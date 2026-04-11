@@ -1,0 +1,144 @@
+// js/script.js
+document.addEventListener('DOMContentLoaded', () => {
+
+    // --- Mobile Menu Toggle ---
+    const hamburger = document.querySelector('.hamburger');
+    const navLinks = document.querySelector('.nav-links');
+
+    if (hamburger && navLinks) {
+        hamburger.addEventListener('click', () => {
+            hamburger.classList.toggle('active');
+            navLinks.classList.toggle('active');
+        });
+
+        // Close menu when a link is clicked
+        document.querySelectorAll('.nav-links a').forEach(link => {
+            link.addEventListener('click', () => {
+                hamburger.classList.remove('active');
+                navLinks.classList.remove('active');
+            });
+        });
+    }
+
+    // --- Scroll Reveal Animation ---
+    const revealElements = document.querySelectorAll('.reveal');
+    const scrollObserver = new IntersectionObserver((entries, observer) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('visible');
+                observer.unobserve(entry.target);
+            }
+        });
+    }, { threshold: 0.1 });
+
+    revealElements.forEach(el => {
+        scrollObserver.observe(el);
+    });
+
+    // --- Parallax for Brand Sections ---
+    const brandSections = document.querySelectorAll('.brand-section');
+    const sectionObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('is-visible');
+            } else {
+                entry.target.classList.remove('is-visible');
+            }
+        });
+    }, { threshold: 0.2 });
+
+    brandSections.forEach(section => {
+        sectionObserver.observe(section);
+    });
+
+    // --- Dynamic Greeting & New Year Countdown ---
+    const greetingElement = document.getElementById('dynamic-greeting');
+    const heroSection = document.querySelector('.hero');
+
+    if (greetingElement) {
+        const updateGreeting = () => {
+            const now = new Date();
+            
+            // Define key dates for the event
+            const newYear2026 = new Date('January 1, 2026 00:00:00');
+            const endOfCelebration = new Date('January 1, 2026 23:59:59');
+            const revertDate = new Date('January 2, 2026 00:00:00');
+
+            // STATE 1: Revert to normal after Jan 1st, 2026 (Jan 2nd onwards)
+            if (now >= revertDate) {
+                 const currentHour = now.getHours();
+                 if (currentHour < 12) {
+                     greetingElement.textContent = "Good Morning.";
+                 } else if (currentHour < 18) {
+                     greetingElement.textContent = "Good Afternoon.";
+                 } else {
+                     greetingElement.textContent = "Good Evening.";
+                 }
+                 if (heroSection) heroSection.classList.remove('fireworks-bg');
+            } 
+            // STATE 2: New Year's Day Celebration (Jan 1st, 2026)
+            else if (now >= newYear2026 && now <= endOfCelebration) {
+                greetingElement.textContent = "Happy New Year!";
+                if (heroSection) heroSection.classList.add('fireworks-bg');
+            } 
+            // STATE 3: Countdown to 2026 (Right Now)
+            else {
+                const diff = newYear2026 - now;
+                
+                if (diff > 0) {
+                    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+                    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+                    
+                    // Updates the text to the countdown
+                    greetingElement.textContent = `New Year in: ${days}d ${hours}h ${minutes}m ${seconds}s`;
+                }
+                // Ensure background is normal during countdown
+                if (heroSection) heroSection.classList.remove('fireworks-bg');
+            }
+        };
+
+        // Initialize immediately and update every second
+        updateGreeting();
+        setInterval(updateGreeting, 1000);
+    }
+
+    // --- Bento Card 3D Tilt Effect ---
+    const bentoCards = document.querySelectorAll('.bento-card');
+    bentoCards.forEach(card => {
+        card.addEventListener('mousemove', (e) => {
+            const rect = card.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+
+            const centerX = rect.width / 2;
+            const centerY = rect.height / 2;
+
+            const rotateX = ((y - centerY) / centerY) * -5; // Max 5deg rotation
+            const rotateY = ((x - centerX) / centerX) * 5;  // Max 5deg rotation
+
+            card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-4px)`;
+        });
+
+        card.addEventListener('mouseleave', () => {
+            card.style.transform = 'perspective(1000px) rotateX(0) rotateY(0) translateY(0)';
+        });
+    });
+
+    // --- Cookie Consent Banner ---
+    const cookieConsentBanner = document.getElementById('cookie-consent-banner');
+    const cookieConsentButton = document.getElementById('cookie-consent-button');
+
+    if (cookieConsentBanner && cookieConsentButton) {
+        if (!localStorage.getItem('cookieConsent')) {
+            cookieConsentBanner.style.display = 'block';
+        }
+
+        cookieConsentButton.addEventListener('click', () => {
+            localStorage.setItem('cookieConsent', 'true');
+            cookieConsentBanner.style.display = 'none';
+        });
+    }
+
+});

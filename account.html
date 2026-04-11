@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+     <script type="module" src="/js/theme-loader.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Account | DTS HUB</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="icon" type="image/png" href="/images/dreams-favicon.png">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/themes.css">
+    <style>
+        :root {
+            --accent-blue: #2563EB;
+            --accent-red: #DC2626;
+            --accent-green: #16A34A;
+            --accent-yellow: #FBBF24;
+            --font-main: 'Inter', sans-serif;
+        }
+        body {
+            font-family: var(--font-main);
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            padding: 40px 20px;
+        }
+        .account-layout {
+            display: flex;
+            width: 100%;
+            max-width: 1200px;
+            gap: 30px;
+        }
+        .sidebar {
+            width: 250px;
+            flex-shrink: 0;
+        }
+        .btn-admin-back {
+            display: none;
+            background-color: var(--accent-yellow);
+            color: #000;
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: 600;
+            text-decoration: none;
+            margin-bottom: 20px;
+            transition: opacity 0.2s;
+            cursor: pointer;
+        }
+        .btn-admin-back:hover { opacity: 0.85; }
+        .sidebar-header {
+            padding: 20px;
+            background-color: var(--primary-card-color);
+            border-radius: 12px;
+            margin-bottom: 20px;
+            border: 1px solid var(--border-color);
+        }
+        .sidebar-header h2 { font-size: 1.2rem; margin: 0 0 5px 0; line-height: 1.2; }
+        .sidebar-header p { font-size: 0.9rem; color: var(--text-secondary); margin: 0; word-wrap: break-word; }
+        .sidebar-nav ul { list-style: none; padding: 0; margin: 0; }
+        .sidebar-nav a {
+            display: block; padding: 15px 20px; color: var(--text-secondary);
+            text-decoration: none; border-radius: 8px; margin-bottom: 5px;
+            font-weight: 500; transition: background-color 0.2s, color 0.2s;
+        }
+        .sidebar-nav a:hover { background-color: var(--primary-card-color); color: var(--text-primary); }
+        .sidebar-nav a.active { background-color: var(--accent-blue); color: #fff; }
+        .sign-out-btn {
+            width: 100%; margin-top: 20px; padding: 15px 20px;
+            background-color: var(--primary-card-color); border: 1px solid var(--border-color);
+            color: var(--text-secondary); font-weight: 500; border-radius: 8px;
+            cursor: pointer; transition: background-color 0.2s, color 0.2s;
+        }
+        .sign-out-btn:hover { background-color: var(--accent-red); color: #fff; border-color: var(--accent-red); }
+        .main-content { flex-grow: 1; }
+        .content-section {
+            display: none; background-color: var(--primary-card-color);
+            padding: 40px; border-radius: 12px; border: 1px solid var(--border-color);
+        }
+        .content-section.active { display: block; }
+        .content-section h3 { font-size: 1.8rem; margin-top: 0; margin-bottom: 30px; }
+        .card {
+            background-color: var(--secondary-card-color); padding: 25px;
+            border-radius: 8px; margin-bottom: 20px; border: 1px solid var(--border-color);
+        }
+        .card h4 { margin-top: 0; margin-bottom: 15px; font-size: 1.2rem; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; color: var(--text-secondary); margin-bottom: 8px; font-weight: 500; }
+        .form-group input, .form-group select {
+            width: 100%; padding: 12px; border: 1px solid var(--border-color);
+            background-color: var(--input-bg); color: var(--text-primary);
+            border-radius: 5px; box-sizing: border-box; font-size: 1rem;
+        }
+        .form-group input:disabled { opacity: 0.6; cursor: not-allowed; }
+        .btn {
+            padding: 12px 24px; border-radius: 6px; font-weight: 600; cursor: pointer;
+            text-decoration: none; display: inline-block; text-align: center; border: 1px solid transparent; transition: all 0.2s;
+        }
+        .btn-primary { background-color: var(--accent-blue); color: white; }
+        .btn-primary:hover { opacity: 0.9; }
+        .btn-danger { background-color: var(--accent-red); color: white; }
+        .btn-danger:hover { opacity: 0.9; }
+        #delete-account-card { border-color: var(--accent-red); }
+        .notification { padding: 10px; border-radius: 6px; font-size: 0.9rem; margin-top: 15px; display: none; }
+        .notification.success { background-color: rgba(22, 163, 74, 0.2); color: var(--accent-green); }
+        .notification.error { background-color: rgba(220, 38, 38, 0.2); color: var(--accent-red); }
+        .accent-options { display: flex; gap: 15px; flex-wrap: wrap; }
+        
+        @media (max-width: 768px) {
+            body { padding: 20px 10px; }
+            .account-layout { flex-direction: column; }
+            .sidebar { width: 100%; }
+            .main-content { width: 100%; }
+            .content-section { padding: 25px; }
+        }
+    </style>
+</head>
+<body style="display: none;">
+    <div class="account-layout">
+        <aside class="sidebar">
+            <a href="admin.html" id="admin-back-button" class="btn-admin-back">← Back to Admin</a>
+            <div class="sidebar-header">
+                <h2 id="welcome-header">Loading...</h2>
+                <p id="user-email-sidebar"></p>
+            </div>
+            <nav class="sidebar-nav">
+                <ul>
+                    <li><a href="index.html">← Return to Home</a></li>
+                    <li><a href="#dashboard" class="nav-link active">Dashboard</a></li>
+                    <li><a href="#orders" class="nav-link">Order History</a></li>
+                    <li><a href="#billing" class="nav-link">Billing & Plans</a></li>
+                    <li><a href="#settings" class="nav-link">Settings</a></li>
+                    <li><a href="#support" class="nav-link">Support</a></li>
+                </ul>
+            </nav>
+            <button class="sign-out-btn" id="sign-out">Sign Out</button>
+        </aside>
+        
+        <main class="main-content">
+            <section id="dashboard" class="content-section active">
+                <h3>Dashboard</h3>
+                <div class="card">
+                    <h4>Quick Overview</h4>
+                    <p>Welcome to your personal hub. Navigate the sidebar to manage your subscriptions, orders, and themes.</p>
+                </div>
+            </section>
+
+            <section id="orders" class="content-section">
+                <h3>Order History</h3>
+                <div class="card">
+                    <h4>Recent Purchases</h4>
+                    <p style="color: var(--text-secondary);">You have no recent orders.</p>
+                </div>
+            </section>
+
+            <section id="billing" class="content-section">
+                <h3>Billing & Plans</h3>
+                <div class="card">
+                    <h4>Current Plan</h4>
+                    <p>You are currently on the <strong>Free</strong> tier.</p>
+                    <a href="memberships.html" class="btn btn-primary" style="margin-top: 10px;">Upgrade Plan</a>
+                </div>
+            </section>
+
+            <section id="settings" class="content-section">
+                <h3>Settings</h3>
+                <div class="card">
+                    <h4>Update Profile</h4>
+                    <form id="update-profile-form">
+                        <div class="form-group">
+                            <label for="update-username">Username</label>
+                            <input type="text" id="update-username" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="update-email">Email (Cannot be changed)</label>
+                            <input type="email" id="update-email" disabled>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                        <div id="profile-notification" class="notification"></div>
+                    </form>
+                </div>
+
+                <div class="card">
+                    <h4>Display Settings</h4>
+                    <form id="theme-settings-form">
+                        <div class="form-group">
+                            <label for="theme-select">Theme</label>
+                            <select id="theme-select">
+                                <option value="dark">Dark</option>
+                                <option value="light">Light</option>
+                                <option value="midnight">Midnight</option>
+                                <option value="forest">Forest</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Accent Color</label>
+                            <div class="accent-options">
+                                <label><input type="radio" name="accent-color" value="blue"> Blue</label>
+                                <label><input type="radio" name="accent-color" value="red"> Red</label>
+                                <label><input type="radio" name="accent-color" value="green"> Green</label>
+                                <label><input type="radio" name="accent-color" value="purple"> Purple</label>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Save Theme</button>
+                        <div id="theme-notification" class="notification"></div>
+                    </form>
+                </div>
+
+                <div class="card" id="delete-account-card">
+                    <h4>Delete Account</h4>
+                    <p>This action is permanent and cannot be undone. All your data will be removed.</p>
+                    <button class="btn btn-danger" id="delete-account-btn">Delete My Account</button>
+                </div>
+            </section>
+            
+            <section id="support" class="content-section">
+                <h3>Contact Support</h3>
+                <div class="card">
+                    <p>If you need help, please reach out. We're happy to assist!</p>
+                    <a href="mailto:unstoppableplays2016@hotmail.com" class="btn btn-primary">Email Support</a>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script type="module">
+        import { auth, db } from '/js/auth.js';
+        import { onAuthStateChanged, signOut, deleteUser } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
+        import { doc, getDoc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
+        
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                try {
+                    const userDocRef = doc(db, "users", user.uid);
+                    const userDoc = await getDoc(userDocRef);
+
+                    if (userDoc.exists()) {
+                        const userData = userDoc.data();
+                        initializePage(user, userData);
+                        setupEventListeners(user);
+                        document.body.style.display = 'flex';
+                    }
+                } catch (error) {
+                    console.error("Error loading profile:", error);
+                }
+            } else {
+                window.location.replace('sign in beta.html');
+            }
+        });
+
+        function initializePage(user, userData) {
+            if (userData.isAdmin) {
+                const adminBtn = document.getElementById('admin-back-button');
+                if (adminBtn) adminBtn.style.display = 'block';
+            }
+
+            const welcomeHeader = document.getElementById('welcome-header');
+            if (sessionStorage.getItem('newUser')) {
+                welcomeHeader.textContent = `Welcome, ${userData.username}!`;
+                sessionStorage.removeItem('newUser');
+            } else {
+                welcomeHeader.textContent = `Welcome back, ${userData.username}!`;
+            }
+
+            document.getElementById('user-email-sidebar').textContent = user.email;
+            document.getElementById('update-username').value = userData.username;
+            document.getElementById('update-email').value = user.email;
+
+            document.getElementById('theme-select').value = userData.theme || 'dark';
+            const currentAccent = userData.accentColor || 'blue';
+            const accentRadio = document.querySelector(`input[name="accent-color"][value="${currentAccent}"]`);
+            if (accentRadio) accentRadio.checked = true;
+        }
+
+        function setupEventListeners(user) {
+            document.getElementById('sign-out').addEventListener('click', () => {
+                signOut(auth).then(() => window.location.replace('index.html'));
+            });
+
+            document.getElementById('update-profile-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const newUsername = document.getElementById('update-username').value;
+                const notificationEl = document.getElementById('profile-notification');
+                try {
+                    await updateDoc(doc(db, "users", user.uid), { username: newUsername });
+                    showNotification(notificationEl, 'Username updated successfully!', 'success');
+                    document.getElementById('welcome-header').textContent = `Welcome back, ${newUsername}!`;
+                } catch (error) {
+                    showNotification(notificationEl, `Error: ${error.message}`, 'error');
+                }
+            });
+
+            document.getElementById('theme-settings-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const theme = document.getElementById('theme-select').value;
+                const accentColor = document.querySelector('input[name="accent-color"]:checked').value;
+                const notificationEl = document.getElementById('theme-notification');
+
+                try {
+                    await updateDoc(doc(db, "users", user.uid), { theme, accentColor });
+                    showNotification(notificationEl, 'Theme updated successfully!', 'success');
+                    document.body.dataset.theme = theme;
+                    document.body.dataset.accent = accentColor;
+                    localStorage.setItem('userTheme', theme);
+                    localStorage.setItem('userAccent', accentColor);
+                } catch (error) {
+                    showNotification(notificationEl, `Error: ${error.message}`, 'error');
+                }
+            });
+
+            document.getElementById('delete-account-btn').addEventListener('click', async () => {
+                if (!confirm('DANGER: This will permanently delete your account and all its data. Are you sure?')) return;
+                try {
+                    const userId = user.uid;
+                    await deleteUser(user);
+                    await deleteDoc(doc(db, "users", userId));
+                    alert('Your account has been permanently deleted.');
+                    window.location.replace('index.html');
+                } catch (error) {
+                    alert('Error: Please sign out, sign back in, and try again.');
+                }
+            });
+
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.addEventListener('click', e => {
+                    e.preventDefault();
+                    document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+                    document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
+                    e.currentTarget.classList.add('active');
+                    document.querySelector(e.currentTarget.getAttribute('href')).classList.add('active');
+                });
+            });
+
+            const showNotification = (element, message, type) => {
+                element.textContent = message;
+                element.className = `notification ${type}`;
+                element.style.display = 'block';
+                setTimeout(() => { element.style.display = 'none'; }, 5000);
+            };
+        }
+    </script>
+</body>
+</html>

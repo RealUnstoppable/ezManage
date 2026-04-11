@@ -1,0 +1,52 @@
+/* themes.css */
+
+/* --- DARK THEME (DEFAULT) --- */
+body[data-theme="dark"] {
+    --bg-color: #0A0A0A;
+    --primary-card-color: #141414;
+    --secondary-card-color: #1f1f1f;
+    --border-color: rgba(255, 255, 255, 0.1);
+    --text-primary: #F5F5F7;
+    --text-secondary: #A3A3A3;
+    --input-bg: #2c2c2c;
+}
+
+/* --- LIGHT THEME (FIXED VISIBILITY) --- */
+body[data-theme="light"] {
+    --bg-color: #F3F4F6;
+    --primary-card-color: #FFFFFF;
+    --secondary-card-color: #F9FAFB;
+    --border-color: rgba(0, 0, 0, 0.15);
+    --text-primary: #111827;
+    --text-secondary: #4B5563;
+    --input-bg: #FFFFFF;
+}
+
+/* --- MIDNIGHT THEME (NEW) --- */
+body[data-theme="midnight"] {
+    --bg-color: #0f172a;
+    --primary-card-color: #1e293b;
+    --secondary-card-color: #334155;
+    --border-color: rgba(255, 255, 255, 0.1);
+    --text-primary: #f8fafc;
+    --text-secondary: #94a3b8;
+    --input-bg: #0f172a;
+}
+
+/* --- FOREST THEME (NEW) --- */
+body[data-theme="forest"] {
+    --bg-color: #064e3b;
+    --primary-card-color: #065f46;
+    --secondary-card-color: #047857;
+    --border-color: rgba(255, 255, 255, 0.15);
+    --text-primary: #ecfdf5;
+    --text-secondary: #a7f3d0;
+    --input-bg: #022c22;
+}
+
+/* Global Form Input Fixes for Themes */
+input, select, textarea {
+    background-color: var(--input-bg) !important;
+    color: var(--text-primary) !important;
+    border: 1px solid var(--border-color);
+}

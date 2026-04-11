@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script type="module" src="/js/theme-loader.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Support | DTS HUB</title>
+    <link rel="icon" type="image/png" href="/images/dreams-favicon.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/themes.css">
+</head>
+<body>
+
+    <header class="main-header">
+        <nav class="navbar">
+            <a href="index.html" class="nav-logo">un<span></span></a>
+            <ul class="nav-links">
+                <li><a href="index.html#bento">Overview</a></li>
+                <li><a href="index.html#unstoppable">Unstoppable</a></li>
+                <li><a href="index.html#dts">Dreams TimeSkip</a></li>
+                <li><a href="index.html#harmony">HarmonyTunes</a></li>
+                <li><a href="shop.html">Shop</a></li>
+                <li><a href="memberships.html">Memberships</a></li>
+                <li><a href="blog.html">Blog</a></li>
+                <li><a href="sign in beta.html" id="auth-link">Sign In / Sign Up</a></li>
+            </ul>
+            <button class="hamburger" aria-label="Open menu">
+                <span class="bar"></span><span class="bar"></span><span class="bar"></span>
+            </button>
+        </nav>
+    </header>
+
+    <main style="padding: 120px 20px; text-align: center; min-height: 60vh;">
+        <h1 style="font-size: 3rem; font-weight: 800; margin-bottom: 20px;">Contact Support</h1>
+        <p style="color: var(--text-secondary); margin-bottom: 40px;">
+            Having trouble? Our team is here to help.
+        </p>
+        
+        <div style="display: flex; gap: 20px; justify-content: center; flex-wrap: wrap;">
+            <a href="mailto:unstoppableplays2016@hotmail.com" class="cta-button">Email Us</a>
+            <a href="https://discord.gg/6zdH5De3ab" class="cta-button" style="background-color: #5865F2; color: white; border: none;">Join Discord</a>
+        </div>
+    </main>
+
+    <footer class="main-footer">
+        <div class="footer-bottom">
+            <p>&copy; 2026 Unstoppable LLC. All Rights Reserved.</p>
+        </div>
+    </footer>
+
+    <script src="/js/script.js"></script>
+    
+    <script type="module">
+        import { auth, db } from '/js/auth.js';
+        import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
+        import { doc, getDoc } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
+
+        const authLink = document.getElementById('auth-link');
+
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                try {
+                    const userDoc = await getDoc(doc(db, "users", user.uid));
+                    const destination = userDoc.exists() && userDoc.data().isAdmin ? 'admin.html' : 'account.html';
+                    authLink.href = destination;
+                    authLink.textContent = "My Account";
+                } catch (e) {
+                    console.error("Nav update error", e);
+                }
+            } else {
+                authLink.href = 'sign in beta.html';
+                authLink.textContent = "Sign In / Sign Up";
+            }
+        });
+    </script>
+</body>
+</html>

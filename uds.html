@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Unstoppable Detailing Services | Premium Auto Care</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        /* =========================================
+           MOBILE-FIRST BASE STYLES
+           ========================================= */
+        :root {
+            --bg-dark: #0A0A0A;
+            --bg-card: #141414;
+            --text-main: #F5F5F7;
+            --text-muted: #A3A3A3;
+            --accent: #2563EB;
+            --gold: #D4AF37;
+            --border: rgba(255, 255, 255, 0.1);
+        }
+        
+        body {
+            margin: 0; font-family: 'Inter', sans-serif; background: var(--bg-dark); 
+            color: var(--text-main); scroll-behavior: smooth; overflow-x: hidden;
+        }
+
+        /* Navbar (Mobile Menu) */
+        nav {
+            position: fixed; top: 0; width: 100%; background: rgba(10, 10, 10, 0.95); 
+            backdrop-filter: blur(10px); z-index: 1000; border-bottom: 1px solid var(--border);
+            padding: 15px 20px; box-sizing: border-box; display: flex; 
+            justify-content: space-between; align-items: center; flex-wrap: wrap;
+        }
+        .logo { font-weight: 800; font-size: 1.2rem; color: var(--text-main); text-decoration: none; letter-spacing: 1px; }
+        
+        .menu-toggle {
+            color: var(--text-main); font-size: 1.5rem; cursor: pointer; display: block; user-select: none;
+        }
+        
+        .nav-links {
+            display: none; width: 100%; flex-direction: column; gap: 15px; 
+            margin-top: 15px; text-align: center;
+        }
+        .nav-links.active { display: flex; }
+        
+        .nav-links a {
+            color: var(--text-main); text-decoration: none; font-weight: 500; 
+            font-size: 1rem; transition: color 0.3s; padding: 10px 0; border-bottom: 1px solid #222;
+        }
+        .nav-links a:last-child { border-bottom: none; }
+        .nav-links a:hover { color: var(--accent); }
+        .auth-btn { background: var(--accent); padding: 10px; border-radius: 6px; font-weight: bold !important; border: none !important;}
+
+        /* Hero Section */
+        .hero {
+            min-height: 100vh; display: flex; align-items: center; justify-content: center; text-align: center;
+            background: linear-gradient(rgba(10,10,10,0.8), rgba(10,10,10,0.9)), url('https://images.unsplash.com/photo-1614165936126-2ed18e471b3b?q=80&w=2000') center/cover;
+            padding: 80px 20px 20px 20px; box-sizing: border-box;
+        }
+        .hero h1 { font-size: 2.5rem; margin-bottom: 15px; line-height: 1.1; }
+        .hero p { font-size: 1rem; color: var(--text-muted); margin-bottom: 30px; max-width: 600px; margin-left: auto; margin-right: auto;}
+        
+        .btn-primary {
+            display: block; width: 100%; max-width: 300px; margin: 0 auto; background: var(--text-main); 
+            color: var(--bg-dark); padding: 15px; text-decoration: none; font-weight: 700; 
+            font-size: 1.1rem; border-radius: 6px; transition: 0.3s; box-sizing: border-box;
+        }
+        .btn-primary:hover { background: var(--accent); color: white; }
+
+        /* General Sections */
+        section { padding: 60px 20px; max-width: 1200px; margin: 0 auto; }
+        h2 { font-size: 2rem; text-align: center; margin-bottom: 40px; border-bottom: 2px solid var(--accent); display: inline-block; padding-bottom: 10px; }
+
+        /* Shared Grid Layouts (Process, Pricing, Gallery) */
+        .grid { display: grid; grid-template-columns: 1fr; gap: 20px; }
+
+        /* Process Cards */
+        .process-step { background: var(--bg-card); padding: 25px; border-radius: 8px; border: 1px solid var(--border); text-align: center; }
+        .process-step h3 { color: var(--accent); margin-top: 0; font-size: 1.2rem; }
+        .process-step p { font-size: 0.95rem; color: var(--text-muted); line-height: 1.5; margin-bottom: 0;}
+
+        /* Pricing Cards */
+        .price-card { background: var(--bg-card); padding: 30px 20px; border-radius: 8px; border: 1px solid var(--border); text-align: center; }
+        .price-card h3 { font-size: 1.3rem; margin-top: 0; }
+        .price-card .price { font-size: 2.2rem; font-weight: 800; color: var(--text-main); margin: 15px 0; }
+        .price-card p { color: var(--text-muted); font-size: 0.9rem; line-height: 1.4; }
+
+        /* Membership Box */
+        .membership { background: linear-gradient(45deg, #141414, #1a1a1a); border: 1px solid var(--gold); text-align: center; padding: 40px 20px; border-radius: 8px; margin-top: 40px; }
+        .membership h3 { color: var(--gold); font-size: 1.5rem; margin-top: 0; }
+        .membership p { font-size: 0.95rem; line-height: 1.5; margin-bottom: 25px;}
+
+        /* Gallery */
+        .gallery-item { height: 200px; background: #222; border-radius: 8px; overflow: hidden; }
+        .gallery-item img { width: 100%; height: 100%; object-fit: cover; transition: 0.3s; }
+
+        /* Swipeable Reviews (Mobile Friendly) */
+        .reviews-container { 
+            display: flex; overflow-x: auto; gap: 15px; padding-bottom: 20px; 
+            scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch;
+        }
+        .review-card { 
+            min-width: 280px; background: var(--bg-card); padding: 25px; 
+            border-radius: 8px; border: 1px solid var(--border); scroll-snap-align: center; 
+            box-sizing: border-box;
+        }
+        .stars { color: var(--gold); margin-bottom: 10px; font-size: 1.2rem; }
+        .review-card p { font-size: 0.95rem; font-style: italic; color: var(--text-muted); line-height: 1.5; }
+
+        /* Footer & Newsletter */
+        footer { background: var(--bg-card); padding: 40px 20px; text-align: center; border-top: 1px solid var(--border); }
+        .newsletter input { width: 100%; padding: 14px; background: var(--bg-dark); border: 1px solid var(--border); color: white; border-radius: 6px; box-sizing: border-box; margin-bottom: 10px; font-size: 1rem;}
+        .newsletter button { width: 100%; padding: 14px; background: var(--accent); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 1rem;}
+        .socials { margin-top: 30px; }
+        .socials a { color: var(--text-muted); margin: 0 10px; text-decoration: none; font-size: 0.9rem;}
+        
+        /* =========================================
+           DESKTOP STYLES (Min-width 768px)
+           ========================================= */
+        @media (min-width: 768px) {
+            /* Nav Desktop */
+            nav { padding: 20px 50px; flex-wrap: nowrap; }
+            .logo { font-size: 1.5rem; }
+            .menu-toggle { display: none; }
+            .nav-links { display: flex; flex-direction: row; width: auto; margin-top: 0; align-items: center; gap: 30px; }
+            .nav-links a { padding: 0; border: none; font-size: 0.9rem; }
+            .auth-btn { padding: 8px 16px; }
+
+            /* Hero Desktop */
+            .hero { padding: 0 50px; }
+            .hero h1 { font-size: 4rem; }
+            .hero p { font-size: 1.2rem; }
+            .btn-primary { display: inline-block; width: auto; }
+
+            /* Grid Layouts Desktop */
+            section { padding: 100px 50px; }
+            h2 { font-size: 2.5rem; margin-bottom: 50px; }
+            .grid { grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 30px; }
+            
+            /* Specific Desktop Adjustments */
+            .membership { padding: 60px; }
+            .membership h3 { font-size: 2rem; }
+            .gallery-item { height: 250px; }
+            
+            /* Footer Desktop */
+            .newsletter { display: flex; justify-content: center; gap: 10px; max-width: 400px; margin: 0 auto; }
+            .newsletter input { width: auto; flex-grow: 1; margin-bottom: 0; }
+            .newsletter button { width: auto; }
+        }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <a href="#" class="logo">UNSTOPPABLE</a>
+        <div class="menu-toggle" id="mobile-menu-btn">☰</div>
+        <div class="nav-links" id="nav-links">
+            <a href="#process" onclick="closeMenu()">Process</a>
+            <a href="#pricing" onclick="closeMenu()">Pricing</a>
+            <a href="#gallery" onclick="closeMenu()">Gallery</a>
+            <a href="#reviews" onclick="closeMenu()">Reviews</a>
+            <a href="#contact" onclick="closeMenu()">Contact</a>
+            <a href="booking.html">Book Now</a>
+            <a href="sign in beta.html" class="auth-btn" id="nav-auth-btn">Sign In</a>
+        </div>
+    </nav>
+
+    <header class="hero">
+        <div>
+            <h1>Flawless Finish. Unstoppable Shine.</h1>
+            <p>Buford's premier luxury mobile detailing. We bring the showroom back to your driveway. (And yes, the shop cat approves of the reflection).</p>
+            <a href="booking.html" class="btn-primary">Schedule Your Detail</a>
+        </div>
+    </header>
+
+    <section id="process">
+        <h2>Our Process</h2>
+        <div class="grid">
+            <div class="process-step">
+                <h3>1. The Safe Wash</h3>
+                <p>Two-bucket method and pH-neutral snow foam to lift dirt without introducing swirl marks to your clear coat.</p>
+            </div>
+            <div class="process-step">
+                <h3>2. Decontamination</h3>
+                <p>Chemical iron removal and clay bar treatment to pull embedded contaminants out of the paint, leaving it smooth as glass.</p>
+            </div>
+            <div class="process-step">
+                <h3>3. Paint Enhancement</h3>
+                <p>Machine polishing to remove minor defects and restore the deep, mirror-like gloss of your vehicle.</p>
+            </div>
+            <div class="process-step">
+                <h3>4. Premium Protection</h3>
+                <p>Application of high-grade ceramic sealants to protect against Georgia UV rays and make future washes a breeze.</p>
+            </div>
+        </div>
+    </section>
+
+    <section id="pricing">
+        <h2>Pricing & Packages</h2>
+        <div class="grid">
+            <div class="price-card">
+                <h3>Luxury Sedan</h3>
+                <div class="price">From $150</div>
+                <p>Deep exterior foam wash, wheel barrel detailing, interior vacuum, leather wipe-down, and ceramic spray sealant.</p>
+            </div>
+            <div class="price-card">
+                <h3>Luxury SUV</h3>
+                <div class="price">From $250</div>
+                <p>Comprehensive interior/exterior detail. Ideal for keeping the family hauler looking brand new.</p>
+            </div>
+            <div class="price-card">
+                <h3>Premium Truck</h3>
+                <div class="price">From $280</div>
+                <p>Heavy-duty deep cleaning. Includes bed flush, intense wheel/tire scrub, and heavy interior extraction.</p>
+            </div>
+            <div class="price-card">
+                <h3>Sprinter Van</h3>
+                <div class="price">From $400</div>
+                <p>Extensive exterior surface coverage and massive interior cubic volume cleaning. Perfect for executive transports.</p>
+            </div>
+        </div>
+
+        <div class="membership">
+            <h3>The Unstoppable Annual Club</h3>
+            <p>Keep your vehicle pristine year-round. Subscribe for a monthly maintenance wash and receive a <strong>15% discount</strong> on all services for the year, plus priority booking.</p>
+            <a href="booking.html" class="btn-primary" style="background: var(--gold); color: black;">Join the Club</a>
+        </div>
+    </section>
+
+    <section id="gallery">
+        <h2>Recent Work</h2>
+        <p style="text-align: center; color: var(--text-muted); margin-top: -30px; margin-bottom: 30px; font-size: 0.9rem;">(Spot the shop cat inspecting the hood in the first shot!)</p>
+        <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));">
+            <div class="gallery-item"><img src="https://images.unsplash.com/photo-1542362567-b07e54358753?q=80&w=600" alt="Polished Porsche"></div>
+            <div class="gallery-item"><img src="https://images.unsplash.com/photo-1605559424843-9e4c228bf1c2?q=80&w=600" alt="Mercedes Interior"></div>
+            <div class="gallery-item"><img src="https://images.unsplash.com/photo-1503376713356-20d6cb25c945?q=80&w=600" alt="G-Wagon Wash"></div>
+            <div class="gallery-item"><img src="https://images.unsplash.com/photo-1619682817481-e994891cd1f5?q=80&w=600" alt="Sprinter Detail"></div>
+        </div>
+    </section>
+
+    <section id="reviews">
+        <h2>Client Testimonials</h2>
+        <div class="reviews-container">
+            <div class="review-card"><div class="stars">★★★★★</div><p>"Absolutely flawless. My 911 looks better than the day I bought it. The attention to detail is unmatched in Buford."<br><br>- James T.</p></div>
+            <div class="review-card"><div class="stars">★★★★★</div><p>"Professional, on time, and my Range Rover's interior smells incredible. Highly recommend the ceramic spray."<br><br>- Sarah M.</p></div>
+            <div class="review-card"><div class="stars">★★★★★</div><p>"Used them for our company Sprinter van. Fast, efficient, and very premium service."<br><br>- David L.</p></div>
+            <div class="review-card"><div class="stars">★★★★★</div><p>"The monthly membership is a lifesaver. My Model S is always spotless."<br><br>- Elena R.</p></div>
+            <div class="review-card"><div class="stars">★★★★★</div><p>"Took out a scratch I thought needed a body shop. Magic."<br><br>- Marcus K.</p></div>
+            <div class="review-card"><div class="stars">★★★★★</div><p>"Best mobile detailer in Gwinnett. Period."<br><br>- Thomas W.</p></div>
+            <div class="review-card"><div class="stars">★★★★★</div><p>"They respect the paint. No cheap brushes used here."<br><br>- Chris A.</p></div>
+            <div class="review-card"><div class="stars">★★★★★</div><p>"My truck was caked in mud. Unstoppable made it look like a mall crawler again."<br><br>- Mike B.</p></div>
+            <div class="review-card"><div class="stars">★★★★★</div><p>"Incredible attention to the leather seats in my BMW."<br><br>- Alicia V.</p></div>
+            <div class="review-card"><div class="stars">★★★★★</div><p>"Easy booking, great communication, stunning results."<br><br>- Robert D.</p></div>
+        </div>
+    </section>
+
+    <footer id="contact">
+        <h2>Stay Unstoppable</h2>
+        <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 20px;">Join our newsletter for detailing tips and 10% off your first wash.</p>
+        <div class="newsletter" id="newsletter-form">
+            <input type="email" id="news-email" placeholder="Enter your email address" required>
+            <button onclick="subscribeNewsletter()">Subscribe</button>
+        </div>
+        <p id="news-msg" style="font-size: 0.85rem; margin-top: 15px; font-weight: 600;"></p>
+        
+        <div class="socials">
+            <a href="#">Instagram</a> | <a href="#">Facebook</a> | <a href="#">YouTube</a>
+        </div>
+        <p style="color: #666; margin-top: 40px; font-size: 0.8rem;">&copy; 2026 Unstoppable Detailing Services. Buford, GA.</p>
+    </footer>
+
+    <script type="module">
+        import { auth, db } from '/js/auth.js';
+        import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
+        import { doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
+
+        // Mobile Menu Toggle Logic
+        const menuBtn = document.getElementById('mobile-menu-btn');
+        const navLinks = document.getElementById('nav-links');
+        
+        menuBtn.addEventListener('click', () => {
+            navLinks.classList.toggle('active');
+            menuBtn.textContent = navLinks.classList.contains('active') ? '✕' : '☰';
+        });
+
+        window.closeMenu = () => {
+            if(window.innerWidth < 768) {
+                navLinks.classList.remove('active');
+                menuBtn.textContent = '☰';
+            }
+        };
+
+        // Update Nav based on Auth Status
+        onAuthStateChanged(auth, (user) => {
+            const authBtn = document.getElementById('nav-auth-btn');
+            if (user) {
+                authBtn.textContent = "My Account";
+                authBtn.href = "account.html";
+            }
+        });
+
+        // Newsletter Logic
+        window.subscribeNewsletter = async () => {
+            const email = document.getElementById('news-email').value;
+            const msg = document.getElementById('news-msg');
+            if(!email) {
+                msg.style.color = "#ef4444";
+                msg.textContent = "Please enter an email address.";
+                return;
+            }
+            
+            try {
+                await setDoc(doc(db, "newsletterSubscribers", email), {
+                    email: email,
+                    subscribedAt: serverTimestamp()
+                });
+                msg.style.color = "#16A34A";
+                msg.textContent = "Subscribed successfully! Check your inbox soon.";
+                document.getElementById('news-email').value = '';
+            } catch(e) {
+                msg.style.color = "#ef4444";
+                msg.textContent = "Error subscribing. Please try again.";
+            }
+        };
+    </script>
+</body>
+</html>

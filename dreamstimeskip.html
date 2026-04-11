@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+     <script type="module" src="/js/theme-loader.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dreams TimeSkip Launch | un</title>
+    <meta name="description" content="The official launch page for Dreams OG and Dreams TimeSkip.">
+    
+    <link rel="icon" type="image/png" href="/images/dreams-favicon.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/themes.css">
+
+    <style>
+        /* --- Page Specific Styles --- */
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            background-color: #000; /* Black background for this page */
+        }
+
+        /* --- Video Hero Section --- */
+        .video-hero-container {
+            height: 100vh;
+            width: 100%;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            color: var(--text-primary);
+            overflow: hidden;
+        }
+
+        .bg-video {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            min-width: 100%;
+            min-height: 100%;
+            width: auto;
+            height: auto;
+            z-index: -2;
+            transform: translateX(-50%) translateY(-50%);
+            object-fit: cover;
+        }
+
+        .video-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6); /* Dark overlay */
+            z-index: -1;
+        }
+
+        .hero-content {
+            z-index: 1;
+            padding: 20px;
+        }
+
+        .hero-content h1 {
+            font-size: clamp(2.5rem, 8vw, 5rem);
+            font-weight: 800;
+            letter-spacing: -2px;
+            background: linear-gradient(90deg, #d1c4e9, #f5f5f7);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+
+        .hero-content .subtitle {
+            font-size: clamp(1rem, 3vw, 1.5rem);
+            color: var(--text-secondary);
+            max-width: 800px;
+            margin: 0 auto 40px;
+            height: 2em; /* Reserve space for the text */
+            line-height: 1.5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 0.35em;
+        }
+
+        /* --- NEW: Animated Subtitle Styles --- */
+        .animated-words-wrapper {
+            display: inline-block;
+            position: relative;
+            height: 1.5em; /* Matches the line-height of the subtitle */
+            overflow: hidden;
+            vertical-align: middle; /* Align with surrounding text */
+            transition: width 0.3s ease-in-out; /* Smooth width transition */
+        }
+
+        .animated-words-wrapper::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            /* This gradient creates the fade effect at the top and bottom */
+            background: linear-gradient(to bottom, 
+                rgba(0,0,0,1) 0%, 
+                rgba(0,0,0,0) 20%, 
+                rgba(0,0,0,0) 80%, 
+                rgba(0,0,0,1) 100%
+            );
+            pointer-events: none;
+        }
+
+        .animated-words {
+            display: block;
+            animation: slideUp 12.5s infinite ease-in-out;
+            white-space: nowrap; /* Prevent words from wrapping */
+        }
+
+        .animated-words span {
+            display: block;
+            height: 1.5em;
+            line-height: 1.5em;
+            color: var(--accent-blue); /* Different color as requested */
+            font-weight: 700;
+            text-align: left;
+        }
+
+        @keyframes slideUp {
+            0%, 16%   { transform: translateY(0); }       /* PVP */
+            20%, 36%  { transform: translateY(-1.5em); }  /* unscripted */
+            40%, 56%  { transform: translateY(-3em); }    /* SMP */
+            60%, 76%  { transform: translateY(-4.5em); }  /* story */
+            80%, 96%  { transform: translateY(-6em); }    /* event */
+            100%      { transform: translateY(-7.5em); }  /* Loops back to PVP */
+        }
+        /* --- END: Animated Subtitle Styles --- */
+
+
+        /* --- Countdown Timer --- */
+        .countdown-container {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 40px;
+            flex-wrap: wrap;
+        }
+
+        .time-block {
+            text-align: center;
+        }
+
+        .flip-card {
+            display: inline-block;
+            position: relative;
+            width: 110px;
+            height: 110px;
+            perspective: 600px;
+            font-size: 4rem;
+            font-weight: 800;
+            line-height: 110px;
+            border-radius: 8px;
+        }
+
+        .flip-card[data-unit="days"] {
+            width: 120px; /* MODIFIED: Increased width for 3-digit days */
+        }
+
+        .top-half, .bottom-half,
+        .top-flip, .bottom-flip {
+            position: absolute;
+            width: 100%;
+            height: 50%;
+            left: 0;
+            background: #1c1c1c;
+            color: #f5f5f7;
+            overflow: hidden;
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+            text-align: center;
+        }
+        
+        .flip-card[data-unit="years"] {
+            width: 90px;
+        }
+
+        .top-half {
+            top: 0;
+            border-radius: 8px 8px 0 0;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.3);
+        }
+
+        .bottom-half {
+            bottom: 0;
+            border-radius: 0 0 8px 8px;
+            align-items: flex-end;
+            line-height: 0;
+        }
+        
+        .top-flip {
+            top: 0;
+            border-radius: 8px 8px 0 0;
+            transform-origin: bottom;
+            transform: rotateX(0deg);
+            animation: flip-top 0.5s ease-in forwards;
+        }
+
+        .bottom-flip {
+            bottom: 0;
+            border-radius: 0 0 8px 8px;
+            transform-origin: top;
+            transform: rotateX(90deg);
+            line-height: 0;
+            animation: flip-bottom 0.5s ease-out 0.5s forwards;
+        }
+
+        @keyframes flip-top {
+            100% { transform: rotateX(-90deg); }
+        }
+        @keyframes flip-bottom {
+            100% { transform: rotateX(0deg); }
+        }
+
+        .time-label {
+            color: var(--text-secondary);
+            margin-top: 15px;
+            font-weight: 500;
+            text-transform: uppercase;
+            font-size: 0.9rem;
+        }
+        
+        /* --- Hero Buttons --- */
+        .hero-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 14px 32px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+
+        .btn-primary {
+            background-color: var(--accent-blue);
+            color: white;
+        }
+        .btn-primary:hover {
+            background-color: transparent;
+            border-color: var(--accent-blue);
+            color: var(--accent-blue);
+            transform: translateY(-3px);
+        }
+
+        .btn-secondary {
+            background-color: #333;
+            color: #888;
+            cursor: not-allowed;
+        }
+
+        .btn-green {
+            background-color: var(--accent-green);
+            color: white;
+            cursor: pointer;
+        }
+        .btn-green:hover {
+            background-color: transparent;
+            border-color: var(--accent-green);
+            color: var(--accent-green);
+            transform: translateY(-3px);
+        }
+
+        /* --- Info Cards Section --- */
+        .info-section {
+            padding: 100px 40px;
+            background-color: var(--bg-color);
+        }
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 30px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .info-card {
+            background-color: var(--primary-card-color);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .info-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+        }
+
+        .card-image {
+            width: 100%;
+            height: 240px;
+            object-fit: cover;
+            background-color: #000;
+        }
+
+        .card-content {
+            padding: 25px;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card-content h3 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin: 0 0 15px;
+        }
+
+        .card-content p {
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+            flex-grow: 1;
+        }
+
+        .card-cta {
+            align-self: flex-end;
+            margin-top: 20px;
+            background-color: #fff;
+            color: #111;
+            padding: 10px 20px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.2s ease;
+        }
+
+        .card-cta:hover {
+            background-color: #ccc;
+            transform: scale(1.05);
+        }
+
+        /* Responsive */
+        @media (max-width: 500px) {
+            .flip-card {
+                width: 65px;
+                height: 80px;
+                font-size: 2.5rem;
+                line-height: 80px;
+            }
+            .flip-card[data-unit="days"] {
+                 width: 80px;
+            }
+            .countdown-container {
+                gap: 10px;
+            }
+        }
+
+    </style>
+</head>
+<body>
+
+    <header class="main-header">
+        <nav class="navbar">
+            <a href="index.html" class="nav-logo">un<span></span></a>
+            <ul class="nav-links">
+                <li><a href="index.html#bento">Overview</a></li>
+                <li><a href="index.html#unstoppable">Unstoppable</a></li>
+                <li><a href="#dts">Dreams TimeSkip</a></li>
+                <li><a href="index.html#harmony">HarmonyTunes</a></li>
+                <li><a href="shop.html">Shop</a></li>
+                <li><a href="blog.html">Blog</a></li>
+                <li><a href="sign in beta.html" id="auth-link">Sign In / Sign Up</a></li>
+            </ul>
+            <button class="hamburger" aria-label="Open menu">
+                <span class="bar"></span>
+                <span class="bar"></span>
+                <span class="bar"></span>
+            </button>
+        </nav>
+    </header>
+
+    <main>
+        <section class="video-hero-container">
+            <div class="video-overlay"></div>
+            <video autoplay muted loop class="bg-video">
+                <source src="https://assets.mixkit.co/videos/preview/mixkit-daytime-city-traffic-on-a-freeway-43155-large.mp4" type="video/mp4">
+                Your browser does not support the video tag.
+            </video>
+            <div class="hero-content">
+                <h1>Dreams OG Launch</h1>
+                <p class="subtitle">Relive your childhood.</p>
+                <div id="countdown-1" class="countdown-container">
+                    </div>
+                <div class="hero-buttons">
+                    <a href="https://discord.gg/aYuEdG9Gh7" class="btn btn-primary">Join the Discord</a>
+                    <a href="#" class="btn btn-secondary">Join the Realms</a>
+                </div>
+            </div>
+        </section>
+
+        <section class="info-section">
+            <div class="info-grid">
+                <div class="info-card">
+                    <img src="https://i.ytimg.com/vi/dQw4w9WgXcQ/maxresdefault.jpg" alt="Trailer thumbnail" class="card-image">
+                    <div class="card-content">
+                        <h3>Watch The Trailer</h3>
+                        <p>Get a glimpse of what's to come. The official trailer showcases the new world, features, and the adventure that awaits.</p>
+                        <a href="https://www.youtube.com/watch?v=dQw4w9WgXcQ" class="card-cta">Watch Now</a>
+                    </div>
+                </div>
+                <div class="info-card">
+                    <img src="https://placehold.co/600x400/0a0a0a/f5f5f7?text=Coming+Soon" alt="New features placeholder" class="card-image">
+                    <div class="card-content">
+                        <h3>Everything New</h3>
+                        <p>From custom biomes to revamped quests and new bosses, discover all the updates that make this the ultimate OG experience.</p>
+                        <a href="#" class="card-cta">Learn More</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <section id="dts" class="video-hero-container">
+            <div class="video-overlay"></div>
+            <video autoplay muted loop class="bg-video">
+                <source src="https://assets.mixkit.co/videos/preview/mixkit-flying-through-a-dark-abstract-tunnel-4982-large.mp4" type="video/mp4">
+                Your browser does not support the video tag.
+            </video>
+            <div class="hero-content">
+                <h1>Dreams TimeSkip Launch</h1>
+                <p class="subtitle">
+                    The best
+                    <span class="animated-words-wrapper">
+                        <span class="animated-words">
+                            <span>1.22.2</span>
+                            <span>&nbsp;&nbsp;FUN</span>
+                            <span>&nbsp;&nbsp;SMP</span>
+                            <span>&nbsp;story</span>
+                            <span>&nbsp;event</span>
+                            <span>&nbsp;&nbsp;PvP</span></span>
+                    </span>
+                    server in Minecraft.
+                </p>
+                <div id="countdown-2" class="countdown-container">
+                    </div>
+                <div class="hero-buttons">
+                    <a href="https://discord.gg/aYuEdG9Gh7" class="btn btn-primary">Join the Discord</a>
+                    <a href="new-dts.html" class="btn btn-green">What's New</a>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+<footer class="main-footer"></footer> 
+
+    <div id="siri-orb">
+        <a href="https://www.dreamstimeskip.com/" class="orb-text">Return Home?</a>
+    </div>
+
+   <script type="module">
+        import { loadNavbar } from './js/navbar.js';
+        import { loadFooter } from './js/footer.js'; // Add this line
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            loadNavbar();
+            loadFooter(); // Add this line
+        });
+    </script>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // --- Mobile Menu Toggle ---
+        const hamburger = document.querySelector('.hamburger');
+        const navLinks = document.querySelector('.nav-links');
+        if (hamburger && navLinks) {
+            hamburger.addEventListener('click', () => {
+                hamburger.classList.toggle('active');
+                navLinks.classList.toggle('active');
+            });
+        }
+        
+        // --- Countdown Timer Class ---
+        class Countdown {
+            constructor(targetDate, containerId, includeYears = false) {
+                this.targetDate = new Date(targetDate).getTime();
+                this.container = document.getElementById(containerId);
+                this.includeYears = includeYears;
+                this.previousTime = {};
+                this.init();
+            }
+
+            init() {
+                let html = '';
+                if (this.includeYears) {
+                    html += `<div class="time-block"><div class="flip-card" data-unit="years"><div class="top-half">0</div><div class="bottom-half">0</div></div><div class="time-label">Years</div></div>`;
+                }
+                html += `
+                    <div class="time-block"><div class="flip-card" data-unit="days"><div class="top-half">00</div><div class="bottom-half">00</div></div><div class="time-label">Days</div></div>
+                    <div class="time-block"><div class="flip-card" data-unit="hours"><div class="top-half">00</div><div class="bottom-half">00</div></div><div class="time-label">Hours</div></div>
+                    <div class="time-block"><div class="flip-card" data-unit="minutes"><div class="top-half">00</div><div class="bottom-half">00</div></div><div class="time-label">Minutes</div></div>
+                    <div class="time-block"><div class="flip-card" data-unit="seconds"><div class="top-half">00</div><div class="bottom-half">00</div></div><div class="time-label">Seconds</div></div>
+                `;
+                this.container.innerHTML = html;
+
+                if (this.includeYears) {
+                    this.yearsEl = this.container.querySelector('[data-unit="years"]');
+                }
+                this.daysEl = this.container.querySelector('[data-unit="days"]');
+                this.hoursEl = this.container.querySelector('[data-unit="hours"]');
+                this.minutesEl = this.container.querySelector('[data-unit="minutes"]');
+                this.secondsEl = this.container.querySelector('[data-unit="seconds"]');
+
+                this.update();
+                this.interval = setInterval(() => this.update(), 1000);
+            }
+
+            update() {
+                const now = new Date().getTime();
+                const distance = this.targetDate - now;
+
+                if (distance < 0) {
+                    clearInterval(this.interval);
+                    this.container.innerHTML = "<h1 style='font-size: 2.5rem;'>The Wait Is Over!</h1>";
+                    return;
+                }
+                
+                let years = 0;
+                let days;
+
+                if(this.includeYears) {
+                    const totalDays = Math.floor(distance / (1000 * 60 * 60 * 24));
+                    years = Math.floor(totalDays / 365.25);
+                    days = Math.floor(totalDays % 365.25);
+                } else {
+                    days = Math.floor(distance / (1000 * 60 * 60 * 24));
+                }
+
+                const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+                const currentTime = {
+                    years: String(years),
+                    days: String(days).padStart(2, '0'),
+                    hours: String(hours).padStart(2, '0'),
+                    minutes: String(minutes).padStart(2, '0'),
+                    seconds: String(seconds).padStart(2, '0'),
+                };
+
+                if (this.includeYears) {
+                    this.updateFlipCard(this.yearsEl, currentTime.years, this.previousTime.years);
+                }
+                this.updateFlipCard(this.daysEl, currentTime.days, this.previousTime.days);
+                this.updateFlipCard(this.hoursEl, currentTime.hours, this.previousTime.hours);
+                this.updateFlipCard(this.minutesEl, currentTime.minutes, this.previousTime.minutes);
+                this.updateFlipCard(this.secondsEl, currentTime.seconds, this.previousTime.seconds);
+
+                this.previousTime = currentTime;
+            }
+
+            updateFlipCard(element, newTime, oldTime) {
+                if (!element || newTime === oldTime) return;
+
+                const topHalf = element.querySelector('.top-half');
+                const bottomHalf = element.querySelector('.bottom-half');
+
+                const topFlip = document.createElement('div');
+                topFlip.classList.add('top-flip');
+                topFlip.textContent = (oldTime !== undefined) ? oldTime : newTime;
+
+                const bottomFlip = document.createElement('div');
+                bottomFlip.classList.add('bottom-flip');
+                bottomFlip.textContent = newTime;
+                
+                topFlip.addEventListener('animationend', () => {
+                    topHalf.textContent = newTime;
+                    topFlip.remove();
+                });
+
+                bottomFlip.addEventListener('animationend', () => {
+                    bottomHalf.textContent = newTime;
+                    bottomFlip.remove();
+                });
+
+                element.append(topFlip, bottomFlip);
+            }
+        }
+
+        // Initialize both countdowns
+        new Countdown("2025-12-09T12:00:00-04:00", "countdown-1");
+        new Countdown("2027-01-15T12:00:00-05:00", "countdown-2", true);
+
+
+        // --- NEW: Dynamic Width for Animated Words ---
+        const animatedWordsWrapper = document.querySelector('.animated-words-wrapper');
+        const animatedWords = document.querySelector('.animated-words');
+        const words = Array.from(animatedWords.children); // Get all span elements
+
+        let currentWordIndex = 0;
+        let animationDuration = 12.5; // From CSS @keyframes slideUp total duration
+        let wordDisplayTime = animationDuration / words.length; // Time each word is "active"
+
+        function updateWrapperWidth() {
+            // Get the width of the current word
+            const currentWord = words[currentWordIndex];
+            if (currentWord) {
+                animatedWordsWrapper.style.width = currentWord.offsetWidth + 'px';
+            }
+        }
+
+        function cycleWords() {
+            updateWrapperWidth(); // Set initial width
+
+            // Update width every time a new word slides in
+            // The animation has 5 words, plus the last one to loop
+            // The animation time for each word is about 2.5s (12.5s / 5 words)
+            setInterval(() => {
+                currentWordIndex = (currentWordIndex + 1) % words.length;
+                updateWrapperWidth();
+            }, wordDisplayTime * 1000); // Convert to milliseconds
+        }
+        
+        // Ensure images are loaded before calculating width if words depend on font loading
+        window.addEventListener('load', cycleWords);
+        // Fallback for DOMContentLoaded if load event takes too long
+        document.addEventListener('DOMContentLoaded', () => {
+             // Only run if window load hasn't already triggered it
+            if (document.readyState === "interactive" || document.readyState === "complete") {
+                cycleWords();
+            }
+        });
+
+    }
+    );
+
+   
+</script>
+    <script type="module" src="/js/auth.js"></script>
+    <script type="module" src="/js/newsletter.js"></script>
+     <script src="/js/script.js"></script>
+    
+   
+</body>
+</html>

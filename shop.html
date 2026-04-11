@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+     <script type="module" src="/js/theme-loader.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Merch Store | DTS HUB</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+     <link rel="icon" type="image/png" href="/images/Unstoppable Collection Logo.png">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/shop.css">
+    <link rel="stylesheet" href="/css/themes.css">
+</head>
+   
+<body>
+   <header class="main-header">
+    </header>
+
+    <main class="shop-main">
+        <section class="shop-header">
+            <h1>Unstoppable Collection</h1>
+            <p>High-quality gear for the dedicated fan. Log in to save your cart.</p>
+        </section>
+
+        <section id="product-grid" class="product-grid">
+            </section>
+    </main>
+    
+    <button id="cart-button" class="cart-fab">
+        <span id="cart-icon">🛒</span>
+        <span id="cart-item-count" class="cart-item-count">0</span>
+    </button>
+
+    <div id="cart-modal" class="cart-modal">
+        <div class="cart-modal-content">
+            <div class="cart-modal-header">
+                <h2>Your Cart</h2>
+                <button id="close-cart-btn" class="close-cart-btn">&times;</button>
+            </div>
+            <div id="cart-items-container" class="cart-items-container">
+                </div>
+            <div class="cart-modal-footer">
+                <div class="cart-total">
+                    <span>Total:</span>
+                    <span id="cart-total-price">$0.00</span>
+                </div>
+                <button id="checkout-btn" class="btn-checkout" disabled>Proceed to Checkout</button>
+            </div>
+        </div>
+    </div>
+    <footer class="main-footer"></footer> 
+
+
+   <script type="module">
+        import { loadNavbar } from './js/navbar.js';
+        import { loadFooter } from './js/footer.js'; // Add this line
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            loadNavbar();
+            loadFooter(); // Add this line
+        });
+    </script>
+    <script type="module" src="/js/shop.js"></script>
+
+
+</script>
+
+
+     <script type="module">
+      import { auth, db } from '/js/auth.js';
+      import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
+    </script>
+     

@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+     <script type="module" src="/js/theme-loader.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign In / Sign Up</title>
+     <link rel="icon" type="image/png" href="/images/dreams-favicon.png">
+
+    <style>
+        /* General Body Styles */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #121212;
+            color: #e0e0e0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        /* Main Container */
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            max-width: 400px;
+            padding: 20px;
+        }
+        
+        /* Form and Welcome Container Styles */
+        .form-container, .welcome-container {
+            background-color: #1e1e1e;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+            width: 100%;
+            box-sizing: border-box;
+            text-align: center;
+        }
+        
+        h1 {
+            margin-bottom: 25px;
+            color: #ffffff;
+            font-weight: 600;
+        }
+        
+        /* Input Field Styles */
+        .input-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #a0a0a0;
+            font-size: 14px;
+        }
+        
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #333;
+            background-color: #2c2c2c;
+            color: #e0e0e0;
+            border-radius: 5px;
+            box-sizing: border-box;
+            font-size: 16px;
+            transition: border-color .3s, box-shadow .3s;
+        }
+        
+        input:focus {
+            border-color: #007bff;
+            box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+            outline: none;
+        }
+        
+        /* Button Styles */
+        button {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            background-color: #007bff;
+            color: #ffffff;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: background-color .3s, opacity .3s;
+        }
+        
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        button:disabled {
+            background-color: #555;
+            cursor: not-allowed;
+        }
+        
+        /* Toggle Link Styles */
+        .toggle-link {
+            margin-top: 20px;
+            color: #007bff;
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 14px;
+        }
+        
+        .toggle-link:hover {
+            text-decoration: underline;
+        }
+
+        /* Message/Notification Styles */
+        #message {
+            margin-top: 15px;
+            color: #ff4d4d; /* Default to error color */
+            font-size: 14px;
+            height: 20px;
+        }
+.back-button{
+position: relative;
+top: 20px;
+left: 0px;
+background: blue;
+border: solid blue 1px;
+border-radius: 5px;
+color: var(--text-primary);
+font-size: 1rem;
+cursor: pointer;
+animation: fadeIn 300ms;
+}
+
+.back-button:hover{
+    position: relative;
+    top: 20px;
+    left: 0px;
+    background: none;
+     border-radius: 5px;
+    border: solid 1px #007bff;
+    color: var(--text-primary);
+    font-size: 1rem;
+    cursor: pointer;
+}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="form-container" id="form-container">
+            <h1 id="form-title">Sign In</h1>
+            <form id="auth-form">
+                <div class="input-group" id="username-group" style="display: none;">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" name="username">
+                </div>
+                <div class="input-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" required>
+                </div>
+                <div class="input-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                <button type="submit" id="submit-btn">Sign In</button>
+            </form>
+            <p id="message"></p>
+            <a href="#" class="toggle-link" id="toggle-form">Don't have an account? Sign Up</a>
+             <button class="back-button" onclick="window.history.back();"> &larr; Back</button>
+        </div>
+    </div>
+  
+    <script type="module">
+        import { auth, db } from '/js/auth.js'; // FIX: Import from centralized auth file
+        import { createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js"; </script>
+
+</body>
+</html>

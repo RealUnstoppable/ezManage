@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Book an Appointment | Unstoppable</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Mobile-First Base Styles */
+        :root {
+            --bg-dark: #0A0A0A;
+            --bg-card: #141414;
+            --text-main: #F5F5F7;
+            --text-muted: #A3A3A3;
+            --accent: #2563EB;
+            --border: rgba(255,255,255,0.1);
+        }
+        body { 
+            background: var(--bg-dark); color: var(--text-main); font-family: 'Inter', sans-serif; 
+            margin: 0; padding: 15px; display: flex; justify-content: center; align-items: flex-start; min-height: 100vh;
+        }
+        .booking-card { 
+            background: var(--bg-card); padding: 25px 20px; border-radius: 12px; 
+            border: 1px solid var(--border); width: 100%; box-sizing: border-box; 
+            margin-top: 20px;
+        }
+        h2 { margin-top: 15px; font-size: 1.5rem; color: #fff; }
+        
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; color: var(--text-muted); font-size: 0.9rem; font-weight: 600;}
+        input, select { 
+            width: 100%; padding: 14px; background: #222; border: 1px solid #333; 
+            color: white; border-radius: 6px; box-sizing: border-box; font-size: 1rem;
+            -webkit-appearance: none; /* Prevents iOS styling overrides */
+        }
+        input:focus, select:focus { border-color: var(--accent); outline: none; }
+        
+        .account-prompt {
+            background: #1a1a1a; padding: 15px; border-radius: 6px; border: 1px solid #333; margin-bottom: 20px;
+        }
+        .checkbox-label { display: flex; align-items: center; font-size: 0.95rem; color: white; cursor: pointer; margin-bottom: 5px; }
+        .checkbox-label input[type="checkbox"] { width: auto; margin-right: 10px; transform: scale(1.2); }
+        .account-prompt p { margin: 0 0 0 25px; font-size: 0.8rem; color: var(--text-muted); }
+        
+        button { 
+            width: 100%; padding: 16px; background: var(--accent); color: white; border: none; 
+            font-weight: 700; font-size: 1rem; border-radius: 6px; cursor: pointer; transition: 0.2s; 
+        }
+        button:hover { background: #1D4ED8; }
+        button:disabled { background: #555; cursor: not-allowed; }
+        
+        #msg { margin-top: 15px; text-align: center; font-size: 0.9rem; font-weight: 600; line-height: 1.4;}
+        
+        .tabs { display: flex; margin-bottom: 25px; border-bottom: 1px solid #333; }
+        .tab { flex: 1; padding: 12px 10px; text-align: center; cursor: pointer; color: var(--text-muted); font-weight: 600; font-size: 0.95rem;}
+        .tab.active { color: #fff; border-bottom: 2px solid var(--accent); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        /* Desktop Adjustments */
+        @media (min-width: 768px) {
+            body { padding: 40px; align-items: center; }
+            .booking-card { max-width: 600px; padding: 40px; margin-top: 0; }
+            h2 { font-size: 1.8rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="booking-card">
+        <a href="index.html" style="color: var(--accent); text-decoration: none; font-size: 0.95rem; font-weight: 600;">&larr; Back to Home</a>
+        <h2>Schedule Service</h2>
+        
+        <div class="tabs">
+            <div class="tab active" onclick="switchTab('book')">Book Wash</div>
+            <div class="tab" onclick="switchTab('quote')">Request Quote</div>
+        </div>
+
+        <div id="book-tab" class="tab-content active">
+            <form id="booking-form">
+                
+                <div class="form-group">
+                    <label>Full Name *</label>
+                    <input type="text" id="b-name" required placeholder="John Doe">
+                </div>
+                
+                <div class="form-group">
+                    <label>Phone Number *</label>
+                    <input type="tel" id="b-phone" required placeholder="(555) 123-4567">
+                </div>
+
+                <div class="form-group">
+                    <label>Email Address *</label>
+                    <input type="email" id="b-email" required placeholder="john@example.com">
+                </div>
+
+                <div id="account-creation-block" class="account-prompt">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="create-account-cb"> 
+                        Create an account for faster checkout?
+                    </label>
+                    <p>Manage appointments and unlock Unstoppable Club discounts.</p>
+                    
+                    <div id="password-group" style="display: none; margin-top: 15px;">
+                        <label>Choose a Password *</label>
+                        <input type="password" id="b-password" placeholder="Minimum 6 characters">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Vehicle Type *</label>
+                    <select id="b-vehicle" required>
+                        <option value="sedan">Luxury Sedan ($150+)</option>
+                        <option value="suv">Luxury SUV ($250+)</option>
+                        <option value="truck">Premium Truck ($280+)</option>
+                        <option value="sprinter">Sprinter Van ($400+)</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>Select Date & Time *</label>
+                    <p style="font-size: 0.8rem; color: var(--text-muted); margin: -5px 0 10px 0;">Note: Tuesdays & Thursdays 7AM-3PM are unavailable.</p>
+                    <input type="datetime-local" id="b-datetime" required>
+                </div>
+                
+                <button type="submit" id="book-submit-btn">Proceed to Booking</button>
+            </form>
+        </div>
+
+        <div id="quote-tab" class="tab-content">
+            <form id="quote-form">
+                <div class="form-group">
+                    <label>Email *</label>
+                    <input type="email" id="q-email" required>
+                </div>
+                <div class="form-group">
+                    <label>Vehicle Make, Model & Condition *</label>
+                    <input type="text" id="q-details" required placeholder="e.g. 2022 Porsche 911 - heavy swirl marks">
+                </div>
+                <button type="submit">Request Custom Quote</button>
+            </form>
+        </div>
+
+        <div id="msg"></div>
+    </div>
+
+    <script type="module">
+        import { auth, db } from '/js/auth.js';
+        import { onAuthStateChanged, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
+        import { collection, addDoc, doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
+
+        let currentUser = null;
+
+        // UI Toggles
+        window.switchTab = (tab) => {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            if(tab === 'book') {
+                document.querySelectorAll('.tab')[0].classList.add('active');
+                document.getElementById('book-tab').classList.add('active');
+            } else {
+                document.querySelectorAll('.tab')[1].classList.add('active');
+                document.getElementById('quote-tab').classList.add('active');
+            }
+        };
+
+        document.getElementById('create-account-cb').addEventListener('change', (e) => {
+            const pwGroup = document.getElementById('password-group');
+            const pwInput = document.getElementById('b-password');
+            if (e.target.checked) {
+                pwGroup.style.display = 'block';
+                pwInput.required = true;
+            } else {
+                pwGroup.style.display = 'none';
+                pwInput.required = false;
+            }
+        });
+
+        // Handle logged-in users
+        onAuthStateChanged(auth, (user) => { 
+            currentUser = user; 
+            if(user) {
+                // Auto-fill email and hide account creation if already signed in
+                document.getElementById('b-email').value = user.email;
+                document.getElementById('account-creation-block').style.display = 'none';
+            }
+        });
+
+        // Booking Submission Logic
+        document.getElementById('booking-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const msg = document.getElementById('msg');
+            const submitBtn = document.getElementById('book-submit-btn');
+            submitBtn.disabled = true;
+            submitBtn.textContent = "Processing...";
+            msg.textContent = "";
+
+            const name = document.getElementById('b-name').value;
+            const phone = document.getElementById('b-phone').value;
+            const email = document.getElementById('b-email').value;
+            const vehicle = document.getElementById('b-vehicle').value;
+            const dtValue = document.getElementById('b-datetime').value;
+            const createAccount = document.getElementById('create-account-cb').checked;
+            const password = document.getElementById('b-password').value;
+
+            // Time Validation
+            const dateObj = new Date(dtValue);
+            const day = dateObj.getDay(); 
+            const hour = dateObj.getHours();
+
+            if ((day === 2 || day === 4) && (hour >= 7 && hour < 15)) {
+                msg.style.color = "var(--accent)"; // Red color from CSS wouldn't pop as well in dark mode, let's use a bright red.
+                msg.style.color = "#ef4444"; 
+                msg.textContent = "Error: Tuesdays and Thursdays between 7:00 AM and 3:00 PM are unavailable.";
+                submitBtn.disabled = false;
+                submitBtn.textContent = "Proceed to Booking";
+                return;
+            }
+
+            try {
+                let finalUid = currentUser ? currentUser.uid : "guest";
+
+                // Handle Optional Account Creation during checkout
+                if (!currentUser && createAccount) {
+                    try {
+                        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                        finalUid = userCredential.user.uid;
+                        
+                        // Create the user profile document
+                        await setDoc(doc(db, "users", finalUid), {
+                            username: name,
+                            email: email,
+                            phone: phone,
+                            signupDate: serverTimestamp(),
+                            isBanned: false,
+                            isAdmin: false,
+                            membershipLevel: 'free'
+                        });
+                        
+                        // Set session flag to trigger welcome message in dashboard
+                        sessionStorage.setItem('newUser', 'true');
+                    } catch (authError) {
+                        msg.style.color = "#ef4444";
+                        if (authError.code === 'auth/email-already-in-use') {
+                            msg.innerHTML = "An account with this email already exists. Please <a href='sign in beta.html' style='color:#2563EB;'>sign in</a> to book.";
+                        } else {
+                            msg.textContent = "Account creation error: " + authError.message;
+                        }
+                        submitBtn.disabled = false;
+                        submitBtn.textContent = "Proceed to Booking";
+                        return; // Stop the booking process if account creation fails
+                    }
+                }
+
+                // Create the Booking Document
+                await addDoc(collection(db, "bookings"), {
+                    userId: finalUid, // Will be "guest" if they didn't log in or create an account
+                    customerName: name,
+                    customerEmail: email,
+                    customerPhone: phone,
+                    vehicle: vehicle,
+                    appointmentDate: dtValue,
+                    status: 'paid_and_confirmed', // Change to 'pending' if adding a real payment gateway later
+                    createdAt: serverTimestamp()
+                });
+
+                msg.style.color = "#16A34A";
+                msg.innerHTML = "Booking Confirmed! " + (finalUid !== "guest" ? "<br><a href='account.html' style='color:var(--accent);'>View in Dashboard</a>" : "We will contact you shortly.");
+                document.getElementById('booking-form').reset();
+
+            } catch (error) {
+                msg.style.color = "#ef4444";
+                msg.textContent = "Error processing booking: " + error.message;
+            } finally {
+                if(msg.style.color !== "rgb(22, 163, 74)") { // Only re-enable if not successful
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = "Proceed to Booking";
+                }
+            }
+        });
+
+        // Quote Logic
+        document.getElementById('quote-form').addEventListener('submit', async (e) => {
+            // ... (Keep existing quote logic here) ...
+             e.preventDefault();
+            const msg = document.getElementById('msg');
+            try {
+                await addDoc(collection(db, "quotes"), {
+                    email: document.getElementById('q-email').value,
+                    details: document.getElementById('q-details').value,
+                    status: 'pending',
+                    createdAt: serverTimestamp()
+                });
+                msg.style.color = "#16A34A";
+                msg.textContent = "Quote requested! We will email you shortly.";
+                document.getElementById('quote-form').reset();
+            } catch (error) {
+                msg.style.color = "#ef4444";
+                msg.textContent = "Error submitting quote.";
+            }
+        });
+    </script>
+</body>
+</html>

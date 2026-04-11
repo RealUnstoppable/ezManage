@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script type="module" src="/js/theme-loader.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Unstoppable Auto Spa | Premium Detailing</title>
+    <meta name="description" content="Premium mobile car detailing in Buford, GA. Ceramic coating, paint correction, and interior restoration.">
+    
+    <link rel="icon" type="image/png" href="/images/dreams-favicon.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/themes.css">
+
+    <style>
+        /* Detailing Specific Styles */
+        .detailing-hero {
+            position: relative;
+            height: 80vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            overflow: hidden;
+            background: radial-gradient(circle at center, #1a1a1a 0%, #000000 100%);
+        }
+
+        .detailing-hero::after {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: url('/images/dreams-lobby.jpg') no-repeat center center/cover; /* Placeholder: Replace with a car image */
+            opacity: 0.2;
+            z-index: 0;
+        }
+
+        .hero-content {
+            z-index: 2;
+            padding: 20px;
+            max-width: 800px;
+        }
+
+        .hero-badge {
+            background-color: var(--accent-blue);
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 20px;
+            display: inline-block;
+        }
+
+        .services-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            padding: 60px 40px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .service-card {
+            background: var(--primary-card-color);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 30px;
+            transition: transform 0.3s ease, border-color 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .service-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--accent-blue);
+        }
+
+        .service-price {
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--text-primary);
+            margin: 15px 0;
+        }
+
+        .service-price span {
+            font-size: 1rem;
+            color: var(--text-secondary);
+            font-weight: 400;
+        }
+
+        .feature-list {
+            list-style: none;
+            padding: 0;
+            margin: 20px 0;
+            color: var(--text-secondary);
+            text-align: left;
+        }
+
+        .feature-list li {
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+        }
+
+        .feature-list li::before {
+            content: '✓';
+            color: var(--accent-green);
+            margin-right: 10px;
+            font-weight: bold;
+        }
+
+        /* Booking Section */
+        .booking-section {
+            background-color: var(--primary-card-color);
+            border-top: 1px solid var(--border-color);
+            padding: 80px 20px;
+        }
+
+        .booking-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: rgba(255,255,255,0.03);
+            padding: 40px;
+            border-radius: 20px;
+            border: 1px solid var(--border-color);
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .full-width {
+            grid-column: span 2;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 15px;
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-family: var(--font-main);
+            margin-bottom: 5px;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+        }
+
+        /* Before/After Slider Placeholder */
+        .portfolio-section {
+            padding: 80px 40px;
+            text-align: center;
+        }
+        
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 40px;
+        }
+
+        .gallery-item {
+            aspect-ratio: 4/3;
+            background-color: #222;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #555;
+            border: 1px solid var(--border-color);
+        }
+
+        @media (max-width: 768px) {
+            .form-grid { grid-template-columns: 1fr; }
+            .full-width { grid-column: span 1; }
+        }
+    </style>
+</head>
+<body>
+
+    <header class="main-header">
+        <div id="navbar-container"></div>
+    </header>
+
+    <main>
+        <section class="detailing-hero">
+            <div class="hero-content reveal">
+                <span class="hero-badge">Serving Buford, GA</span>
+                <h1>Unstoppable <br> <span style="color: var(--accent-blue);">Auto Spa</span></h1>
+                <p class="section-subtitle">
+                    Elevate your vehicle's aesthetic with professional detailing. 
+                    From ceramic coating to deep interior restoration, we treat every car like a trophy.
+                </p>
+                <a href="#booking" class="cta-button" style="padding: 15px 40px; font-size: 1.1rem;">Book Appointment</a>
+            </div>
+        </section>
+
+        <section class="services-grid" id="services">
+            <div class="service-card reveal">
+                <h3>The Refresh</h3>
+                <p style="color: var(--text-secondary);">Perfect for regular maintenance.</p>
+                <div class="service-price">$80+ <span>/ sedan</span></div>
+                <ul class="feature-list">
+                    <li>Foam Cannon Hand Wash</li>
+                    <li>Wheel & Tire Cleaning</li>
+                    <li>Interior Vacuum & Wipe Down</li>
+                    <li>Window Cleaning</li>
+                    <li>Tire Shine Application</li>
+                </ul>
+                <button class="cta-button" style="width:100%; background: transparent; border: 1px solid var(--accent-blue);" onclick="selectService('refresh')">Select Plan</button>
+            </div>
+
+            <div class="service-card reveal" style="border-color: var(--accent-blue); transform: scale(1.02);">
+                <div style="position: absolute; top: 0; right: 0; background: var(--accent-blue); color: white; padding: 5px 15px; font-size: 0.8rem; border-bottom-left-radius: 10px;">POPULAR</div>
+                <h3>The Deep Clean</h3>
+                <p style="color: var(--text-secondary);">Restoration for lived-in vehicles.</p>
+                <div class="service-price">$180+ <span>/ sedan</span></div>
+                <ul class="feature-list">
+                    <li>Everything in Refresh</li>
+                    <li>Clay Bar Treatment</li>
+                    <li>Leather Conditioning</li>
+                    <li>Carpet & Seat Shampoo</li>
+                    <li>3-Month Spray Wax</li>
+                </ul>
+                <button class="cta-button" style="width:100%;" onclick="selectService('deep-clean')">Select Plan</button>
+            </div>
+
+            <div class="service-card reveal">
+                <h3>Showroom Ready</h3>
+                <p style="color: var(--text-secondary);">Complete correction & protection.</p>
+                <div class="service-price">$400+ <span>/ varies</span></div>
+                <ul class="feature-list">
+                    <li>Everything in Deep Clean</li>
+                    <li>1-Step Paint Correction</li>
+                    <li>Engine Bay Detail</li>
+                    <li>1-Year Ceramic Coating</li>
+                    <li>Headlight Restoration</li>
+                </ul>
+                <button class="cta-button" style="width:100%; background: transparent; border: 1px solid var(--accent-blue);" onclick="selectService('showroom')">Select Plan</button>
+            </div>
+        </section>
+
+        <section class="portfolio-section">
+            <h2 class="reveal">The Results</h2>
+            <p class="section-subtitle reveal">Consistent quality. Attention to detail. Unstoppable shine.</p>
+            
+            <div class="gallery-grid reveal">
+                <div class="gallery-item"><img src="/images/dreams-lobby.jpg" style="width:100%; height:100%; object-fit:cover; opacity:0.5; border-radius:12px;" alt="Detailing Work 1"></div>
+                <div class="gallery-item"><img src="/images/Unstoppable Collection Logo.png" style="width:100%; height:100%; object-fit:cover; opacity:0.5; border-radius:12px;" alt="Detailing Work 2"></div>
+                <div class="gallery-item" style="background: #111; display:flex; flex-direction:column; justify-content:center; align-items:center;">
+                    <h3 style="font-size:3rem; color:var(--accent-blue); margin:0;">3+</h3>
+                    <p>Happy Clients</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="booking-section" id="booking">
+            <div class="booking-container reveal">
+                <h2 style="text-align: center; margin-bottom: 10px;">Reserve Your Spot</h2>
+                <p style="text-align: center; color: var(--text-secondary); margin-bottom: 30px;">We come to you. Mobile service available in Buford and surrounding areas.</p>
+                
+                <form id="booking-form">
+                    <div class="form-grid">
+                        <div>
+                            <label>Name</label>
+                            <input type="text" id="client-name" required placeholder="John Doe">
+                        </div>
+                        <div>
+                            <label>Phone</label>
+                            <input type="tel" id="client-phone" required placeholder="(555) 000-0000">
+                        </div>
+                        <div class="full-width">
+                            <label>Email</label>
+                            <input type="email" id="client-email" required placeholder="john@example.com">
+                        </div>
+                        <div>
+                            <label>Vehicle Make/Model</label>
+                            <input type="text" id="vehicle-model" required placeholder="e.g. 2020 Honda Civic">
+                        </div>
+                        <div>
+                            <label>Service Package</label>
+                            <select id="service-select">
+                                <option value="refresh">The Refresh ($80+)</option>
+                                <option value="deep-clean">The Deep Clean ($180+)</option>
+                                <option value="showroom">Showroom Ready ($400+)</option>
+                                <option value="custom">Custom Quote</option>
+                            </select>
+                        </div>
+                        <div class="full-width">
+                            <label>Preferred Date & Time</label>
+                            <input type="datetime-local" id="appointment-time" required>
+                        </div>
+                        <div class="full-width">
+                            <label>Special Requests / Issues</label>
+                            <textarea id="notes" rows="3" placeholder="e.g. Dog hair removal needed, scratch on rear bumper..."></textarea>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="cta-button" style="width: 100%; margin-top: 30px; border: none; cursor: pointer;">Confirm Booking Request</button>
+                    <p id="form-status" style="text-align: center; margin-top: 15px; font-size: 0.9rem;"></p>
+                </form>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="main-footer">
+        <div class="footer-container">
+            <div class="footer-bottom">
+                <p>&copy; 2026 Unstoppable Auto Spa. Part of the Unstoppable Ecosystem. Designed in collaboration with Unstoppable Design, LLC.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script type="module">
+        import { loadNavbar } from '/js/navbar.js';
+        
+        // Load Navbar
+        document.addEventListener('DOMContentLoaded', () => {
+            // Inject navbar logic manually since the placeholder might differ
+            const header = document.querySelector('.main-header');
+            if(header) {
+                // We use the exported function from your existing codebase
+                loadNavbar(); 
+            }
+        });
+    </script>
+
+    <script src="/js/script.js"></script>
+
+    <script type="module">
+        // --- Functional Logic for Booking ---
+        import { db } from '/js/auth.js';
+        import { collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
+
+        // Helper to pre-select service from buttons
+        window.selectService = function(value) {
+            const select = document.getElementById('service-select');
+            select.value = value;
+            document.getElementById('booking').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        const bookingForm = document.getElementById('booking-form');
+        const statusMsg = document.getElementById('form-status');
+
+        bookingForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = bookingForm.querySelector('button');
+            btn.disabled = true;
+            btn.textContent = "Processing...";
+
+            const formData = {
+                name: document.getElementById('client-name').value,
+                phone: document.getElementById('client-phone').value,
+                email: document.getElementById('client-email').value,
+                vehicle: document.getElementById('vehicle-model').value,
+                service: document.getElementById('service-select').value,
+                requestedDate: document.getElementById('appointment-time').value,
+                notes: document.getElementById('notes').value,
+                status: 'New',
+                timestamp: serverTimestamp()
+            };
+
+            try {
+                // Save to 'detailing_requests' collection in your existing Firestore
+                await addDoc(collection(db, "detailing_requests"), formData);
+                
+                statusMsg.textContent = "Request received! We will contact you shortly to confirm.";
+                statusMsg.style.color = "var(--accent-green)";
+                bookingForm.reset();
+            } catch (error) {
+                console.error("Booking Error: ", error);
+                statusMsg.textContent = "Error submitting request. Please try calling us directly.";
+                statusMsg.style.color = "var(--accent-red)";
+            } finally {
+                btn.disabled = false;
+                btn.textContent = "Confirm Booking Request";
+            }
+        });
+    </script>
+
+</body>
+</html>

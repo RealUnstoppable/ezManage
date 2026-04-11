@@ -1,0 +1,118 @@
+[debug] [2026-04-07T01:59:56.470Z] ----------------------------------------------------------------------
+[debug] [2026-04-07T01:59:56.472Z] Command:       /usr/local/bin/node /Users/catalinandrian/.npm-global/bin/firebase init functions
+[debug] [2026-04-07T01:59:56.472Z] CLI Version:   15.13.0
+[debug] [2026-04-07T01:59:56.472Z] Platform:      darwin
+[debug] [2026-04-07T01:59:56.472Z] Node Version:  v24.14.1
+[debug] [2026-04-07T01:59:56.472Z] Time:          Mon Apr 06 2026 20:59:56 GMT-0500 (Central Daylight Time)
+[debug] [2026-04-07T01:59:56.472Z] ----------------------------------------------------------------------
+[debug] 
+[info] 
+     ######## #### ########  ######## ########     ###     ######  ########
+     ##        ##  ##     ## ##       ##     ##  ##   ##  ##       ##
+     ######    ##  ########  ######   ########  #########  ######  ######
+     ##        ##  ##    ##  ##       ##     ## ##     ##       ## ##
+     ##       #### ##     ## ######## ########  ##     ##  ######  ########
+
+You're about to initialize a Firebase project in this directory:
+
+  /Users/catalinandrian/Documents/GitHub/dreamstimeskip-beta
+
+Before we get started, keep in mind:
+
+  * You are initializing within an existing Firebase project directory
+
+[info] 
+=== Project Setup
+[info] 
+[info] First, let's associate this project directory with a Firebase project.
+[info] You can create multiple project aliases by running firebase use --add, 
+[info] 
+[debug] [2026-04-07T01:59:56.936Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-04-07T01:59:56.936Z] > authorizing via signed-in user (catalinandrian1@gmail.com)
+[debug] [2026-04-07T01:59:56.936Z] Checked if tokens are valid: false, expires at: 1775502819072
+[debug] [2026-04-07T01:59:56.936Z] Checked if tokens are valid: false, expires at: 1775502819072
+[debug] [2026-04-07T01:59:56.936Z] > refreshing access token with scopes: []
+[debug] [2026-04-07T01:59:56.937Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2026-04-07T01:59:56.937Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-04-07T01:59:57.236Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 200
+[debug] [2026-04-07T01:59:57.236Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-04-07T01:59:57.246Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/dts-hub-website [none]
+[debug] [2026-04-07T01:59:57.708Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/dts-hub-website 200
+[debug] [2026-04-07T01:59:57.708Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/dts-hub-website {"projectId":"dts-hub-website","projectNumber":"48345990988","displayName":"dts-hub-website","name":"projects/dts-hub-website","resources":{"hostingSite":"dts-hub-website"},"state":"ACTIVE","etag":"1_01b4c069-f591-4937-a327-43342b9adf3e"}
+[info] i  Using project dts-hub-website (dts-hub-website) . 
+[info] 
+=== Functions Setup
+[debug] [2026-04-07T01:59:57.713Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-04-07T01:59:57.713Z] > authorizing via signed-in user (catalinandrian1@gmail.com)
+[debug] [2026-04-07T01:59:57.713Z] [iam] checking project dts-hub-website for permissions ["firebase.projects.get"]
+[debug] [2026-04-07T01:59:57.713Z] Checked if tokens are valid: true, expires at: 1775530796236
+[debug] [2026-04-07T01:59:57.713Z] Checked if tokens are valid: true, expires at: 1775530796236
+[debug] [2026-04-07T01:59:57.714Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/dts-hub-website:testIamPermissions [none]
+[debug] [2026-04-07T01:59:57.714Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/dts-hub-website:testIamPermissions  x-goog-user-project=dts-hub-website
+[debug] [2026-04-07T01:59:57.714Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/dts-hub-website:testIamPermissions {"permissions":["firebase.projects.get"]}
+[debug] [2026-04-07T01:59:58.066Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/dts-hub-website:testIamPermissions 200
+[debug] [2026-04-07T01:59:58.066Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/dts-hub-website:testIamPermissions {"permissions":["firebase.projects.get"]}
+[info] 
+Detected existing codebase(s): default, dts-hub-website
+
+[info] Let's create a new codebase for your functions.
+[info] A directory corresponding to the codebase will be created in your project
+[info] with sample code pre-configured.
+
+[info] See https://firebase.google.com/docs/functions/organize-functions for
+[info] more information on organizing your functions using codebases.
+
+[info] Functions can be deployed with firebase deploy.
+
+[debug] [2026-04-07T02:00:46.808Z] ----------------------------------------------------------------------
+[debug] [2026-04-07T02:00:46.812Z] Command:       /usr/local/bin/node /Users/catalinandrian/.npm-global/bin/firebase init functions
+[debug] [2026-04-07T02:00:46.812Z] CLI Version:   15.13.0
+[debug] [2026-04-07T02:00:46.812Z] Platform:      darwin
+[debug] [2026-04-07T02:00:46.812Z] Node Version:  v24.14.1
+[debug] [2026-04-07T02:00:46.812Z] Time:          Mon Apr 06 2026 21:00:46 GMT-0500 (Central Daylight Time)
+[debug] [2026-04-07T02:00:46.812Z] ----------------------------------------------------------------------
+[debug] 
+[info] 
+     ######## #### ########  ######## ########     ###     ######  ########
+     ##        ##  ##     ## ##       ##     ##  ##   ##  ##       ##
+     ######    ##  ########  ######   ########  #########  ######  ######
+     ##        ##  ##    ##  ##       ##     ## ##     ##       ## ##
+     ##       #### ##     ## ######## ########  ##     ##  ######  ########
+
+You're about to initialize a Firebase project in this directory:
+
+  /Users/catalinandrian/Documents/GitHub/dreamstimeskip-beta
+
+Before we get started, keep in mind:
+
+  * You are initializing within an existing Firebase project directory
+
+[info] 
+=== Project Setup
+[info] 
+[info] First, let's associate this project directory with a Firebase project.
+[info] You can create multiple project aliases by running firebase use --add, 
+[info] 
+[debug] [2026-04-07T02:00:47.264Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-04-07T02:00:47.264Z] > authorizing via signed-in user (catalinandrian1@gmail.com)
+[debug] [2026-04-07T02:00:47.265Z] Checked if tokens are valid: true, expires at: 1775530796236
+[debug] [2026-04-07T02:00:47.265Z] Checked if tokens are valid: true, expires at: 1775530796236
+[debug] [2026-04-07T02:00:47.265Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/dts-hub-website [none]
+[debug] [2026-04-07T02:00:47.888Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/dts-hub-website 200
+[debug] [2026-04-07T02:00:47.888Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/dts-hub-website {"projectId":"dts-hub-website","projectNumber":"48345990988","displayName":"dts-hub-website","name":"projects/dts-hub-website","resources":{"hostingSite":"dts-hub-website"},"state":"ACTIVE","etag":"1_01b4c069-f591-4937-a327-43342b9adf3e"}
+[info] i  Using project dts-hub-website (dts-hub-website) . 
+[info] 
+=== Functions Setup
+[debug] [2026-04-07T02:00:47.898Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-04-07T02:00:47.898Z] > authorizing via signed-in user (catalinandrian1@gmail.com)
+[debug] [2026-04-07T02:00:47.898Z] [iam] checking project dts-hub-website for permissions ["firebase.projects.get"]
+[debug] [2026-04-07T02:00:47.898Z] Checked if tokens are valid: true, expires at: 1775530796236
+[debug] [2026-04-07T02:00:47.898Z] Checked if tokens are valid: true, expires at: 1775530796236
+[debug] [2026-04-07T02:00:47.898Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/dts-hub-website:testIamPermissions [none]
+[debug] [2026-04-07T02:00:47.898Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/dts-hub-website:testIamPermissions  x-goog-user-project=dts-hub-website
+[debug] [2026-04-07T02:00:47.898Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/dts-hub-website:testIamPermissions {"permissions":["firebase.projects.get"]}
+[debug] [2026-04-07T02:00:48.642Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/dts-hub-website:testIamPermissions 200
+[debug] [2026-04-07T02:00:48.642Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/dts-hub-website:testIamPermissions {"permissions":["firebase.projects.get"]}
+[info] 
+Detected existing codebase(s): default, dts-hub-website
+
