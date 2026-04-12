@@ -209,6 +209,7 @@
             <a href="#" onclick="navTo('performance')" class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="bar-chart-3"></i> Performance</a>
             <div class="h-px bg-slate-100 dark:bg-slate-800 my-8"></div>
             <a href="#" onclick="handleNavAccountClick()" class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="user"></i> My Profile</a>
+            <a href="#" onclick="navTo('pricing')" class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="credit-card"></i> Pricing & Plans</a>
             <a href="#" onclick="navTo('request')" class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="lightbulb"></i> Feature Request</a>
         </nav>
 
@@ -679,6 +680,9 @@
                         <p class="text-slate-500 mb-6 text-sm">Earn premium credits by referring other managers.</p>
                         <input type="text" id="referralLink" readonly class="font-mono text-xs mb-4 bg-slate-50 opacity-60 dark:bg-slate-800">
                         <button onclick="copyReferral()" class="btn btn-outline w-full">Copy My Link</button>
+                        <div id="referralStatus" class="mt-4 text-[10px] font-black uppercase text-emerald-500 hidden">
+                            Referral Detected: 10% Extra Discount Applied!
+                        </div>
                     </div>
                 </div>
             </div>
@@ -687,13 +691,18 @@
         <div id="view-pricing" class="view-section px-6 py-20 bg-white dark:bg-slate-950 transition-colors duration-300">
             <div class="max-w-5xl mx-auto text-center">
                 <h2 class="text-4xl md:text-6xl font-black text-slate-900 dark:text-white mb-6 tracking-tight">Transparent Scaling</h2>
+                <div class="inline-flex items-center px-4 py-1.5 mb-8 text-[10px] font-black tracking-[0.2em] text-red-600 uppercase bg-red-50 rounded-full">
+                    🔥 Limited Time: 20% Off All Plans 🔥
+                </div>
                 <p class="text-slate-500 dark:text-slate-400 text-xl mb-16 font-medium">Simple plans for serious growth.</p>
 
                 <div class="grid md:grid-cols-2 gap-8 text-left max-w-4xl mx-auto">
-                    <div class="card bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800 p-12">
+                    <div class="card bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800 p-12 relative overflow-hidden">
+                        <div class="absolute top-4 left-[-35px] bg-red-500 text-white text-[8px] font-black px-10 py-1 rotate-[-45deg] uppercase tracking-widest">Sale</div>
                         <h3 class="text-xs font-black text-sky-500 uppercase tracking-[0.3em] mb-4">Individual Pro</h3>
                         <div class="flex items-baseline mb-8">
-                            <span class="text-7xl font-black tracking-tighter text-slate-900 dark:text-white">$61</span>
+                            <span class="text-7xl font-black tracking-tighter text-slate-900 dark:text-white">$48</span>
+                            <span class="text-slate-400 text-lg line-through ml-2">$61</span>
                             <span class="text-slate-500 text-xl font-bold ml-2">/year</span>
                         </div>
                         <ul class="space-y-4 mb-10 text-slate-700 dark:text-slate-300 font-medium">
@@ -704,10 +713,12 @@
                         <button onclick="processCheckout('Individual Pro')" class="btn btn-outline w-full border-slate-300 dark:border-slate-700 hover:bg-sky-500 hover:border-sky-500 hover:text-white transition-colors">Choose Pro</button>
                     </div>
                     <div class="card bg-white dark:bg-slate-800 p-12 relative overflow-hidden border-slate-200 dark:border-slate-700 shadow-xl">
+                        <div class="absolute top-4 left-[-35px] bg-red-500 text-white text-[8px] font-black px-10 py-1 rotate-[-45deg] uppercase tracking-widest">Sale</div>
                         <div class="absolute top-0 right-0 bg-sky-500 text-white text-[10px] font-black px-6 py-2 rounded-bl-3xl uppercase tracking-widest">Most Selected</div>
                         <h3 class="text-xs font-black text-sky-600 uppercase tracking-[0.3em] mb-4">Business Pro</h3>
                         <div class="flex items-baseline mb-8">
-                            <span class="text-7xl font-black tracking-tighter text-slate-900 dark:text-white">$207</span>
+                            <span class="text-7xl font-black tracking-tighter text-slate-900 dark:text-white">$165</span>
+                            <span class="text-slate-400 text-lg line-through ml-2">$207</span>
                             <span class="text-slate-500 dark:text-slate-400 text-xl font-bold ml-2">/year</span>
                         </div>
                         <ul class="space-y-4 mb-10 text-slate-700 dark:text-slate-300 font-medium">
@@ -779,6 +790,7 @@
         let shiftStartTime = null;
         let timerInterval = null;
         let cloudSyncTimeout = null;
+        let hasReferralDiscount = false;
 
         auth.onAuthStateChanged((user) => {
             currentUser = user;
@@ -787,7 +799,7 @@
             if (user) {
                 navStatus.innerText = "Manager: " + (user.displayName || "Online");
                 document.getElementById('profEmail').value = user.email;
-                document.getElementById('referralLink').value = `https://ezmanage.pro/ref=${user.uid}`;
+                document.getElementById('referralLink').value = `${window.location.origin}${window.location.pathname}?ref=${user.uid}`;
                 
                 db.collection("users").doc(user.uid).get().then(doc => {
                     if (doc.exists) {
@@ -804,6 +816,17 @@
             } else {
                 navStatus.innerText = "Login / Sign Up";
                 currentUserData = null;
+            }
+        });
+
+        // Check for Referral Link in URL
+        window.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.has('ref')) {
+                hasReferralDiscount = true;
+                const refMsg = document.getElementById('referralStatus');
+                if(refMsg) refMsg.classList.remove('hidden');
+                console.log("Referral discount activated.");
             }
         });
 
@@ -868,7 +891,6 @@
             db.collection('users').doc(currentUser.uid).set(data).then(() => {
                 currentUser.updateProfile({ displayName: data.name });
                 document.getElementById('shiftManager').value = data.name;
-                loadPresetByName(data.store === 'other' ? 'arbys' : data.store);
                 navTo('tracker');
             });
         }
@@ -1319,13 +1341,16 @@
                 addDrawerItem("100.00", "Register 2");
                 addDepositItem();
                 ["Parking Lot", "Lobby/Restrooms", "ServSafe Temps", "Filtered Fryers", "Trash Run"].forEach(t => addRoutineTask(t));
-                // Defaulting to arbys for initial population
                 presets['arbys'].forEach(name => addInventoryItem(name));
             }
         }
 
         async function processCheckout(planName) {
             if (!currentUser) { alert("Please sign in or create an account to upgrade."); navTo('auth'); return; }
+
+            // Sale + Referral Logic
+            let basePrice = (planName === 'Business Pro') ? 165 : 48;
+            let finalPrice = hasReferralDiscount ? Math.floor(basePrice * 0.9) : basePrice;
 
             try {
                 const res = await fetch("https://us-central1-dts-hub-website.cloudfunctions.net/createCheckoutSession", {
@@ -1335,7 +1360,8 @@
                         uid: currentUser.uid,
                         email: currentUser.email,
                         plan: planName,
-                        successUrl: "https://dreamstimeskip-beta.pages.dev/tracker?success=true",
+                        amount: finalPrice, // Send adjusted price to backend
+                        successUrl: window.location.origin + window.location.pathname + "?success=true",
                         cancelUrl: window.location.href
                     })
                 });
