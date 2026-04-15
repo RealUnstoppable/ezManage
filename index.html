@@ -158,9 +158,11 @@
         }
         #sidebar.open { transform: translateX(0); }
 
+        /* Robust Print CSS override to bypass popup bugs */
         @media print {
-            .no-print { display: none !important; }
             body { background: white; color: black; }
+            main, nav, aside { display: none !important; }
+            #print-wrapper { display: block !important; }
             .card { border: none; box-shadow: none; padding: 0; }
         }
     </style>
@@ -616,6 +618,32 @@
                         </div>
                     </div>
                 </div>
+
+                <div class="card mt-8">
+                    <h3 class="text-xl font-black mb-6 border-b border-slate-200 dark:border-slate-800 pb-4">Account Management</h3>
+                    
+                    <div class="space-y-6">
+                        <div>
+                            <label class="text-xs font-black uppercase tracking-widest text-slate-400 mb-2 block">Redeem Promo Code</label>
+                            <div class="flex gap-2">
+                                <input type="text" id="promoCodeInput" placeholder="Enter code (e.g. SAVE10)" class="flex-1 uppercase font-mono">
+                                <button onclick="applyPromoCode()" class="btn btn-outline">Apply</button>
+                            </div>
+                            <div id="promoStatus" class="mt-2 text-[10px] font-black uppercase text-emerald-500 hidden">
+                                <i data-lucide="check-circle-2" class="w-3 h-3 inline-block"></i> Promo Code Applied: 10% Off Your Next Checkout!
+                            </div>
+                        </div>
+
+                        <div class="h-px bg-slate-100 dark:bg-slate-800"></div>
+
+                        <div class="flex flex-col sm:flex-row gap-4">
+                            <button onclick="changePassword()" class="btn btn-outline flex-1 text-sm"><i data-lucide="key" class="w-4 h-4"></i> Change Password</button>
+                            <button onclick="cancelSubscription()" class="btn btn-outline flex-1 text-sm text-amber-500 border-amber-200 hover:bg-amber-50 dark:border-amber-900/50 dark:hover:bg-amber-900/20"><i data-lucide="x-circle" class="w-4 h-4"></i> Cancel Sub</button>
+                            <button onclick="deleteAccount()" class="btn btn-outline flex-1 text-sm text-red-500 border-red-200 hover:bg-red-50 dark:border-red-900/50 dark:hover:bg-red-900/20"><i data-lucide="trash-2" class="w-4 h-4"></i> Delete Account</button>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </div>
 
@@ -633,6 +661,7 @@
                         <h3 class="text-xs font-black text-sky-500 uppercase tracking-[0.3em] mb-4">Individual Pro</h3>
                         <div class="flex items-baseline mb-8">
                             <span class="text-7xl font-black tracking-tighter text-slate-900 dark:text-white">$61</span>
+                            <span class="text-slate-400 text-lg line-through ml-2">$73</span>
                             <span class="text-slate-500 text-xl font-bold ml-2">/year</span>
                         </div>
                         <ul class="space-y-4 mb-10 text-slate-700 dark:text-slate-300 font-medium">
@@ -648,6 +677,7 @@
                         <h3 class="text-xs font-black text-sky-600 uppercase tracking-[0.3em] mb-4">Business Pro</h3>
                         <div class="flex items-baseline mb-8">
                             <span class="text-7xl font-black tracking-tighter text-slate-900 dark:text-white">$207</span>
+                            <span class="text-slate-400 text-lg line-through ml-2">$248</span>
                             <span class="text-slate-500 dark:text-slate-400 text-xl font-bold ml-2">/year</span>
                         </div>
                         <ul class="space-y-4 mb-10 text-slate-700 dark:text-slate-300 font-medium">
@@ -678,8 +708,8 @@
 
     </main>
 
-    <div id="print-wrapper" class="hidden">
-        <div class="p-8 font-serif">
+    <div id="print-wrapper" class="hidden print:block absolute top-0 left-0 w-full bg-white z-50">
+        <div class="p-8 font-serif bg-white text-black min-h-screen">
             <h1 class="text-2xl font-bold border-b-2 border-black pb-4 mb-8" id="printHeader">ezManage Shift Report</h1>
             
             <div class="mb-8">
@@ -739,7 +769,7 @@
                 document.getElementById('profEmail').value = user.email;
                 document.getElementById('referralLink').value = `${window.location.origin}${window.location.pathname}?ref=${user.uid}`;
                 
-                // Real-time listener for the User Profile (Handles instant plan upgrades via webhook)
+                // Real-time listener for the User Profile
                 unsubscribeUser = db.collection("users").doc(user.uid).onSnapshot(doc => {
                     if (doc.exists) {
                         currentUserData = doc.data();
@@ -751,7 +781,6 @@
                         fetchFeatureRequests();
                         syncDraftFromServer(); 
                         
-                        // Only auto-route to tracker if they are stuck on auth screen.
                         if (document.querySelector('.view-section.active').id === 'view-auth') navTo('tracker');
                     } else {
                         if (document.querySelector('.view-section.active').id !== 'view-setup') navTo('setup'); 
@@ -826,6 +855,7 @@
                 location: document.getElementById('setupLocation').value,
                 email: currentUser.email,
                 plan: 'Free',
+                hasPromoCode: false,
                 signupDate: firebase.firestore.FieldValue.serverTimestamp()
             };
 
@@ -1084,14 +1114,29 @@
                             <div class="font-black text-lg">${data.dateSaved}</div>
                             <div class="text-xs font-bold uppercase tracking-widest text-slate-400">Manager: ${data.manager || 'N/A'} • Duration: ${data.durationMins || 0}m</div>
                         </div>
-                        <button onclick="loadHistoryShift('${data.id}')" class="btn btn-outline btn-sm opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity">
-                            <i data-lucide="download"></i> Load
-                        </button>
+                        <div class="flex gap-2">
+                            <button onclick="loadHistoryShift('${data.id}')" class="btn btn-outline btn-sm opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity">
+                                <i data-lucide="download"></i> Load
+                            </button>
+                            <button onclick="deleteHistoryShift('${data.id}')" class="text-red-400 p-2 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity" title="Delete">
+                                <i data-lucide="trash-2" class="w-4 h-4"></i>
+                            </button>
+                        </div>
                     `;
                     container.appendChild(div);
                 });
             });
             lucide.createIcons();
+        }
+
+        function deleteHistoryShift(id) {
+            if(!currentUserData || !confirm("Are you sure you want to delete this shift from history permanently?")) return;
+            const shift = (currentUserData.shiftHistory || []).find(s => s.id === id);
+            if (shift) {
+                db.collection('users').doc(currentUser.uid).update({
+                    shiftHistory: firebase.firestore.FieldValue.arrayRemove(shift)
+                });
+            }
         }
 
         function updateStorageBar() {
@@ -1276,6 +1321,9 @@
             document.getElementById('printInventoryList').innerHTML = invHtml;
 
             manualSaveHistory();
+            
+            // Calling print synchronously bypasses popup blockers for the same user gesture.
+            // The CSS purely handles visibility swapping safely via @media print.
             window.print();
         }
 
@@ -1286,6 +1334,10 @@
             document.getElementById('profRole').value = data.role || "";
             document.getElementById('profPhone').value = data.phone || "";
             if(data.name) document.getElementById('profileAvatar').innerText = data.name.charAt(0).toUpperCase();
+            
+            if (data.hasPromoCode) {
+                document.getElementById('promoStatus').classList.remove('hidden');
+            }
         }
 
         function saveProfileToFirebase() {
@@ -1303,6 +1355,73 @@
             el.select();
             document.execCommand('copy');
             alert("Link copied! Share to earn credits.");
+        }
+
+        function applyPromoCode() {
+            if(!currentUser) return;
+            const code = document.getElementById('promoCodeInput').value.trim().toUpperCase();
+            if(code === "") return alert("Please enter a code.");
+            
+            // Basic redemption simulation.
+            db.collection('users').doc(currentUser.uid).update({ hasPromoCode: true }).then(() => {
+                document.getElementById('promoCodeInput').value = "";
+                document.getElementById('promoStatus').classList.remove('hidden');
+                alert("Promo code applied! You will get an additional 10% off at checkout.");
+            }).catch(err => alert(err.message));
+        }
+
+        function changePassword() {
+            if(!currentUser) return;
+            auth.sendPasswordResetEmail(currentUser.email).then(() => {
+                alert("A password reset email has been sent to " + currentUser.email);
+            }).catch(err => alert(err.message));
+        }
+
+        async function cancelSubscription() {
+            if(!currentUserData || !currentUserData.subscription || currentUserData.subscription.status !== 'active') {
+                return alert("You do not have an active premium subscription to cancel.");
+            }
+            if(!confirm("Are you sure you want to cancel your subscription?")) return;
+
+            try {
+                const res = await fetch("https://cancelsubscription-dsy7tdoigq-uc.a.run.app", {
+                    method: "POST",
+                    headers: {"Content-Type": "application/json"},
+                    body: JSON.stringify({ customerId: currentUserData.subscription.customerId })
+                });
+                const data = await res.json();
+                if(data.success) {
+                    alert("Subscription canceled successfully.");
+                    // Update frontend state immediately to reflect
+                    db.collection('users').doc(currentUser.uid).update({ 
+                        "subscription.status": "canceled", 
+                        plan: "Free" 
+                    });
+                } else {
+                    alert("Error: " + data.error);
+                }
+            } catch(e) {
+                alert("Failed to contact payment server. Try again later.");
+            }
+        }
+
+        function deleteAccount() {
+            if(!currentUser) return;
+            if(!confirm("WARNING: Are you sure you want to permanently delete your account and all associated data? This action cannot be undone.")) return;
+            
+            // Delete user document from DB, then delete Auth profile.
+            db.collection('users').doc(currentUser.uid).delete().then(() => {
+                currentUser.delete().then(() => {
+                    alert("Your account has been deleted.");
+                    window.location.reload();
+                }).catch(err => {
+                    if(err.code === 'auth/requires-recent-login') {
+                        alert("For security reasons, please log out and log back in before deleting your account.");
+                    } else {
+                        alert(err.message);
+                    }
+                });
+            });
         }
 
         function clearData() {
@@ -1332,9 +1451,14 @@
         async function processCheckout(planName) {
             if (!currentUser) { alert("Please sign in or create an account to upgrade."); navTo('auth'); return; }
 
-            // Sale + Referral Logic Base Prices
+            // Sale Logic Base Prices (Actual billed amounts are $61 and $207)
             let basePrice = (planName === 'Business Pro') ? 207 : 61;
-            let finalPrice = hasReferralDiscount ? Math.floor(basePrice * 0.9) : basePrice;
+            let finalPrice = basePrice;
+            
+            if (hasReferralDiscount) finalPrice *= 0.9;
+            if (currentUserData && currentUserData.hasPromoCode) finalPrice *= 0.9;
+            
+            finalPrice = Math.floor(finalPrice);
 
             try {
               const res = await fetch("https://createcheckoutsession-dsy7tdoigq-uc.a.run.app", {
