@@ -529,6 +529,7 @@
             <div class="max-w-4xl mx-auto">
                 <div class="flex justify-between items-center mb-12">
                     <h1 class="text-4xl font-black">Manager Performance</h1>
+                    <button class="btn btn-outline btn-sm" onclick="exportPerformanceCSV()">Export CSV</button>
                 </div>
                 
                 <div class="grid md:grid-cols-3 gap-6 mb-12">
@@ -577,10 +578,10 @@
                     <div class="space-y-8">
                         <div class="card">
                             <h3 class="text-xl font-black mb-6">Custom Presets</h3>
-                            <p class="text-sm text-slate-500 mb-4">Saves your exact current inventory layout (including item quantities) so you can recall it instantly.</p>
+                            <p class="text-sm text-slate-500 mb-4">Saves your exact current inventory layout, checklists, and register setups so you can recall them instantly.</p>
                             <div class="flex gap-2 mb-8">
                                 <input type="text" id="customPresetName" placeholder="e.g. Closing Shift Layout" class="flex-1">
-                                <button onclick="saveCustomPreset()" class="btn btn-outline">Save Current</button>
+                                <button onclick="saveCustomPreset()" class="btn btn-outline">Save Current Tracker</button>
                             </div>
                             <div id="customPresetsContainer" class="space-y-3"></div>
                         </div>
@@ -757,6 +758,7 @@
         let cloudSyncTimeout = null;
         let hasReferralDiscount = false;
         let unsubscribeUser = null;
+        let initialDraftLoaded = false; // Fixes the DOM overwrite while typing issue
 
         auth.onAuthStateChanged((user) => {
             currentUser = user;
@@ -779,7 +781,12 @@
                         renderHistory();
                         updateStorageBar();
                         fetchFeatureRequests();
-                        syncDraftFromServer(); 
+                        
+                        // Only sync draft heavily on initial load to prevent killing user focus while typing
+                        if (!initialDraftLoaded) {
+                            syncDraftFromServer(); 
+                            initialDraftLoaded = true;
+                        }
                         
                         if (document.querySelector('.view-section.active').id === 'view-auth') navTo('tracker');
                     } else {
@@ -789,6 +796,7 @@
             } else {
                 navStatus.innerText = "Login / Sign Up";
                 currentUserData = null;
+                initialDraftLoaded = false;
             }
         });
 
@@ -925,15 +933,15 @@
             const div = document.createElement('div');
             div.className = "flex gap-2 items-center animate-fadeIn";
             div.innerHTML = `
-                <input type="text" placeholder="Drawer Label" class="drawer-name" value="${label}" style="flex: 2;">
-                <input type="number" step="0.01" value="${val}" class="drawer-val" style="flex: 1;" oninput="calcDrawer(this)">
+                <input type="text" placeholder="Drawer Label" class="drawer-name" value="${label}" style="flex: 2;" oninput="triggerDraftSync()">
+                <input type="number" step="0.01" value="${val}" class="drawer-val" style="flex: 1;" oninput="calcDrawer(this); triggerDraftSync();">
                 <input type="text" readonly class="drawer-res text-xs font-bold opacity-70" style="flex: 1.5; border:none; background:transparent;">
                 <button type="button" onclick="this.parentElement.remove(); triggerDraftSync();" class="text-red-400 p-2"><i data-lucide="x" class="w-4"></i></button>
             `;
             document.getElementById('drawersContainer').appendChild(div);
             calcDrawer(div.querySelector('.drawer-val'));
             lucide.createIcons();
-            triggerDraftSync();
+            if (initialDraftLoaded) triggerDraftSync();
         }
 
         function calcDrawer(input) {
@@ -944,18 +952,18 @@
             else res.value = diff < 0 ? `$${Math.abs(diff).toFixed(2)} Short` : `$${diff.toFixed(2)} Over`;
         }
 
-        function addDepositItem(val = "") {
+        function addDepositItem(val = "", ver = true, valCheck = true) {
             const div = document.createElement('div');
             div.className = "flex gap-4 items-center bg-slate-50 dark:bg-slate-800 p-3 rounded-xl animate-fadeIn";
             div.innerHTML = `
-                <input type="text" placeholder="Amount" class="dep-val" value="${val}" style="flex:1;">
-                <label class="flex items-center gap-1 text-[10px] font-bold"><input type="checkbox" class="dep-ver" checked> VER</label>
-                <label class="flex items-center gap-1 text-[10px] font-bold"><input type="checkbox" class="dep-val-chk" checked> VAL</label>
+                <input type="text" placeholder="Amount" class="dep-val" value="${val}" style="flex:1;" oninput="triggerDraftSync()">
+                <label class="flex items-center gap-1 text-[10px] font-bold"><input type="checkbox" class="dep-ver" ${ver ? 'checked' : ''} onchange="triggerDraftSync()"> VER</label>
+                <label class="flex items-center gap-1 text-[10px] font-bold"><input type="checkbox" class="dep-val-chk" ${valCheck ? 'checked' : ''} onchange="triggerDraftSync()"> VAL</label>
                 <button type="button" onclick="this.parentElement.remove(); triggerDraftSync();" class="text-red-400"><i data-lucide="x" class="w-4"></i></button>
             `;
             document.getElementById('depositsContainer').appendChild(div);
             lucide.createIcons();
-            triggerDraftSync();
+            if (initialDraftLoaded) triggerDraftSync();
         }
 
         function addRoutineTask(name = "", isChecked = false) {
@@ -971,14 +979,14 @@
             document.getElementById('routineContainer').appendChild(div);
             document.getElementById('newRoutineTask').value = "";
             lucide.createIcons();
-            triggerDraftSync();
+            if (initialDraftLoaded) triggerDraftSync();
         }
 
         function addInventoryItem(name = "", bl = "", cl = "", fr = "") {
             const div = document.createElement('div');
             div.className = 'inventory-item animate-fadeIn';
             div.innerHTML = `
-                <input type="text" placeholder="Item Name" class="inv-name" value="${name}">
+                <input type="text" placeholder="Item Name" class="inv-name" value="${name}" oninput="triggerDraftSync()">
                 <input type="text" placeholder="Backline" class="inv-backline" value="${bl}" oninput="triggerDraftSync()">
                 <input type="text" placeholder="Cooler" class="inv-cooler" value="${cl}" oninput="triggerDraftSync()">
                 <input type="text" placeholder="Freezer" class="inv-freezer" value="${fr}" oninput="triggerDraftSync()">
@@ -986,7 +994,7 @@
             `;
             document.getElementById('inventoryContainer').appendChild(div);
             lucide.createIcons();
-            triggerDraftSync();
+            if (initialDraftLoaded) triggerDraftSync();
         }
 
         function getTrackerState() {
@@ -1023,37 +1031,59 @@
         document.getElementById('trackerForm').addEventListener('input', triggerDraftSync);
         
         function triggerDraftSync() {
-            if (!currentUser) return;
+            if (!initialDraftLoaded || !currentUser) return;
+
+            const state = getTrackerState();
+            
+            // Highly robust local storage caching for mobile backgrounding
+            localStorage.setItem(`ezManage_draft_${currentUser.uid}`, JSON.stringify(state));
+
             clearTimeout(cloudSyncTimeout);
             cloudSyncTimeout = setTimeout(() => {
-                const state = getTrackerState();
                 db.collection('users').doc(currentUser.uid).set({ trackerDraft: state }, { merge: true });
             }, 3000); 
         }
 
-        function syncDraftFromServer() {
-            if (!currentUser || !currentUserData) return;
-            const draft = currentUserData.trackerDraft;
-            if (draft) {
-                document.getElementById('shiftManager').value = draft.manager || "";
-                document.getElementById('prepNotes').value = draft.prepNotes || "";
-                document.getElementById('safeCount').value = draft.safeCount || "";
-                document.getElementById('beefCook').value = draft.beefCook || "";
-                document.getElementById('beefTempered').value = draft.beefTempered || "";
-                document.getElementById('laborVariance').value = draft.laborVariance || "";
-                document.getElementById('changeNeeded').value = draft.changeNeeded || "";
-                
-                document.getElementById('routineContainer').innerHTML = '';
-                if(draft.routines) draft.routines.forEach(r => addRoutineTask(r.name, r.checked));
-                
-                document.getElementById('inventoryContainer').innerHTML = '';
-                if(draft.inventory) draft.inventory.forEach(i => addInventoryItem(i.name, i.bl, i.cl, i.fr));
-                
-                document.getElementById('drawersContainer').innerHTML = '';
-                if(draft.drawers) draft.drawers.forEach(d => addDrawerItem(d.val, d.name));
+        function populateTrackerFromState(draft) {
+            document.getElementById('shiftManager').value = draft.manager || "";
+            document.getElementById('shiftDate').value = draft.dateSaved || "";
+            document.getElementById('shiftTime').value = draft.timeSaved || "";
+            document.getElementById('prepNotes').value = draft.prepNotes || "";
+            document.getElementById('safeCount').value = draft.safeCount || "";
+            document.getElementById('beefCook').value = draft.beefCook || "";
+            document.getElementById('beefTempered').value = draft.beefTempered || "";
+            document.getElementById('laborVariance').value = draft.laborVariance || "";
+            document.getElementById('changeNeeded').value = draft.changeNeeded || "";
+            
+            document.getElementById('routineContainer').innerHTML = '';
+            if(draft.routines) draft.routines.forEach(r => addRoutineTask(r.name, r.checked));
+            
+            document.getElementById('inventoryContainer').innerHTML = '';
+            if(draft.inventory) draft.inventory.forEach(i => addInventoryItem(i.name, i.bl, i.cl, i.fr));
+            
+            document.getElementById('drawersContainer').innerHTML = '';
+            if(draft.drawers) draft.drawers.forEach(d => addDrawerItem(d.val, d.name));
 
-                document.getElementById('depositsContainer').innerHTML = '';
-                if(draft.deposits) draft.deposits.forEach(d => addDepositItem(d.val));
+            document.getElementById('depositsContainer').innerHTML = '';
+            if(draft.deposits) draft.deposits.forEach(d => addDepositItem(d.val, d.ver, d.valCheck));
+        }
+
+        function syncDraftFromServer() {
+            if (!currentUser) return;
+
+            // Step 1: Check mobile local storage to avoid progress resets
+            const localDraft = localStorage.getItem(`ezManage_draft_${currentUser.uid}`);
+            if (localDraft) {
+                try {
+                    const parsed = JSON.parse(localDraft);
+                    populateTrackerFromState(parsed);
+                    return; // Skip cloud sync if local is available, local is strictly more recent for the user
+                } catch(e) { console.error("Local draft parse error", e); }
+            }
+
+            // Step 2: Fallback to Cloud if no local cache is found
+            if (currentUserData && currentUserData.trackerDraft) {
+                populateTrackerFromState(currentUserData.trackerDraft);
             } else {
                 initDefaults();
             }
@@ -1166,32 +1196,36 @@
             const shift = history.find(s => s.id === id);
             
             if(shift) {
-                document.getElementById('shiftDate').value = shift.dateSaved || "";
-                document.getElementById('shiftTime').value = shift.timeSaved || "";
-                document.getElementById('shiftManager').value = shift.manager || "";
-                document.getElementById('prepNotes').value = shift.prepNotes || "";
-                document.getElementById('safeCount').value = shift.safeCount || "";
-                document.getElementById('beefCook').value = shift.beefCook || "";
-                document.getElementById('beefTempered').value = shift.beefTempered || "";
-                document.getElementById('laborVariance').value = shift.laborVariance || "";
-                document.getElementById('changeNeeded').value = shift.changeNeeded || "";
-                
-                document.getElementById('routineContainer').innerHTML = '';
-                if(shift.routines) shift.routines.forEach(r => addRoutineTask(r.name, r.checked));
-                
-                document.getElementById('inventoryContainer').innerHTML = '';
-                if(shift.inventory) shift.inventory.forEach(i => addInventoryItem(i.name, i.bl, i.cl, i.fr));
-                
-                document.getElementById('drawersContainer').innerHTML = '';
-                if(shift.drawers) shift.drawers.forEach(d => addDrawerItem(d.val, d.name));
-
-                document.getElementById('depositsContainer').innerHTML = '';
-                if(shift.deposits) shift.deposits.forEach(d => addDepositItem(d.val));
-
+                populateTrackerFromState(shift);
                 navTo('tracker');
                 triggerDraftSync();
                 alert("Shift loaded into Active Tracker successfully.");
             }
+        }
+
+        function exportPerformanceCSV() {
+            if(!currentUserData || !currentUserData.shiftHistory || currentUserData.shiftHistory.length === 0) return alert("No history available to export.");
+            
+            let csv = "Date,Time,Manager,Duration(m),Routines Completed,Safe Count,Prep Notes\n";
+            
+            currentUserData.shiftHistory.forEach(h => {
+                let routinesDone = h.routines ? h.routines.filter(r => r.checked).length : 0;
+                let routinesTotal = h.routines ? h.routines.length : 0;
+                let safeCount = h.safeCount ? h.safeCount.replace(/,/g, '') : "0";
+                let prepNotes = h.prepNotes ? h.prepNotes.replace(/,/g, ';').replace(/\n/g, ' ') : "";
+                
+                csv += `${h.dateSaved},${h.timeSaved},${h.manager},${h.durationMins},${routinesDone}/${routinesTotal},${safeCount},${prepNotes}\n`;
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.setAttribute('hidden', '');
+            a.setAttribute('href', url);
+            a.setAttribute('download', 'ezManage_Performance.csv');
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
         }
 
         function calculatePerformance() {
@@ -1237,21 +1271,21 @@
         function saveCustomPreset() {
             if(!currentUser) return;
             const name = document.getElementById('customPresetName').value || "Unnamed Preset";
-            const items = [];
+            const state = getTrackerState();
             
-            document.querySelectorAll('.inventory-item').forEach(el => {
-                items.push({ 
-                    name: el.querySelector('.inv-name').value,
-                    bl: el.querySelector('.inv-backline').value,
-                    cl: el.querySelector('.inv-cooler').value,
-                    fr: el.querySelector('.inv-freezer').value
-                });
-            });
+            const presetData = {
+                id: Date.now().toString(),
+                name: name,
+                inventory: state.inventory,
+                routines: state.routines,
+                drawers: state.drawers,
+                deposits: state.deposits
+            };
             
             db.collection('users').doc(currentUser.uid).set({
-                customPresets: firebase.firestore.FieldValue.arrayUnion({ id: Date.now().toString(), name, items })
+                customPresets: firebase.firestore.FieldValue.arrayUnion(presetData)
             }, { merge: true }).then(() => {
-                alert("Inventory Layout & Counts Saved Successfully!");
+                alert("Tracker Layout (Counts & Routines) Saved Successfully!");
                 document.getElementById('customPresetName').value = "";
             });
         }
@@ -1287,14 +1321,19 @@
         }
 
         function applyCustomPreset(id) {
-            if(!confirm("Replace current inventory layout with this custom preset?")) return;
+            if(!confirm("Replace current tracker layout with this custom preset?")) return;
             const preset = (currentUserData.customPresets || []).find(p => p.id == id);
             if(preset) {
-                document.getElementById('inventoryContainer').innerHTML = '';
-                preset.items.forEach(i => {
-                    if (typeof i === 'string') addInventoryItem(i);
-                    else addInventoryItem(i.name, i.bl, i.cl, i.fr);
-                });
+                // Determine if it's an old preset (just items array) or new preset (full state)
+                if (preset.items) {
+                    document.getElementById('inventoryContainer').innerHTML = '';
+                    preset.items.forEach(i => {
+                        if (typeof i === 'string') addInventoryItem(i);
+                        else addInventoryItem(i.name, i.bl, i.cl, i.fr);
+                    });
+                } else {
+                    populateTrackerFromState(preset);
+                }
                 navTo('tracker');
                 triggerDraftSync();
             }
@@ -1322,9 +1361,13 @@
 
             manualSaveHistory();
             
-            // Calling print synchronously bypasses popup blockers for the same user gesture.
-            // The CSS purely handles visibility swapping safely via @media print.
-            window.print();
+            // Direct, synchronous print bypasses typical Safari/iOS blockers.
+            // If it still blocks, notify the user.
+            try {
+                window.print();
+            } catch(e) {
+                alert("Printing was blocked by your browser. Please ensure popups are allowed, or check your browser settings.");
+            }
         }
 
         function loadProfileUI(data) {
@@ -1362,7 +1405,6 @@
             const code = document.getElementById('promoCodeInput').value.trim().toUpperCase();
             if(code === "") return alert("Please enter a code.");
             
-            // Basic redemption simulation.
             db.collection('users').doc(currentUser.uid).update({ hasPromoCode: true }).then(() => {
                 document.getElementById('promoCodeInput').value = "";
                 document.getElementById('promoStatus').classList.remove('hidden');
@@ -1392,7 +1434,6 @@
                 const data = await res.json();
                 if(data.success) {
                     alert("Subscription canceled successfully.");
-                    // Update frontend state immediately to reflect
                     db.collection('users').doc(currentUser.uid).update({ 
                         "subscription.status": "canceled", 
                         plan: "Free" 
@@ -1409,8 +1450,8 @@
             if(!currentUser) return;
             if(!confirm("WARNING: Are you sure you want to permanently delete your account and all associated data? This action cannot be undone.")) return;
             
-            // Delete user document from DB, then delete Auth profile.
             db.collection('users').doc(currentUser.uid).delete().then(() => {
+                localStorage.removeItem(`ezManage_draft_${currentUser.uid}`);
                 currentUser.delete().then(() => {
                     alert("Your account has been deleted.");
                     window.location.reload();
