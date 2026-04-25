@@ -4,93 +4,1227 @@
     <link rel="manifest" href="manifest.json">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ezManage | Elevate Your Store Management</title>
+    <title>Tracker Dashboard | ezManage</title>
+    
     <link rel="icon" type="image/jpeg" href="ManagerPro.jpg?v=2">
+    <link rel="apple-touch-icon" href="ManagerPro.jpg?v=2">
+    
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
     <script src="https://cdn.tailwindcss.com"></script>
-    <script>tailwind.config = { darkMode: ['class', '.dark-mode'] }</script>
+    <script>
+        tailwind.config = {
+            darkMode: ['class', '.dark-mode'],
+        }
+    </script>
     <script src="https://unpkg.com/lucide@latest"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+
     <style>
-        :root { --bg-color: #f8fafc; --text-main: #1e293b; --primary: #0f172a; --accent: #0ea5e9; --card-bg: #ffffff; }
-        body.dark-mode { --bg-color: #000000; --text-main: #f1f5f9; --primary: #ffffff; --card-bg: #0a0a0a; }
-        body { font-family: 'Inter', sans-serif; background-color: var(--bg-color); color: var(--text-main); }
-        .glass-nav { background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(20px); }
-        .dark-mode .glass-nav { background: rgba(0, 0, 0, 0.7); }
-        .btn { display: inline-flex; align-items: center; justify-content: center; padding: 0.8rem 1.8rem; border-radius: 9999px; font-weight: 700; cursor: pointer; transition: all 0.2s ease; }
+        :root {
+            --brand-sky: #87ceeb;
+            --brand-dark: #0f172a;
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --primary: #0f172a;
+            --accent: #0ea5e9;
+            --accent-hover: #0284c7;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --radius: 24px;
+            --nav-height: 80px;
+        }
+
+        body.dark-mode {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --primary: #f8fafc;
+            --text-main: #f1f5f9;
+            --text-muted: #94a3b8;
+            --border: #334155;
+            --input-bg: #334155;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: var(--bg-color); 
+            color: var(--text-main);
+            transition: background-color 0.3s, color 0.3s;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .glass-nav {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+        .dark-mode .glass-nav { background: rgba(15, 23, 42, 0.7); }
+
+        .view-section { display: none; width: 100%; }
+        .view-section.active { display: block; animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .card { 
+            background: var(--card-bg); 
+            border-radius: var(--radius); 
+            padding: 2rem; 
+            margin-bottom: 1.5rem; 
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+            border: 1px solid var(--border);
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.8rem 1.8rem;
+            border-radius: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 0.95rem;
+            gap: 0.5rem;
+        }
+
+        .btn-accent { background: var(--accent); color: white; }
+        .btn-accent:hover { background: var(--accent-hover); transform: translateY(-1px); }
         .btn-dark { background: var(--primary); color: var(--card-bg); }
-        .btn-outline { background: transparent; border: 2px solid #e2e8f0; color: var(--text-main); }
-        .card { background: var(--card-bg); border-radius: 24px; padding: 2rem; border: 1px solid #e2e8f0; }
+        .btn-outline { background: transparent; border: 2px solid var(--border); color: var(--text-main); }
+        .btn-danger { background: #ef4444; color: white; }
+        .btn-success { background: #10b981; color: white; }
+        .btn-sm { padding: 0.5rem 1rem; font-size: 0.8rem; border-radius: 10px; }
+
+        input[type="text"], input[type="number"], input[type="date"], input[type="time"], input[type="password"], input[type="email"], textarea, select {
+            padding: 0.85rem;
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            outline: none;
+            width: 100%;
+            background-color: var(--card-bg);
+            color: var(--text-main);
+            font-size: 1rem;
+            transition: border-color 0.2s;
+        }
+        input:focus, select:focus, textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.2); }
+
+        .inventory-item {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr 40px;
+            gap: 0.75rem;
+            align-items: center;
+            padding: 1rem;
+            background: var(--bg-color);
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            margin-bottom: 0.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .inventory-item { grid-template-columns: 1fr 1fr; }
+            .inv-name { grid-column: 1 / -1; }
+        }
+
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg-color); }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+
+        #sidebar {
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transform: translateX(-100%);
+        }
+        #sidebar.open { transform: translateX(0); }
+
+        @media print {
+            body { background: white; color: black; }
+            main, nav, aside { display: none !important; }
+            #print-wrapper { display: block !important; }
+            .card { border: none; box-shadow: none; padding: 0; }
+        }
     </style>
 </head>
 <body>
-    <nav class="fixed w-full z-50 glass-nav border-b border-slate-200/50 top-0">
+
+    <nav class="fixed w-full z-50 glass-nav border-b border-slate-200/50 top-0 no-print">
         <div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-            <div class="flex items-center space-x-3 cursor-pointer">
+            <div class="flex items-center space-x-3 cursor-pointer" onclick="window.location.href='index.html'">
                 <img src="ManagerPro.jpg" alt="ezManage Logo" class="w-10 h-10 rounded-xl shadow-sm border border-white">
-                <span class="text-xl font-black tracking-tighter uppercase">ezManage</span>
+                <span class="text-xl font-black tracking-tighter text-slate-900 dark:text-white uppercase">ezManage</span>
             </div>
+            
             <div class="hidden md:flex space-x-10 text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">
-                <a href="index.html" class="hover:text-sky-600">Home</a>
-                <a href="ezmanage.html" class="hover:text-sky-600">App</a>
-                <a href="pricing.html" class="hover:text-sky-600">Pricing</a>
+                <a href="index.html" class="hover:text-sky-600 transition-colors">Home</a>
+                <a href="#" onclick="navTo('tracker')" class="hover:text-sky-600 transition-colors">App</a>
+                <a href="pricing.html" class="hover:text-sky-600 transition-colors">Pricing</a>
             </div>
-            <button onclick="window.location.href='onboarding.html'" class="btn btn-outline btn-sm text-[10px] font-black uppercase tracking-widest">Login / Sign Up</button>
+            
+            <div class="flex items-center space-x-4">
+                <button onclick="window.location.href='company-dashboard.html'" class="text-[10px] font-black uppercase tracking-widest text-sky-600 hidden bg-sky-50 px-3 py-1 rounded-full" id="navAdminBtn">Admin Panel</button>
+                <div id="navUserStatus" class="hidden sm:block text-[10px] font-black uppercase tracking-widest text-slate-500">
+                    Loading...
+                </div>
+                <button onclick="toggleSidebar()" class="p-2 text-slate-600 dark:text-slate-300" aria-label="Toggle Menu">
+                    <i data-lucide="menu"></i>
+                </button>
+            </div>
         </div>
     </nav>
 
-    <main class="pt-[80px]">
-        <section class="pt-24 pb-32 px-6 relative overflow-hidden text-center">
-            <div class="max-w-6xl mx-auto">
-                <span class="inline-flex items-center px-4 py-1.5 mb-8 text-[10px] font-black tracking-[0.2em] text-sky-700 uppercase bg-sky-50 rounded-full">For Retail & Fast Food Leaders</span>
-                <h1 class="text-6xl md:text-8xl font-black tracking-tight mb-8 leading-[0.95]">Less Admin.<br><span class="text-sky-500">More Leadership.</span></h1>
-                <p class="text-xl md:text-2xl text-slate-500 mb-12 max-w-3xl mx-auto font-medium">The strategic toolkit for modern managers. Track statistics in real-time, monitor floor performance, and unlock improvement insights instantly.</p>
-                <div class="flex flex-col sm:flex-row justify-center gap-6">
-                    <button onclick="window.location.href='onboarding.html'" class="btn btn-dark text-lg px-12 py-5 shadow-2xl">Get Started Free</button>
-                    <button onclick="window.location.href='ezmanage.html'" class="btn btn-outline text-lg px-12 py-5">Explore App <i data-lucide="arrow-right" class="ml-2"></i></button>
-                </div>
-                <div class="mt-16 flex flex-col items-center">
-                    <div class="flex items-center gap-1 mb-2 text-amber-400">
-                        <i data-lucide="star" class="fill-current w-6 h-6"></i><i data-lucide="star" class="fill-current w-6 h-6"></i><i data-lucide="star" class="fill-current w-6 h-6"></i><i data-lucide="star" class="fill-current w-6 h-6"></i><i data-lucide="star" class="fill-current w-6 h-6 opacity-90"></i>
-                    </div>
-                    <p class="text-sm font-black uppercase tracking-widest text-slate-400">Trusted by 30+ Certified Managers | 4.9 Average</p>
-                </div>
-            </div>
-        </section>
+    <aside id="sidebar" class="fixed inset-y-0 left-0 w-80 bg-white dark:bg-slate-900 z-[60] shadow-2xl border-r border-slate-100 dark:border-slate-800 p-8 no-print">
+        <div class="flex justify-between items-center mb-12">
+            <span class="font-black uppercase tracking-widest text-xs">Menu</span>
+            <button onclick="toggleSidebar()" class="p-2"><i data-lucide="x"></i></button>
+        </div>
 
-        <section class="py-24 bg-slate-50 dark:bg-slate-900">
-            <div class="max-w-7xl mx-auto px-6">
-                <div class="text-center mb-16">
-                    <h2 class="text-4xl font-black tracking-tight mb-4">Manager Testimonials</h2>
-                    <p class="text-slate-500 font-medium">Real feedback from the floor.</p>
+        <nav class="space-y-6">
+            <a href="#" onclick="navTo('tracker')" class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="edit-3"></i> Active Tracker</a>
+            <a href="#" onclick="navTo('presets')" class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="layout"></i> Templates</a>
+            <a href="#" onclick="navTo('history')" class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="clock"></i> History</a>
+            <a href="#" onclick="navTo('performance')" class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="bar-chart-3"></i> Performance</a>
+            <div class="h-px bg-slate-100 dark:bg-slate-800 my-8"></div>
+            <a href="#" onclick="navTo('profile')" class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="user"></i> My Profile</a>
+            <a href="pricing.html" class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="credit-card"></i> Upgrade Plan</a>
+            <a href="#" onclick="navTo('request')" class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="lightbulb"></i> Feature Request</a>
+        </nav>
+
+        <div class="absolute bottom-8 left-8 right-8">
+            <div class="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl">
+                <span class="text-xs font-bold uppercase tracking-widest">Dark Mode</span>
+                <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" id="themeToggle" class="sr-only peer" onchange="toggleTheme()">
+                    <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:bg-sky-500 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
+                </label>
+            </div>
+            <button onclick="auth.signOut().then(() => window.location.href='index.html')" class="w-full mt-4 text-xs font-black uppercase tracking-[0.2em] text-red-500 hover:text-red-600">Sign Out</button>
+        </div>
+    </aside>
+
+    <main class="pt-[var(--nav-height)] min-h-screen">
+
+        <div id="view-tracker" class="view-section active px-6 py-12 pb-32">
+            <div class="max-w-5xl mx-auto">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
+                    <div>
+                        <h1 class="text-4xl font-black tracking-tight">Shift Tracker</h1>
+                        <p class="text-slate-500 font-medium">Real-time sync enabled.</p>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <button onclick="navTo('presets')" class="btn btn-outline btn-sm"><i data-lucide="layout" class="w-4"></i> Templates</button>
+                        <button onclick="clearData()" class="btn btn-outline btn-sm text-red-500 border-red-100 hover:bg-red-50"><i data-lucide="trash-2" class="w-4"></i> Reset</button>
+                    </div>
                 </div>
-                <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8 text-left">
-                    <div class="card border-none">
-                        <div class="flex text-amber-400 mb-4"><i data-lucide="star" class="fill-current w-4 h-4"></i><i data-lucide="star" class="fill-current w-4 h-4"></i><i data-lucide="star" class="fill-current w-4 h-4"></i><i data-lucide="star" class="fill-current w-4 h-4"></i><i data-lucide="star" class="fill-current w-4 h-4"></i></div>
-                        <p class="font-bold text-lg mb-4">"A complete game changer for my closing shifts."</p>
-                        <p class="text-slate-500 text-sm italic mb-6">"I used to spend 45 minutes on paperwork at 1 AM. Now I’m out the door in 10. The inventory presets are perfect."</p>
-                        <p class="text-xs font-black uppercase tracking-widest text-sky-600">— Sarah M., Shift Lead</p>
+
+                <form id="trackerForm" class="space-y-8">
+                    <div class="card grid md:grid-cols-3 gap-6">
+                        <div class="space-y-2">
+                            <label class="text-[10px] font-black uppercase tracking-widest text-slate-400">Shift Manager</label>
+                            <input type="text" id="shiftManager" placeholder="Enter Name">
+                        </div>
+                        <div class="space-y-2">
+                            <label class="text-[10px] font-black uppercase tracking-widest text-slate-400">Date & Time</label>
+                            <div class="flex gap-2">
+                                <input type="date" id="shiftDate">
+                                <input type="time" id="shiftTime">
+                            </div>
+                        </div>
+                        <div class="space-y-2">
+                            <label class="text-[10px] font-black uppercase tracking-widest text-slate-400">Efficiency Timer</label>
+                            <div class="flex gap-2 items-center">
+                                <button type="button" id="timerBtn" onclick="toggleShiftTimer()" class="btn btn-success flex-1 py-3"><i data-lucide="play" class="w-4"></i> Start</button>
+                                <span id="timerDisplay" class="font-mono font-bold bg-slate-50 dark:bg-slate-800 px-4 py-3 rounded-xl border border-slate-100 dark:border-slate-700">00:00</span>
+                            </div>
+                        </div>
                     </div>
-                    <div class="card border-none">
-                        <div class="flex text-amber-400 mb-4"><i data-lucide="star" class="fill-current w-4 h-4"></i><i data-lucide="star" class="fill-current w-4 h-4"></i><i data-lucide="star" class="fill-current w-4 h-4"></i><i data-lucide="star" class="fill-current w-4 h-4"></i><i data-lucide="star" class="fill-current w-4 h-4"></i></div>
-                        <p class="font-bold text-lg mb-4">"Finally, a tool made for US."</p>
-                        <p class="text-slate-500 text-sm italic mb-6">"Most apps are for corporate. ezManage is for the person actually running the kitchen. 10/10 recommendation."</p>
-                        <p class="text-xs font-black uppercase tracking-widest text-sky-600">— David L., Kitchen Manager</p>
+
+                    <div class="card">
+                        <h3 class="text-xl font-black mb-6 flex items-center gap-3"><i data-lucide="list-checks" class="text-sky-500"></i> Routine & ServSafe</h3>
+                        <div id="routineContainer" class="grid sm:grid-cols-2 gap-4"></div>
+                        <div class="mt-8 flex gap-3">
+                            <input type="text" id="newRoutineTask" placeholder="Add custom daily task..." class="flex-1">
+                            <button type="button" onclick="addRoutineTask()" class="btn btn-outline">Add</button>
+                        </div>
                     </div>
-                    <div class="card border-none">
-                        <div class="flex text-amber-400 mb-4"><i data-lucide="star" class="fill-current w-4 h-4"></i><i data-lucide="star" class="fill-current w-4 h-4"></i><i data-lucide="star" class="fill-current w-4 h-4"></i><i data-lucide="star" class="fill-current w-4 h-4"></i><i data-lucide="star" class="w-4 h-4"></i></div>
-                        <p class="font-bold text-lg mb-4">"Solid tool, great support."</p>
-                        <p class="text-slate-500 text-sm italic mb-6">"Needed a custom field for our freezer temps and the dev team added a feature request update within a week. Extremely impressed."</p>
-                        <p class="text-xs font-black uppercase tracking-widest text-sky-600">— Marcus T., Store Manager</p>
+
+                    <div class="card">
+                        <h3 class="text-xl font-black mb-6 flex items-center gap-3"><i data-lucide="beef" class="text-amber-600"></i> Prep & Labor Stats</h3>
+                        <div class="grid md:grid-cols-2 gap-8">
+                            <div class="space-y-4">
+                                <div class="space-y-2">
+                                    <label class="text-[10px] font-black uppercase tracking-widest text-slate-400">Prep Notes</label>
+                                    <textarea id="prepNotes" placeholder="e.g. Prepped 8 pans of lettuce..." class="h-32"></textarea>
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-1 gap-4">
+                                <div class="space-y-2">
+                                    <label class="text-[10px] font-black uppercase tracking-widest text-slate-400">Main Prep Count (Beef/Protein)</label>
+                                    <input type="text" id="beefCook" placeholder="Cooked Count">
+                                </div>
+                                <div class="space-y-2">
+                                    <label class="text-[10px] font-black uppercase tracking-widest text-slate-400">Tempered / Thawed</label>
+                                    <input type="text" id="beefTempered" placeholder="Tempered Count">
+                                </div>
+                                <div class="space-y-2">
+                                    <label class="text-[10px] font-black uppercase tracking-widest text-slate-400">Labor Variance %</label>
+                                    <input type="text" id="laborVariance" placeholder="e.g. -2.5%">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h3 class="text-xl font-black mb-6 flex items-center gap-3"><i data-lucide="banknote" class="text-emerald-500"></i> Cash & Registers</h3>
+                        <div class="grid lg:grid-cols-2 gap-12">
+                            <div>
+                                <label class="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-4 block">Register Variance</label>
+                                <div id="drawersContainer" class="space-y-3 mb-4"></div>
+                                <button type="button" onclick="addDrawerItem()" class="text-sky-600 font-black text-xs uppercase tracking-widest">+ Add Drawer</button>
+                            </div>
+                            <div class="space-y-6">
+                                <div class="space-y-2">
+                                    <label class="text-[10px] font-black uppercase tracking-widest text-slate-400">Safe Count ($)</label>
+                                    <input type="text" id="safeCount" placeholder="$1,100.00">
+                                </div>
+                                <div class="space-y-2">
+                                    <label class="text-[10px] font-black uppercase tracking-widest text-slate-400">Verified Deposits</label>
+                                    <div id="depositsContainer" class="space-y-3 mb-2"></div>
+                                    <button type="button" onclick="addDepositItem()" class="text-sky-600 font-black text-xs uppercase tracking-widest">+ Add Deposit</button>
+                                </div>
+                                <div class="space-y-2">
+                                    <label class="text-[10px] font-black uppercase tracking-widest text-slate-400">Change Needed</label>
+                                    <textarea id="changeNeeded" placeholder="List bills/coins needed..." class="h-20"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+                            <h3 class="text-xl font-black flex items-center gap-3"><i data-lucide="package" class="text-purple-500"></i> Inventory Count</h3>
+                            <div class="flex gap-2 w-full md:w-auto">
+                                <select id="sortSelect" onchange="sortInventory(this.value)" class="text-sm border-slate-200">
+                                    <option value="recent">Sort: Most Recent</option>
+                                    <option value="alpha">Sort: Alphabetical A-Z</option>
+                                </select>
+                                <button type="button" onclick="addInventoryItem()" class="btn btn-outline btn-sm whitespace-nowrap">+ Add Item</button>
+                            </div>
+                        </div>
+                        <div class="hidden md:grid grid-cols-5 gap-4 px-4 mb-4 text-[10px] font-black uppercase tracking-widest text-slate-400">
+                            <div class="col-span-1">Item Name</div>
+                            <div>Front/Backline</div>
+                            <div>Cooler</div>
+                            <div>Freezer</div>
+                            <div class="text-right">Action</div>
+                        </div>
+                        <div id="inventoryContainer"></div>
+                    </div>
+
+                    <div class="grid md:grid-cols-2 gap-6 pt-12 no-print">
+                        <button type="button" onclick="generateReport()" class="btn btn-dark py-6 text-xl shadow-2xl">
+                            <i data-lucide="printer"></i> End Shift & Print
+                        </button>
+                        <button type="button" onclick="manualSaveHistory()" class="btn btn-outline py-6 text-xl">
+                            <i data-lucide="cloud"></i> Save to Cloud
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div id="view-history" class="view-section px-6 py-12">
+            <div class="max-w-4xl mx-auto">
+                <div class="card bg-slate-50 dark:bg-slate-900 border-none mb-8">
+                    <h3 class="text-lg font-black mb-2 flex items-center gap-2"><i data-lucide="database" class="text-sky-500"></i> Cloud Storage</h3>
+                    <div class="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-3 mb-2 overflow-hidden">
+                        <div id="storageProgressBar" class="bg-sky-500 h-3 rounded-full transition-all duration-500" style="width: 0%"></div>
+                    </div>
+                    <div class="flex justify-between text-xs font-bold text-slate-500 uppercase tracking-widest">
+                        <span id="storageUsedTxt">0 MB Used</span>
+                        <span id="storageMaxTxt">1 GB Limit</span>
+                    </div>
+                </div>
+
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+                    <h1 class="text-4xl font-black">Shift History</h1>
+                    <div class="relative w-full md:w-64">
+                        <i data-lucide="search" class="absolute left-3 top-3 w-4 h-4 text-slate-400"></i>
+                        <input type="text" id="historySearch" placeholder="Search by date..." class="pl-10 text-sm" oninput="renderHistory()">
+                    </div>
+                </div>
+                <div id="historyListContainer" class="space-y-6"></div>
+            </div>
+        </div>
+
+        <div id="view-performance" class="view-section px-6 py-12">
+            <div class="max-w-4xl mx-auto">
+                <div class="flex justify-between items-center mb-12">
+                    <h1 class="text-4xl font-black">Performance</h1>
+                    <button class="btn btn-outline btn-sm" onclick="exportPerformanceCSV()">Export CSV</button>
+                </div>
+                
+                <div class="grid md:grid-cols-3 gap-6 mb-12">
+                    <div class="card text-center">
+                        <div class="text-4xl font-black text-sky-500 mb-2" id="statShifts">0</div>
+                        <div class="text-[10px] font-black uppercase tracking-widest text-slate-400">Shifts Logged</div>
+                    </div>
+                    <div class="card text-center">
+                        <div class="text-4xl font-black text-amber-500 mb-2" id="statAvgTime">0m</div>
+                        <div class="text-[10px] font-black uppercase tracking-widest text-slate-400">Avg Log Time</div>
+                    </div>
+                    <div class="card text-center">
+                        <div class="text-4xl font-black text-emerald-500 mb-2" id="statRoutines">0%</div>
+                        <div class="text-[10px] font-black uppercase tracking-widest text-slate-400">Routine Score</div>
+                    </div>
+                </div>
+
+                <div class="card bg-slate-50 dark:bg-slate-900 border-none">
+                    <h3 class="text-xl font-black mb-4 flex items-center gap-2"><i data-lucide="sparkles" class="text-amber-500"></i> AI Insights</h3>
+                    <div id="performanceTips" class="text-slate-600 dark:text-slate-400 leading-relaxed font-medium">
+                        Start logging shifts to see personalized insights!
                     </div>
                 </div>
             </div>
-        </section>
+        </div>
+
+        <div id="view-presets" class="view-section px-6 py-12">
+            <div class="max-w-4xl mx-auto">
+                <h1 class="text-4xl font-black mb-12">Templates & Presets</h1>
+                
+                <div class="grid md:grid-cols-2 gap-12">
+                    <div class="space-y-8">
+                        <div class="card">
+                            <h3 class="text-xl font-black mb-6">System Layouts</h3>
+                            <select id="presetSelector" class="mb-4">
+                                <option value="arbys">Arby's / Roast Beef</option>
+                                <option value="mcdonalds">McDonald's</option>
+                                <option value="tacobell">Taco Bell</option>
+                                <option value="chickfila">Chick-fil-A</option>
+                                <option value="pizza">Standard Pizza Shop</option>
+                            </select>
+                            <button onclick="loadPresetList()" class="btn btn-accent w-full">Apply System Template</button>
+                        </div>
+                    </div>
+                    <div class="space-y-8">
+                        <div class="card">
+                            <h3 class="text-xl font-black mb-6">Custom Presets</h3>
+                            <p class="text-sm text-slate-500 mb-4">Save your exact current inventory layout and checklists.</p>
+                            <div class="flex gap-2 mb-8">
+                                <input type="text" id="customPresetName" placeholder="e.g. Closing Shift" class="flex-1">
+                                <button onclick="saveCustomPreset()" class="btn btn-outline">Save Current</button>
+                            </div>
+                            <div id="customPresetsContainer" class="space-y-3"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="view-profile" class="view-section px-6 py-12">
+            <div class="max-w-4xl mx-auto">
+                <div class="card text-center mb-12 py-16">
+                    <div id="profileAvatar" class="w-24 h-24 bg-sky-500 text-white rounded-full flex items-center justify-center text-4xl font-black mx-auto mb-6 shadow-xl dark:shadow-none">?</div>
+                    <h2 class="text-3xl font-black mb-2" id="profNameDisplay">Loading...</h2>
+                    <span class="inline-flex items-center px-4 py-1.5 text-[10px] font-black tracking-[0.2em] text-sky-700 uppercase bg-sky-50 rounded-full" id="profSubStatus">Free Plan</span>
+                </div>
+
+                <div class="grid md:grid-cols-2 gap-8">
+                    <div class="card">
+                        <h3 class="text-xl font-black mb-6">Personal Details</h3>
+                        <div class="space-y-4">
+                            <input type="text" id="profName" placeholder="Name">
+                            <input type="text" id="profRole" placeholder="Role">
+                            <input type="email" id="profEmail" readonly class="bg-slate-50 opacity-60 dark:bg-slate-800">
+                            <input type="text" id="profPhone" placeholder="Phone">
+                            <button onclick="saveProfileToFirebase()" class="btn btn-accent w-full mt-4">Save Changes</button>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <h3 class="text-xl font-black mb-6">Affiliate Program</h3>
+                        <p class="text-slate-500 mb-6 text-sm">Earn premium credits by referring other managers.</p>
+                        <input type="text" id="referralLink" readonly class="font-mono text-xs mb-4 bg-slate-50 opacity-60 dark:bg-slate-800">
+                        <button onclick="copyReferral()" class="btn btn-outline w-full">Copy My Link</button>
+                    </div>
+                </div>
+
+                <div class="card mt-8">
+                    <h3 class="text-xl font-black mb-6 border-b border-slate-200 dark:border-slate-800 pb-4">Account Management</h3>
+                    <div class="space-y-6">
+                        <div class="flex flex-col sm:flex-row gap-4">
+                            <button onclick="changePassword()" class="btn btn-outline flex-1 text-sm"><i data-lucide="key" class="w-4 h-4"></i> Change Password</button>
+                            <button onclick="cancelSubscription()" class="btn btn-outline flex-1 text-sm text-amber-500 border-amber-200 hover:bg-amber-50"><i data-lucide="x-circle" class="w-4 h-4"></i> Cancel Sub</button>
+                            <button onclick="deleteAccount()" class="btn btn-outline flex-1 text-sm text-red-500 border-red-200 hover:bg-red-50"><i data-lucide="trash-2" class="w-4 h-4"></i> Delete Account</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="view-request" class="view-section px-6 py-12">
+            <div class="max-w-4xl mx-auto">
+                <div class="card shadow-2xl mb-12">
+                    <h1 class="text-3xl font-black mb-4">Submit Request</h1>
+                    <p class="text-slate-500 mb-8">Direct line to the engineering team. Pro users receive priority.</p>
+                    <textarea id="featureReqText" class="h-32 mb-6" placeholder="I would love it if ezManage could..."></textarea>
+                    <button onclick="submitFeatureRequest()" class="btn btn-accent w-full py-4">Send Directly to Admin</button>
+                </div>
+                <h3 class="text-xl font-black mb-6 border-b border-slate-200 dark:border-slate-800 pb-2">My Requests</h3>
+                <div id="myFeatureRequests" class="space-y-4"></div>
+            </div>
+        </div>
+
     </main>
+
+    <div id="print-wrapper" class="hidden print:block absolute top-0 left-0 w-full bg-white z-50">
+        <div class="p-8 font-serif bg-white text-black min-h-screen">
+            <h1 class="text-2xl font-bold border-b-2 border-black pb-4 mb-8" id="printHeader">ezManage Shift Report</h1>
+            <div class="mb-8">
+                <h2 class="font-bold italic mb-2 uppercase text-sm tracking-widest">Shift Routine</h2>
+                <div id="printRoutines" class="space-y-1"></div>
+            </div>
+            <div class="mb-8">
+                <h2 class="font-bold italic mb-2 uppercase text-sm tracking-widest">Cash & Drawers</h2>
+                <div id="printDrawers" class="space-y-1 mb-4"></div>
+                <div class="font-bold">Safe Count: <span id="printSafe"></span></div>
+                <div id="printDeposits" class="mt-2"></div>
+            </div>
+            <div class="mb-8">
+                <h2 class="font-bold italic mb-2 uppercase text-sm tracking-widest">Inventory List</h2>
+                <div id="printInventoryList" class="space-y-1"></div>
+            </div>
+        </div>
+    </div>
+
     <script>
-        lucide.createIcons();
-        if(localStorage.getItem('managerProTheme') === 'dark') document.body.classList.add('dark-mode');
+        // ================= FIREBASE CONFIG =================
+        const firebaseConfig = {
+            apiKey: "AIzaSyBgrI9HwJPSc5b4pu2Egsv4DE7shNwptSw",
+            authDomain: "dts-hub-website.firebaseapp.com",
+            projectId: "dts-hub-website",
+            storageBucket: "dts-hub-website.firebasestorage.app",
+            messagingSenderId: "48345990988",
+            appId: "1:48345990988:web:e3662c9b508168546471e9",
+            measurementId: "G-ZN3YJPHVGX"
+        };
+
+        if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+        
+        db.enablePersistence().catch(err => console.error("Offline sync error:", err));
+
+        let currentUser = null;
+        let currentUserData = null;
+        let shiftStartTime = null;
+        let timerInterval = null;
+        let cloudSyncTimeout = null;
+        let unsubscribeUser = null;
+        let initialDraftLoaded = false;
+
+        // ================= AUTH LISTENER & INIT =================
+        auth.onAuthStateChanged((user) => {
+            if (!user) {
+                // Reroute decoupled onboarding users
+                window.location.href = 'onboarding.html';
+                return;
+            }
+
+            currentUser = user;
+            const navStatus = document.getElementById('navUserStatus');
+            
+            if (unsubscribeUser) unsubscribeUser();
+
+            navStatus.innerText = "Manager: " + (user.displayName || "Online");
+            document.getElementById('profEmail').value = user.email;
+            document.getElementById('referralLink').value = `${window.location.origin}${window.location.pathname}?ref=${user.uid}`;
+            
+            unsubscribeUser = db.collection("users").doc(user.uid).onSnapshot(doc => {
+                if (doc.exists) {
+                    currentUserData = doc.data();
+                    
+                    // Display Admin nav securely
+                    if(currentUserData.isAdmin) document.getElementById('navAdminBtn').classList.remove('hidden');
+
+                    loadProfileUI(currentUserData);
+                    loadCustomPresets();
+                    calculatePerformance();
+                    renderHistory();
+                    updateStorageBar();
+                    fetchFeatureRequests();
+                    
+                    if (!initialDraftLoaded) {
+                        syncDraftFromServer(); 
+                        initialDraftLoaded = true;
+                    }
+                } else {
+                    window.location.href = 'onboarding.html'; 
+                }
+            });
+        });
+
+        // ================= UI CONTROLS =================
+        function toggleSidebar() { 
+            document.getElementById('sidebar').classList.toggle('open'); 
+        }
+
+        function navTo(viewId) {
+            document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+            document.getElementById('view-' + viewId).classList.add('active');
+            document.getElementById('sidebar').classList.remove('open');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            lucide.createIcons();
+        }
+
+        function toggleTheme() {
+            const isDark = document.getElementById('themeToggle').checked;
+            document.body.classList.toggle('dark-mode', isDark);
+            localStorage.setItem('managerProTheme', isDark ? 'dark' : 'light');
+        }
+
+        function toggleShiftTimer() {
+            const btn = document.getElementById('timerBtn');
+            const disp = document.getElementById('timerDisplay');
+            if (!shiftStartTime) {
+                shiftStartTime = Date.now();
+                btn.innerHTML = `<i data-lucide="square" class="w-4"></i> Stop`;
+                btn.classList.replace('btn-success', 'btn-danger');
+                timerInterval = setInterval(updateTimerUI, 1000);
+            } else {
+                clearInterval(timerInterval);
+                const mins = Math.round((Date.now() - shiftStartTime) / 60000);
+                disp.innerText = `Log: ${mins}m`;
+                shiftStartTime = null; 
+                btn.innerHTML = `<i data-lucide="play" class="w-4"></i> Resume`;
+                btn.classList.replace('btn-danger', 'btn-success');
+            }
+            lucide.createIcons();
+        }
+
+        function updateTimerUI() {
+            if (!shiftStartTime) return;
+            const diff = Date.now() - shiftStartTime;
+            const h = Math.floor(diff / 3600000);
+            const m = Math.floor((diff % 3600000) / 60000);
+            const s = Math.floor((diff % 60000) / 1000);
+            document.getElementById('timerDisplay').innerText = `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+        }
+
+        // ================= TRACKER LOGIC =================
+        function addDrawerItem(val = "100.00", label = "") {
+            const div = document.createElement('div');
+            div.className = "flex gap-2 items-center animate-fadeIn";
+            div.innerHTML = `
+                <input type="text" placeholder="Drawer Label" class="drawer-name" value="${label}" style="flex: 2;" oninput="triggerDraftSync()">
+                <input type="number" step="0.01" value="${val}" class="drawer-val" style="flex: 1;" oninput="calcDrawer(this); triggerDraftSync();">
+                <input type="text" readonly class="drawer-res text-xs font-bold opacity-70" style="flex: 1.5; border:none; background:transparent;">
+                <button type="button" onclick="this.parentElement.remove(); triggerDraftSync();" class="text-red-400 p-2"><i data-lucide="x" class="w-4"></i></button>
+            `;
+            document.getElementById('drawersContainer').appendChild(div);
+            calcDrawer(div.querySelector('.drawer-val'));
+            lucide.createIcons();
+            if (initialDraftLoaded) triggerDraftSync();
+        }
+
+        function calcDrawer(input) {
+            let val = parseFloat(input.value) || 0;
+            let diff = val - 100;
+            let res = input.parentElement.querySelector('.drawer-res');
+            if (diff === 0) res.value = "Balanced";
+            else res.value = diff < 0 ? `$${Math.abs(diff).toFixed(2)} Short` : `$${diff.toFixed(2)} Over`;
+        }
+
+        function addDepositItem(val = "", ver = true, valCheck = true) {
+            const div = document.createElement('div');
+            div.className = "flex gap-4 items-center bg-slate-50 dark:bg-slate-800 p-3 rounded-xl animate-fadeIn";
+            div.innerHTML = `
+                <input type="text" placeholder="Amount" class="dep-val" value="${val}" style="flex:1;" oninput="triggerDraftSync()">
+                <label class="flex items-center gap-1 text-[10px] font-bold"><input type="checkbox" class="dep-ver" ${ver ? 'checked' : ''} onchange="triggerDraftSync()"> VER</label>
+                <label class="flex items-center gap-1 text-[10px] font-bold"><input type="checkbox" class="dep-val-chk" ${valCheck ? 'checked' : ''} onchange="triggerDraftSync()"> VAL</label>
+                <button type="button" onclick="this.parentElement.remove(); triggerDraftSync();" class="text-red-400"><i data-lucide="x" class="w-4"></i></button>
+            `;
+            document.getElementById('depositsContainer').appendChild(div);
+            lucide.createIcons();
+            if (initialDraftLoaded) triggerDraftSync();
+        }
+
+        function addRoutineTask(name = "", isChecked = false) {
+            let taskName = name || document.getElementById('newRoutineTask').value;
+            if(!taskName) return;
+            const div = document.createElement('div');
+            div.className = "flex items-center gap-3 p-4 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl shadow-sm";
+            div.innerHTML = `
+                <input type="checkbox" class="routine-chk w-5 h-5 accent-sky-500" ${isChecked ? 'checked' : ''} onchange="triggerDraftSync()"> 
+                <span class="routine-name flex-1 font-semibold text-sm">${taskName}</span>
+                <button type="button" onclick="this.parentElement.remove(); triggerDraftSync();" class="text-slate-300 hover:text-red-400"><i data-lucide="trash-2" class="w-4"></i></button>
+            `;
+            document.getElementById('routineContainer').appendChild(div);
+            document.getElementById('newRoutineTask').value = "";
+            lucide.createIcons();
+            if (initialDraftLoaded) triggerDraftSync();
+        }
+
+        function addInventoryItem(name = "", bl = "", cl = "", fr = "") {
+            const div = document.createElement('div');
+            div.className = 'inventory-item animate-fadeIn';
+            div.dataset.timestamp = Date.now(); // For sorting
+            div.innerHTML = `
+                <input type="text" placeholder="Item Name" class="inv-name" value="${name}" oninput="triggerDraftSync()">
+                <input type="number" placeholder="Backline" class="inv-backline" value="${bl}" oninput="triggerDraftSync()">
+                <input type="number" placeholder="Cooler" class="inv-cooler" value="${cl}" oninput="triggerDraftSync()">
+                <input type="number" placeholder="Freezer" class="inv-freezer" value="${fr}" oninput="triggerDraftSync()">
+                <button type="button" onclick="this.parentElement.remove(); triggerDraftSync();" class="text-red-400 text-right"><i data-lucide="minus-circle" class="w-5"></i></button>
+            `;
+            // INSTRUCTION: prepend to top
+            document.getElementById('inventoryContainer').prepend(div);
+            lucide.createIcons();
+            if (initialDraftLoaded) triggerDraftSync();
+        }
+
+        function sortInventory(method) {
+            try {
+                const container = document.getElementById('inventoryContainer');
+                const items = Array.from(container.children);
+                
+                items.sort((a, b) => {
+                    if (method === 'alpha') {
+                        const nameA = a.querySelector('.inv-name').value.toLowerCase();
+                        const nameB = b.querySelector('.inv-name').value.toLowerCase();
+                        return nameA.localeCompare(nameB);
+                    } else {
+                        return parseInt(b.dataset.timestamp) - parseInt(a.dataset.timestamp);
+                    }
+                });
+                
+                container.innerHTML = '';
+                items.forEach(item => container.appendChild(item));
+            } catch (err) {
+                console.error("Sorting Error:", err);
+            }
+        }
+
+        // ================= SYNC & STATE =================
+        function getTrackerState() {
+            const state = {
+                id: Date.now().toString(),
+                dateSaved: document.getElementById('shiftDate').value || new Date().toLocaleDateString(),
+                timeSaved: document.getElementById('shiftTime').value || new Date().toLocaleTimeString(),
+                manager: document.getElementById('shiftManager').value,
+                durationMins: shiftStartTime ? Math.round((Date.now() - shiftStartTime) / 60000) : 0,
+                routines: [], drawers: [], deposits: [], inventory: [],
+                prepNotes: document.getElementById('prepNotes').value,
+                beefCook: document.getElementById('beefCook').value,
+                beefTempered: document.getElementById('beefTempered').value,
+                laborVariance: document.getElementById('laborVariance').value,
+                safeCount: document.getElementById('safeCount').value,
+                changeNeeded: document.getElementById('changeNeeded').value
+            };
+
+            document.querySelectorAll('#routineContainer > div').forEach(el => {
+                state.routines.push({ name: el.querySelector('.routine-name').innerText, checked: el.querySelector('.routine-chk').checked });
+            });
+            document.querySelectorAll('#drawersContainer > div').forEach(el => {
+                state.drawers.push({ name: el.querySelector('.drawer-name').value, val: el.querySelector('.drawer-val').value, res: el.querySelector('.drawer-res').value });
+            });
+            document.querySelectorAll('#depositsContainer > div').forEach(el => {
+                state.deposits.push({ val: el.querySelector('.dep-val').value, ver: el.querySelector('.dep-ver').checked, valCheck: el.querySelector('.dep-val-chk').checked });
+            });
+            document.querySelectorAll('.inventory-item').forEach(el => {
+                state.inventory.push({ name: el.querySelector('.inv-name').value, bl: el.querySelector('.inv-backline').value, cl: el.querySelector('.inv-cooler').value, fr: el.querySelector('.inv-freezer').value });
+            });
+            return state;
+        }
+
+        document.getElementById('trackerForm').addEventListener('input', triggerDraftSync);
+        
+        function triggerDraftSync() {
+            if (!initialDraftLoaded || !currentUser) return;
+            const state = getTrackerState();
+            localStorage.setItem(`ezManage_draft_${currentUser.uid}`, JSON.stringify(state));
+
+            clearTimeout(cloudSyncTimeout);
+            cloudSyncTimeout = setTimeout(() => {
+                db.collection('users').doc(currentUser.uid).set({ trackerDraft: state }, { merge: true });
+            }, 3000); 
+        }
+
+        function populateTrackerFromState(draft) {
+            document.getElementById('shiftManager').value = draft.manager || "";
+            document.getElementById('shiftDate').value = draft.dateSaved || "";
+            document.getElementById('shiftTime').value = draft.timeSaved || "";
+            document.getElementById('prepNotes').value = draft.prepNotes || "";
+            document.getElementById('safeCount').value = draft.safeCount || "";
+            document.getElementById('beefCook').value = draft.beefCook || "";
+            document.getElementById('beefTempered').value = draft.beefTempered || "";
+            document.getElementById('laborVariance').value = draft.laborVariance || "";
+            document.getElementById('changeNeeded').value = draft.changeNeeded || "";
+            
+            document.getElementById('routineContainer').innerHTML = '';
+            if(draft.routines) draft.routines.forEach(r => addRoutineTask(r.name, r.checked));
+            
+            document.getElementById('inventoryContainer').innerHTML = '';
+            if(draft.inventory) draft.inventory.slice().reverse().forEach(i => addInventoryItem(i.name, i.bl, i.cl, i.fr)); // reverse because of prepend
+            
+            document.getElementById('drawersContainer').innerHTML = '';
+            if(draft.drawers) draft.drawers.forEach(d => addDrawerItem(d.val, d.name));
+
+            document.getElementById('depositsContainer').innerHTML = '';
+            if(draft.deposits) draft.deposits.forEach(d => addDepositItem(d.val, d.ver, d.valCheck));
+        }
+
+        function syncDraftFromServer() {
+            if (!currentUser) return;
+            const localDraft = localStorage.getItem(`ezManage_draft_${currentUser.uid}`);
+            if (localDraft) {
+                try {
+                    populateTrackerFromState(JSON.parse(localDraft));
+                    return; 
+                } catch(e) { console.error("Local draft parse error"); }
+            }
+            if (currentUserData && currentUserData.trackerDraft) {
+                populateTrackerFromState(currentUserData.trackerDraft);
+            } else {
+                initDefaults();
+            }
+        }
+
+        function manualSaveHistory() {
+            if(!currentUser) return;
+            const state = getTrackerState();
+            db.collection('users').doc(currentUser.uid).set({
+                shiftHistory: firebase.firestore.FieldValue.arrayUnion(state)
+            }, { merge: true }).then(() => {
+                alert("Shift saved to Cloud History!");
+            });
+        }
+
+        // ================= HISTORY & STATS =================
+        function renderHistory() {
+            if(!currentUserData) return;
+            const container = document.getElementById('historyListContainer');
+            const searchInput = document.getElementById('historySearch').value.toLowerCase();
+            
+            const rawHistory = (currentUserData.shiftHistory || []).reverse();
+            const history = rawHistory.filter(h => {
+                const manager = (h.manager || "").toLowerCase();
+                const notes = (h.prepNotes || "").toLowerCase();
+                const d = (h.dateSaved || "").toLowerCase();
+                return manager.includes(searchInput) || notes.includes(searchInput) || d.includes(searchInput);
+            });
+
+            container.innerHTML = "";
+            if(history.length === 0) { 
+                container.innerHTML = "<p class='text-center py-20 opacity-40'>No logs found matching your criteria.</p>"; 
+                return; 
+            }
+
+            const grouped = {};
+            history.forEach(data => {
+                let groupKey = "Unknown Date";
+                if(data.dateSaved) {
+                    const parts = data.dateSaved.split('-');
+                    groupKey = parts.length >= 2 ? `${parts[0]}-${parts[1]}` : data.dateSaved;
+                }
+                if(!grouped[groupKey]) grouped[groupKey] = [];
+                grouped[groupKey].push(data);
+            });
+
+            Object.keys(grouped).sort().reverse().forEach(key => {
+                const groupHeader = document.createElement('h3');
+                groupHeader.className = "text-xs font-black uppercase tracking-widest text-sky-500 mb-2 mt-6 border-b border-slate-200 dark:border-slate-800 pb-1";
+                groupHeader.innerText = `Period: ${key}`;
+                container.appendChild(groupHeader);
+
+                grouped[key].forEach(data => {
+                    const div = document.createElement('div');
+                    div.className = "card flex justify-between items-center hover:border-sky-200 dark:hover:border-sky-800 transition-colors group mb-3";
+                    div.innerHTML = `
+                        <div>
+                            <div class="font-black text-lg">${data.dateSaved}</div>
+                            <div class="text-xs font-bold uppercase tracking-widest text-slate-400">Manager: ${data.manager || 'N/A'} • Duration: ${data.durationMins || 0}m</div>
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="loadHistoryShift('${data.id}')" class="btn btn-outline btn-sm opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity"><i data-lucide="download"></i> Load</button>
+                            <button onclick="deleteHistoryShift('${data.id}')" class="text-red-400 p-2 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity" title="Delete"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                        </div>
+                    `;
+                    container.appendChild(div);
+                });
+            });
+            lucide.createIcons();
+        }
+
+        function deleteHistoryShift(id) {
+            if(!currentUserData || !confirm("Are you sure you want to delete this shift from history permanently?")) return;
+            const shift = (currentUserData.shiftHistory || []).find(s => s.id === id);
+            if (shift) {
+                db.collection('users').doc(currentUser.uid).update({
+                    shiftHistory: firebase.firestore.FieldValue.arrayRemove(shift)
+                });
+            }
+        }
+
+        function updateStorageBar() {
+            if(!currentUserData) return;
+            const historyCount = (currentUserData.shiftHistory || []).length;
+            const usedKB = historyCount * 5; 
+            const usedMB = (usedKB / 1024).toFixed(2);
+            
+            const plan = currentUserData.plan || 'Free';
+            let maxGB = 1;
+            if (plan.includes('Individual')) maxGB = 3;
+            if (plan.includes('Business')) maxGB = 5;
+
+            document.getElementById('storageUsedTxt').innerText = `${usedMB} MB Used`;
+            document.getElementById('storageMaxTxt').innerText = `${maxGB} GB Limit`;
+
+            const percentage = Math.min(((usedMB / 1024) / maxGB) * 100, 100);
+            document.getElementById('storageProgressBar').style.width = `${percentage}%`;
+        }
+
+        function loadHistoryShift(id) {
+            if(!currentUserData || !confirm("Loading this shift will overwrite your current draft tracker. Continue?")) return;
+            const shift = (currentUserData.shiftHistory || []).find(s => s.id === id);
+            if(shift) {
+                populateTrackerFromState(shift);
+                navTo('tracker');
+                triggerDraftSync();
+                alert("Shift loaded into Active Tracker.");
+            }
+        }
+
+        function exportPerformanceCSV() {
+            if(!currentUserData || !currentUserData.shiftHistory || currentUserData.shiftHistory.length === 0) return alert("No history available to export.");
+            
+            let csv = "Date,Time,Manager,Duration(m),Routines Completed,Safe Count,Prep Notes\n";
+            currentUserData.shiftHistory.forEach(h => {
+                let routinesDone = h.routines ? h.routines.filter(r => r.checked).length : 0;
+                let routinesTotal = h.routines ? h.routines.length : 0;
+                let safeCount = h.safeCount ? h.safeCount.replace(/,/g, '') : "0";
+                let prepNotes = h.prepNotes ? h.prepNotes.replace(/,/g, ';').replace(/\n/g, ' ') : "";
+                csv += `${h.dateSaved},${h.timeSaved},${h.manager},${h.durationMins},${routinesDone}/${routinesTotal},${safeCount},${prepNotes}\n`;
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.setAttribute('hidden', '');
+            a.setAttribute('href', url);
+            a.setAttribute('download', 'ezManage_Performance.csv');
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+
+        function calculatePerformance() {
+            if(!currentUserData) return;
+            const history = currentUserData.shiftHistory || [];
+            document.getElementById('statShifts').innerText = history.length;
+            
+            let totalRoutines = 0; let checkedRoutines = 0;
+            let totalTime = 0;
+            
+            history.forEach(d => {
+                totalTime += (d.durationMins || 0);
+                (d.routines || []).forEach(r => { totalRoutines++; if(r.checked) checkedRoutines++; });
+            });
+
+            document.getElementById('statAvgTime').innerText = history.length > 0 ? Math.round(totalTime / history.length) + "m" : "0m";
+            const score = totalRoutines === 0 ? 0 : Math.round((checkedRoutines / totalRoutines) * 100);
+            document.getElementById('statRoutines').innerText = score + "%";
+
+            const tips = document.getElementById('performanceTips');
+            if(score < 70) tips.innerText = "Focus: Your routine score is low. Try completing ServSafe temps and lobby checks immediately after the rush.";
+            else if(history.length > 5) tips.innerText = "Great consistency! Your logs are detailed and synced. Consider sharing your custom templates with your team.";
+        }
+
+        // ================= TEMPLATES & PRESETS =================
+        const presets = {
+            'arbys': ["Shake Mix", "Mozzarella", "Beef", "Turkey", "Ham", "Sub Buns", "Slider Buns", "Turnovers"],
+            'mcdonalds': ["10:1 Beef", "4:1 Beef", "Nuggets", "McChicken", "Fries", "Reg Buns", "Mac Sauce"],
+            'tacobell': ["Ground Beef", "Chicken", "Steak", "Nacho Cheese", "Tortillas (12in)", "Cinnabon Delights"],
+            'chickfila': ["CFA Filets", "Spicy Filets", "Nuggets", "Waffle Fries", "Milk Base", "Mac & Cheese"],
+            'pizza': ["Dough Large", "Dough Medium", "Mozzarella", "Pepperoni", "Sausage", "Wings"]
+        };
+
+        function loadPresetList() {
+            if(confirm("Apply this template? Current inventory list will be cleared.")) {
+                const key = document.getElementById('presetSelector').value;
+                document.getElementById('inventoryContainer').innerHTML = '';
+                (presets[key] || []).reverse().forEach(name => addInventoryItem(name));
+                navTo('tracker');
+                triggerDraftSync();
+            }
+        }
+
+        function saveCustomPreset() {
+            if(!currentUser) return;
+            const name = document.getElementById('customPresetName').value || "Unnamed Preset";
+            const state = getTrackerState();
+            
+            const presetData = {
+                id: Date.now().toString(),
+                name: name,
+                inventory: state.inventory,
+                routines: state.routines,
+                drawers: state.drawers,
+                deposits: state.deposits
+            };
+            
+            db.collection('users').doc(currentUser.uid).set({
+                customPresets: firebase.firestore.FieldValue.arrayUnion(presetData)
+            }, { merge: true }).then(() => {
+                alert("Tracker Layout (Counts & Routines) Saved Successfully!");
+                document.getElementById('customPresetName').value = "";
+            });
+        }
+
+        function deleteCustomPreset(id) {
+            if(!currentUserData || !confirm("Are you sure you want to delete this preset permanently?")) return;
+            const preset = (currentUserData.customPresets || []).find(p => p.id === id);
+            if (preset) {
+                db.collection('users').doc(currentUser.uid).update({
+                    customPresets: firebase.firestore.FieldValue.arrayRemove(preset)
+                });
+            }
+        }
+
+        function loadCustomPresets() {
+            if(!currentUserData) return;
+            const container = document.getElementById('customPresetsContainer');
+            container.innerHTML = "";
+            const cp = currentUserData.customPresets || [];
+            cp.forEach(p => {
+                const div = document.createElement('div');
+                div.className = "flex justify-between items-center p-4 bg-slate-50 dark:bg-slate-800 rounded-xl group border border-slate-100 dark:border-slate-700";
+                div.innerHTML = `
+                    <span class="font-bold">${p.name}</span>
+                    <div class="flex gap-2">
+                        <button onclick="applyCustomPreset('${p.id}')" class="btn btn-sm btn-outline opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity">Load</button>
+                        <button onclick="deleteCustomPreset('${p.id}')" class="text-red-400 p-2 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity" title="Delete"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+            lucide.createIcons();
+        }
+
+        function applyCustomPreset(id) {
+            if(!confirm("Replace current tracker layout with this custom preset?")) return;
+            const preset = (currentUserData.customPresets || []).find(p => p.id == id);
+            if(preset) {
+                if (preset.items) {
+                    document.getElementById('inventoryContainer').innerHTML = '';
+                    preset.items.slice().reverse().forEach(i => {
+                        if (typeof i === 'string') addInventoryItem(i);
+                        else addInventoryItem(i.name, i.bl, i.cl, i.fr);
+                    });
+                } else {
+                    populateTrackerFromState(preset);
+                }
+                navTo('tracker');
+                triggerDraftSync();
+            }
+        }
+
+        // ================= PROFILE & ADMIN =================
+        function loadProfileUI(data) {
+            document.getElementById('profNameDisplay').innerText = data.name || "Manager";
+            document.getElementById('profSubStatus').innerText = (data.plan || "Free") + " Plan";
+            document.getElementById('profName').value = data.name || "";
+            document.getElementById('profRole').value = data.role || "";
+            document.getElementById('profPhone').value = data.phone || "";
+            if(data.name) document.getElementById('profileAvatar').innerText = data.name.charAt(0).toUpperCase();
+        }
+
+        function saveProfileToFirebase() {
+            if(!currentUser) return;
+            const data = {
+                name: document.getElementById('profName').value,
+                role: document.getElementById('profRole').value,
+                phone: document.getElementById('profPhone').value
+            };
+            db.collection('users').doc(currentUser.uid).set(data, { merge: true }).then(() => alert("Profile Updated!"));
+        }
+
+        function copyReferral() {
+            const el = document.getElementById('referralLink');
+            el.select();
+            document.execCommand('copy');
+            alert("Link copied! Share to earn credits.");
+        }
+
+        function changePassword() {
+            if(!currentUser) return;
+            auth.sendPasswordResetEmail(currentUser.email).then(() => {
+                alert("A password reset email has been sent to " + currentUser.email);
+            }).catch(err => alert(err.message));
+        }
+
+        async function cancelSubscription() {
+            if(!currentUserData || !currentUserData.subscription || currentUserData.subscription.status !== 'active') {
+                return alert("You do not have an active premium subscription to cancel.");
+            }
+            if(!confirm("Are you sure you want to cancel your subscription?")) return;
+            
+            try {
+                const res = await fetch("https://cancelsubscription-dsy7tdoigq-uc.a.run.app", {
+                    method: "POST",
+                    headers: {"Content-Type": "application/json"},
+                    body: JSON.stringify({ customerId: currentUserData.subscription.customerId })
+                });
+                const data = await res.json();
+                if(data.success) {
+                    alert("Subscription canceled successfully.");
+                    db.collection('users').doc(currentUser.uid).update({ 
+                        "subscription.status": "canceled", 
+                        plan: "Free" 
+                    });
+                } else { alert("Error: " + data.error); }
+            } catch(e) { alert("Failed to contact payment server. Try again later."); }
+        }
+
+        function deleteAccount() {
+            if(!currentUser) return;
+            if(!confirm("WARNING: Are you sure you want to permanently delete your account and all associated data? This action cannot be undone.")) return;
+            
+            db.collection('users').doc(currentUser.uid).delete().then(() => {
+                localStorage.removeItem(`ezManage_draft_${currentUser.uid}`);
+                currentUser.delete().then(() => {
+                    alert("Your account has been deleted.");
+                    window.location.href = 'index.html';
+                }).catch(err => {
+                    if(err.code === 'auth/requires-recent-login') {
+                        alert("For security reasons, please log out and log back in before deleting your account.");
+                    } else { alert(err.message); }
+                });
+            });
+        }
+
+        // ================= FEATURE REQUESTS =================
+        function submitFeatureRequest() {
+            const msg = document.getElementById('featureReqText').value;
+            if(!msg) return;
+            db.collection('feature_requests').add({
+                uid: currentUser.uid,
+                email: currentUser.email,
+                message: msg,
+                status: "In Progress",
+                timestamp: new Date().toISOString()
+            }).then(() => { 
+                alert("Sent!"); 
+                document.getElementById('featureReqText').value = ""; 
+            });
+        }
+
+        function fetchFeatureRequests() {
+            if(!currentUser) return;
+            db.collection('feature_requests')
+              .where('uid', '==', currentUser.uid)
+              .onSnapshot(snap => {
+                  const container = document.getElementById('myFeatureRequests');
+                  container.innerHTML = '';
+                  if (snap.empty) {
+                      container.innerHTML = "<p class='text-sm text-slate-500'>You haven't submitted any requests yet.</p>";
+                      return;
+                  }
+                  
+                  snap.forEach(doc => {
+                      const data = doc.data();
+                      const status = data.status || 'In Progress';
+                      
+                      let badgeClass = "bg-amber-100 text-amber-700"; 
+                      if(status === 'Completed') badgeClass = "bg-emerald-100 text-emerald-700";
+                      if(status === 'Declined') badgeClass = "bg-red-100 text-red-700";
+
+                      const div = document.createElement('div');
+                      div.className = "p-4 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700";
+                      div.innerHTML = `
+                          <div class="flex justify-between items-start mb-2">
+                              <span class="text-xs text-slate-400 font-mono">${new Date(data.timestamp).toLocaleDateString()}</span>
+                              <span class="text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded-full ${badgeClass}">${status}</span>
+                          </div>
+                          <p class="text-sm font-medium text-slate-700 dark:text-slate-300">"${data.message}"</p>
+                      `;
+                      container.appendChild(div);
+                  });
+              });
+        }
+
+        // ================= MISC UTILS =================
+        function clearData() {
+            if(confirm("Are you sure? This will wipe the current tracker form.")) {
+                document.getElementById('trackerForm').reset();
+                document.getElementById('drawersContainer').innerHTML = '';
+                document.getElementById('depositsContainer').innerHTML = '';
+                document.getElementById('inventoryContainer').innerHTML = '';
+                document.getElementById('routineContainer').innerHTML = '';
+                initDefaults();
+                triggerDraftSync();
+            }
+        }
+
+        function initDefaults() {
+            if (document.getElementById('inventoryContainer').innerHTML.trim() === "") {
+                document.getElementById('shiftDate').value = new Date().toISOString().split('T')[0];
+                document.getElementById('shiftTime').value = new Date().toTimeString().slice(0,5);
+                addDrawerItem("100.00", "Register 1");
+                addDrawerItem("100.00", "Register 2");
+                addDepositItem();
+                ["Parking Lot", "Lobby/Restrooms", "ServSafe Temps", "Filtered Fryers", "Trash Run"].forEach(t => addRoutineTask(t));
+                presets['arbys'].slice().reverse().forEach(name => addInventoryItem(name)); // Ensure Arby's renders top down with prepend
+            }
+        }
+
+        function generateReport() {
+            if(!currentUser) return alert("Sign in required.");
+            const state = getTrackerState();
+            
+            document.getElementById('printHeader').innerText = `ezManage Shift Summary: ${state.dateSaved} - ${state.manager}`;
+            
+            let routineHtml = "";
+            state.routines.forEach(r => routineHtml += `<div>${r.checked ? '☑' : '☐'} ${r.name}</div>`);
+            document.getElementById('printRoutines').innerHTML = routineHtml;
+
+            let drawerHtml = "";
+            state.drawers.forEach(d => drawerHtml += `<div>${d.name}: $${d.val} (${d.res})</div>`);
+            document.getElementById('printDrawers').innerHTML = drawerHtml;
+
+            document.getElementById('printSafe').innerText = state.safeCount;
+
+            let invHtml = "";
+            state.inventory.forEach(i => invHtml += `<div>${i.name}: ${i.bl} BL | ${i.cl} CL | ${i.fr} FR</div>`);
+            document.getElementById('printInventoryList').innerHTML = invHtml;
+
+            manualSaveHistory();
+            
+            try {
+                window.print();
+            } catch(e) {
+                alert("Printing was blocked by your browser. Please ensure popups are allowed.");
+            }
+        }
+
+        window.onload = () => {
+            if(localStorage.getItem('managerProTheme') === 'dark') {
+                document.body.classList.add('dark-mode');
+                document.getElementById('themeToggle').checked = true;
+            }
+            lucide.createIcons();
+            initDefaults();
+        };
+
     </script>
 </body>
 </html>

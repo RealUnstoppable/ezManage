@@ -4,13 +4,14 @@
     <link rel="manifest" href="manifest.json">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Tracker Dashboard | ezManage</title>
+    <title>Dashboard | ezManage</title>
     
     <link rel="icon" type="image/jpeg" href="ManagerPro.jpg?v=2">
     <link rel="apple-touch-icon" href="ManagerPro.jpg?v=2">
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="ezManage">
 
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -19,6 +20,7 @@
         }
     </script>
     <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -44,14 +46,15 @@
             --nav-height: 80px;
         }
 
+        /* AMOLED Black Optimization for Anti-Fatigue Restored */
         body.dark-mode {
-            --bg-color: #0f172a;
-            --card-bg: #1e293b;
-            --primary: #f8fafc;
+            --bg-color: #000000;
+            --card-bg: #0a0a0a;
+            --primary: #ffffff;
             --text-main: #f1f5f9;
             --text-muted: #94a3b8;
-            --border: #334155;
-            --input-bg: #334155;
+            --border: #1a1a1a;
+            --input-bg: #111111;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -64,12 +67,14 @@
             -webkit-font-smoothing: antialiased;
         }
 
+        [x-cloak] { display: none !important; }
+
         .glass-nav {
             background: rgba(255, 255, 255, 0.7);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
         }
-        .dark-mode .glass-nav { background: rgba(15, 23, 42, 0.7); }
+        .dark-mode .glass-nav { background: rgba(0, 0, 0, 0.7); }
 
         .view-section { display: none; width: 100%; }
         .view-section.active { display: block; animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
@@ -93,7 +98,7 @@
             align-items: center;
             justify-content: center;
             padding: 0.8rem 1.8rem;
-            border-radius: 16px;
+            border-radius: 9999px; /* Pill-shaped aesthetic mandate */
             font-weight: 700;
             cursor: pointer;
             transition: all 0.2s ease;
@@ -101,26 +106,28 @@
             gap: 0.5rem;
         }
 
-        .btn-accent { background: var(--accent); color: white; }
-        .btn-accent:hover { background: var(--accent-hover); transform: translateY(-1px); }
-        .btn-dark { background: var(--primary); color: var(--card-bg); }
+        .btn-accent { background: var(--accent); color: white; border: 2px solid var(--accent); }
+        .btn-accent:hover { background: var(--accent-hover); border-color: var(--accent-hover); transform: translateY(-1px); }
+        .btn-dark { background: var(--primary); color: var(--card-bg); border: 2px solid var(--primary); }
         .btn-outline { background: transparent; border: 2px solid var(--border); color: var(--text-main); }
-        .btn-danger { background: #ef4444; color: white; }
-        .btn-success { background: #10b981; color: white; }
-        .btn-sm { padding: 0.5rem 1rem; font-size: 0.8rem; border-radius: 10px; }
+        .btn-outline:hover { border-color: var(--text-main); }
+        .btn-danger { background: #ef4444; color: white; border: 2px solid #ef4444; }
+        .btn-success { background: #10b981; color: white; border: 2px solid #10b981; }
+        .btn-sm { padding: 0.5rem 1rem; font-size: 0.8rem; }
 
         input[type="text"], input[type="number"], input[type="date"], input[type="time"], input[type="password"], input[type="email"], textarea, select {
-            padding: 0.85rem;
+            padding: 0.85rem 1.2rem;
             border: 1px solid var(--border);
-            border-radius: 14px;
+            border-radius: 9999px; /* Pill-shaped aesthetic mandate */
             outline: none;
             width: 100%;
             background-color: var(--card-bg);
             color: var(--text-main);
             font-size: 1rem;
-            transition: border-color 0.2s;
+            transition: border-color 0.2s, box-shadow 0.2s;
         }
-        input:focus, select:focus, textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.2); }
+        textarea { border-radius: 20px; resize: vertical; }
+        input:focus, textarea:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1); }
 
         .inventory-item {
             display: grid;
@@ -149,15 +156,47 @@
         }
         #sidebar.open { transform: translateX(0); }
 
+        /* The PDF Output Mirror CSS Restored */
         @media print {
-            body { background: white; color: black; }
-            main, nav, aside { display: none !important; }
+            body { background: white; color: black; font-family: 'Times New Roman', serif; }
+            main, nav, aside, .no-print { display: none !important; }
             #print-wrapper { display: block !important; }
-            .card { border: none; box-shadow: none; padding: 0; }
+            .print-table { width: 100%; border-collapse: collapse; margin-bottom: 24px; font-size: 12pt; }
+            .print-table th, .print-table td { border: 1px solid #000; padding: 8px 12px; text-align: left; }
+            .print-table th { background-color: #f3f4f6 !important; font-weight: bold; -webkit-print-color-adjust: exact; }
+            .print-header-info { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px; }
+            .print-checkbox { width: 14px; height: 14px; border: 1px solid black; display: inline-block; margin-right: 8px; vertical-align: middle; }
+            .print-checked { background-color: black; -webkit-print-color-adjust: exact; }
         }
     </style>
 </head>
-<body>
+<body x-data="{ annual: true, mobileMenu: false }">
+
+    <div id="tosModal" class="hidden fixed inset-0 z-[100] bg-black/80 flex items-center justify-center p-6 backdrop-blur-sm no-print" x-data>
+        <div class="bg-white dark:bg-slate-900 w-full max-w-3xl rounded-2xl p-8 max-h-[90vh] overflow-y-auto border border-slate-200 dark:border-slate-700 shadow-2xl relative">
+            <h2 class="text-3xl font-black mb-6">Terms of Service & Enterprise Cloud Sync Policy</h2>
+            
+            <div class="space-y-6 text-sm text-slate-600 dark:text-slate-400 font-medium mb-8">
+                <div>
+                    <h3 class="text-slate-900 dark:text-white font-bold text-lg mb-2">1. The "Shadow IT" & Corporate Policy Clause</h3>
+                    <p>ezManage is a personal productivity and efficiency tool. You bear 100% of the responsibility for ensuring that entering your floor data complies with your employer’s Non-Disclosure Agreements (NDAs) and corporate IT security policies.</p>
+                </div>
+                <div>
+                    <h3 class="text-slate-900 dark:text-white font-bold text-lg mb-2">2. Data Controller vs. Data Processor</h3>
+                    <p>By opting into Enterprise Cloud Sync, you explicitly act as the "Data Controller." ezManage acts strictly as a "Data Processor" and facilitates the requested cloud backup architecture.</p>
+                </div>
+                <div>
+                    <h3 class="text-slate-900 dark:text-white font-bold text-lg mb-2">3. The FLSA / Wage Liability Shield</h3>
+                    <p>The timer and stopwatch functions are strictly provided as "task efficiency stopwatches." They are NOT official payroll time clocks. ezManage is shielded from FLSA claims or labor law violations.</p>
+                </div>
+            </div>
+
+            <div class="flex flex-col sm:flex-row gap-4 border-t border-slate-200 dark:border-slate-800 pt-6">
+                <button onclick="acceptToSAndEnableCloud()" class="btn btn-accent flex-1 py-4">I Accept & Enable Cloud Sync</button>
+                <button onclick="declineToS()" class="btn btn-outline flex-1 py-4 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20">Decline (Keep Data Local Only)</button>
+            </div>
+        </div>
+    </div>
 
     <nav class="fixed w-full z-50 glass-nav border-b border-slate-200/50 top-0 no-print">
         <div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
@@ -168,13 +207,13 @@
             
             <div class="hidden md:flex space-x-10 text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">
                 <a href="index.html" class="hover:text-sky-600 transition-colors">Home</a>
-                <a href="#" onclick="navTo('tracker')" class="hover:text-sky-600 transition-colors">App</a>
+                <a href="#" onclick="navTo('tracker')" class="hover:text-sky-600 transition-colors text-sky-600">App</a>
                 <a href="pricing.html" class="hover:text-sky-600 transition-colors">Pricing</a>
             </div>
             
             <div class="flex items-center space-x-4">
-                <button onclick="window.location.href='company-dashboard.html'" class="text-[10px] font-black uppercase tracking-widest text-sky-600 hidden bg-sky-50 px-3 py-1 rounded-full" id="navAdminBtn">Admin Panel</button>
-                <div id="navUserStatus" class="hidden sm:block text-[10px] font-black uppercase tracking-widest text-slate-500">
+                <button onclick="window.location.href='company-dashboard.html'" class="text-[10px] font-black uppercase tracking-widest text-sky-600 hidden bg-sky-50 px-3 py-1 rounded-full border border-sky-200" id="navAdminBtn">Admin Panel</button>
+                <div id="navUserStatus" class="hidden sm:block text-[10px] font-black uppercase tracking-widest text-slate-500 cursor-pointer" onclick="navTo('profile')">
                     Loading...
                 </div>
                 <button onclick="toggleSidebar()" class="p-2 text-slate-600 dark:text-slate-300" aria-label="Toggle Menu">
@@ -184,7 +223,7 @@
         </div>
     </nav>
 
-    <aside id="sidebar" class="fixed inset-y-0 left-0 w-80 bg-white dark:bg-slate-900 z-[60] shadow-2xl border-r border-slate-100 dark:border-slate-800 p-8 no-print">
+    <aside id="sidebar" class="fixed inset-y-0 left-0 w-80 bg-white dark:bg-slate-950 z-[60] shadow-2xl border-r border-slate-100 dark:border-slate-800 p-8 no-print">
         <div class="flex justify-between items-center mb-12">
             <span class="font-black uppercase tracking-widest text-xs">Menu</span>
             <button onclick="toggleSidebar()" class="p-2"><i data-lucide="x"></i></button>
@@ -202,8 +241,8 @@
         </nav>
 
         <div class="absolute bottom-8 left-8 right-8">
-            <div class="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl">
-                <span class="text-xs font-bold uppercase tracking-widest">Dark Mode</span>
+            <div class="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800">
+                <span class="text-xs font-bold uppercase tracking-widest">AMOLED Dark</span>
                 <label class="relative inline-flex items-center cursor-pointer">
                     <input type="checkbox" id="themeToggle" class="sr-only peer" onchange="toggleTheme()">
                     <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:bg-sky-500 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
@@ -215,20 +254,33 @@
 
     <main class="pt-[var(--nav-height)] min-h-screen">
 
-        <div id="view-tracker" class="view-section active px-6 py-12 pb-32">
-            <div class="max-w-5xl mx-auto">
-                <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
+        <div id="view-tracker" class="view-section active pb-32 relative">
+            
+            <div class="sticky top-[80px] z-40 bg-white/90 dark:bg-black/90 backdrop-blur pb-4 pt-4 border-b border-slate-200 dark:border-slate-800 mb-8 overflow-x-auto no-print px-6">
+                <div class="flex gap-4 max-w-5xl mx-auto">
+                    <button onclick="document.getElementById('section-routine').scrollIntoView({behavior: 'smooth', block: 'center'})" class="btn btn-sm btn-outline whitespace-nowrap bg-white dark:bg-black">Routine</button>
+                    <button onclick="document.getElementById('section-stats').scrollIntoView({behavior: 'smooth', block: 'center'})" class="btn btn-sm btn-outline whitespace-nowrap bg-white dark:bg-black">Stats</button>
+                    <button onclick="document.getElementById('section-cash').scrollIntoView({behavior: 'smooth', block: 'center'})" class="btn btn-sm btn-outline whitespace-nowrap bg-white dark:bg-black">Cash</button>
+                    <button onclick="document.getElementById('section-inventory').scrollIntoView({behavior: 'smooth', block: 'center'})" class="btn btn-sm btn-outline whitespace-nowrap bg-white dark:bg-black">Inventory</button>
+                </div>
+            </div>
+
+            <div class="max-w-5xl mx-auto px-6">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12 no-print">
                     <div>
                         <h1 class="text-4xl font-black tracking-tight">Shift Tracker</h1>
-                        <p class="text-slate-500 font-medium">Real-time sync enabled.</p>
+                        <p class="text-slate-500 font-medium flex items-center gap-2">
+                            <span id="cloudSyncStatus" class="w-2 h-2 rounded-full bg-slate-300"></span>
+                            <span id="cloudSyncText">Local Mode Only (Opt-In for Cloud)</span>
+                        </p>
                     </div>
                     <div class="flex items-center gap-3">
                         <button onclick="navTo('presets')" class="btn btn-outline btn-sm"><i data-lucide="layout" class="w-4"></i> Templates</button>
-                        <button onclick="clearData()" class="btn btn-outline btn-sm text-red-500 border-red-100 hover:bg-red-50"><i data-lucide="trash-2" class="w-4"></i> Reset</button>
+                        <button onclick="clearData()" class="btn btn-outline btn-sm text-red-500 border-red-200 hover:bg-red-50"><i data-lucide="trash-2" class="w-4"></i> Reset</button>
                     </div>
                 </div>
 
-                <form id="trackerForm" class="space-y-8">
+                <form id="trackerForm" class="space-y-6">
                     <div class="card grid md:grid-cols-3 gap-6">
                         <div class="space-y-2">
                             <label class="text-[10px] font-black uppercase tracking-widest text-slate-400">Shift Manager</label>
@@ -241,103 +293,126 @@
                                 <input type="time" id="shiftTime">
                             </div>
                         </div>
-                        <div class="space-y-2">
-                            <label class="text-[10px] font-black uppercase tracking-widest text-slate-400">Efficiency Timer</label>
+                        <div class="space-y-2 no-print">
+                            <label class="text-[10px] font-black uppercase tracking-widest text-slate-400">Task Efficiency Timer</label>
                             <div class="flex gap-2 items-center">
                                 <button type="button" id="timerBtn" onclick="toggleShiftTimer()" class="btn btn-success flex-1 py-3"><i data-lucide="play" class="w-4"></i> Start</button>
-                                <span id="timerDisplay" class="font-mono font-bold bg-slate-50 dark:bg-slate-800 px-4 py-3 rounded-xl border border-slate-100 dark:border-slate-700">00:00</span>
+                                <span id="timerDisplay" class="font-mono font-bold bg-slate-50 dark:bg-slate-800 px-4 py-3 rounded-full border border-slate-100 dark:border-slate-700">00:00</span>
                             </div>
                         </div>
                     </div>
 
-                    <div class="card">
-                        <h3 class="text-xl font-black mb-6 flex items-center gap-3"><i data-lucide="list-checks" class="text-sky-500"></i> Routine & ServSafe</h3>
-                        <div id="routineContainer" class="grid sm:grid-cols-2 gap-4"></div>
-                        <div class="mt-8 flex gap-3">
-                            <input type="text" id="newRoutineTask" placeholder="Add custom daily task..." class="flex-1">
-                            <button type="button" onclick="addRoutineTask()" class="btn btn-outline">Add</button>
-                        </div>
-                    </div>
-
-                    <div class="card">
-                        <h3 class="text-xl font-black mb-6 flex items-center gap-3"><i data-lucide="beef" class="text-amber-600"></i> Prep & Labor Stats</h3>
-                        <div class="grid md:grid-cols-2 gap-8">
-                            <div class="space-y-4">
-                                <div class="space-y-2">
-                                    <label class="text-[10px] font-black uppercase tracking-widest text-slate-400">Prep Notes</label>
-                                    <textarea id="prepNotes" placeholder="e.g. Prepped 8 pans of lettuce..." class="h-32"></textarea>
-                                </div>
-                            </div>
-                            <div class="grid grid-cols-1 gap-4">
-                                <div class="space-y-2">
-                                    <label class="text-[10px] font-black uppercase tracking-widest text-slate-400">Main Prep Count (Beef/Protein)</label>
-                                    <input type="text" id="beefCook" placeholder="Cooked Count">
-                                </div>
-                                <div class="space-y-2">
-                                    <label class="text-[10px] font-black uppercase tracking-widest text-slate-400">Tempered / Thawed</label>
-                                    <input type="text" id="beefTempered" placeholder="Tempered Count">
-                                </div>
-                                <div class="space-y-2">
-                                    <label class="text-[10px] font-black uppercase tracking-widest text-slate-400">Labor Variance %</label>
-                                    <input type="text" id="laborVariance" placeholder="e.g. -2.5%">
-                                </div>
+                    <div id="section-routine" class="card" x-data="{ expanded: true }">
+                        <h3 @click="expanded = !expanded" class="text-xl font-black mb-2 flex items-center justify-between cursor-pointer">
+                            <div class="flex items-center gap-3"><i data-lucide="list-checks" class="text-sky-500"></i> Routine & ServSafe</div>
+                            <i data-lucide="chevron-down" class="transition-transform no-print" :class="expanded ? 'rotate-180' : ''"></i>
+                        </h3>
+                        <div x-show="expanded" x-transition>
+                            <div id="routineContainer" class="grid sm:grid-cols-2 gap-4 mt-4"></div>
+                            <div class="mt-8 flex gap-3 no-print">
+                                <input type="text" id="newRoutineTask" placeholder="Add custom daily task..." class="flex-1">
+                                <button type="button" onclick="addRoutineTask()" class="btn btn-outline">Add</button>
                             </div>
                         </div>
                     </div>
 
-                    <div class="card">
-                        <h3 class="text-xl font-black mb-6 flex items-center gap-3"><i data-lucide="banknote" class="text-emerald-500"></i> Cash & Registers</h3>
-                        <div class="grid lg:grid-cols-2 gap-12">
-                            <div>
-                                <label class="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-4 block">Register Variance</label>
-                                <div id="drawersContainer" class="space-y-3 mb-4"></div>
-                                <button type="button" onclick="addDrawerItem()" class="text-sky-600 font-black text-xs uppercase tracking-widest">+ Add Drawer</button>
-                            </div>
-                            <div class="space-y-6">
-                                <div class="space-y-2">
-                                    <label class="text-[10px] font-black uppercase tracking-widest text-slate-400">Safe Count ($)</label>
-                                    <input type="text" id="safeCount" placeholder="$1,100.00">
+                    <div id="section-stats" class="card" x-data="{ expanded: true }">
+                        <h3 @click="expanded = !expanded" class="text-xl font-black mb-2 flex items-center justify-between cursor-pointer">
+                            <div class="flex items-center gap-3"><i data-lucide="beef" class="text-amber-600"></i> Prep & Labor Stats</div>
+                            <i data-lucide="chevron-down" class="transition-transform no-print" :class="expanded ? 'rotate-180' : ''"></i>
+                        </h3>
+                        <div x-show="expanded" x-transition class="mt-4">
+                            <div class="grid md:grid-cols-2 gap-8">
+                                <div class="space-y-4">
+                                    <div class="space-y-2">
+                                        <label class="text-[10px] font-black uppercase tracking-widest text-slate-400">Prep Notes</label>
+                                        <textarea id="prepNotes" placeholder="e.g. Prepped 8 pans of lettuce..." class="h-32"></textarea>
+                                    </div>
                                 </div>
-                                <div class="space-y-2">
-                                    <label class="text-[10px] font-black uppercase tracking-widest text-slate-400">Verified Deposits</label>
-                                    <div id="depositsContainer" class="space-y-3 mb-2"></div>
-                                    <button type="button" onclick="addDepositItem()" class="text-sky-600 font-black text-xs uppercase tracking-widest">+ Add Deposit</button>
-                                </div>
-                                <div class="space-y-2">
-                                    <label class="text-[10px] font-black uppercase tracking-widest text-slate-400">Change Needed</label>
-                                    <textarea id="changeNeeded" placeholder="List bills/coins needed..." class="h-20"></textarea>
+                                <div class="grid grid-cols-1 gap-4">
+                                    <div class="space-y-2">
+                                        <label class="text-[10px] font-black uppercase tracking-widest text-slate-400">Main Prep Count (Beef/Protein)</label>
+                                        <input type="text" id="beefCook" placeholder="Cooked Count">
+                                    </div>
+                                    <div class="space-y-2">
+                                        <label class="text-[10px] font-black uppercase tracking-widest text-slate-400">Tempered / Thawed</label>
+                                        <input type="text" id="beefTempered" placeholder="Tempered Count">
+                                    </div>
+                                    <div class="space-y-2">
+                                        <label class="text-[10px] font-black uppercase tracking-widest text-slate-400">Labor Variance %</label>
+                                        <input type="text" id="laborVariance" placeholder="e.g. -2.5%">
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <div class="card">
-                        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
-                            <h3 class="text-xl font-black flex items-center gap-3"><i data-lucide="package" class="text-purple-500"></i> Inventory Count</h3>
-                            <div class="flex gap-2 w-full md:w-auto">
-                                <select id="sortSelect" onchange="sortInventory(this.value)" class="text-sm border-slate-200">
-                                    <option value="recent">Sort: Most Recent</option>
-                                    <option value="alpha">Sort: Alphabetical A-Z</option>
+                    <div id="section-cash" class="card" x-data="{ expanded: true }">
+                        <h3 @click="expanded = !expanded" class="text-xl font-black mb-2 flex items-center justify-between cursor-pointer">
+                            <div class="flex items-center gap-3"><i data-lucide="banknote" class="text-emerald-500"></i> Cash & Registers</div>
+                            <i data-lucide="chevron-down" class="transition-transform no-print" :class="expanded ? 'rotate-180' : ''"></i>
+                        </h3>
+                        <div x-show="expanded" x-transition class="mt-4">
+                            <div class="grid lg:grid-cols-2 gap-12">
+                                <div>
+                                    <label class="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-4 block">Register Variance Tracker</label>
+                                    <div id="drawersContainer" class="space-y-3 mb-4"></div>
+                                    <button type="button" onclick="addDrawerItem()" class="text-sky-600 font-black text-xs uppercase tracking-widest hover:text-sky-700 no-print">+ Add Drawer</button>
+                                </div>
+                                <div class="space-y-6">
+                                    <div class="space-y-2">
+                                        <label class="text-[10px] font-black uppercase tracking-widest text-slate-400">Safe Count ($)</label>
+                                        <input type="text" id="safeCount" placeholder="$1,100.00">
+                                    </div>
+                                    <div class="space-y-2">
+                                        <label class="text-[10px] font-black uppercase tracking-widest text-slate-400">Verified Deposits</label>
+                                        <div id="depositsContainer" class="space-y-3 mb-2"></div>
+                                        <button type="button" onclick="addDepositItem()" class="text-sky-600 font-black text-xs uppercase tracking-widest no-print">+ Add Deposit</button>
+                                    </div>
+                                    <div class="space-y-2">
+                                        <label class="text-[10px] font-black uppercase tracking-widest text-slate-400">Change Needed</label>
+                                        <textarea id="changeNeeded" placeholder="List bills/coins needed from bank..." class="h-20"></textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="section-inventory" class="card" x-data="{ expanded: true }">
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 @click="expanded = !expanded" class="text-xl font-black flex items-center gap-3 cursor-pointer w-full">
+                                <div class="flex items-center gap-3"><i data-lucide="package" class="text-purple-500"></i> Inventory Count</div>
+                                <i data-lucide="chevron-down" class="transition-transform no-print ml-auto mr-4" :class="expanded ? 'rotate-180' : ''"></i>
+                            </h3>
+                            <div class="flex gap-2">
+                                <select id="sortSelect" onchange="sortInventory(this.value)" class="text-sm w-auto">
+                                    <option value="recent">Most Recent</option>
+                                    <option value="alpha">A-Z</option>
                                 </select>
-                                <button type="button" onclick="addInventoryItem()" class="btn btn-outline btn-sm whitespace-nowrap">+ Add Item</button>
+                                <button type="button" onclick="addInventoryItem()" class="btn btn-outline btn-sm no-print whitespace-nowrap">+ Add</button>
                             </div>
                         </div>
-                        <div class="hidden md:grid grid-cols-5 gap-4 px-4 mb-4 text-[10px] font-black uppercase tracking-widest text-slate-400">
-                            <div class="col-span-1">Item Name</div>
-                            <div>Front/Backline</div>
-                            <div>Cooler</div>
-                            <div>Freezer</div>
-                            <div class="text-right">Action</div>
+                        <div x-show="expanded" x-transition>
+                            <div class="hidden md:grid grid-cols-5 gap-4 px-4 mb-4 text-[10px] font-black uppercase tracking-widest text-slate-400">
+                                <div class="col-span-1">Item Name</div>
+                                <div>Front/Backline</div>
+                                <div>Cooler</div>
+                                <div>Freezer</div>
+                                <div class="text-right no-print">Action</div>
+                            </div>
+                            <div id="inventoryContainer"></div>
                         </div>
-                        <div id="inventoryContainer"></div>
                     </div>
 
-                    <div class="grid md:grid-cols-2 gap-6 pt-12 no-print">
-                        <button type="button" onclick="generateReport()" class="btn btn-dark py-6 text-xl shadow-2xl">
-                            <i data-lucide="printer"></i> End Shift & Print
+                    <div class="grid md:grid-cols-3 gap-4 pt-8 no-print">
+                        <button type="button" onclick="exportDataJSON()" class="btn btn-outline py-5">
+                            <i data-lucide="download"></i> Save JSON
                         </button>
-                        <button type="button" onclick="manualSaveHistory()" class="btn btn-outline py-6 text-xl">
-                            <i data-lucide="cloud"></i> Save to Cloud
+                        <button type="button" onclick="manualSaveHistory()" class="btn btn-outline py-5" id="btnCloudSave" disabled>
+                            <i data-lucide="cloud-off" id="iconCloudSave"></i> Save to Cloud
+                        </button>
+                        <button type="button" onclick="generateReport()" class="btn btn-dark py-5 shadow-2xl">
+                            <i data-lucide="printer"></i> End Shift & Print
                         </button>
                     </div>
                 </form>
@@ -423,7 +498,7 @@
                             <p class="text-sm text-slate-500 mb-4">Save your exact current inventory layout and checklists.</p>
                             <div class="flex gap-2 mb-8">
                                 <input type="text" id="customPresetName" placeholder="e.g. Closing Shift" class="flex-1">
-                                <button onclick="saveCustomPreset()" class="btn btn-outline">Save Current</button>
+                                <button onclick="saveCustomPreset()" class="btn btn-outline whitespace-nowrap">Save Current</button>
                             </div>
                             <div id="customPresetsContainer" class="space-y-3"></div>
                         </div>
@@ -435,7 +510,7 @@
         <div id="view-profile" class="view-section px-6 py-12">
             <div class="max-w-4xl mx-auto">
                 <div class="card text-center mb-12 py-16">
-                    <div id="profileAvatar" class="w-24 h-24 bg-sky-500 text-white rounded-full flex items-center justify-center text-4xl font-black mx-auto mb-6 shadow-xl dark:shadow-none">?</div>
+                    <div id="profileAvatar" class="w-24 h-24 bg-sky-500 text-white rounded-full flex items-center justify-center text-4xl font-black mx-auto mb-6 shadow-xl shadow-sky-200 dark:shadow-none">?</div>
                     <h2 class="text-3xl font-black mb-2" id="profNameDisplay">Loading...</h2>
                     <span class="inline-flex items-center px-4 py-1.5 text-[10px] font-black tracking-[0.2em] text-sky-700 uppercase bg-sky-50 rounded-full" id="profSubStatus">Free Plan</span>
                 </div>
@@ -452,10 +527,18 @@
                         </div>
                     </div>
                     <div class="card">
-                        <h3 class="text-xl font-black mb-6">Affiliate Program</h3>
-                        <p class="text-slate-500 mb-6 text-sm">Earn premium credits by referring other managers.</p>
-                        <input type="text" id="referralLink" readonly class="font-mono text-xs mb-4 bg-slate-50 opacity-60 dark:bg-slate-800">
-                        <button onclick="copyReferral()" class="btn btn-outline w-full">Copy My Link</button>
+                        <h3 class="text-xl font-black mb-6">Data & Cloud Controls</h3>
+                        <p class="text-slate-500 mb-6 text-sm">Manage where your data is stored securely.</p>
+                        
+                        <div class="p-4 border border-slate-200 dark:border-slate-800 rounded-xl mb-4 bg-slate-50 dark:bg-slate-900">
+                            <label class="flex items-center gap-3 cursor-pointer">
+                                <input type="checkbox" id="profileCloudSyncToggle" onchange="triggerCloudOptIn(this)" class="w-5 h-5 accent-sky-500">
+                                <span class="font-bold text-sm">Enable Enterprise Cloud Sync</span>
+                            </label>
+                            <p class="text-xs text-slate-400 mt-2">Requires Business Pro plan. Binds you to Data Controller ToS.</p>
+                        </div>
+                        
+                        <button onclick="exportDataJSON()" class="btn btn-outline w-full mb-4">Export All Data to JSON File</button>
                     </div>
                 </div>
 
@@ -464,8 +547,8 @@
                     <div class="space-y-6">
                         <div class="flex flex-col sm:flex-row gap-4">
                             <button onclick="changePassword()" class="btn btn-outline flex-1 text-sm"><i data-lucide="key" class="w-4 h-4"></i> Change Password</button>
-                            <button onclick="cancelSubscription()" class="btn btn-outline flex-1 text-sm text-amber-500 border-amber-200 hover:bg-amber-50"><i data-lucide="x-circle" class="w-4 h-4"></i> Cancel Sub</button>
-                            <button onclick="deleteAccount()" class="btn btn-outline flex-1 text-sm text-red-500 border-red-200 hover:bg-red-50"><i data-lucide="trash-2" class="w-4 h-4"></i> Delete Account</button>
+                            <button onclick="cancelSubscription()" class="btn btn-outline flex-1 text-sm text-amber-500 border-amber-200 hover:bg-amber-50 dark:border-amber-900/50 dark:hover:bg-amber-900/20"><i data-lucide="x-circle" class="w-4 h-4"></i> Cancel Sub</button>
+                            <button onclick="deleteAccount()" class="btn btn-outline flex-1 text-sm text-red-500 border-red-200 hover:bg-red-50 dark:border-red-900/50 dark:hover:bg-red-900/20"><i data-lucide="trash-2" class="w-4 h-4"></i> Delete Account</button>
                         </div>
                     </div>
                 </div>
@@ -487,23 +570,46 @@
 
     </main>
 
-    <div id="print-wrapper" class="hidden print:block absolute top-0 left-0 w-full bg-white z-50">
-        <div class="p-8 font-serif bg-white text-black min-h-screen">
-            <h1 class="text-2xl font-bold border-b-2 border-black pb-4 mb-8" id="printHeader">ezManage Shift Report</h1>
-            <div class="mb-8">
-                <h2 class="font-bold italic mb-2 uppercase text-sm tracking-widest">Shift Routine</h2>
-                <div id="printRoutines" class="space-y-1"></div>
-            </div>
-            <div class="mb-8">
-                <h2 class="font-bold italic mb-2 uppercase text-sm tracking-widest">Cash & Drawers</h2>
-                <div id="printDrawers" class="space-y-1 mb-4"></div>
-                <div class="font-bold">Safe Count: <span id="printSafe"></span></div>
-                <div id="printDeposits" class="mt-2"></div>
-            </div>
-            <div class="mb-8">
-                <h2 class="font-bold italic mb-2 uppercase text-sm tracking-widest">Inventory List</h2>
-                <div id="printInventoryList" class="space-y-1"></div>
-            </div>
+    <div id="print-wrapper" class="hidden print:block absolute top-0 left-0 w-full bg-white z-50 p-8 text-black">
+        <h1 class="text-3xl font-black border-b-4 border-black pb-4 mb-6 uppercase tracking-wider" id="printHeader">Store Shift Logbook</h1>
+        
+        <div class="print-header-info font-bold text-sm">
+            <div>Manager: <span id="printMgr" class="font-normal"></span></div>
+            <div>Date: <span id="printDt" class="font-normal"></span></div>
+            <div>Time Saved: <span id="printTm" class="font-normal"></span></div>
+            <div>Log Duration: <span id="printDur" class="font-normal"></span> min</div>
+        </div>
+
+        <h2 class="font-bold uppercase text-lg border-b-2 border-black mb-4 mt-8 bg-gray-100 p-2">1. Health, Safety & Routines</h2>
+        <table class="print-table">
+            <thead>
+                <tr><th style="width:10%">Status</th><th>Task/Routine Description</th></tr>
+            </thead>
+            <tbody id="printRoutines"></tbody>
+        </table>
+
+        <h2 class="font-bold uppercase text-lg border-b-2 border-black mb-4 mt-8 bg-gray-100 p-2">2. Cash & Drawers</h2>
+        <table class="print-table">
+            <thead>
+                <tr><th>Drawer Label</th><th>Expected</th><th>Actual/Variance</th></tr>
+            </thead>
+            <tbody id="printDrawers"></tbody>
+        </table>
+        <div class="font-bold mt-2">End of Shift Safe Count: <span id="printSafe" class="font-normal"></span></div>
+        <div class="font-bold mt-2">Change Needed: <span id="printChange" class="font-normal"></span></div>
+
+        <h2 class="font-bold uppercase text-lg border-b-2 border-black mb-4 mt-8 bg-gray-100 p-2">3. Master Inventory Verification</h2>
+        <table class="print-table">
+            <thead>
+                <tr><th>Item Name</th><th>Front/Backline</th><th>Cooler Count</th><th>Freezer Count</th></tr>
+            </thead>
+            <tbody id="printInventoryList"></tbody>
+        </table>
+
+        <h2 class="font-bold uppercase text-lg border-b-2 border-black mb-4 mt-8 bg-gray-100 p-2">4. Labor & Prep Notes</h2>
+        <div class="border border-black p-4 min-h-[100px] mb-4" id="printNotesBlock"></div>
+        <div class="text-xs italic text-center mt-12 pt-4 border-t border-gray-300">
+            System generated by ezManage. This document is a local export and complies with Data Controller offline storage protocols.
         </div>
     </div>
 
@@ -532,11 +638,12 @@
         let cloudSyncTimeout = null;
         let unsubscribeUser = null;
         let initialDraftLoaded = false;
+        let cloudSyncEnabled = false;
 
         // ================= AUTH LISTENER & INIT =================
         auth.onAuthStateChanged((user) => {
             if (!user) {
-                // Reroute decoupled onboarding users
+                // If unauthenticated, redirect to onboarding per decoupled structure
                 window.location.href = 'onboarding.html';
                 return;
             }
@@ -548,14 +655,18 @@
 
             navStatus.innerText = "Manager: " + (user.displayName || "Online");
             document.getElementById('profEmail').value = user.email;
-            document.getElementById('referralLink').value = `${window.location.origin}${window.location.pathname}?ref=${user.uid}`;
             
             unsubscribeUser = db.collection("users").doc(user.uid).onSnapshot(doc => {
                 if (doc.exists) {
                     currentUserData = doc.data();
                     
-                    // Display Admin nav securely
+                    // Admin UI trigger
                     if(currentUserData.isAdmin) document.getElementById('navAdminBtn').classList.remove('hidden');
+
+                    // Legal / Cloud Shielding Opt-In
+                    cloudSyncEnabled = !!currentUserData.cloudSyncEnabled;
+                    document.getElementById('profileCloudSyncToggle').checked = cloudSyncEnabled;
+                    updateCloudSyncUI();
 
                     loadProfileUI(currentUserData);
                     loadCustomPresets();
@@ -621,6 +732,79 @@
             document.getElementById('timerDisplay').innerText = `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
         }
 
+        // ================= LEGAL SHIELDING & CLOUD ToS =================
+        function triggerCloudOptIn(checkbox) {
+            if (checkbox.checked) {
+                checkbox.checked = false; // Temporarily uncheck until ToS accepted
+                document.getElementById('tosModal').classList.remove('hidden');
+            } else { disableCloudSync(); }
+        }
+
+        function acceptToSAndEnableCloud() {
+            if (!currentUser) return;
+            const isBusiness = (currentUserData && currentUserData.plan && currentUserData.plan.includes('Business'));
+            
+            if(!isBusiness) {
+                alert("Enterprise Cloud Sync is only available for the Business Pro plan.");
+                document.getElementById('tosModal').classList.add('hidden');
+                return;
+            }
+
+            cloudSyncEnabled = true;
+            document.getElementById('profileCloudSyncToggle').checked = true;
+            document.getElementById('tosModal').classList.add('hidden');
+            
+            db.collection('users').doc(currentUser.uid).set({ cloudSyncEnabled: true }, { merge: true });
+            updateCloudSyncUI();
+            triggerDraftSync(); 
+        }
+
+        function declineToS() {
+            document.getElementById('tosModal').classList.add('hidden');
+            document.getElementById('profileCloudSyncToggle').checked = false;
+            disableCloudSync();
+        }
+
+        function disableCloudSync() {
+            if (!currentUser) return;
+            cloudSyncEnabled = false;
+            db.collection('users').doc(currentUser.uid).set({ cloudSyncEnabled: false }, { merge: true });
+            updateCloudSyncUI();
+        }
+
+        function updateCloudSyncUI() {
+            const statusIndicator = document.getElementById('cloudSyncStatus');
+            const statusText = document.getElementById('cloudSyncText');
+            const btnCloudSave = document.getElementById('btnCloudSave');
+            const iconCloudSave = document.getElementById('iconCloudSave');
+
+            if (cloudSyncEnabled) {
+                statusIndicator.className = "w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]";
+                statusText.innerText = "Cloud Sync Active (Data Controller)";
+                btnCloudSave.disabled = false;
+                btnCloudSave.classList.remove('opacity-50', 'cursor-not-allowed');
+                iconCloudSave.setAttribute('data-lucide', 'cloud-upload');
+            } else {
+                statusIndicator.className = "w-2 h-2 rounded-full bg-slate-400";
+                statusText.innerText = "Local Mode Only (Opt-In Required)";
+                btnCloudSave.disabled = true;
+                btnCloudSave.classList.add('opacity-50', 'cursor-not-allowed');
+                iconCloudSave.setAttribute('data-lucide', 'cloud-off');
+            }
+            lucide.createIcons();
+        }
+
+        function exportDataJSON() {
+            const state = getTrackerState();
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(state, null, 2));
+            const dlAnchorElem = document.createElement('a');
+            dlAnchorElem.setAttribute("href", dataStr);
+            dlAnchorElem.setAttribute("download", `ezManage_ShiftData_${state.dateSaved}.json`);
+            document.body.appendChild(dlAnchorElem);
+            dlAnchorElem.click();
+            document.body.removeChild(dlAnchorElem);
+        }
+
         // ================= TRACKER LOGIC =================
         function addDrawerItem(val = "100.00", label = "") {
             const div = document.createElement('div');
@@ -650,8 +834,8 @@
             div.className = "flex gap-4 items-center bg-slate-50 dark:bg-slate-800 p-3 rounded-xl animate-fadeIn";
             div.innerHTML = `
                 <input type="text" placeholder="Amount" class="dep-val" value="${val}" style="flex:1;" oninput="triggerDraftSync()">
-                <label class="flex items-center gap-1 text-[10px] font-bold"><input type="checkbox" class="dep-ver" ${ver ? 'checked' : ''} onchange="triggerDraftSync()"> VER</label>
-                <label class="flex items-center gap-1 text-[10px] font-bold"><input type="checkbox" class="dep-val-chk" ${valCheck ? 'checked' : ''} onchange="triggerDraftSync()"> VAL</label>
+                <label class="flex items-center gap-1 text-[10px] font-bold"><input type="checkbox" class="dep-ver accent-sky-500 w-4 h-4" ${ver ? 'checked' : ''} onchange="triggerDraftSync()"> VER</label>
+                <label class="flex items-center gap-1 text-[10px] font-bold"><input type="checkbox" class="dep-val-chk accent-sky-500 w-4 h-4" ${valCheck ? 'checked' : ''} onchange="triggerDraftSync()"> VAL</label>
                 <button type="button" onclick="this.parentElement.remove(); triggerDraftSync();" class="text-red-400"><i data-lucide="x" class="w-4"></i></button>
             `;
             document.getElementById('depositsContainer').appendChild(div);
@@ -663,7 +847,7 @@
             let taskName = name || document.getElementById('newRoutineTask').value;
             if(!taskName) return;
             const div = document.createElement('div');
-            div.className = "flex items-center gap-3 p-4 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl shadow-sm";
+            div.className = "flex items-center gap-3 p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm";
             div.innerHTML = `
                 <input type="checkbox" class="routine-chk w-5 h-5 accent-sky-500" ${isChecked ? 'checked' : ''} onchange="triggerDraftSync()"> 
                 <span class="routine-name flex-1 font-semibold text-sm">${taskName}</span>
@@ -677,8 +861,8 @@
 
         function addInventoryItem(name = "", bl = "", cl = "", fr = "") {
             const div = document.createElement('div');
-            div.className = 'inventory-item animate-fadeIn';
-            div.dataset.timestamp = Date.now(); // For sorting
+            div.className = 'inventory-item animate-fadeIn border-slate-200 dark:border-slate-800';
+            div.dataset.timestamp = Date.now(); // For sorting UX
             div.innerHTML = `
                 <input type="text" placeholder="Item Name" class="inv-name" value="${name}" oninput="triggerDraftSync()">
                 <input type="number" placeholder="Backline" class="inv-backline" value="${bl}" oninput="triggerDraftSync()">
@@ -686,7 +870,6 @@
                 <input type="number" placeholder="Freezer" class="inv-freezer" value="${fr}" oninput="triggerDraftSync()">
                 <button type="button" onclick="this.parentElement.remove(); triggerDraftSync();" class="text-red-400 text-right"><i data-lucide="minus-circle" class="w-5"></i></button>
             `;
-            // INSTRUCTION: prepend to top
             document.getElementById('inventoryContainer').prepend(div);
             lucide.createIcons();
             if (initialDraftLoaded) triggerDraftSync();
@@ -709,9 +892,7 @@
                 
                 container.innerHTML = '';
                 items.forEach(item => container.appendChild(item));
-            } catch (err) {
-                console.error("Sorting Error:", err);
-            }
+            } catch (err) { console.error("Sorting Error:", err); }
         }
 
         // ================= SYNC & STATE =================
@@ -751,12 +932,17 @@
         function triggerDraftSync() {
             if (!initialDraftLoaded || !currentUser) return;
             const state = getTrackerState();
+            
+            // Core Local Backup Shielding
             localStorage.setItem(`ezManage_draft_${currentUser.uid}`, JSON.stringify(state));
 
-            clearTimeout(cloudSyncTimeout);
-            cloudSyncTimeout = setTimeout(() => {
-                db.collection('users').doc(currentUser.uid).set({ trackerDraft: state }, { merge: true });
-            }, 3000); 
+            // Enterprise Opt-in Database Sync
+            if (cloudSyncEnabled) {
+                clearTimeout(cloudSyncTimeout);
+                cloudSyncTimeout = setTimeout(() => {
+                    db.collection('users').doc(currentUser.uid).set({ trackerDraft: state }, { merge: true });
+                }, 3000); 
+            }
         }
 
         function populateTrackerFromState(draft) {
@@ -774,7 +960,7 @@
             if(draft.routines) draft.routines.forEach(r => addRoutineTask(r.name, r.checked));
             
             document.getElementById('inventoryContainer').innerHTML = '';
-            if(draft.inventory) draft.inventory.slice().reverse().forEach(i => addInventoryItem(i.name, i.bl, i.cl, i.fr)); // reverse because of prepend
+            if(draft.inventory) draft.inventory.slice().reverse().forEach(i => addInventoryItem(i.name, i.bl, i.cl, i.fr)); // reverse for prepend correction
             
             document.getElementById('drawersContainer').innerHTML = '';
             if(draft.drawers) draft.drawers.forEach(d => addDrawerItem(d.val, d.name));
@@ -790,9 +976,10 @@
                 try {
                     populateTrackerFromState(JSON.parse(localDraft));
                     return; 
-                } catch(e) { console.error("Local draft parse error"); }
+                } catch(e) { console.error("Local parse err"); }
             }
-            if (currentUserData && currentUserData.trackerDraft) {
+            
+            if (cloudSyncEnabled && currentUserData && currentUserData.trackerDraft) {
                 populateTrackerFromState(currentUserData.trackerDraft);
             } else {
                 initDefaults();
@@ -800,7 +987,9 @@
         }
 
         function manualSaveHistory() {
-            if(!currentUser) return;
+            if(!currentUser) return alert("Please Sign In first.");
+            if(!cloudSyncEnabled) return alert("Enterprise Cloud Sync is required to save shift history to the cloud.");
+            
             const state = getTrackerState();
             db.collection('users').doc(currentUser.uid).set({
                 shiftHistory: firebase.firestore.FieldValue.arrayUnion(state)
@@ -815,6 +1004,11 @@
             const container = document.getElementById('historyListContainer');
             const searchInput = document.getElementById('historySearch').value.toLowerCase();
             
+            if(!cloudSyncEnabled) {
+                container.innerHTML = "<p class='text-center py-10 opacity-60'>Cloud Sync is disabled. History relies on Enterprise Cloud Data.</p>";
+                return;
+            }
+
             const rawHistory = (currentUserData.shiftHistory || []).reverse();
             const history = rawHistory.filter(h => {
                 const manager = (h.manager || "").toLowerCase();
@@ -962,7 +1156,7 @@
             if(confirm("Apply this template? Current inventory list will be cleared.")) {
                 const key = document.getElementById('presetSelector').value;
                 document.getElementById('inventoryContainer').innerHTML = '';
-                (presets[key] || []).reverse().forEach(name => addInventoryItem(name));
+                (presets[key] || []).slice().reverse().forEach(name => addInventoryItem(name));
                 navTo('tracker');
                 triggerDraftSync();
             }
@@ -1007,7 +1201,7 @@
             const cp = currentUserData.customPresets || [];
             cp.forEach(p => {
                 const div = document.createElement('div');
-                div.className = "flex justify-between items-center p-4 bg-slate-50 dark:bg-slate-800 rounded-xl group border border-slate-100 dark:border-slate-700";
+                div.className = "flex justify-between items-center p-4 bg-slate-50 dark:bg-slate-900 rounded-xl group border border-slate-100 dark:border-slate-800";
                 div.innerHTML = `
                     <span class="font-bold">${p.name}</span>
                     <div class="flex gap-2">
@@ -1058,13 +1252,6 @@
             db.collection('users').doc(currentUser.uid).set(data, { merge: true }).then(() => alert("Profile Updated!"));
         }
 
-        function copyReferral() {
-            const el = document.getElementById('referralLink');
-            el.select();
-            document.execCommand('copy');
-            alert("Link copied! Share to earn credits.");
-        }
-
         function changePassword() {
             if(!currentUser) return;
             auth.sendPasswordResetEmail(currentUser.email).then(() => {
@@ -1089,7 +1276,8 @@
                     alert("Subscription canceled successfully.");
                     db.collection('users').doc(currentUser.uid).update({ 
                         "subscription.status": "canceled", 
-                        plan: "Free" 
+                        plan: "Free",
+                        cloudSyncEnabled: false
                     });
                 } else { alert("Error: " + data.error); }
             } catch(e) { alert("Failed to contact payment server. Try again later."); }
@@ -1149,7 +1337,7 @@
                       if(status === 'Declined') badgeClass = "bg-red-100 text-red-700";
 
                       const div = document.createElement('div');
-                      div.className = "p-4 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700";
+                      div.className = "p-4 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-800";
                       div.innerHTML = `
                           <div class="flex justify-between items-start mb-2">
                               <span class="text-xs text-slate-400 font-mono">${new Date(data.timestamp).toLocaleDateString()}</span>
@@ -1162,7 +1350,7 @@
               });
         }
 
-        // ================= MISC UTILS =================
+        // ================= PDF PRINT ENGINE =================
         function clearData() {
             if(confirm("Are you sure? This will wipe the current tracker form.")) {
                 document.getElementById('trackerForm').reset();
@@ -1183,7 +1371,7 @@
                 addDrawerItem("100.00", "Register 2");
                 addDepositItem();
                 ["Parking Lot", "Lobby/Restrooms", "ServSafe Temps", "Filtered Fryers", "Trash Run"].forEach(t => addRoutineTask(t));
-                presets['arbys'].slice().reverse().forEach(name => addInventoryItem(name)); // Ensure Arby's renders top down with prepend
+                presets['arbys'].slice().reverse().forEach(name => addInventoryItem(name)); // Match prepend logic
             }
         }
 
@@ -1191,23 +1379,34 @@
             if(!currentUser) return alert("Sign in required.");
             const state = getTrackerState();
             
-            document.getElementById('printHeader').innerText = `ezManage Shift Summary: ${state.dateSaved} - ${state.manager}`;
+            // Perfect PDF Print Mirror Mapping
+            document.getElementById('printMgr').innerText = state.manager || 'Not Specified';
+            document.getElementById('printDt').innerText = state.dateSaved || 'Not Specified';
+            document.getElementById('printTm').innerText = state.timeSaved || 'Not Specified';
+            document.getElementById('printDur').innerText = state.durationMins || '0';
             
             let routineHtml = "";
-            state.routines.forEach(r => routineHtml += `<div>${r.checked ? '☑' : '☐'} ${r.name}</div>`);
-            document.getElementById('printRoutines').innerHTML = routineHtml;
+            state.routines.forEach(r => {
+                let boxClass = r.checked ? "print-checked" : "";
+                routineHtml += `<tr><td style="text-align:center"><div class="print-checkbox ${boxClass}"></div></td><td>${r.name}</td></tr>`;
+            });
+            document.getElementById('printRoutines').innerHTML = routineHtml || "<tr><td colspan='2'>No routines logged</td></tr>";
 
             let drawerHtml = "";
-            state.drawers.forEach(d => drawerHtml += `<div>${d.name}: $${d.val} (${d.res})</div>`);
-            document.getElementById('printDrawers').innerHTML = drawerHtml;
+            state.drawers.forEach(d => drawerHtml += `<tr><td>${d.name}</td><td>$${d.val}</td><td>${d.res}</td></tr>`);
+            document.getElementById('printDrawers').innerHTML = drawerHtml || "<tr><td colspan='3'>No drawers logged</td></tr>";
 
-            document.getElementById('printSafe').innerText = state.safeCount;
+            document.getElementById('printSafe').innerText = state.safeCount || "N/A";
+            document.getElementById('printChange').innerText = state.changeNeeded || "N/A";
 
             let invHtml = "";
-            state.inventory.forEach(i => invHtml += `<div>${i.name}: ${i.bl} BL | ${i.cl} CL | ${i.fr} FR</div>`);
-            document.getElementById('printInventoryList').innerHTML = invHtml;
+            state.inventory.forEach(i => invHtml += `<tr><td>${i.name}</td><td>${i.bl}</td><td>${i.cl}</td><td>${i.fr}</td></tr>`);
+            document.getElementById('printInventoryList').innerHTML = invHtml || "<tr><td colspan='4'>No inventory logged</td></tr>";
 
-            manualSaveHistory();
+            document.getElementById('printNotesBlock').innerText = state.prepNotes || "No notes provided.";
+
+            if (cloudSyncEnabled) { manualSaveHistory(); } 
+            else { localStorage.setItem(`ezManage_draft_${currentUser.uid}`, JSON.stringify(state)); }
             
             try {
                 window.print();
