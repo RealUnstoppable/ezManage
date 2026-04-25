@@ -46,7 +46,7 @@
             --nav-height: 80px;
         }
 
-        /* AMOLED Black Optimization for Anti-Fatigue Restored */
+        /* AMOLED Anti-Fatigue Optmization */
         body.dark-mode {
             --bg-color: #000000;
             --card-bg: #0a0a0a;
@@ -94,16 +94,9 @@
         }
 
         .btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            padding: 0.8rem 1.8rem;
-            border-radius: 9999px; /* Pill-shaped aesthetic mandate */
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            font-size: 0.95rem;
-            gap: 0.5rem;
+            display: inline-flex; align-items: center; justify-content: center;
+            padding: 0.8rem 1.8rem; border-radius: 9999px; font-weight: 700;
+            cursor: pointer; transition: all 0.2s ease; font-size: 0.95rem; gap: 0.5rem;
         }
 
         .btn-accent { background: var(--accent); color: white; border: 2px solid var(--accent); }
@@ -116,29 +109,17 @@
         .btn-sm { padding: 0.5rem 1rem; font-size: 0.8rem; }
 
         input[type="text"], input[type="number"], input[type="date"], input[type="time"], input[type="password"], input[type="email"], textarea, select {
-            padding: 0.85rem 1.2rem;
-            border: 1px solid var(--border);
-            border-radius: 9999px; /* Pill-shaped aesthetic mandate */
-            outline: none;
-            width: 100%;
-            background-color: var(--card-bg);
-            color: var(--text-main);
-            font-size: 1rem;
-            transition: border-color 0.2s, box-shadow 0.2s;
+            padding: 0.85rem 1.2rem; border: 1px solid var(--border); border-radius: 9999px; 
+            outline: none; width: 100%; background-color: var(--card-bg); color: var(--text-main);
+            font-size: 1rem; transition: border-color 0.2s, box-shadow 0.2s;
         }
-        textarea { border-radius: 20px; resize: vertical; }
+        textarea { border-radius: 20px; resize: vertical; } 
         input:focus, textarea:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1); }
 
         .inventory-item {
-            display: grid;
-            grid-template-columns: 2fr 1fr 1fr 1fr 40px;
-            gap: 0.75rem;
-            align-items: center;
-            padding: 1rem;
-            background: var(--bg-color);
-            border-radius: 16px;
-            border: 1px solid var(--border);
-            margin-bottom: 0.5rem;
+            display: grid; grid-template-columns: 2fr 1fr 1fr 1fr 40px; gap: 0.75rem;
+            align-items: center; padding: 1rem; background: var(--bg-color);
+            border-radius: 16px; border: 1px solid var(--border); margin-bottom: 0.5rem;
         }
 
         @media (max-width: 768px) {
@@ -150,13 +131,10 @@
         ::-webkit-scrollbar-track { background: var(--bg-color); }
         ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
 
-        #sidebar {
-            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            transform: translateX(-100%);
-        }
+        #sidebar { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); transform: translateX(-100%); }
         #sidebar.open { transform: translateX(0); }
 
-        /* The PDF Output Mirror CSS Restored */
+        /* Perfect PDF Mirror */
         @media print {
             body { background: white; color: black; font-family: 'Times New Roman', serif; }
             main, nav, aside, .no-print { display: none !important; }
@@ -170,30 +148,20 @@
         }
     </style>
 </head>
-<body x-data="{ annual: true, mobileMenu: false }">
+<body x-data="{ mobileMenu: false }">
 
     <div id="tosModal" class="hidden fixed inset-0 z-[100] bg-black/80 flex items-center justify-center p-6 backdrop-blur-sm no-print" x-data>
         <div class="bg-white dark:bg-slate-900 w-full max-w-3xl rounded-2xl p-8 max-h-[90vh] overflow-y-auto border border-slate-200 dark:border-slate-700 shadow-2xl relative">
-            <h2 class="text-3xl font-black mb-6">Terms of Service & Enterprise Cloud Sync Policy</h2>
-            
+            <h2 class="text-3xl font-black mb-6">Enterprise Cloud Sync Policy</h2>
             <div class="space-y-6 text-sm text-slate-600 dark:text-slate-400 font-medium mb-8">
                 <div>
-                    <h3 class="text-slate-900 dark:text-white font-bold text-lg mb-2">1. The "Shadow IT" & Corporate Policy Clause</h3>
-                    <p>ezManage is a personal productivity and efficiency tool. You bear 100% of the responsibility for ensuring that entering your floor data complies with your employer’s Non-Disclosure Agreements (NDAs) and corporate IT security policies.</p>
-                </div>
-                <div>
-                    <h3 class="text-slate-900 dark:text-white font-bold text-lg mb-2">2. Data Controller vs. Data Processor</h3>
-                    <p>By opting into Enterprise Cloud Sync, you explicitly act as the "Data Controller." ezManage acts strictly as a "Data Processor" and facilitates the requested cloud backup architecture.</p>
-                </div>
-                <div>
-                    <h3 class="text-slate-900 dark:text-white font-bold text-lg mb-2">3. The FLSA / Wage Liability Shield</h3>
-                    <p>The timer and stopwatch functions are strictly provided as "task efficiency stopwatches." They are NOT official payroll time clocks. ezManage is shielded from FLSA claims or labor law violations.</p>
+                    <h3 class="text-slate-900 dark:text-white font-bold text-lg mb-2">Data Controller Agreement</h3>
+                    <p>By opting into Enterprise Cloud Sync, you or your business explicitly acts as the "Data Controller." ezManage acts strictly as a "Data Processor".</p>
                 </div>
             </div>
-
-            <div class="flex flex-col sm:flex-row gap-4 border-t border-slate-200 dark:border-slate-800 pt-6">
+            <div class="flex flex-col sm:flex-row gap-4 pt-6 border-t border-slate-200 dark:border-slate-800">
                 <button onclick="acceptToSAndEnableCloud()" class="btn btn-accent flex-1 py-4">I Accept & Enable Cloud Sync</button>
-                <button onclick="declineToS()" class="btn btn-outline flex-1 py-4 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20">Decline (Keep Data Local Only)</button>
+                <button onclick="declineToS()" class="btn btn-outline flex-1 py-4 text-red-500">Decline (Keep Local)</button>
             </div>
         </div>
     </div>
@@ -201,24 +169,17 @@
     <nav class="fixed w-full z-50 glass-nav border-b border-slate-200/50 top-0 no-print">
         <div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
             <div class="flex items-center space-x-3 cursor-pointer" onclick="window.location.href='index.html'">
-                <img src="ManagerPro.jpg" alt="ezManage Logo" class="w-10 h-10 rounded-xl shadow-sm border border-white">
-                <span class="text-xl font-black tracking-tighter text-slate-900 dark:text-white uppercase">ezManage</span>
+                <img src="ManagerPro.jpg" onerror="this.src='https://ui-avatars.com/api/?name=ez+M&background=87ceeb&color=fff'" alt="ezManage Logo" class="w-10 h-10 rounded-xl shadow-sm border border-white">
+                <span class="text-xl font-black tracking-tighter uppercase text-slate-900 dark:text-white">ezManage</span>
             </div>
-            
             <div class="hidden md:flex space-x-10 text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">
                 <a href="index.html" class="hover:text-sky-600 transition-colors">Home</a>
-                <a href="#" onclick="navTo('tracker')" class="hover:text-sky-600 transition-colors text-sky-600">App</a>
+                <a href="#" onclick="navTo('tracker')" class="text-sky-600 transition-colors">App</a>
                 <a href="pricing.html" class="hover:text-sky-600 transition-colors">Pricing</a>
             </div>
-            
             <div class="flex items-center space-x-4">
-                <button onclick="window.location.href='company-dashboard.html'" class="text-[10px] font-black uppercase tracking-widest text-sky-600 hidden bg-sky-50 px-3 py-1 rounded-full border border-sky-200" id="navAdminBtn">Admin Panel</button>
-                <div id="navUserStatus" class="hidden sm:block text-[10px] font-black uppercase tracking-widest text-slate-500 cursor-pointer" onclick="navTo('profile')">
-                    Loading...
-                </div>
-                <button onclick="toggleSidebar()" class="p-2 text-slate-600 dark:text-slate-300" aria-label="Toggle Menu">
-                    <i data-lucide="menu"></i>
-                </button>
+                <div id="navUserStatus" class="hidden sm:block text-[10px] font-black uppercase tracking-widest text-slate-500 cursor-pointer" onclick="navTo('profile')">Loading...</div>
+                <button onclick="toggleSidebar()" class="p-2 text-slate-600 dark:text-slate-300" aria-label="Toggle Menu"><i data-lucide="menu"></i></button>
             </div>
         </div>
     </nav>
@@ -228,7 +189,6 @@
             <span class="font-black uppercase tracking-widest text-xs">Menu</span>
             <button onclick="toggleSidebar()" class="p-2"><i data-lucide="x"></i></button>
         </div>
-
         <nav class="space-y-6">
             <a href="#" onclick="navTo('tracker')" class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="edit-3"></i> Active Tracker</a>
             <a href="#" onclick="navTo('presets')" class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="layout"></i> Templates</a>
@@ -239,7 +199,6 @@
             <a href="pricing.html" class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="credit-card"></i> Upgrade Plan</a>
             <a href="#" onclick="navTo('request')" class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="lightbulb"></i> Feature Request</a>
         </nav>
-
         <div class="absolute bottom-8 left-8 right-8">
             <div class="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800">
                 <span class="text-xs font-bold uppercase tracking-widest">AMOLED Dark</span>
@@ -248,7 +207,7 @@
                     <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:bg-sky-500 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
                 </label>
             </div>
-            <button onclick="auth.signOut().then(() => window.location.href='index.html')" class="w-full mt-4 text-xs font-black uppercase tracking-[0.2em] text-red-500 hover:text-red-600">Sign Out</button>
+            <button onclick="signOut()" class="w-full mt-4 text-xs font-black uppercase tracking-[0.2em] text-red-500 hover:text-red-600">Sign Out</button>
         </div>
     </aside>
 
@@ -288,13 +247,10 @@
                         </div>
                         <div class="space-y-2">
                             <label class="text-[10px] font-black uppercase tracking-widest text-slate-400">Date & Time</label>
-                            <div class="flex gap-2">
-                                <input type="date" id="shiftDate">
-                                <input type="time" id="shiftTime">
-                            </div>
+                            <div class="flex gap-2"><input type="date" id="shiftDate"><input type="time" id="shiftTime"></div>
                         </div>
                         <div class="space-y-2 no-print">
-                            <label class="text-[10px] font-black uppercase tracking-widest text-slate-400">Task Efficiency Timer</label>
+                            <label class="text-[10px] font-black uppercase tracking-widest text-slate-400">Efficiency Timer</label>
                             <div class="flex gap-2 items-center">
                                 <button type="button" id="timerBtn" onclick="toggleShiftTimer()" class="btn btn-success flex-1 py-3"><i data-lucide="play" class="w-4"></i> Start</button>
                                 <span id="timerDisplay" class="font-mono font-bold bg-slate-50 dark:bg-slate-800 px-4 py-3 rounded-full border border-slate-100 dark:border-slate-700">00:00</span>
@@ -323,25 +279,11 @@
                         </h3>
                         <div x-show="expanded" x-transition class="mt-4">
                             <div class="grid md:grid-cols-2 gap-8">
-                                <div class="space-y-4">
-                                    <div class="space-y-2">
-                                        <label class="text-[10px] font-black uppercase tracking-widest text-slate-400">Prep Notes</label>
-                                        <textarea id="prepNotes" placeholder="e.g. Prepped 8 pans of lettuce..." class="h-32"></textarea>
-                                    </div>
-                                </div>
+                                <div class="space-y-4"><textarea id="prepNotes" placeholder="e.g. Prepped 8 pans of lettuce..." class="h-32"></textarea></div>
                                 <div class="grid grid-cols-1 gap-4">
-                                    <div class="space-y-2">
-                                        <label class="text-[10px] font-black uppercase tracking-widest text-slate-400">Main Prep Count (Beef/Protein)</label>
-                                        <input type="text" id="beefCook" placeholder="Cooked Count">
-                                    </div>
-                                    <div class="space-y-2">
-                                        <label class="text-[10px] font-black uppercase tracking-widest text-slate-400">Tempered / Thawed</label>
-                                        <input type="text" id="beefTempered" placeholder="Tempered Count">
-                                    </div>
-                                    <div class="space-y-2">
-                                        <label class="text-[10px] font-black uppercase tracking-widest text-slate-400">Labor Variance %</label>
-                                        <input type="text" id="laborVariance" placeholder="e.g. -2.5%">
-                                    </div>
+                                    <input type="text" id="beefCook" placeholder="Cooked Count">
+                                    <input type="text" id="beefTempered" placeholder="Tempered Count">
+                                    <input type="text" id="laborVariance" placeholder="Labor Variance % (e.g. -2.5%)">
                                 </div>
                             </div>
                         </div>
@@ -355,65 +297,47 @@
                         <div x-show="expanded" x-transition class="mt-4">
                             <div class="grid lg:grid-cols-2 gap-12">
                                 <div>
-                                    <label class="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-4 block">Register Variance Tracker</label>
                                     <div id="drawersContainer" class="space-y-3 mb-4"></div>
-                                    <button type="button" onclick="addDrawerItem()" class="text-sky-600 font-black text-xs uppercase tracking-widest hover:text-sky-700 no-print">+ Add Drawer</button>
+                                    <button type="button" onclick="addDrawerItem()" class="text-sky-600 font-black text-xs uppercase tracking-widest no-print">+ Add Drawer</button>
                                 </div>
                                 <div class="space-y-6">
-                                    <div class="space-y-2">
-                                        <label class="text-[10px] font-black uppercase tracking-widest text-slate-400">Safe Count ($)</label>
-                                        <input type="text" id="safeCount" placeholder="$1,100.00">
-                                    </div>
-                                    <div class="space-y-2">
-                                        <label class="text-[10px] font-black uppercase tracking-widest text-slate-400">Verified Deposits</label>
+                                    <input type="text" id="safeCount" placeholder="Safe Count ($)">
+                                    <div>
                                         <div id="depositsContainer" class="space-y-3 mb-2"></div>
                                         <button type="button" onclick="addDepositItem()" class="text-sky-600 font-black text-xs uppercase tracking-widest no-print">+ Add Deposit</button>
                                     </div>
-                                    <div class="space-y-2">
-                                        <label class="text-[10px] font-black uppercase tracking-widest text-slate-400">Change Needed</label>
-                                        <textarea id="changeNeeded" placeholder="List bills/coins needed from bank..." class="h-20"></textarea>
-                                    </div>
+                                    <textarea id="changeNeeded" placeholder="List bills/coins needed from bank..." class="h-20"></textarea>
                                 </div>
                             </div>
                         </div>
                     </div>
 
                     <div id="section-inventory" class="card" x-data="{ expanded: true }">
-                        <div class="flex justify-between items-center mb-6">
-                            <h3 @click="expanded = !expanded" class="text-xl font-black flex items-center gap-3 cursor-pointer w-full">
-                                <div class="flex items-center gap-3"><i data-lucide="package" class="text-purple-500"></i> Inventory Count</div>
-                                <i data-lucide="chevron-down" class="transition-transform no-print ml-auto mr-4" :class="expanded ? 'rotate-180' : ''"></i>
+                        <div class="flex flex-wrap justify-between items-center mb-6 gap-4">
+                            <h3 @click="expanded = !expanded" class="text-xl font-black flex items-center gap-3 cursor-pointer flex-1 min-w-[200px]">
+                                <i data-lucide="package" class="text-purple-500"></i> Inventory Count
+                                <i data-lucide="chevron-down" class="transition-transform no-print ml-auto" :class="expanded ? 'rotate-180' : ''"></i>
                             </h3>
-                            <div class="flex gap-2">
-                                <select id="sortSelect" onchange="sortInventory(this.value)" class="text-sm w-auto">
+                            <div class="flex flex-wrap gap-2 w-full md:w-auto">
+                                <select id="sortSelect" onchange="sortInventory(this.value)" class="text-sm border-slate-200 flex-1 md:flex-none">
                                     <option value="recent">Most Recent</option>
                                     <option value="alpha">A-Z</option>
                                 </select>
-                                <button type="button" onclick="addInventoryItem()" class="btn btn-outline btn-sm no-print whitespace-nowrap">+ Add</button>
+                                <button type="button" onclick="addInventoryItem()" class="btn btn-outline btn-sm no-print whitespace-nowrap flex-1 md:flex-none">+ Add Item</button>
                             </div>
                         </div>
                         <div x-show="expanded" x-transition>
                             <div class="hidden md:grid grid-cols-5 gap-4 px-4 mb-4 text-[10px] font-black uppercase tracking-widest text-slate-400">
-                                <div class="col-span-1">Item Name</div>
-                                <div>Front/Backline</div>
-                                <div>Cooler</div>
-                                <div>Freezer</div>
-                                <div class="text-right no-print">Action</div>
+                                <div class="col-span-1">Item Name</div><div>Front/Backline</div><div>Cooler</div><div>Freezer</div><div class="text-right no-print">Action</div>
                             </div>
                             <div id="inventoryContainer"></div>
                         </div>
                     </div>
 
                     <div class="grid md:grid-cols-3 gap-4 pt-8 no-print">
-                        <button type="button" onclick="exportDataJSON()" class="btn btn-outline py-5">
-                            <i data-lucide="download"></i> Save JSON
-                        </button>
-                        <button type="button" onclick="manualSaveHistory()" class="btn btn-outline py-5" id="btnCloudSave" disabled>
-                            <i data-lucide="cloud-off" id="iconCloudSave"></i> Save to Cloud
-                        </button>
-                        <button type="button" onclick="generateReport()" class="btn btn-dark py-5 shadow-2xl">
-                            <i data-lucide="printer"></i> End Shift & Print
-                        </button>
+                        <button type="button" onclick="exportDataJSON()" class="btn btn-outline py-5"><i data-lucide="download"></i> Save to Files (.json)</button>
+                        <button type="button" onclick="manualSaveHistory()" class="btn btn-outline py-5" id="btnCloudSave" disabled><i data-lucide="cloud-off" id="iconCloudSave"></i> Save to Cloud</button>
+                        <button type="button" onclick="generateReport()" class="btn btn-dark py-5 shadow-2xl"><i data-lucide="printer"></i> Print PDF</button>
                     </div>
                 </form>
             </div>
@@ -423,81 +347,40 @@
             <div class="max-w-4xl mx-auto">
                 <div class="card bg-slate-50 dark:bg-slate-900 border-none mb-8">
                     <h3 class="text-lg font-black mb-2 flex items-center gap-2"><i data-lucide="database" class="text-sky-500"></i> Cloud Storage</h3>
-                    <div class="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-3 mb-2 overflow-hidden">
-                        <div id="storageProgressBar" class="bg-sky-500 h-3 rounded-full transition-all duration-500" style="width: 0%"></div>
-                    </div>
-                    <div class="flex justify-between text-xs font-bold text-slate-500 uppercase tracking-widest">
-                        <span id="storageUsedTxt">0 MB Used</span>
-                        <span id="storageMaxTxt">1 GB Limit</span>
-                    </div>
+                    <div class="w-full bg-slate-200 dark:bg-slate-800 rounded-full h-3 mb-2 overflow-hidden"><div id="storageProgressBar" class="bg-sky-500 h-3 rounded-full transition-all duration-500" style="width: 0%"></div></div>
+                    <div class="flex justify-between text-xs font-bold text-slate-500 uppercase tracking-widest"><span id="storageUsedTxt">0 MB</span><span id="storageMaxTxt">1 GB</span></div>
                 </div>
-
                 <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
                     <h1 class="text-4xl font-black">Shift History</h1>
                     <div class="relative w-full md:w-64">
                         <i data-lucide="search" class="absolute left-3 top-3 w-4 h-4 text-slate-400"></i>
-                        <input type="text" id="historySearch" placeholder="Search by date..." class="pl-10 text-sm" oninput="renderHistory()">
+                        <input type="text" id="historySearch" placeholder="Search..." class="pl-10 text-sm" oninput="renderHistory()">
                     </div>
                 </div>
                 <div id="historyListContainer" class="space-y-6"></div>
             </div>
         </div>
 
-        <div id="view-performance" class="view-section px-6 py-12">
-            <div class="max-w-4xl mx-auto">
-                <div class="flex justify-between items-center mb-12">
-                    <h1 class="text-4xl font-black">Performance</h1>
-                    <button class="btn btn-outline btn-sm" onclick="exportPerformanceCSV()">Export CSV</button>
-                </div>
-                
-                <div class="grid md:grid-cols-3 gap-6 mb-12">
-                    <div class="card text-center">
-                        <div class="text-4xl font-black text-sky-500 mb-2" id="statShifts">0</div>
-                        <div class="text-[10px] font-black uppercase tracking-widest text-slate-400">Shifts Logged</div>
-                    </div>
-                    <div class="card text-center">
-                        <div class="text-4xl font-black text-amber-500 mb-2" id="statAvgTime">0m</div>
-                        <div class="text-[10px] font-black uppercase tracking-widest text-slate-400">Avg Log Time</div>
-                    </div>
-                    <div class="card text-center">
-                        <div class="text-4xl font-black text-emerald-500 mb-2" id="statRoutines">0%</div>
-                        <div class="text-[10px] font-black uppercase tracking-widest text-slate-400">Routine Score</div>
-                    </div>
-                </div>
-
-                <div class="card bg-slate-50 dark:bg-slate-900 border-none">
-                    <h3 class="text-xl font-black mb-4 flex items-center gap-2"><i data-lucide="sparkles" class="text-amber-500"></i> AI Insights</h3>
-                    <div id="performanceTips" class="text-slate-600 dark:text-slate-400 leading-relaxed font-medium">
-                        Start logging shifts to see personalized insights!
-                    </div>
-                </div>
-            </div>
-        </div>
-
         <div id="view-presets" class="view-section px-6 py-12">
             <div class="max-w-4xl mx-auto">
                 <h1 class="text-4xl font-black mb-12">Templates & Presets</h1>
-                
                 <div class="grid md:grid-cols-2 gap-12">
                     <div class="space-y-8">
                         <div class="card">
-                            <h3 class="text-xl font-black mb-6">System Layouts</h3>
-                            <select id="presetSelector" class="mb-4">
+                            <h3 class="text-xl font-black mb-2">System Layouts</h3>
+                            <select id="presetSelector" class="mb-4 mt-6">
                                 <option value="arbys">Arby's / Roast Beef</option>
                                 <option value="mcdonalds">McDonald's</option>
                                 <option value="tacobell">Taco Bell</option>
-                                <option value="chickfila">Chick-fil-A</option>
-                                <option value="pizza">Standard Pizza Shop</option>
                             </select>
-                            <button onclick="loadPresetList()" class="btn btn-accent w-full">Apply System Template</button>
+                            <button onclick="loadPresetList()" class="btn btn-accent w-full">Apply Template</button>
                         </div>
                     </div>
                     <div class="space-y-8">
                         <div class="card">
                             <h3 class="text-xl font-black mb-6">Custom Presets</h3>
-                            <p class="text-sm text-slate-500 mb-4">Save your exact current inventory layout and checklists.</p>
                             <div class="flex gap-2 mb-8">
-                                <input type="text" id="customPresetName" placeholder="e.g. Closing Shift" class="flex-1">
+                                <input type="text" id="customPresetName" placeholder="e.g. Closing Shift Layout" class="flex-1">
                                 <button onclick="saveCustomPreset()" class="btn btn-outline whitespace-nowrap">Save Current</button>
                             </div>
                             <div id="customPresetsContainer" class="space-y-3"></div>
@@ -507,49 +390,98 @@
             </div>
         </div>
 
+        <div id="view-performance" class="view-section px-6 py-12">
+            <div class="max-w-4xl mx-auto">
+                <div class="flex justify-between items-center mb-12">
+                    <h1 class="text-4xl font-black">Performance</h1>
+                    <button class="btn btn-outline btn-sm" onclick="exportPerformanceCSV()">Export CSV</button>
+                </div>
+                <div class="grid md:grid-cols-3 gap-6 mb-12">
+                    <div class="card text-center"><div class="text-4xl font-black text-sky-500 mb-2" id="statShifts">0</div><div class="text-[10px] font-black uppercase tracking-widest text-slate-400">Shifts</div></div>
+                    <div class="card text-center"><div class="text-4xl font-black text-amber-500 mb-2" id="statAvgTime">0m</div><div class="text-[10px] font-black uppercase tracking-widest text-slate-400">Avg Time</div></div>
+                    <div class="card text-center"><div class="text-4xl font-black text-emerald-500 mb-2" id="statRoutines">0%</div><div class="text-[10px] font-black uppercase tracking-widest text-slate-400">Routine Score</div></div>
+                </div>
+            </div>
+        </div>
+
         <div id="view-profile" class="view-section px-6 py-12">
             <div class="max-w-4xl mx-auto">
                 <div class="card text-center mb-12 py-16">
-                    <div id="profileAvatar" class="w-24 h-24 bg-sky-500 text-white rounded-full flex items-center justify-center text-4xl font-black mx-auto mb-6 shadow-xl shadow-sky-200 dark:shadow-none">?</div>
+                    <div id="profileAvatar" class="w-24 h-24 bg-sky-500 text-white rounded-full flex items-center justify-center text-4xl font-black mx-auto mb-6 shadow-xl">?</div>
                     <h2 class="text-3xl font-black mb-2" id="profNameDisplay">Loading...</h2>
-                    <span class="inline-flex items-center px-4 py-1.5 text-[10px] font-black tracking-[0.2em] text-sky-700 uppercase bg-sky-50 rounded-full" id="profSubStatus">Free Plan</span>
+                    <span class="inline-flex items-center px-4 py-1.5 text-[10px] font-black tracking-[0.2em] text-sky-700 uppercase bg-sky-50 rounded-full mb-2" id="profSubStatus">Free Plan</span>
+                    <p class="text-sm text-slate-500 font-bold" id="profAccountTypeDisplay">Individual Account</p>
                 </div>
 
-                <div class="grid md:grid-cols-2 gap-8">
+                <div class="grid md:grid-cols-2 gap-8 mb-8">
                     <div class="card">
                         <h3 class="text-xl font-black mb-6">Personal Details</h3>
                         <div class="space-y-4">
                             <input type="text" id="profName" placeholder="Name">
                             <input type="text" id="profRole" placeholder="Role">
                             <input type="email" id="profEmail" readonly class="bg-slate-50 opacity-60 dark:bg-slate-800">
-                            <input type="text" id="profPhone" placeholder="Phone">
                             <button onclick="saveProfileToFirebase()" class="btn btn-accent w-full mt-4">Save Changes</button>
                         </div>
                     </div>
+                    
                     <div class="card">
-                        <h3 class="text-xl font-black mb-6">Data & Cloud Controls</h3>
-                        <p class="text-slate-500 mb-6 text-sm">Manage where your data is stored securely.</p>
-                        
+                        <h3 class="text-xl font-black mb-6">Data & Cloud</h3>
                         <div class="p-4 border border-slate-200 dark:border-slate-800 rounded-xl mb-4 bg-slate-50 dark:bg-slate-900">
                             <label class="flex items-center gap-3 cursor-pointer">
                                 <input type="checkbox" id="profileCloudSyncToggle" onchange="triggerCloudOptIn(this)" class="w-5 h-5 accent-sky-500">
                                 <span class="font-bold text-sm">Enable Enterprise Cloud Sync</span>
                             </label>
-                            <p class="text-xs text-slate-400 mt-2">Requires Business Pro plan. Binds you to Data Controller ToS.</p>
+                            <p class="text-xs text-slate-400 mt-2">Requires Business Pro plan.</p>
+                        </div>
+                        <button onclick="exportDataJSON()" class="btn btn-outline w-full">Export Data to JSON</button>
+                    </div>
+                </div>
+
+                <div class="card mb-8" id="orgManagementSection">
+                    <h3 class="text-xl font-black mb-6 border-b border-slate-200 dark:border-slate-800 pb-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                        Organization Settings
+                        <span id="orgMyCodeDisplay" class="text-xs font-mono bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-full text-slate-500"></span>
+                    </h3>
+                    
+                    <div id="orgBusinessUI" class="hidden space-y-6">
+                        <p class="text-sm text-slate-500">Invite employees to your organization. They will sync their shift data to your cloud overview.</p>
+                        <div class="flex gap-2">
+                            <input type="email" id="inviteEmailInput" placeholder="Employee Email Address">
+                            <button onclick="inviteUserToBusiness()" class="btn btn-dark whitespace-nowrap">Send Invite</button>
+                        </div>
+                        <div class="mt-4">
+                            <h4 class="text-xs font-black uppercase tracking-widest text-slate-400 mb-3">Pending Sent Invites</h4>
+                            <div id="sentInvitesList" class="space-y-2"></div>
+                        </div>
+                        <button onclick="toggleAccountType('individual')" class="btn btn-outline btn-sm text-amber-500 mt-4">Downgrade to Individual Account</button>
+                    </div>
+
+                    <div id="orgIndividualUI" class="hidden space-y-6">
+                        <div id="orgIndividualNotBound">
+                            <p class="text-sm text-slate-500 mb-4">You are operating as an Independent Manager. You can switch to a Business account to invite employees, or accept an invite below.</p>
+                            <div class="mt-4 mb-6">
+                                <h4 class="text-xs font-black uppercase tracking-widest text-sky-500 mb-3">Pending Incoming Invites</h4>
+                                <div id="incomingInvitesList" class="space-y-2"></div>
+                            </div>
+                            <button onclick="toggleAccountType('business')" class="btn btn-outline btn-sm">Upgrade to Business Account</button>
                         </div>
                         
-                        <button onclick="exportDataJSON()" class="btn btn-outline w-full mb-4">Export All Data to JSON File</button>
+                        <div id="orgIndividualBound" class="hidden">
+                            <div class="p-4 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-xl mb-4">
+                                <p class="text-emerald-700 dark:text-emerald-400 font-bold flex items-center gap-2"><i data-lucide="check-circle-2"></i> Linked to Organization</p>
+                                <p class="text-sm text-emerald-600 dark:text-emerald-500 mt-1">Your shift data is syncing with your parent organization.</p>
+                            </div>
+                            <button onclick="leaveOrganization()" class="btn btn-outline btn-sm text-red-500 hover:bg-red-50 hover:border-red-200 dark:hover:bg-red-900/20">Leave Organization</button>
+                        </div>
                     </div>
                 </div>
 
                 <div class="card mt-8">
-                    <h3 class="text-xl font-black mb-6 border-b border-slate-200 dark:border-slate-800 pb-4">Account Management</h3>
-                    <div class="space-y-6">
-                        <div class="flex flex-col sm:flex-row gap-4">
-                            <button onclick="changePassword()" class="btn btn-outline flex-1 text-sm"><i data-lucide="key" class="w-4 h-4"></i> Change Password</button>
-                            <button onclick="cancelSubscription()" class="btn btn-outline flex-1 text-sm text-amber-500 border-amber-200 hover:bg-amber-50 dark:border-amber-900/50 dark:hover:bg-amber-900/20"><i data-lucide="x-circle" class="w-4 h-4"></i> Cancel Sub</button>
-                            <button onclick="deleteAccount()" class="btn btn-outline flex-1 text-sm text-red-500 border-red-200 hover:bg-red-50 dark:border-red-900/50 dark:hover:bg-red-900/20"><i data-lucide="trash-2" class="w-4 h-4"></i> Delete Account</button>
-                        </div>
+                    <h3 class="text-xl font-black mb-6 border-b border-slate-200 dark:border-slate-800 pb-4">Account Security</h3>
+                    <div class="flex flex-col sm:flex-row gap-4">
+                        <button onclick="changePassword()" class="btn btn-outline flex-1 text-sm"><i data-lucide="key" class="w-4 h-4"></i> Change Password</button>
+                        <button onclick="cancelSubscription()" class="btn btn-outline flex-1 text-sm text-amber-500 border-amber-200 hover:bg-amber-50 dark:hover:bg-amber-900/20"><i data-lucide="x-circle" class="w-4 h-4"></i> Cancel Sub</button>
+                        <button onclick="deleteAccount()" class="btn btn-outline flex-1 text-sm text-red-500 border-red-200 hover:bg-red-50 dark:hover:bg-red-900/20"><i data-lucide="trash-2" class="w-4 h-4"></i> Delete Account</button>
                     </div>
                 </div>
             </div>
@@ -572,45 +504,17 @@
 
     <div id="print-wrapper" class="hidden print:block absolute top-0 left-0 w-full bg-white z-50 p-8 text-black">
         <h1 class="text-3xl font-black border-b-4 border-black pb-4 mb-6 uppercase tracking-wider" id="printHeader">Store Shift Logbook</h1>
-        
         <div class="print-header-info font-bold text-sm">
             <div>Manager: <span id="printMgr" class="font-normal"></span></div>
             <div>Date: <span id="printDt" class="font-normal"></span></div>
-            <div>Time Saved: <span id="printTm" class="font-normal"></span></div>
-            <div>Log Duration: <span id="printDur" class="font-normal"></span> min</div>
         </div>
-
         <h2 class="font-bold uppercase text-lg border-b-2 border-black mb-4 mt-8 bg-gray-100 p-2">1. Health, Safety & Routines</h2>
-        <table class="print-table">
-            <thead>
-                <tr><th style="width:10%">Status</th><th>Task/Routine Description</th></tr>
-            </thead>
-            <tbody id="printRoutines"></tbody>
-        </table>
-
+        <table class="print-table"><thead><tr><th style="width:10%">Status</th><th>Task Description</th></tr></thead><tbody id="printRoutines"></tbody></table>
         <h2 class="font-bold uppercase text-lg border-b-2 border-black mb-4 mt-8 bg-gray-100 p-2">2. Cash & Drawers</h2>
-        <table class="print-table">
-            <thead>
-                <tr><th>Drawer Label</th><th>Expected</th><th>Actual/Variance</th></tr>
-            </thead>
-            <tbody id="printDrawers"></tbody>
-        </table>
-        <div class="font-bold mt-2">End of Shift Safe Count: <span id="printSafe" class="font-normal"></span></div>
-        <div class="font-bold mt-2">Change Needed: <span id="printChange" class="font-normal"></span></div>
-
-        <h2 class="font-bold uppercase text-lg border-b-2 border-black mb-4 mt-8 bg-gray-100 p-2">3. Master Inventory Verification</h2>
-        <table class="print-table">
-            <thead>
-                <tr><th>Item Name</th><th>Front/Backline</th><th>Cooler Count</th><th>Freezer Count</th></tr>
-            </thead>
-            <tbody id="printInventoryList"></tbody>
-        </table>
-
-        <h2 class="font-bold uppercase text-lg border-b-2 border-black mb-4 mt-8 bg-gray-100 p-2">4. Labor & Prep Notes</h2>
-        <div class="border border-black p-4 min-h-[100px] mb-4" id="printNotesBlock"></div>
-        <div class="text-xs italic text-center mt-12 pt-4 border-t border-gray-300">
-            System generated by ezManage. This document is a local export and complies with Data Controller offline storage protocols.
-        </div>
+        <table class="print-table"><thead><tr><th>Drawer Label</th><th>Expected</th><th>Variance</th></tr></thead><tbody id="printDrawers"></tbody></table>
+        <h2 class="font-bold uppercase text-lg border-b-2 border-black mb-4 mt-8 bg-gray-100 p-2">3. Inventory Verification</h2>
+        <table class="print-table"><thead><tr><th>Item Name</th><th>Front/Backline</th><th>Cooler</th><th>Freezer</th></tr></thead><tbody id="printInventoryList"></tbody></table>
+        <div class="text-xs italic text-center mt-12 pt-4 border-t border-gray-300">System generated by ezManage.</div>
     </div>
 
     <script>
@@ -637,20 +541,14 @@
         let timerInterval = null;
         let cloudSyncTimeout = null;
         let unsubscribeUser = null;
-        let initialDraftLoaded = false;
+        let initialDraftLoaded = false; 
         let cloudSyncEnabled = false;
 
-        // ================= AUTH LISTENER & INIT =================
+        // ================= AUTH & INIT =================
         auth.onAuthStateChanged((user) => {
-            if (!user) {
-                // If unauthenticated, redirect to onboarding per decoupled structure
-                window.location.href = 'onboarding.html';
-                return;
-            }
-
+            if (!user) { window.location.href = 'onboarding.html'; return; } // Reroute to decoupled onboarding
             currentUser = user;
             const navStatus = document.getElementById('navUserStatus');
-            
             if (unsubscribeUser) unsubscribeUser();
 
             navStatus.innerText = "Manager: " + (user.displayName || "Online");
@@ -659,11 +557,6 @@
             unsubscribeUser = db.collection("users").doc(user.uid).onSnapshot(doc => {
                 if (doc.exists) {
                     currentUserData = doc.data();
-                    
-                    // Admin UI trigger
-                    if(currentUserData.isAdmin) document.getElementById('navAdminBtn').classList.remove('hidden');
-
-                    // Legal / Cloud Shielding Opt-In
                     cloudSyncEnabled = !!currentUserData.cloudSyncEnabled;
                     document.getElementById('profileCloudSyncToggle').checked = cloudSyncEnabled;
                     updateCloudSyncUI();
@@ -674,11 +567,9 @@
                     renderHistory();
                     updateStorageBar();
                     fetchFeatureRequests();
+                    fetchPendingInvites();
                     
-                    if (!initialDraftLoaded) {
-                        syncDraftFromServer(); 
-                        initialDraftLoaded = true;
-                    }
+                    if (!initialDraftLoaded) { syncDraftFromServer(); initialDraftLoaded = true; }
                 } else {
                     window.location.href = 'onboarding.html'; 
                 }
@@ -686,10 +577,7 @@
         });
 
         // ================= UI CONTROLS =================
-        function toggleSidebar() { 
-            document.getElementById('sidebar').classList.toggle('open'); 
-        }
-
+        function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); }
         function navTo(viewId) {
             document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
             document.getElementById('view-' + viewId).classList.add('active');
@@ -697,118 +585,157 @@
             window.scrollTo({ top: 0, behavior: 'smooth' });
             lucide.createIcons();
         }
-
+        function signOut() { auth.signOut().then(() => window.location.href = 'index.html'); }
         function toggleTheme() {
             const isDark = document.getElementById('themeToggle').checked;
             document.body.classList.toggle('dark-mode', isDark);
             localStorage.setItem('managerProTheme', isDark ? 'dark' : 'light');
         }
 
-        function toggleShiftTimer() {
-            const btn = document.getElementById('timerBtn');
-            const disp = document.getElementById('timerDisplay');
-            if (!shiftStartTime) {
-                shiftStartTime = Date.now();
-                btn.innerHTML = `<i data-lucide="square" class="w-4"></i> Stop`;
-                btn.classList.replace('btn-success', 'btn-danger');
-                timerInterval = setInterval(updateTimerUI, 1000);
-            } else {
-                clearInterval(timerInterval);
-                const mins = Math.round((Date.now() - shiftStartTime) / 60000);
-                disp.innerText = `Log: ${mins}m`;
-                shiftStartTime = null; 
-                btn.innerHTML = `<i data-lucide="play" class="w-4"></i> Resume`;
-                btn.classList.replace('btn-danger', 'btn-success');
+        // ================= ORG & INVITE LOGIC =================
+        function toggleAccountType(newType) {
+            if(!currentUserData || !confirm(`Are you sure you want to switch to a ${newType} account?`)) return;
+            db.collection('users').doc(currentUser.uid).update({ accountType: newType }).then(() => {
+                alert(`Switched to ${newType} account successfully.`);
+            });
+        }
+
+        function leaveOrganization() {
+            if(!confirm("Are you sure you want to leave this organization? Your data will no longer sync to them.")) return;
+            db.collection('users').doc(currentUser.uid).update({ orgId: null }).then(() => alert("Left organization."));
+        }
+
+        function inviteUserToBusiness() {
+            const email = document.getElementById('inviteEmailInput').value.trim();
+            if(!email) return;
+            db.collection('invites').add({
+                businessId: currentUser.uid,
+                businessName: currentUserData.name || "A Business",
+                inviteeEmail: email,
+                status: 'pending',
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            }).then(() => {
+                alert("Invite sent to " + email);
+                document.getElementById('inviteEmailInput').value = '';
+            });
+        }
+
+        function fetchPendingInvites() {
+            if(!currentUser || !currentUserData) return;
+            
+            if(currentUserData.accountType === 'business') {
+                db.collection('invites').where('businessId', '==', currentUser.uid).where('status', '==', 'pending')
+                  .onSnapshot(snap => {
+                      const c = document.getElementById('sentInvitesList');
+                      c.innerHTML = snap.empty ? "<p class='text-xs text-slate-500'>No pending invites.</p>" : "";
+                      snap.forEach(doc => {
+                          c.innerHTML += `<div class="text-xs bg-slate-100 dark:bg-slate-800 p-2 rounded flex justify-between border border-slate-200 dark:border-slate-700">
+                            <span>Sent to: <strong class="text-sky-500">${doc.data().inviteeEmail}</strong></span>
+                            <button onclick="cancelInvite('${doc.id}')" class="text-red-500 font-bold hover:underline">Cancel</button>
+                          </div>`;
+                      });
+                  });
             }
-            lucide.createIcons();
+            
+            if(currentUserData.accountType === 'individual' && !currentUserData.orgId) {
+                db.collection('invites').where('inviteeEmail', '==', currentUser.email).where('status', '==', 'pending')
+                  .onSnapshot(snap => {
+                      const c = document.getElementById('incomingInvitesList');
+                      c.innerHTML = snap.empty ? "<p class='text-xs text-slate-500'>No invites at this time.</p>" : "";
+                      snap.forEach(doc => {
+                          const d = doc.data();
+                          c.innerHTML += `<div class="text-sm bg-sky-50 dark:bg-sky-900/20 border border-sky-200 dark:border-sky-800 p-3 rounded-xl flex justify-between items-center">
+                            <span><strong class="text-sky-600 dark:text-sky-400">${d.businessName}</strong> wants you to join.</span>
+                            <button onclick="acceptInvite('${doc.id}', '${d.businessId}')" class="btn btn-sm btn-accent py-1 px-3">Accept</button>
+                          </div>`;
+                      });
+                  });
+            }
         }
 
-        function updateTimerUI() {
-            if (!shiftStartTime) return;
-            const diff = Date.now() - shiftStartTime;
-            const h = Math.floor(diff / 3600000);
-            const m = Math.floor((diff % 3600000) / 60000);
-            const s = Math.floor((diff % 60000) / 1000);
-            document.getElementById('timerDisplay').innerText = `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+        function acceptInvite(inviteId, businessId) {
+            db.collection('users').doc(currentUser.uid).update({ orgId: businessId }).then(() => {
+                db.collection('invites').doc(inviteId).update({ status: 'accepted' });
+                alert("Joined organization successfully!");
+            });
         }
+        function cancelInvite(inviteId) { db.collection('invites').doc(inviteId).delete(); }
 
-        // ================= LEGAL SHIELDING & CLOUD ToS =================
+        // ================= CLOUD & DATA CONTROLLER =================
         function triggerCloudOptIn(checkbox) {
             if (checkbox.checked) {
-                checkbox.checked = false; // Temporarily uncheck until ToS accepted
+                checkbox.checked = false; // Require ToS read
                 document.getElementById('tosModal').classList.remove('hidden');
             } else { disableCloudSync(); }
         }
-
         function acceptToSAndEnableCloud() {
             if (!currentUser) return;
             const isBusiness = (currentUserData && currentUserData.plan && currentUserData.plan.includes('Business'));
-            
             if(!isBusiness) {
                 alert("Enterprise Cloud Sync is only available for the Business Pro plan.");
                 document.getElementById('tosModal').classList.add('hidden');
                 return;
             }
-
             cloudSyncEnabled = true;
             document.getElementById('profileCloudSyncToggle').checked = true;
             document.getElementById('tosModal').classList.add('hidden');
-            
             db.collection('users').doc(currentUser.uid).set({ cloudSyncEnabled: true }, { merge: true });
-            updateCloudSyncUI();
-            triggerDraftSync(); 
+            updateCloudSyncUI(); triggerDraftSync();
         }
-
         function declineToS() {
             document.getElementById('tosModal').classList.add('hidden');
-            document.getElementById('profileCloudSyncToggle').checked = false;
             disableCloudSync();
         }
-
         function disableCloudSync() {
             if (!currentUser) return;
-            cloudSyncEnabled = false;
+            cloudSyncEnabled = false; document.getElementById('profileCloudSyncToggle').checked = false;
             db.collection('users').doc(currentUser.uid).set({ cloudSyncEnabled: false }, { merge: true });
             updateCloudSyncUI();
         }
-
         function updateCloudSyncUI() {
             const statusIndicator = document.getElementById('cloudSyncStatus');
             const statusText = document.getElementById('cloudSyncText');
             const btnCloudSave = document.getElementById('btnCloudSave');
-            const iconCloudSave = document.getElementById('iconCloudSave');
-
             if (cloudSyncEnabled) {
                 statusIndicator.className = "w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]";
-                statusText.innerText = "Cloud Sync Active (Data Controller)";
-                btnCloudSave.disabled = false;
-                btnCloudSave.classList.remove('opacity-50', 'cursor-not-allowed');
-                iconCloudSave.setAttribute('data-lucide', 'cloud-upload');
+                statusText.innerText = "Cloud Sync Active";
+                if(btnCloudSave) btnCloudSave.disabled = false;
             } else {
                 statusIndicator.className = "w-2 h-2 rounded-full bg-slate-400";
-                statusText.innerText = "Local Mode Only (Opt-In Required)";
-                btnCloudSave.disabled = true;
-                btnCloudSave.classList.add('opacity-50', 'cursor-not-allowed');
-                iconCloudSave.setAttribute('data-lucide', 'cloud-off');
+                statusText.innerText = "Local Mode Only";
+                if(btnCloudSave) btnCloudSave.disabled = true;
+            }
+        }
+        function exportDataJSON() {
+            const state = getTrackerState();
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(state, null, 2));
+            const dlAnchorElem = document.createElement('a'); dlAnchorElem.setAttribute("href", dataStr);
+            dlAnchorElem.setAttribute("download", `ezManage_ShiftData_${state.dateSaved}.json`);
+            document.body.appendChild(dlAnchorElem); dlAnchorElem.click(); document.body.removeChild(dlAnchorElem);
+        }
+
+        // ================= TRACKER UI & TIMER =================
+        function toggleShiftTimer() {
+            const btn = document.getElementById('timerBtn'); const disp = document.getElementById('timerDisplay');
+            if (!shiftStartTime) {
+                shiftStartTime = Date.now();
+                btn.innerHTML = `<i data-lucide="square" class="w-4"></i> Stop`; btn.classList.replace('btn-success', 'btn-danger');
+                timerInterval = setInterval(() => {
+                    const diff = Date.now() - shiftStartTime;
+                    const h = Math.floor(diff / 3600000); const m = Math.floor((diff % 3600000) / 60000); const s = Math.floor((diff % 60000) / 1000);
+                    disp.innerText = `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+                }, 1000);
+            } else {
+                clearInterval(timerInterval);
+                disp.innerText = `Log: ${Math.round((Date.now() - shiftStartTime) / 60000)}m`;
+                shiftStartTime = null; 
+                btn.innerHTML = `<i data-lucide="play" class="w-4"></i> Resume`; btn.classList.replace('btn-danger', 'btn-success');
             }
             lucide.createIcons();
         }
 
-        function exportDataJSON() {
-            const state = getTrackerState();
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(state, null, 2));
-            const dlAnchorElem = document.createElement('a');
-            dlAnchorElem.setAttribute("href", dataStr);
-            dlAnchorElem.setAttribute("download", `ezManage_ShiftData_${state.dateSaved}.json`);
-            document.body.appendChild(dlAnchorElem);
-            dlAnchorElem.click();
-            document.body.removeChild(dlAnchorElem);
-        }
-
-        // ================= TRACKER LOGIC =================
         function addDrawerItem(val = "100.00", label = "") {
-            const div = document.createElement('div');
-            div.className = "flex gap-2 items-center animate-fadeIn";
+            const div = document.createElement('div'); div.className = "flex gap-2 items-center animate-fadeIn";
             div.innerHTML = `
                 <input type="text" placeholder="Drawer Label" class="drawer-name" value="${label}" style="flex: 2;" oninput="triggerDraftSync()">
                 <input type="number" step="0.01" value="${val}" class="drawer-val" style="flex: 1;" oninput="calcDrawer(this); triggerDraftSync();">
@@ -816,53 +743,44 @@
                 <button type="button" onclick="this.parentElement.remove(); triggerDraftSync();" class="text-red-400 p-2"><i data-lucide="x" class="w-4"></i></button>
             `;
             document.getElementById('drawersContainer').appendChild(div);
-            calcDrawer(div.querySelector('.drawer-val'));
-            lucide.createIcons();
+            calcDrawer(div.querySelector('.drawer-val')); lucide.createIcons();
             if (initialDraftLoaded) triggerDraftSync();
         }
-
         function calcDrawer(input) {
-            let val = parseFloat(input.value) || 0;
-            let diff = val - 100;
+            let diff = (parseFloat(input.value) || 0) - 100;
             let res = input.parentElement.querySelector('.drawer-res');
-            if (diff === 0) res.value = "Balanced";
-            else res.value = diff < 0 ? `$${Math.abs(diff).toFixed(2)} Short` : `$${diff.toFixed(2)} Over`;
+            res.value = diff === 0 ? "Balanced" : (diff < 0 ? `$${Math.abs(diff).toFixed(2)} Short` : `$${diff.toFixed(2)} Over`);
         }
 
         function addDepositItem(val = "", ver = true, valCheck = true) {
-            const div = document.createElement('div');
-            div.className = "flex gap-4 items-center bg-slate-50 dark:bg-slate-800 p-3 rounded-xl animate-fadeIn";
+            const div = document.createElement('div'); div.className = "flex gap-4 items-center bg-slate-50 dark:bg-slate-800 p-3 rounded-xl animate-fadeIn border border-slate-100 dark:border-slate-700";
             div.innerHTML = `
                 <input type="text" placeholder="Amount" class="dep-val" value="${val}" style="flex:1;" oninput="triggerDraftSync()">
                 <label class="flex items-center gap-1 text-[10px] font-bold"><input type="checkbox" class="dep-ver accent-sky-500 w-4 h-4" ${ver ? 'checked' : ''} onchange="triggerDraftSync()"> VER</label>
                 <label class="flex items-center gap-1 text-[10px] font-bold"><input type="checkbox" class="dep-val-chk accent-sky-500 w-4 h-4" ${valCheck ? 'checked' : ''} onchange="triggerDraftSync()"> VAL</label>
                 <button type="button" onclick="this.parentElement.remove(); triggerDraftSync();" class="text-red-400"><i data-lucide="x" class="w-4"></i></button>
             `;
-            document.getElementById('depositsContainer').appendChild(div);
-            lucide.createIcons();
+            document.getElementById('depositsContainer').appendChild(div); lucide.createIcons();
             if (initialDraftLoaded) triggerDraftSync();
         }
 
         function addRoutineTask(name = "", isChecked = false) {
-            let taskName = name || document.getElementById('newRoutineTask').value;
-            if(!taskName) return;
-            const div = document.createElement('div');
-            div.className = "flex items-center gap-3 p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm";
+            let taskName = name || document.getElementById('newRoutineTask').value; if(!taskName) return;
+            const div = document.createElement('div'); div.className = "flex items-center gap-3 p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm";
             div.innerHTML = `
                 <input type="checkbox" class="routine-chk w-5 h-5 accent-sky-500" ${isChecked ? 'checked' : ''} onchange="triggerDraftSync()"> 
                 <span class="routine-name flex-1 font-semibold text-sm">${taskName}</span>
                 <button type="button" onclick="this.parentElement.remove(); triggerDraftSync();" class="text-slate-300 hover:text-red-400"><i data-lucide="trash-2" class="w-4"></i></button>
             `;
-            document.getElementById('routineContainer').appendChild(div);
-            document.getElementById('newRoutineTask').value = "";
-            lucide.createIcons();
-            if (initialDraftLoaded) triggerDraftSync();
+            document.getElementById('routineContainer').appendChild(div); document.getElementById('newRoutineTask').value = "";
+            lucide.createIcons(); if (initialDraftLoaded) triggerDraftSync();
         }
 
+        // ANTI-LOOP: Prepend and native JS sorting
         function addInventoryItem(name = "", bl = "", cl = "", fr = "") {
             const div = document.createElement('div');
             div.className = 'inventory-item animate-fadeIn border-slate-200 dark:border-slate-800';
-            div.dataset.timestamp = Date.now(); // For sorting UX
+            div.dataset.timestamp = Date.now();
             div.innerHTML = `
                 <input type="text" placeholder="Item Name" class="inv-name" value="${name}" oninput="triggerDraftSync()">
                 <input type="number" placeholder="Backline" class="inv-backline" value="${bl}" oninput="triggerDraftSync()">
@@ -871,188 +789,94 @@
                 <button type="button" onclick="this.parentElement.remove(); triggerDraftSync();" class="text-red-400 text-right"><i data-lucide="minus-circle" class="w-5"></i></button>
             `;
             document.getElementById('inventoryContainer').prepend(div);
-            lucide.createIcons();
-            if (initialDraftLoaded) triggerDraftSync();
+            lucide.createIcons(); if (initialDraftLoaded) triggerDraftSync();
         }
 
         function sortInventory(method) {
             try {
                 const container = document.getElementById('inventoryContainer');
                 const items = Array.from(container.children);
-                
-                items.sort((a, b) => {
-                    if (method === 'alpha') {
-                        const nameA = a.querySelector('.inv-name').value.toLowerCase();
-                        const nameB = b.querySelector('.inv-name').value.toLowerCase();
-                        return nameA.localeCompare(nameB);
-                    } else {
-                        return parseInt(b.dataset.timestamp) - parseInt(a.dataset.timestamp);
-                    }
-                });
-                
-                container.innerHTML = '';
-                items.forEach(item => container.appendChild(item));
+                items.sort((a, b) => method === 'alpha' ? a.querySelector('.inv-name').value.toLowerCase().localeCompare(b.querySelector('.inv-name').value.toLowerCase()) : parseInt(b.dataset.timestamp) - parseInt(a.dataset.timestamp));
+                container.innerHTML = ''; items.forEach(item => container.appendChild(item));
             } catch (err) { console.error("Sorting Error:", err); }
         }
 
-        // ================= SYNC & STATE =================
         function getTrackerState() {
             const state = {
-                id: Date.now().toString(),
-                dateSaved: document.getElementById('shiftDate').value || new Date().toLocaleDateString(),
-                timeSaved: document.getElementById('shiftTime').value || new Date().toLocaleTimeString(),
-                manager: document.getElementById('shiftManager').value,
-                durationMins: shiftStartTime ? Math.round((Date.now() - shiftStartTime) / 60000) : 0,
-                routines: [], drawers: [], deposits: [], inventory: [],
-                prepNotes: document.getElementById('prepNotes').value,
-                beefCook: document.getElementById('beefCook').value,
-                beefTempered: document.getElementById('beefTempered').value,
-                laborVariance: document.getElementById('laborVariance').value,
-                safeCount: document.getElementById('safeCount').value,
-                changeNeeded: document.getElementById('changeNeeded').value
+                id: Date.now().toString(), dateSaved: document.getElementById('shiftDate').value || new Date().toLocaleDateString(),
+                timeSaved: document.getElementById('shiftTime').value || new Date().toLocaleTimeString(), manager: document.getElementById('shiftManager').value,
+                durationMins: shiftStartTime ? Math.round((Date.now() - shiftStartTime) / 60000) : 0, routines: [], drawers: [], deposits: [], inventory: [],
+                prepNotes: document.getElementById('prepNotes').value, beefCook: document.getElementById('beefCook').value,
+                beefTempered: document.getElementById('beefTempered').value, laborVariance: document.getElementById('laborVariance').value,
+                safeCount: document.getElementById('safeCount').value, changeNeeded: document.getElementById('changeNeeded').value
             };
-
-            document.querySelectorAll('#routineContainer > div').forEach(el => {
-                state.routines.push({ name: el.querySelector('.routine-name').innerText, checked: el.querySelector('.routine-chk').checked });
-            });
-            document.querySelectorAll('#drawersContainer > div').forEach(el => {
-                state.drawers.push({ name: el.querySelector('.drawer-name').value, val: el.querySelector('.drawer-val').value, res: el.querySelector('.drawer-res').value });
-            });
-            document.querySelectorAll('#depositsContainer > div').forEach(el => {
-                state.deposits.push({ val: el.querySelector('.dep-val').value, ver: el.querySelector('.dep-ver').checked, valCheck: el.querySelector('.dep-val-chk').checked });
-            });
-            document.querySelectorAll('.inventory-item').forEach(el => {
-                state.inventory.push({ name: el.querySelector('.inv-name').value, bl: el.querySelector('.inv-backline').value, cl: el.querySelector('.inv-cooler').value, fr: el.querySelector('.inv-freezer').value });
-            });
+            document.querySelectorAll('#routineContainer > div').forEach(el => { state.routines.push({ name: el.querySelector('.routine-name').innerText, checked: el.querySelector('.routine-chk').checked }); });
+            document.querySelectorAll('#drawersContainer > div').forEach(el => { state.drawers.push({ name: el.querySelector('.drawer-name').value, val: el.querySelector('.drawer-val').value, res: el.querySelector('.drawer-res').value }); });
+            document.querySelectorAll('#depositsContainer > div').forEach(el => { state.deposits.push({ val: el.querySelector('.dep-val').value, ver: el.querySelector('.dep-ver').checked, valCheck: el.querySelector('.dep-val-chk').checked }); });
+            document.querySelectorAll('.inventory-item').forEach(el => { state.inventory.push({ name: el.querySelector('.inv-name').value, bl: el.querySelector('.inv-backline').value, cl: el.querySelector('.inv-cooler').value, fr: el.querySelector('.inv-freezer').value }); });
             return state;
         }
 
         document.getElementById('trackerForm').addEventListener('input', triggerDraftSync);
-        
         function triggerDraftSync() {
             if (!initialDraftLoaded || !currentUser) return;
             const state = getTrackerState();
-            
-            // Core Local Backup Shielding
-            localStorage.setItem(`ezManage_draft_${currentUser.uid}`, JSON.stringify(state));
-
-            // Enterprise Opt-in Database Sync
+            localStorage.setItem(`ezManage_draft_${currentUser.uid}`, JSON.stringify(state)); // Shield logic
             if (cloudSyncEnabled) {
                 clearTimeout(cloudSyncTimeout);
-                cloudSyncTimeout = setTimeout(() => {
-                    db.collection('users').doc(currentUser.uid).set({ trackerDraft: state }, { merge: true });
-                }, 3000); 
+                cloudSyncTimeout = setTimeout(() => { db.collection('users').doc(currentUser.uid).set({ trackerDraft: state }, { merge: true }); }, 3000); 
             }
         }
 
         function populateTrackerFromState(draft) {
-            document.getElementById('shiftManager').value = draft.manager || "";
-            document.getElementById('shiftDate').value = draft.dateSaved || "";
-            document.getElementById('shiftTime').value = draft.timeSaved || "";
-            document.getElementById('prepNotes').value = draft.prepNotes || "";
-            document.getElementById('safeCount').value = draft.safeCount || "";
-            document.getElementById('beefCook').value = draft.beefCook || "";
-            document.getElementById('beefTempered').value = draft.beefTempered || "";
-            document.getElementById('laborVariance').value = draft.laborVariance || "";
+            document.getElementById('shiftManager').value = draft.manager || ""; document.getElementById('shiftDate').value = draft.dateSaved || "";
+            document.getElementById('shiftTime').value = draft.timeSaved || ""; document.getElementById('prepNotes').value = draft.prepNotes || "";
+            document.getElementById('safeCount').value = draft.safeCount || ""; document.getElementById('beefCook').value = draft.beefCook || "";
+            document.getElementById('beefTempered').value = draft.beefTempered || ""; document.getElementById('laborVariance').value = draft.laborVariance || "";
             document.getElementById('changeNeeded').value = draft.changeNeeded || "";
-            
-            document.getElementById('routineContainer').innerHTML = '';
-            if(draft.routines) draft.routines.forEach(r => addRoutineTask(r.name, r.checked));
-            
-            document.getElementById('inventoryContainer').innerHTML = '';
-            if(draft.inventory) draft.inventory.slice().reverse().forEach(i => addInventoryItem(i.name, i.bl, i.cl, i.fr)); // reverse for prepend correction
-            
-            document.getElementById('drawersContainer').innerHTML = '';
-            if(draft.drawers) draft.drawers.forEach(d => addDrawerItem(d.val, d.name));
-
-            document.getElementById('depositsContainer').innerHTML = '';
-            if(draft.deposits) draft.deposits.forEach(d => addDepositItem(d.val, d.ver, d.valCheck));
+            document.getElementById('routineContainer').innerHTML = ''; if(draft.routines) draft.routines.forEach(r => addRoutineTask(r.name, r.checked));
+            document.getElementById('inventoryContainer').innerHTML = ''; if(draft.inventory) draft.inventory.slice().reverse().forEach(i => addInventoryItem(i.name, i.bl, i.cl, i.fr));
+            document.getElementById('drawersContainer').innerHTML = ''; if(draft.drawers) draft.drawers.forEach(d => addDrawerItem(d.val, d.name));
+            document.getElementById('depositsContainer').innerHTML = ''; if(draft.deposits) draft.deposits.forEach(d => addDepositItem(d.val, d.ver, d.valCheck));
         }
 
         function syncDraftFromServer() {
             if (!currentUser) return;
             const localDraft = localStorage.getItem(`ezManage_draft_${currentUser.uid}`);
-            if (localDraft) {
-                try {
-                    populateTrackerFromState(JSON.parse(localDraft));
-                    return; 
-                } catch(e) { console.error("Local parse err"); }
-            }
-            
-            if (cloudSyncEnabled && currentUserData && currentUserData.trackerDraft) {
-                populateTrackerFromState(currentUserData.trackerDraft);
-            } else {
-                initDefaults();
-            }
+            if (localDraft) { try { populateTrackerFromState(JSON.parse(localDraft)); return; } catch(e) {} }
+            if (cloudSyncEnabled && currentUserData && currentUserData.trackerDraft) { populateTrackerFromState(currentUserData.trackerDraft); } 
+            else { initDefaults(); }
         }
 
         function manualSaveHistory() {
-            if(!currentUser) return alert("Please Sign In first.");
-            if(!cloudSyncEnabled) return alert("Enterprise Cloud Sync is required to save shift history to the cloud.");
-            
-            const state = getTrackerState();
-            db.collection('users').doc(currentUser.uid).set({
-                shiftHistory: firebase.firestore.FieldValue.arrayUnion(state)
-            }, { merge: true }).then(() => {
-                alert("Shift saved to Cloud History!");
-            });
+            if(!currentUser) return alert("Sign In required.");
+            if(!cloudSyncEnabled) return alert("Enterprise Sync required for cloud save.");
+            db.collection('users').doc(currentUser.uid).set({ shiftHistory: firebase.firestore.FieldValue.arrayUnion(getTrackerState()) }, { merge: true }).then(() => { alert("Saved to Cloud!"); });
         }
 
         // ================= HISTORY & STATS =================
         function renderHistory() {
             if(!currentUserData) return;
             const container = document.getElementById('historyListContainer');
+            if(!cloudSyncEnabled) { container.innerHTML = "<p class='text-center py-10 opacity-60'>Cloud Sync is disabled.</p>"; return; }
             const searchInput = document.getElementById('historySearch').value.toLowerCase();
-            
-            if(!cloudSyncEnabled) {
-                container.innerHTML = "<p class='text-center py-10 opacity-60'>Cloud Sync is disabled. History relies on Enterprise Cloud Data.</p>";
-                return;
-            }
-
-            const rawHistory = (currentUserData.shiftHistory || []).reverse();
-            const history = rawHistory.filter(h => {
-                const manager = (h.manager || "").toLowerCase();
-                const notes = (h.prepNotes || "").toLowerCase();
-                const d = (h.dateSaved || "").toLowerCase();
-                return manager.includes(searchInput) || notes.includes(searchInput) || d.includes(searchInput);
-            });
-
+            const history = (currentUserData.shiftHistory || []).reverse().filter(h => ((h.manager || "").toLowerCase().includes(searchInput) || (h.dateSaved || "").toLowerCase().includes(searchInput)));
             container.innerHTML = "";
-            if(history.length === 0) { 
-                container.innerHTML = "<p class='text-center py-20 opacity-40'>No logs found matching your criteria.</p>"; 
-                return; 
-            }
-
+            if(history.length === 0) { container.innerHTML = "<p class='text-center py-20 opacity-40'>No logs found.</p>"; return; }
             const grouped = {};
             history.forEach(data => {
-                let groupKey = "Unknown Date";
-                if(data.dateSaved) {
-                    const parts = data.dateSaved.split('-');
-                    groupKey = parts.length >= 2 ? `${parts[0]}-${parts[1]}` : data.dateSaved;
-                }
-                if(!grouped[groupKey]) grouped[groupKey] = [];
-                grouped[groupKey].push(data);
+                let groupKey = data.dateSaved ? (data.dateSaved.split('-').length >= 2 ? `${data.dateSaved.split('-')[0]}-${data.dateSaved.split('-')[1]}` : data.dateSaved) : "Unknown";
+                if(!grouped[groupKey]) grouped[groupKey] = []; grouped[groupKey].push(data);
             });
-
             Object.keys(grouped).sort().reverse().forEach(key => {
-                const groupHeader = document.createElement('h3');
-                groupHeader.className = "text-xs font-black uppercase tracking-widest text-sky-500 mb-2 mt-6 border-b border-slate-200 dark:border-slate-800 pb-1";
-                groupHeader.innerText = `Period: ${key}`;
-                container.appendChild(groupHeader);
-
+                const groupHeader = document.createElement('h3'); groupHeader.className = "text-xs font-black uppercase tracking-widest text-sky-500 mb-2 mt-6 border-b border-slate-200 dark:border-slate-800 pb-1"; groupHeader.innerText = `Period: ${key}`; container.appendChild(groupHeader);
                 grouped[key].forEach(data => {
-                    const div = document.createElement('div');
-                    div.className = "card flex justify-between items-center hover:border-sky-200 dark:hover:border-sky-800 transition-colors group mb-3";
-                    div.innerHTML = `
-                        <div>
-                            <div class="font-black text-lg">${data.dateSaved}</div>
-                            <div class="text-xs font-bold uppercase tracking-widest text-slate-400">Manager: ${data.manager || 'N/A'} • Duration: ${data.durationMins || 0}m</div>
-                        </div>
+                    const div = document.createElement('div'); div.className = "card flex justify-between items-center hover:border-sky-200 dark:hover:border-sky-800 transition-colors group mb-3";
+                    div.innerHTML = `<div><div class="font-black text-lg">${data.dateSaved}</div><div class="text-xs font-bold uppercase tracking-widest text-slate-400">Mgr: ${data.manager || 'N/A'} • Dur: ${data.durationMins || 0}m</div></div>
                         <div class="flex gap-2">
                             <button onclick="loadHistoryShift('${data.id}')" class="btn btn-outline btn-sm opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity"><i data-lucide="download"></i> Load</button>
                             <button onclick="deleteHistoryShift('${data.id}')" class="text-red-400 p-2 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity" title="Delete"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
-                        </div>
-                    `;
+                        </div>`;
                     container.appendChild(div);
                 });
             });
@@ -1060,306 +884,155 @@
         }
 
         function deleteHistoryShift(id) {
-            if(!currentUserData || !confirm("Are you sure you want to delete this shift from history permanently?")) return;
+            if(!currentUserData || !confirm("Permanently delete this shift from history?")) return;
             const shift = (currentUserData.shiftHistory || []).find(s => s.id === id);
-            if (shift) {
-                db.collection('users').doc(currentUser.uid).update({
-                    shiftHistory: firebase.firestore.FieldValue.arrayRemove(shift)
-                });
-            }
+            if (shift) db.collection('users').doc(currentUser.uid).update({ shiftHistory: firebase.firestore.FieldValue.arrayRemove(shift) });
         }
 
         function updateStorageBar() {
             if(!currentUserData) return;
-            const historyCount = (currentUserData.shiftHistory || []).length;
-            const usedKB = historyCount * 5; 
-            const usedMB = (usedKB / 1024).toFixed(2);
-            
-            const plan = currentUserData.plan || 'Free';
-            let maxGB = 1;
-            if (plan.includes('Individual')) maxGB = 3;
-            if (plan.includes('Business')) maxGB = 5;
-
-            document.getElementById('storageUsedTxt').innerText = `${usedMB} MB Used`;
-            document.getElementById('storageMaxTxt').innerText = `${maxGB} GB Limit`;
-
-            const percentage = Math.min(((usedMB / 1024) / maxGB) * 100, 100);
-            document.getElementById('storageProgressBar').style.width = `${percentage}%`;
+            const usedMB = ((currentUserData.shiftHistory || []).length * 5 / 1024).toFixed(2);
+            let maxGB = (currentUserData.plan || 'Free').includes('Business') ? 5 : ((currentUserData.plan || 'Free').includes('Individual') ? 3 : 1);
+            document.getElementById('storageUsedTxt').innerText = `${usedMB} MB Used`; document.getElementById('storageMaxTxt').innerText = `${maxGB} GB Limit`;
+            document.getElementById('storageProgressBar').style.width = `${Math.min(((usedMB / 1024) / maxGB) * 100, 100)}%`;
         }
 
         function loadHistoryShift(id) {
-            if(!currentUserData || !confirm("Loading this shift will overwrite your current draft tracker. Continue?")) return;
+            if(!currentUserData || !confirm("Loading will overwrite current draft. Continue?")) return;
             const shift = (currentUserData.shiftHistory || []).find(s => s.id === id);
-            if(shift) {
-                populateTrackerFromState(shift);
-                navTo('tracker');
-                triggerDraftSync();
-                alert("Shift loaded into Active Tracker.");
-            }
-        }
-
-        function exportPerformanceCSV() {
-            if(!currentUserData || !currentUserData.shiftHistory || currentUserData.shiftHistory.length === 0) return alert("No history available to export.");
-            
-            let csv = "Date,Time,Manager,Duration(m),Routines Completed,Safe Count,Prep Notes\n";
-            currentUserData.shiftHistory.forEach(h => {
-                let routinesDone = h.routines ? h.routines.filter(r => r.checked).length : 0;
-                let routinesTotal = h.routines ? h.routines.length : 0;
-                let safeCount = h.safeCount ? h.safeCount.replace(/,/g, '') : "0";
-                let prepNotes = h.prepNotes ? h.prepNotes.replace(/,/g, ';').replace(/\n/g, ' ') : "";
-                csv += `${h.dateSaved},${h.timeSaved},${h.manager},${h.durationMins},${routinesDone}/${routinesTotal},${safeCount},${prepNotes}\n`;
-            });
-
-            const blob = new Blob([csv], { type: 'text/csv' });
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.setAttribute('hidden', '');
-            a.setAttribute('href', url);
-            a.setAttribute('download', 'ezManage_Performance.csv');
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
+            if(shift) { populateTrackerFromState(shift); navTo('tracker'); triggerDraftSync(); }
         }
 
         function calculatePerformance() {
             if(!currentUserData) return;
             const history = currentUserData.shiftHistory || [];
             document.getElementById('statShifts').innerText = history.length;
-            
-            let totalRoutines = 0; let checkedRoutines = 0;
-            let totalTime = 0;
-            
-            history.forEach(d => {
-                totalTime += (d.durationMins || 0);
-                (d.routines || []).forEach(r => { totalRoutines++; if(r.checked) checkedRoutines++; });
-            });
-
+            let totalRoutines = 0, checkedRoutines = 0, totalTime = 0;
+            history.forEach(d => { totalTime += (d.durationMins || 0); (d.routines || []).forEach(r => { totalRoutines++; if(r.checked) checkedRoutines++; }); });
             document.getElementById('statAvgTime').innerText = history.length > 0 ? Math.round(totalTime / history.length) + "m" : "0m";
-            const score = totalRoutines === 0 ? 0 : Math.round((checkedRoutines / totalRoutines) * 100);
-            document.getElementById('statRoutines').innerText = score + "%";
-
-            const tips = document.getElementById('performanceTips');
-            if(score < 70) tips.innerText = "Focus: Your routine score is low. Try completing ServSafe temps and lobby checks immediately after the rush.";
-            else if(history.length > 5) tips.innerText = "Great consistency! Your logs are detailed and synced. Consider sharing your custom templates with your team.";
+            document.getElementById('statRoutines').innerText = totalRoutines === 0 ? "0%" : Math.round((checkedRoutines / totalRoutines) * 100) + "%";
         }
 
-        // ================= TEMPLATES & PRESETS =================
-        const presets = {
-            'arbys': ["Shake Mix", "Mozzarella", "Beef", "Turkey", "Ham", "Sub Buns", "Slider Buns", "Turnovers"],
-            'mcdonalds': ["10:1 Beef", "4:1 Beef", "Nuggets", "McChicken", "Fries", "Reg Buns", "Mac Sauce"],
-            'tacobell': ["Ground Beef", "Chicken", "Steak", "Nacho Cheese", "Tortillas (12in)", "Cinnabon Delights"],
-            'chickfila': ["CFA Filets", "Spicy Filets", "Nuggets", "Waffle Fries", "Milk Base", "Mac & Cheese"],
-            'pizza': ["Dough Large", "Dough Medium", "Mozzarella", "Pepperoni", "Sausage", "Wings"]
-        };
-
+        // ================= TEMPLATES =================
+        const presets = { 'arbys': ["Shake Mix", "Mozzarella", "Beef", "Turkey", "Ham", "Sub Buns", "Slider Buns", "Turnovers"], 'mcdonalds': ["10:1 Beef", "4:1 Beef", "Nuggets", "McChicken", "Fries", "Reg Buns", "Mac Sauce"], 'tacobell': ["Ground Beef", "Chicken", "Steak", "Nacho Cheese", "Tortillas (12in)", "Cinnabon Delights"] };
         function loadPresetList() {
-            if(confirm("Apply this template? Current inventory list will be cleared.")) {
-                const key = document.getElementById('presetSelector').value;
+            if(confirm("Apply template? Current inventory will be cleared.")) {
                 document.getElementById('inventoryContainer').innerHTML = '';
-                (presets[key] || []).slice().reverse().forEach(name => addInventoryItem(name));
-                navTo('tracker');
-                triggerDraftSync();
+                (presets[document.getElementById('presetSelector').value] || []).slice().reverse().forEach(name => addInventoryItem(name));
+                navTo('tracker'); triggerDraftSync();
             }
         }
 
         function saveCustomPreset() {
             if(!currentUser) return;
-            const name = document.getElementById('customPresetName').value || "Unnamed Preset";
-            const state = getTrackerState();
-            
-            const presetData = {
-                id: Date.now().toString(),
-                name: name,
-                inventory: state.inventory,
-                routines: state.routines,
-                drawers: state.drawers,
-                deposits: state.deposits
-            };
-            
             db.collection('users').doc(currentUser.uid).set({
-                customPresets: firebase.firestore.FieldValue.arrayUnion(presetData)
-            }, { merge: true }).then(() => {
-                alert("Tracker Layout (Counts & Routines) Saved Successfully!");
-                document.getElementById('customPresetName').value = "";
-            });
+                customPresets: firebase.firestore.FieldValue.arrayUnion({ id: Date.now().toString(), name: document.getElementById('customPresetName').value || "Unnamed Preset", inventory: getTrackerState().inventory, routines: getTrackerState().routines, drawers: getTrackerState().drawers, deposits: getTrackerState().deposits })
+            }, { merge: true }).then(() => { alert("Layout Saved Successfully!"); document.getElementById('customPresetName').value = ""; });
         }
-
         function deleteCustomPreset(id) {
-            if(!currentUserData || !confirm("Are you sure you want to delete this preset permanently?")) return;
+            if(!currentUserData || !confirm("Delete this preset permanently?")) return;
             const preset = (currentUserData.customPresets || []).find(p => p.id === id);
-            if (preset) {
-                db.collection('users').doc(currentUser.uid).update({
-                    customPresets: firebase.firestore.FieldValue.arrayRemove(preset)
-                });
-            }
+            if (preset) db.collection('users').doc(currentUser.uid).update({ customPresets: firebase.firestore.FieldValue.arrayRemove(preset) });
         }
-
         function loadCustomPresets() {
             if(!currentUserData) return;
-            const container = document.getElementById('customPresetsContainer');
-            container.innerHTML = "";
-            const cp = currentUserData.customPresets || [];
-            cp.forEach(p => {
-                const div = document.createElement('div');
-                div.className = "flex justify-between items-center p-4 bg-slate-50 dark:bg-slate-900 rounded-xl group border border-slate-100 dark:border-slate-800";
-                div.innerHTML = `
-                    <span class="font-bold">${p.name}</span>
-                    <div class="flex gap-2">
-                        <button onclick="applyCustomPreset('${p.id}')" class="btn btn-sm btn-outline opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity">Load</button>
-                        <button onclick="deleteCustomPreset('${p.id}')" class="text-red-400 p-2 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity" title="Delete"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
-                    </div>
-                `;
+            const container = document.getElementById('customPresetsContainer'); container.innerHTML = "";
+            (currentUserData.customPresets || []).forEach(p => {
+                const div = document.createElement('div'); div.className = "flex justify-between items-center p-4 bg-slate-50 dark:bg-slate-800 rounded-xl group border border-slate-100 dark:border-slate-700";
+                div.innerHTML = `<span class="font-bold">${p.name}</span><div class="flex gap-2"><button onclick="applyCustomPreset('${p.id}')" class="btn btn-sm btn-outline opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity">Load</button><button onclick="deleteCustomPreset('${p.id}')" class="text-red-400 p-2 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div>`;
                 container.appendChild(div);
             });
             lucide.createIcons();
         }
-
         function applyCustomPreset(id) {
-            if(!confirm("Replace current tracker layout with this custom preset?")) return;
+            if(!confirm("Replace current tracker layout?")) return;
             const preset = (currentUserData.customPresets || []).find(p => p.id == id);
             if(preset) {
-                if (preset.items) {
-                    document.getElementById('inventoryContainer').innerHTML = '';
-                    preset.items.slice().reverse().forEach(i => {
-                        if (typeof i === 'string') addInventoryItem(i);
-                        else addInventoryItem(i.name, i.bl, i.cl, i.fr);
-                    });
-                } else {
-                    populateTrackerFromState(preset);
-                }
-                navTo('tracker');
-                triggerDraftSync();
+                if (preset.items) { document.getElementById('inventoryContainer').innerHTML = ''; preset.items.slice().reverse().forEach(i => { if (typeof i === 'string') addInventoryItem(i); else addInventoryItem(i.name, i.bl, i.cl, i.fr); }); } 
+                else { populateTrackerFromState(preset); }
+                navTo('tracker'); triggerDraftSync();
             }
         }
 
-        // ================= PROFILE & ADMIN =================
+        // ================= PROFILE & REQUESTS =================
         function loadProfileUI(data) {
             document.getElementById('profNameDisplay').innerText = data.name || "Manager";
             document.getElementById('profSubStatus').innerText = (data.plan || "Free") + " Plan";
-            document.getElementById('profName').value = data.name || "";
-            document.getElementById('profRole').value = data.role || "";
-            document.getElementById('profPhone').value = data.phone || "";
+            document.getElementById('profName').value = data.name || ""; document.getElementById('profRole').value = data.role || "";
             if(data.name) document.getElementById('profileAvatar').innerText = data.name.charAt(0).toUpperCase();
-        }
 
+            // Org Display Management
+            const accType = data.accountType || 'individual';
+            document.getElementById('profAccountTypeDisplay').innerText = accType === 'business' ? "Business / Corporate Account" : "Individual Manager Account";
+            document.getElementById('orgMyCodeDisplay').innerText = "Company ID: " + currentUser.uid;
+
+            if (accType === 'business') {
+                document.getElementById('orgBusinessUI').classList.remove('hidden'); document.getElementById('orgIndividualUI').classList.add('hidden');
+            } else {
+                document.getElementById('orgBusinessUI').classList.add('hidden'); document.getElementById('orgIndividualUI').classList.remove('hidden');
+                if(data.orgId) {
+                    document.getElementById('orgIndividualBound').classList.remove('hidden'); document.getElementById('orgIndividualNotBound').classList.add('hidden');
+                } else {
+                    document.getElementById('orgIndividualBound').classList.add('hidden'); document.getElementById('orgIndividualNotBound').classList.remove('hidden');
+                }
+            }
+        }
         function saveProfileToFirebase() {
             if(!currentUser) return;
-            const data = {
-                name: document.getElementById('profName').value,
-                role: document.getElementById('profRole').value,
-                phone: document.getElementById('profPhone').value
-            };
-            db.collection('users').doc(currentUser.uid).set(data, { merge: true }).then(() => alert("Profile Updated!"));
+            db.collection('users').doc(currentUser.uid).set({ name: document.getElementById('profName').value, role: document.getElementById('profRole').value }, { merge: true }).then(() => alert("Profile Updated!"));
         }
-
-        function changePassword() {
-            if(!currentUser) return;
-            auth.sendPasswordResetEmail(currentUser.email).then(() => {
-                alert("A password reset email has been sent to " + currentUser.email);
-            }).catch(err => alert(err.message));
-        }
-
+        function changePassword() { auth.sendPasswordResetEmail(currentUser.email).then(() => alert("Reset email sent.")); }
         async function cancelSubscription() {
-            if(!currentUserData || !currentUserData.subscription || currentUserData.subscription.status !== 'active') {
-                return alert("You do not have an active premium subscription to cancel.");
-            }
-            if(!confirm("Are you sure you want to cancel your subscription?")) return;
-            
+            if(!currentUserData || !currentUserData.subscription || currentUserData.subscription.status !== 'active') return alert("No active subscription to cancel.");
+            if(!confirm("Cancel your subscription?")) return;
             try {
-                const res = await fetch("https://cancelsubscription-dsy7tdoigq-uc.a.run.app", {
-                    method: "POST",
-                    headers: {"Content-Type": "application/json"},
-                    body: JSON.stringify({ customerId: currentUserData.subscription.customerId })
-                });
+                const res = await fetch("https://cancelsubscription-dsy7tdoigq-uc.a.run.app", { method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({ customerId: currentUserData.subscription.customerId }) });
                 const data = await res.json();
-                if(data.success) {
-                    alert("Subscription canceled successfully.");
-                    db.collection('users').doc(currentUser.uid).update({ 
-                        "subscription.status": "canceled", 
-                        plan: "Free",
-                        cloudSyncEnabled: false
-                    });
-                } else { alert("Error: " + data.error); }
-            } catch(e) { alert("Failed to contact payment server. Try again later."); }
+                if(data.success) db.collection('users').doc(currentUser.uid).update({ "subscription.status": "canceled", plan: "Free", cloudSyncEnabled: false });
+                else alert("Error: " + data.error);
+            } catch(e) { alert("Failed to contact server."); }
         }
-
         function deleteAccount() {
-            if(!currentUser) return;
-            if(!confirm("WARNING: Are you sure you want to permanently delete your account and all associated data? This action cannot be undone.")) return;
-            
-            db.collection('users').doc(currentUser.uid).delete().then(() => {
-                localStorage.removeItem(`ezManage_draft_${currentUser.uid}`);
-                currentUser.delete().then(() => {
-                    alert("Your account has been deleted.");
-                    window.location.href = 'index.html';
-                }).catch(err => {
-                    if(err.code === 'auth/requires-recent-login') {
-                        alert("For security reasons, please log out and log back in before deleting your account.");
-                    } else { alert(err.message); }
-                });
-            });
+            if(!confirm("WARNING: Permanently delete your account?")) return;
+            db.collection('users').doc(currentUser.uid).delete().then(() => { localStorage.removeItem(`ezManage_draft_${currentUser.uid}`); currentUser.delete().then(() => { window.location.href = 'index.html'; }); });
         }
 
-        // ================= FEATURE REQUESTS =================
+        // Feature Request Feature specifically requested
         function submitFeatureRequest() {
-            const msg = document.getElementById('featureReqText').value;
-            if(!msg) return;
-            db.collection('feature_requests').add({
-                uid: currentUser.uid,
-                email: currentUser.email,
-                message: msg,
-                status: "In Progress",
-                timestamp: new Date().toISOString()
-            }).then(() => { 
-                alert("Sent!"); 
-                document.getElementById('featureReqText').value = ""; 
-            });
+            const msg = document.getElementById('featureReqText').value; if(!msg) return;
+            db.collection('feature_requests').add({ uid: currentUser.uid, email: currentUser.email, message: msg, status: "In Progress", timestamp: new Date().toISOString() })
+              .then(() => { alert("Sent!"); document.getElementById('featureReqText').value = ""; });
         }
-
+        function deleteFeatureRequest(id) {
+            if(confirm("Are you sure you want to delete this feature request?")) db.collection('feature_requests').doc(id).delete();
+        }
         function fetchFeatureRequests() {
             if(!currentUser) return;
-            db.collection('feature_requests')
-              .where('uid', '==', currentUser.uid)
-              .onSnapshot(snap => {
-                  const container = document.getElementById('myFeatureRequests');
-                  container.innerHTML = '';
-                  if (snap.empty) {
-                      container.innerHTML = "<p class='text-sm text-slate-500'>You haven't submitted any requests yet.</p>";
-                      return;
-                  }
-                  
-                  snap.forEach(doc => {
-                      const data = doc.data();
-                      const status = data.status || 'In Progress';
-                      
-                      let badgeClass = "bg-amber-100 text-amber-700"; 
-                      if(status === 'Completed') badgeClass = "bg-emerald-100 text-emerald-700";
-                      if(status === 'Declined') badgeClass = "bg-red-100 text-red-700";
-
-                      const div = document.createElement('div');
-                      div.className = "p-4 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-800";
-                      div.innerHTML = `
-                          <div class="flex justify-between items-start mb-2">
-                              <span class="text-xs text-slate-400 font-mono">${new Date(data.timestamp).toLocaleDateString()}</span>
-                              <span class="text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded-full ${badgeClass}">${status}</span>
-                          </div>
-                          <p class="text-sm font-medium text-slate-700 dark:text-slate-300">"${data.message}"</p>
-                      `;
-                      container.appendChild(div);
-                  });
-              });
+            db.collection('feature_requests').where('uid', '==', currentUser.uid).onSnapshot(snap => {
+                const container = document.getElementById('myFeatureRequests'); container.innerHTML = snap.empty ? "<p class='text-sm text-slate-500'>No requests yet.</p>" : "";
+                snap.forEach(doc => {
+                    const data = doc.data(); const status = data.status || 'In Progress';
+                    let badgeClass = status === 'Completed' ? "bg-emerald-100 text-emerald-700" : (status === 'Declined' ? "bg-red-100 text-red-700" : "bg-amber-100 text-amber-700");
+                    container.innerHTML += `
+                        <div class="p-4 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-800">
+                            <div class="flex justify-between items-start mb-2">
+                                <div><span class="text-xs text-slate-400 font-mono block mb-1">${new Date(data.timestamp).toLocaleDateString()}</span><span class="text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded-full ${badgeClass}">${status}</span></div>
+                                <button onclick="deleteFeatureRequest('${doc.id}')" class="text-red-400 hover:text-red-500 p-1 bg-red-50 dark:bg-red-900/20 rounded-lg transition-colors"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                            </div>
+                            <p class="text-sm font-medium text-slate-700 dark:text-slate-300 mt-2">"${data.message}"</p>
+                        </div>`;
+                });
+                lucide.createIcons();
+            });
         }
 
         // ================= PDF PRINT ENGINE =================
         function clearData() {
-            if(confirm("Are you sure? This will wipe the current tracker form.")) {
+            if(confirm("Wipe the current tracker form?")) {
                 document.getElementById('trackerForm').reset();
-                document.getElementById('drawersContainer').innerHTML = '';
-                document.getElementById('depositsContainer').innerHTML = '';
-                document.getElementById('inventoryContainer').innerHTML = '';
-                document.getElementById('routineContainer').innerHTML = '';
-                initDefaults();
-                triggerDraftSync();
+                document.getElementById('drawersContainer').innerHTML = ''; document.getElementById('depositsContainer').innerHTML = '';
+                document.getElementById('inventoryContainer').innerHTML = ''; document.getElementById('routineContainer').innerHTML = '';
+                initDefaults(); triggerDraftSync();
             }
         }
 
@@ -1367,63 +1040,32 @@
             if (document.getElementById('inventoryContainer').innerHTML.trim() === "") {
                 document.getElementById('shiftDate').value = new Date().toISOString().split('T')[0];
                 document.getElementById('shiftTime').value = new Date().toTimeString().slice(0,5);
-                addDrawerItem("100.00", "Register 1");
-                addDrawerItem("100.00", "Register 2");
-                addDepositItem();
+                addDrawerItem("100.00", "Register 1"); addDrawerItem("100.00", "Register 2"); addDepositItem();
                 ["Parking Lot", "Lobby/Restrooms", "ServSafe Temps", "Filtered Fryers", "Trash Run"].forEach(t => addRoutineTask(t));
-                presets['arbys'].slice().reverse().forEach(name => addInventoryItem(name)); // Match prepend logic
+                (presets['arbys'] || []).slice().reverse().forEach(name => addInventoryItem(name)); // Match prepend logic
             }
         }
 
         function generateReport() {
-            if(!currentUser) return alert("Sign in required.");
             const state = getTrackerState();
-            
-            // Perfect PDF Print Mirror Mapping
-            document.getElementById('printMgr').innerText = state.manager || 'Not Specified';
-            document.getElementById('printDt').innerText = state.dateSaved || 'Not Specified';
-            document.getElementById('printTm').innerText = state.timeSaved || 'Not Specified';
-            document.getElementById('printDur').innerText = state.durationMins || '0';
-            
-            let routineHtml = "";
-            state.routines.forEach(r => {
-                let boxClass = r.checked ? "print-checked" : "";
-                routineHtml += `<tr><td style="text-align:center"><div class="print-checkbox ${boxClass}"></div></td><td>${r.name}</td></tr>`;
-            });
+            document.getElementById('printMgr').innerText = state.manager || 'Not Specified'; document.getElementById('printDt').innerText = state.dateSaved || 'Not Specified';
+            let routineHtml = ""; state.routines.forEach(r => { routineHtml += `<tr><td style="text-align:center"><div class="print-checkbox ${r.checked ? "print-checked" : ""}"></div></td><td>${r.name}</td></tr>`; });
             document.getElementById('printRoutines').innerHTML = routineHtml || "<tr><td colspan='2'>No routines logged</td></tr>";
-
-            let drawerHtml = "";
-            state.drawers.forEach(d => drawerHtml += `<tr><td>${d.name}</td><td>$${d.val}</td><td>${d.res}</td></tr>`);
+            let drawerHtml = ""; state.drawers.forEach(d => drawerHtml += `<tr><td>${d.name}</td><td>$${d.val}</td><td>${d.res}</td></tr>`);
             document.getElementById('printDrawers').innerHTML = drawerHtml || "<tr><td colspan='3'>No drawers logged</td></tr>";
-
-            document.getElementById('printSafe').innerText = state.safeCount || "N/A";
-            document.getElementById('printChange').innerText = state.changeNeeded || "N/A";
-
-            let invHtml = "";
-            state.inventory.forEach(i => invHtml += `<tr><td>${i.name}</td><td>${i.bl}</td><td>${i.cl}</td><td>${i.fr}</td></tr>`);
+            let invHtml = ""; state.inventory.forEach(i => invHtml += `<tr><td>${i.name}</td><td>${i.bl}</td><td>${i.cl}</td><td>${i.fr}</td></tr>`);
             document.getElementById('printInventoryList').innerHTML = invHtml || "<tr><td colspan='4'>No inventory logged</td></tr>";
-
-            document.getElementById('printNotesBlock').innerText = state.prepNotes || "No notes provided.";
-
-            if (cloudSyncEnabled) { manualSaveHistory(); } 
-            else { localStorage.setItem(`ezManage_draft_${currentUser.uid}`, JSON.stringify(state)); }
             
-            try {
-                window.print();
-            } catch(e) {
-                alert("Printing was blocked by your browser. Please ensure popups are allowed.");
-            }
+            if (cloudSyncEnabled) manualSaveHistory(); else localStorage.setItem(`ezManage_draft_${currentUser?.uid || 'guest'}`, JSON.stringify(state));
+            try { window.print(); } catch(e) { alert("Printing was blocked by your browser. Please ensure popups are allowed."); }
         }
 
         window.onload = () => {
             if(localStorage.getItem('managerProTheme') === 'dark') {
-                document.body.classList.add('dark-mode');
-                document.getElementById('themeToggle').checked = true;
+                document.body.classList.add('dark-mode'); document.getElementById('themeToggle').checked = true;
             }
-            lucide.createIcons();
-            initDefaults();
+            lucide.createIcons(); initDefaults();
         };
-
     </script>
 </body>
 </html>
