@@ -35,6 +35,11 @@ export const products = [
     }
 ];
 
+export const productMap = products.reduce((map, product) => {
+    map[product.id] = product;
+    return map;
+}, {});
+
 // --- STATE MANAGEMENT ---
 let cart = {}; // { productId: quantity, ... }
 let currentUser = null;
@@ -76,7 +81,7 @@ function renderCart() {
         checkoutBtn.disabled = true;
     } else {
         cartItemsContainer.innerHTML = Object.entries(cart).map(([productId, quantity]) => {
-            const product = products.find(p => p.id === productId);
+            const product = productMap[productId];
             if (!product) return ''; // Should not happen
             return `
                 <div class="cart-item">
@@ -100,8 +105,8 @@ function renderCart() {
 function updateCartSummary() {
     const itemCount = Object.values(cart).reduce((sum, quantity) => sum + quantity, 0);
     const totalPrice = Object.entries(cart).reduce((sum, [productId, quantity]) => {
-        const product = products.find(p => p.id === productId);
-        return sum + (product.price * quantity);
+        const product = productMap[productId];
+        return sum + (product ? (product.price * quantity) : 0);
     }, 0);
 
     cartItemCountEl.textContent = itemCount;
