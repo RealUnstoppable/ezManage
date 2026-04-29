@@ -8,4 +8,5 @@ functions/node_modules/
 
 # Firebase
 .firebase/
-firebase-debug.logcoverage/
+firebase-debug.log
+coverage/
