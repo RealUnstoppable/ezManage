@@ -173,8 +173,15 @@ animation: fadeIn 300ms;
     </div>
   
     <script type="module">
-        import { auth, db } from '/js/auth.js'; // FIX: Import from centralized auth file
-        import { createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js"; </script>
+        import {
+            auth,
+            db,
+            createUserWithEmailAndPassword,
+            signInWithEmailAndPassword,
+            onAuthStateChanged,
+            signOut
+        } from '/js/auth.js';
+    </script>
 
 </body>
 </html>

@@ -227,9 +227,17 @@
     </div>
 
     <script type="module">
-        import { auth, db } from '/js/auth.js';
-        import { onAuthStateChanged, signOut, deleteUser } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
-        import { doc, getDoc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
+        import {
+            auth,
+            db,
+            onAuthStateChanged,
+            signOut,
+            deleteUser,
+            doc,
+            getDoc,
+            updateDoc,
+            deleteDoc
+        } from '/js/auth.js';
         
         onAuthStateChanged(auth, async (user) => {
             if (user) {
