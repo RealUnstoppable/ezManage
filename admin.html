@@ -264,7 +264,7 @@
                     const requests = featureRequestsSnapshot.docs.map(d => ({ id: d.id, ...d.data() }));
                     renderFeatureRequestsTable(requests);
                 } catch (frError) {
-                    console.log("Could not load feature requests. Missing Firestore rules?", frError);
+                    console.error("Could not load feature requests. Missing Firestore rules?", frError);
                     document.getElementById('feature-request-list-body').innerHTML = `<tr><td colspan="6" style="text-align:center; color:var(--accent-red);">Failed to load Feature Requests. Please check your Firebase Database Rules.</td></tr>`;
                 }
                 
