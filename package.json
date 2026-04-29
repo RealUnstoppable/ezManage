@@ -7,6 +7,13 @@
     "test": "jest",
     "start": "node server.js",
     "build": "echo 'No build step required'"
+  "main": "server.cjs",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "NODE_OPTIONS='--experimental-vm-modules' jest",
+    "start": "node server.cjs"
   },
   "repository": {
     "type": "git",
@@ -26,5 +33,14 @@
     "babel-jest": "^30.3.0",
     "jest": "^30.3.0",
     "jest-environment-jsdom": "^30.3.0"
+    "jest": "^30.3.0",
+    "jest-environment-jsdom": "^30.3.0",
+    "jsdom": "^29.1.0"
+  },
+  "type": "module",
+  "dependencies": {
+    "cors": "^2.8.6",
+    "express": "^5.2.1",
+    "stripe": "^22.1.0"
   }
 }
