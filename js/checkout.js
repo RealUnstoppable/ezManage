@@ -96,22 +96,29 @@ async function handlePlaceOrder(e) {
     try {
         // New Feature: Use a transaction to ensure atomicity
         await runTransaction(db, async (transaction) => {
-            // 1. Create a new order document
+            // 1. Fetch all product stats concurrently (Reads must happen before writes in Firestore transactions)
+            const cartEntries = Object.entries(userCart);
+            const productStatRefs = cartEntries.map(([productId]) => doc(db, "product_stats", productId));
+            const statDocs = await Promise.all(productStatRefs.map(ref => transaction.get(ref)));
+
+            // 2. Create a new order document
             const newOrderRef = doc(db, "orders", `${currentUser.uid}-${Date.now()}`);
             transaction.set(newOrderRef, orderDetails);
 
-            // 2. Update product order counts
-            for (const [productId, quantity] of Object.entries(userCart)) {
-                const productStatRef = doc(db, "product_stats", productId);
-                const statDoc = await transaction.get(productStatRef);
+            // 3. Update product order counts
+            cartEntries.forEach(([productId, quantity], index) => {
+                const productStatRef = productStatRefs[index];
+                const statDoc = statDocs[index];
+
                 if (!statDoc.exists()) {
-    transaction.set(productStatRef, { orderedCount: quantity });
-} else {
-    const newCount = statDoc.data().orderedCount + quantity;
-    transaction.update(productStatRef, { orderedCount: newCount });
-}
-            }
-            // 3. Clear the user's cart
+                    transaction.set(productStatRef, { orderedCount: quantity });
+                } else {
+                    const newCount = statDoc.data().orderedCount + quantity;
+                    transaction.update(productStatRef, { orderedCount: newCount });
+                }
+            });
+
+            // 4. Clear the user's cart
             const userCartRef = doc(db, 'carts', currentUser.uid);
             transaction.set(userCartRef, { items: {} });
         });
