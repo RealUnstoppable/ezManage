@@ -1,0 +1,3 @@
+## 2024-04-29 - Accessible Shopping Cart Buttons
+**Learning:** Screen readers announce the total content of a button when interacting. Adding an `aria-label` to a button that dynamically updates (like a cart count) completely replaces the button's visual content from the screen reader's perspective. For instance, if a button has `<span class="cart-count">3</span>`, an `aria-label="Open Cart"` causes the screen reader to miss the "3" entirely.
+**Action:** When adding ARIA labels to components containing dynamic visual indicators (like item counts), ensure the ARIA label is also dynamically updated to reflect that state (e.g., `aria-label="Open Cart, 3 items"`).

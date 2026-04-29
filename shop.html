@@ -28,8 +28,8 @@
             </section>
     </main>
     
-    <button id="cart-button" class="cart-fab">
-        <span id="cart-icon">🛒</span>
+    <button id="cart-button" class="cart-fab" aria-label="Open Cart">
+        <span id="cart-icon" aria-hidden="true">🛒</span>
         <span id="cart-item-count" class="cart-item-count">0</span>
     </button>
 
@@ -37,7 +37,7 @@
         <div class="cart-modal-content">
             <div class="cart-modal-header">
                 <h2>Your Cart</h2>
-                <button id="close-cart-btn" class="close-cart-btn">&times;</button>
+                <button id="close-cart-btn" class="close-cart-btn" aria-label="Close Cart">&times;</button>
             </div>
             <div id="cart-items-container" class="cart-items-container">
                 </div>
