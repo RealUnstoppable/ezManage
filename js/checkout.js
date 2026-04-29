@@ -96,22 +96,33 @@ async function handlePlaceOrder(e) {
     try {
         // New Feature: Use a transaction to ensure atomicity
         await runTransaction(db, async (transaction) => {
-            // 1. Create a new order document
+            // 1. Pre-fetch all necessary read documents before any writes
+            const cartEntries = Object.entries(userCart);
+            const statDocs = await Promise.all(
+                cartEntries.map(([productId]) => {
+                    const productStatRef = doc(db, "product_stats", productId);
+                    return transaction.get(productStatRef);
+                })
+            );
+
+            // 2. Create a new order document
             const newOrderRef = doc(db, "orders", `${currentUser.uid}-${Date.now()}`);
             transaction.set(newOrderRef, orderDetails);
 
-            // 2. Update product order counts
-            for (const [productId, quantity] of Object.entries(userCart)) {
+            // 3. Update product order counts
+            cartEntries.forEach(([productId, quantity], index) => {
+                const statDoc = statDocs[index];
                 const productStatRef = doc(db, "product_stats", productId);
-                const statDoc = await transaction.get(productStatRef);
+
                 if (!statDoc.exists()) {
-    transaction.set(productStatRef, { orderedCount: quantity });
-} else {
-    const newCount = statDoc.data().orderedCount + quantity;
-    transaction.update(productStatRef, { orderedCount: newCount });
-}
-            }
-            // 3. Clear the user's cart
+                    transaction.set(productStatRef, { orderedCount: quantity });
+                } else {
+                    const newCount = statDoc.data().orderedCount + quantity;
+                    transaction.update(productStatRef, { orderedCount: newCount });
+                }
+            });
+
+            // 4. Clear the user's cart
             const userCartRef = doc(db, 'carts', currentUser.uid);
             transaction.set(userCartRef, { items: {} });
         });
