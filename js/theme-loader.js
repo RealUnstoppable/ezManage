@@ -5,11 +5,9 @@
     if (localTheme) document.body.dataset.theme = localTheme;
     if (localAccent) document.body.dataset.accent = localAccent;
 })();
-import { auth, db } from './auth.js';
-import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
-import { doc, getDoc } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
+import { auth, db, onAuthStateChanged, doc, getDoc } from './auth.js';
 
-const applyTheme = (theme, accentColor) => {
+export const applyTheme = (theme, accentColor) => {
     document.body.dataset.theme = theme || 'dark';
     document.body.dataset.accent = accentColor || 'blue';
 
