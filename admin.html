@@ -462,6 +462,13 @@
         }
       });
 
+      function escapeHTML(str) {
+        if (!str) return "";
+        const p = document.createElement("p");
+        p.textContent = str;
+        return p.innerHTML;
+      }
+
       function initializeAdminPage(adminUser) {
         document.getElementById("user-email-sidebar").textContent =
           adminUser.email;
@@ -551,9 +558,9 @@
                 : `<span style="color: var(--text-secondary);">Free</span>`;
 
             row.innerHTML = `
-                    <td>${user.username || user.name || "N/A"}</td>
-                    <td>${user.email}</td>
-                    <td>${signupDate}</td>
+                    <td>${escapeHTML(user.username || user.name || "N/A")}</td>
+                    <td>${escapeHTML(user.email)}</td>
+                    <td>${escapeHTML(signupDate)}</td>
                     <td>${subStatus}</td>
                     <td>${statusBadge}</td>
                     <td>${actionButton}</td>`;
@@ -593,9 +600,9 @@
             : `<button class="btn-sm btn-unban mark-complete-btn" data-id="${req.id}">Mark Complete</button>`;
 
           row.innerHTML = `
-                    <td>${reqDate}</td>
-                    <td>${req.email || "Unknown User"}</td>
-                    <td style="max-width:300px; word-wrap:break-word;">${req.message}</td>
+                    <td>${escapeHTML(reqDate)}</td>
+                    <td>${escapeHTML(req.email || "Unknown User")}</td>
+                    <td style="max-width:300px; word-wrap:break-word;">${escapeHTML(req.message)}</td>
                     <td>${tierBadge}</td>
                     <td>${statusStr}</td>
                     <td>${actionButton}</td>`;
@@ -620,8 +627,8 @@
             subscriber.subscribedAt?.toDate().toLocaleDateString() || "N/A";
 
           row.innerHTML = `
-                    <td>${subscriber.email}</td>
-                    <td>${subscriptionDate}</td>`;
+                    <td>${escapeHTML(subscriber.email)}</td>
+                    <td>${escapeHTML(subscriptionDate)}</td>`;
           newsletterListBody.appendChild(row);
         });
       }
