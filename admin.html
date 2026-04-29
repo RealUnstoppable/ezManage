@@ -444,6 +444,13 @@
         updateDoc,
       } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
 
+      const escapeHTML = (str) => {
+        if (!str) return "";
+        const div = document.createElement("div");
+        div.textContent = str;
+        return div.innerHTML;
+      };
+
       let performanceChart;
 
       onAuthStateChanged(auth, async (user) => {
@@ -551,8 +558,8 @@
                 : `<span style="color: var(--text-secondary);">Free</span>`;
 
             row.innerHTML = `
-                    <td>${user.username || user.name || "N/A"}</td>
-                    <td>${user.email}</td>
+                    <td>${escapeHTML(user.username || user.name || "N/A")}</td>
+                    <td>${escapeHTML(user.email)}</td>
                     <td>${signupDate}</td>
                     <td>${subStatus}</td>
                     <td>${statusBadge}</td>
@@ -594,8 +601,8 @@
 
           row.innerHTML = `
                     <td>${reqDate}</td>
-                    <td>${req.email || "Unknown User"}</td>
-                    <td style="max-width:300px; word-wrap:break-word;">${req.message}</td>
+                    <td>${escapeHTML(req.email || "Unknown User")}</td>
+                    <td style="max-width:300px; word-wrap:break-word;">${escapeHTML(req.message)}</td>
                     <td>${tierBadge}</td>
                     <td>${statusStr}</td>
                     <td>${actionButton}</td>`;
@@ -620,7 +627,7 @@
             subscriber.subscribedAt?.toDate().toLocaleDateString() || "N/A";
 
           row.innerHTML = `
-                    <td>${subscriber.email}</td>
+                    <td>${escapeHTML(subscriber.email)}</td>
                     <td>${subscriptionDate}</td>`;
           newsletterListBody.appendChild(row);
         });
