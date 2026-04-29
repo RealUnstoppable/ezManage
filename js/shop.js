@@ -91,8 +91,8 @@ function renderCart() {
                         <p>$${product.price.toFixed(2)}</p>
                     </div>
                     <div class="cart-item-actions">
-                        <input type="number" value="${quantity}" min="1" data-id="${productId}" class="item-quantity-input">
-                        <button class="remove-item-btn" data-id="${productId}">&#128465;</button>
+                        <input type="number" aria-label="Quantity of ${product.name}" value="${quantity}" min="1" data-id="${productId}" class="item-quantity-input">
+                        <button class="remove-item-btn" data-id="${productId}" aria-label="Remove ${product.name} from cart" title="Remove from cart">&#128465;</button>
                     </div>
                 </div>
             `;
@@ -111,6 +111,7 @@ function updateCartSummary() {
 
     cartItemCountEl.textContent = itemCount;
     cartTotalPriceEl.textContent = `$${totalPrice.toFixed(2)}`;
+    cartButton.setAttribute('aria-label', `Open Cart, ${itemCount} items`);
 }
 
 // --- CART LOGIC ---
