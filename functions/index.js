@@ -4,15 +4,19 @@ const cors = require("cors")({origin: true});
 
 admin.initializeApp();
 
-// Fallback "placeholder" string to stop Firebase Analyzer from crashing during deployment
+// Fallback "placeholder" string to stop Firebase Analyzer from crashing
+// during deployment
 const stripeKey = process.env.STRIPE_SECRET || "sk_test_placeholder";
-const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET || "whsec_placeholder";
+const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET ||
+  "whsec_placeholder";
 const stripe = require("stripe")(stripeKey);
 
 // 🔹 Create Checkout Session
 exports.createCheckoutSession = functions.https.onRequest((req, res) => {
   cors(req, res, async () => {
-    if (req.method !== "POST") return res.status(405).send("Method Not Allowed");
+    if (req.method !== "POST") {
+      return res.status(405).send("Method Not Allowed");
+    }
 
     const {uid, email, plan, amount, successUrl, cancelUrl} = req.body;
 
@@ -20,19 +24,24 @@ exports.createCheckoutSession = functions.https.onRequest((req, res) => {
 
     // If the frontend passed a specific discounted amount (Sale or Referral)
     if (amount) {
-      const productId = plan === "Business Pro" ? "prod_UFnBrTwFCgb54A" : "prod_UFn8zqZ0mwyy5r";
+      const productId = plan === "Business Pro" ?
+        "prod_UFnBrTwFCgb54A" :
+        "prod_UFn8zqZ0mwyy5r";
       lineItems = [{
         price_data: {
           currency: "usd",
           product: productId,
           recurring: {interval: "year"},
-          unit_amount: Math.round(amount * 100), // Stripe requires amounts in cents
+          // Stripe requires amounts in cents
+          unit_amount: Math.round(amount * 100),
         },
         quantity: 1,
       }];
     } else {
       // 🔴 Fallback to Actual Price IDs if no custom amount was provided
-      const priceId = plan === "Business Pro" ? "price_1THHbVBp2C5GdKaKvCVoMf1X" : "price_1THHYPBp2C5GdKaKxNpqndNE";
+      const priceId = plan === "Business Pro" ?
+        "price_1THHbVBp2C5GdKaKvCVoMf1X" :
+        "price_1THHYPBp2C5GdKaKxNpqndNE";
       lineItems = [{price: priceId, quantity: 1}];
     }
 
@@ -44,9 +53,11 @@ exports.createCheckoutSession = functions.https.onRequest((req, res) => {
         line_items: lineItems,
         subscription_data: {trial_period_days: 7}, // ✅ FREE TRIAL
 
-        // Use the URLs passed from the frontend, fallback to hardcoded if missing
-        success_url: successUrl || "https://dreamstimeskip-beta.pages.dev/tracker?success=true",
-        cancel_url: cancelUrl || "https://dreamstimeskip-beta.pages.dev/tracker?canceled=true",
+        // Use URLs from frontend, fallback to hardcoded if missing
+        success_url: successUrl ||
+          "https://dreamstimeskip-beta.pages.dev/tracker?success=true",
+        cancel_url: cancelUrl ||
+          "https://dreamstimeskip-beta.pages.dev/tracker?canceled=true",
         metadata: {
           uid: uid || "unknown",
           planName: plan || "Pro",
@@ -94,7 +105,8 @@ exports.stripeWebhook = functions.https.onRequest(async (req, res) => {
     }
   }
 
-  if (event.type === "customer.subscription.deleted" || event.type === "customer.subscription.canceled") {
+  if (event.type === "customer.subscription.deleted" ||
+      event.type === "customer.subscription.canceled") {
     const sub = event.data.object;
 
     const snapshot = await admin.firestore()
@@ -119,7 +131,9 @@ exports.stripeWebhook = functions.https.onRequest(async (req, res) => {
 // 🔻 Cancel Subscription Manually
 exports.cancelSubscription = functions.https.onRequest((req, res) => {
   cors(req, res, async () => {
-    if (req.method !== "POST") return res.status(405).send("Method Not Allowed");
+    if (req.method !== "POST") {
+      return res.status(405).send("Method Not Allowed");
+    }
 
     const {customerId} = req.body;
 
