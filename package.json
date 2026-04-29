@@ -2,13 +2,13 @@
   "name": "app",
   "version": "1.0.0",
   "description": "",
-  "main": "server.js",
+  "main": "server.cjs",
   "directories": {
     "test": "tests"
   },
   "scripts": {
     "test": "NODE_OPTIONS='--experimental-vm-modules' jest",
-    "start": "node server.js"
+    "start": "node server.cjs"
   },
   "repository": {
     "type": "git",
@@ -17,7 +17,6 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "module",
   "bugs": {
     "url": "https://github.com/RealUnstoppable/ezManage/issues"
   },
@@ -26,5 +25,11 @@
     "jest": "^30.3.0",
     "jest-environment-jsdom": "^30.3.0",
     "jsdom": "^29.1.0"
+  },
+  "type": "module",
+  "dependencies": {
+    "cors": "^2.8.6",
+    "express": "^5.2.1",
+    "stripe": "^22.1.0"
   }
 }
