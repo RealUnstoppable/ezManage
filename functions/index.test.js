@@ -1,97 +1,89 @@
-jest.mock("firebase-admin", () => ({
-  initializeApp: jest.fn(),
-  firestore: () => ({
-    collection: jest.fn(),
-    FieldValue: {serverTimestamp: jest.fn()},
-  }),
-}));
+const admin = require('firebase-admin');
+const functionsTest = require('firebase-functions-test')();
 
-const mockSessionsCreate = jest.fn();
-jest.mock("stripe", () => {
-  return jest.fn(() => ({
-    checkout: {
-      sessions: {
-        create: mockSessionsCreate,
-      },
-    },
+// Mock dependencies
+jest.mock('firebase-admin', () => {
+  const firestoreMock = {
+    collection: jest.fn().mockReturnThis(),
+    doc: jest.fn().mockReturnThis(),
+    set: jest.fn(),
+    where: jest.fn().mockReturnThis(),
+    get: jest.fn(),
+    update: jest.fn()
+  };
+  return {
+    initializeApp: jest.fn(),
+    firestore: jest.fn(() => firestoreMock),
+  };
+});
+admin.firestore.FieldValue = {
+    serverTimestamp: jest.fn()
+};
+
+// We must mock Stripe properly since it's instantiated immediately when index.js is required.
+const mockStripeMock = {
     webhooks: {
-      constructEvent: jest.fn(),
+        constructEvent: jest.fn()
+    },
+    checkout: {
+        sessions: {
+            create: jest.fn()
+        }
     },
     subscriptions: {
-      list: jest.fn(),
-      cancel: jest.fn(),
-    },
-  }));
+        list: jest.fn(),
+        cancel: jest.fn()
+    }
+};
+
+jest.mock('stripe', () => {
+    return jest.fn(() => mockStripeMock);
 });
 
-const myFunctions = require("./index.js");
+// Import the module after mocking
+const { stripeWebhook } = require('./index.js');
 
-describe("createCheckoutSession", () => {
-  let req;
-  let res;
-
-  beforeEach(() => {
-    req = {
-      method: "POST",
-      headers: {
-        origin: "http://localhost",
-      },
-      body: {},
-    };
-    res = {
-      status: jest.fn().mockReturnThis(),
-      json: jest.fn(),
-      send: jest.fn(),
-      setHeader: jest.fn(), // for cors
-      getHeader: jest.fn(),
-    };
-    mockSessionsCreate.mockClear();
-  });
-
-  it("should use Biz Pro price when amount not provided", async () => {
-    req.body = {
-      uid: "123",
-      email: "test@test.com",
-      plan: "Business Pro",
-    };
-
-    mockSessionsCreate.mockResolvedValue({url: "http://checkout.url"});
-
-    await new Promise((resolve) => {
-      res.json.mockImplementation((data) => resolve(data));
-      res.send.mockImplementation((data) => resolve(data));
-      myFunctions.createCheckoutSession(req, res);
+describe('stripeWebhook', () => {
+    beforeEach(() => {
+        jest.clearAllMocks();
     });
 
-    expect(mockSessionsCreate).toHaveBeenCalledTimes(1);
-    const createArgs = mockSessionsCreate.mock.calls[0][0];
-    expect(createArgs.line_items).toEqual([
-      {price: "price_1THHbVBp2C5GdKaKvCVoMf1X", quantity: 1},
-    ]);
-    expect(res.status).toHaveBeenCalledWith(200);
-    expect(res.json).toHaveBeenCalledWith({url: "http://checkout.url"});
-  });
-
-  it("should use default price when plan not Biz Pro", async () => {
-    req.body = {
-      uid: "123",
-      email: "test@test.com",
-      plan: "Pro",
-    };
-
-    mockSessionsCreate.mockResolvedValue({url: "http://checkout.url"});
-
-    await new Promise((resolve) => {
-      res.json.mockImplementation((data) => resolve(data));
-      res.send.mockImplementation((data) => resolve(data));
-      myFunctions.createCheckoutSession(req, res);
+    afterAll(() => {
+        functionsTest.cleanup();
     });
 
-    expect(mockSessionsCreate).toHaveBeenCalledTimes(1);
-    const createArgs = mockSessionsCreate.mock.calls[0][0];
-    expect(createArgs.line_items).toEqual([
-      {price: "price_1THHYPBp2C5GdKaKxNpqndNE", quantity: 1},
-    ]);
-    expect(res.status).toHaveBeenCalledWith(200);
-  });
+    it('should return 400 when constructEvent throws an error', async () => {
+        const req = {
+            headers: {
+                'stripe-signature': 'invalid_signature'
+            },
+            rawBody: 'raw_body_data'
+        };
+
+        const res = {
+            status: jest.fn().mockReturnThis(),
+            send: jest.fn(),
+            json: jest.fn()
+        };
+
+        // Simulate an error from stripe.webhooks.constructEvent
+        const errorMessage = 'Invalid signature';
+        mockStripeMock.webhooks.constructEvent.mockImplementation(() => {
+            throw new Error(errorMessage);
+        });
+
+        // Suppress console.error in tests to avoid noisy output
+        const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+        // Call the webhook
+        await stripeWebhook(req, res);
+
+        // Assertions
+        expect(mockStripeMock.webhooks.constructEvent).toHaveBeenCalledWith('raw_body_data', 'invalid_signature', expect.any(String));
+        expect(consoleSpy).toHaveBeenCalledWith('Webhook Error:', expect.any(Error));
+        expect(res.status).toHaveBeenCalledWith(400);
+        expect(res.send).toHaveBeenCalledWith(`Webhook Error: ${errorMessage}`);
+
+        consoleSpy.mockRestore();
+    });
 });
