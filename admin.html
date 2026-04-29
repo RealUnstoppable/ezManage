@@ -1,815 +1,439 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <script type="module" src="/js/theme-loader.js"></script>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<head>
+     <script type="module" src="/js/theme-loader.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard | DTS HUB</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="icon" type="image/png" href="/images/dreams-favicon.png" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
-      rel="stylesheet"
-    />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="icon" type="image/png" href="/images/dreams-favicon.png">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link rel="stylesheet" href="/css/themes.css" />
+    <link rel="stylesheet" href="/css/themes.css">
     <style>
-      :root {
-        --accent-blue: #2563eb;
-        --accent-red: #dc2626;
-        --accent-green: #16a34a;
-        --accent-yellow: #fbbf24;
-        --font-main: "Inter", sans-serif;
-      }
-      body {
-        font-family: var(--font-main);
-        background-color: var(--bg-color);
-        color: var(--text-primary);
-        margin: 0;
-        display: flex;
-        justify-content: center;
-        padding: 40px 20px;
-      }
-
-      /* Mobile Hamburger Styles */
-      .mobile-header {
-        display: none;
-        width: 100%;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 20px;
-      }
-      .hamburger-btn {
-        background: none;
-        border: none;
-        color: var(--text-primary);
-        font-size: 2rem;
-        cursor: pointer;
-      }
-
-      .admin-layout {
-        display: flex;
-        width: 100%;
-        max-width: 1400px;
-        gap: 30px;
-      }
-      .sidebar {
-        width: 250px;
-        flex-shrink: 0;
-        transition: transform 0.3s ease;
-      }
-      .sidebar-header {
-        padding: 20px;
-        background-color: var(--primary-card-color);
-        border-radius: 12px;
-        margin-bottom: 20px;
-        border: 1px solid var(--border-color);
-      }
-      .sidebar-header h2 {
-        font-size: 1.2rem;
-        margin: 0 0 5px;
-        color: var(--accent-yellow);
-      }
-      .sidebar-header p {
-        font-size: 0.9rem;
-        color: var(--text-secondary);
-        margin: 0;
-        word-wrap: break-word;
-      }
-      .sidebar-nav ul {
-        list-style: none;
-        padding: 0;
-        margin: 0;
-      }
-      .sidebar-nav a {
-        display: block;
-        padding: 15px 20px;
-        color: var(--text-secondary);
-        text-decoration: none;
-        border-radius: 8px;
-        margin-bottom: 5px;
-        font-weight: 500;
-        transition:
-          background-color 0.2s,
-          color 0.2s;
-      }
-      .sidebar-nav a:hover {
-        background-color: var(--primary-card-color);
-        color: var(--text-primary);
-      }
-      .sidebar-nav a.active {
-        background-color: var(--accent-blue);
-        color: #fff;
-      }
-      .sign-out-btn {
-        width: 100%;
-        margin-top: 20px;
-        padding: 15px 20px;
-        background-color: var(--primary-card-color);
-        border: 1px solid var(--border-color);
-        color: var(--text-secondary);
-        font-weight: 500;
-        border-radius: 8px;
-        cursor: pointer;
-        transition:
-          background-color 0.2s,
-          color 0.2s;
-      }
-      .sign-out-btn:hover {
-        background-color: var(--accent-red);
-        color: #fff;
-        border-color: var(--accent-red);
-      }
-
-      .main-content {
-        flex-grow: 1;
-      }
-      .content-section {
-        display: none;
-      }
-      .content-section.active {
-        display: block;
-      }
-      .content-section > h3 {
-        font-size: 1.8rem;
-        margin-top: 0;
-        margin-bottom: 30px;
-      }
-      .metrics-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 20px;
-        margin-bottom: 30px;
-      }
-      .metric-card {
-        background-color: var(--primary-card-color);
-        padding: 25px;
-        border-radius: 12px;
-        border: 1px solid var(--border-color);
-      }
-      .metric-card .value {
-        font-size: 2rem;
-        font-weight: 700;
-        color: var(--text-primary);
-      }
-      .metric-card .label {
-        font-size: 0.9rem;
-        color: var(--text-secondary);
-        margin-top: 5px;
-      }
-      .graph-container {
-        background-color: var(--primary-card-color);
-        padding: 30px;
-        border-radius: 12px;
-        border: 1px solid var(--border-color);
-        margin-bottom: 30px;
-        height: 400px;
-        display: flex;
-        flex-direction: column;
-      }
-      .graph-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 20px;
-      }
-      .graph-dropdown {
-        background-color: var(--input-bg);
-        color: var(--text-primary);
-        border: 1px solid var(--border-color);
-        padding: 8px 12px;
-        border-radius: 6px;
-      }
-
-      .user-table-container {
-        background-color: var(--primary-card-color);
-        border: 1px solid var(--border-color);
-        border-radius: 12px;
-        overflow-x: auto;
-      }
-      .user-table {
-        width: 100%;
-        border-collapse: collapse;
-        text-align: left;
-      }
-      .user-table th,
-      .user-table td {
-        padding: 15px 20px;
-        border-bottom: 1px solid var(--border-color);
-      }
-      .user-table th {
-        font-weight: 600;
-        color: var(--text-secondary);
-      }
-      .status-badge {
-        padding: 4px 10px;
-        border-radius: 20px;
-        font-size: 0.8rem;
-        font-weight: 600;
-      }
-      .status-badge.active {
-        background-color: rgba(22, 163, 74, 0.2);
-        color: var(--accent-green);
-      }
-      .status-badge.banned {
-        background-color: rgba(220, 38, 38, 0.2);
-        color: var(--accent-red);
-      }
-      .status-badge.pro {
-        background-color: rgba(251, 191, 36, 0.2);
-        color: var(--accent-yellow);
-      }
-      .subscription-text {
-        font-weight: bold;
-        color: var(--accent-blue);
-      }
-      .btn-sm {
-        padding: 6px 12px;
-        border-radius: 5px;
-        font-weight: 500;
-        cursor: pointer;
-        border: none;
-        color: white;
-      }
-      .btn-ban {
-        background-color: var(--accent-red);
-      }
-      .btn-unban {
-        background-color: var(--accent-green);
-      }
-
-      @media (max-width: 768px) {
+        :root {
+            --accent-blue: #2563EB;
+            --accent-red: #DC2626;
+            --accent-green: #16A34A;
+            --accent-yellow: #FBBF24;
+            --font-main: 'Inter', sans-serif;
+        }
         body {
-          padding: 10px;
-          flex-direction: column;
+            font-family: var(--font-main);
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            padding: 40px 20px;
         }
-        .mobile-header {
-          display: flex;
-        }
+
+        /* Mobile Hamburger Styles */
+        .mobile-header { display: none; width: 100%; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .hamburger-btn { background: none; border: none; color: var(--text-primary); font-size: 2rem; cursor: pointer; }
+
         .admin-layout {
-          flex-direction: column;
+            display: flex;
+            width: 100%;
+            max-width: 1400px;
+            gap: 30px;
         }
-        .sidebar {
-          position: fixed;
-          top: 0;
-          left: -100%;
-          height: 100vh;
-          z-index: 1000;
-          background-color: var(--bg-color);
-          width: 80%;
-          max-width: 300px;
-          padding: 20px;
-          border-right: 1px solid var(--border-color);
+        .sidebar { width: 250px; flex-shrink: 0; transition: transform 0.3s ease; }
+        .sidebar-header { padding: 20px; background-color: var(--primary-card-color); border-radius: 12px; margin-bottom: 20px; border: 1px solid var(--border-color); }
+        .sidebar-header h2 { font-size: 1.2rem; margin: 0 0 5px; color: var(--accent-yellow); }
+        .sidebar-header p { font-size: 0.9rem; color: var(--text-secondary); margin: 0; word-wrap: break-word; }
+        .sidebar-nav ul { list-style: none; padding: 0; margin: 0; }
+        .sidebar-nav a { display: block; padding: 15px 20px; color: var(--text-secondary); text-decoration: none; border-radius: 8px; margin-bottom: 5px; font-weight: 500; transition: background-color 0.2s, color 0.2s; }
+        .sidebar-nav a:hover { background-color: var(--primary-card-color); color: var(--text-primary); }
+        .sidebar-nav a.active { background-color: var(--accent-blue); color: #fff; }
+        .sign-out-btn { width: 100%; margin-top: 20px; padding: 15px 20px; background-color: var(--primary-card-color); border: 1px solid var(--border-color); color: var(--text-secondary); font-weight: 500; border-radius: 8px; cursor: pointer; transition: background-color 0.2s, color 0.2s; }
+        .sign-out-btn:hover { background-color: var(--accent-red); color: #fff; border-color: var(--accent-red); }
+
+        .main-content { flex-grow: 1; }
+        .content-section { display: none; }
+        .content-section.active { display: block; }
+        .content-section > h3 { font-size: 1.8rem; margin-top: 0; margin-bottom: 30px; }
+        .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .metric-card { background-color: var(--primary-card-color); padding: 25px; border-radius: 12px; border: 1px solid var(--border-color); }
+        .metric-card .value { font-size: 2rem; font-weight: 700; color: var(--text-primary); }
+        .metric-card .label { font-size: 0.9rem; color: var(--text-secondary); margin-top: 5px; }
+        .graph-container { background-color: var(--primary-card-color); padding: 30px; border-radius: 12px; border: 1px solid var(--border-color); margin-bottom: 30px; height: 400px; display: flex; flex-direction: column; }
+        .graph-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .graph-dropdown { background-color: var(--input-bg); color: var(--text-primary); border: 1px solid var(--border-color); padding: 8px 12px; border-radius: 6px; }
+
+        .user-table-container { background-color: var(--primary-card-color); border: 1px solid var(--border-color); border-radius: 12px; overflow-x: auto; }
+        .user-table { width: 100%; border-collapse: collapse; text-align: left; }
+        .user-table th, .user-table td { padding: 15px 20px; border-bottom: 1px solid var(--border-color); }
+        .user-table th { font-weight: 600; color: var(--text-secondary); }
+        .status-badge { padding: 4px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; }
+        .status-badge.active { background-color: rgba(22, 163, 74, 0.2); color: var(--accent-green); }
+        .status-badge.banned { background-color: rgba(220, 38, 38, 0.2); color: var(--accent-red); }
+        .status-badge.pro { background-color: rgba(251, 191, 36, 0.2); color: var(--accent-yellow); }
+        .subscription-text { font-weight: bold; color: var(--accent-blue); }
+        .btn-sm { padding: 6px 12px; border-radius: 5px; font-weight: 500; cursor: pointer; border: none; color: white; }
+        .btn-ban { background-color: var(--accent-red); }
+        .btn-unban { background-color: var(--accent-green); }
+
+        @media (max-width: 768px) {
+            body { padding: 10px; flex-direction: column; }
+            .mobile-header { display: flex; }
+            .admin-layout { flex-direction: column; }
+            .sidebar {
+                position: fixed; top: 0; left: -100%; height: 100vh; z-index: 1000;
+                background-color: var(--bg-color); width: 80%; max-width: 300px;
+                padding: 20px; border-right: 1px solid var(--border-color);
+            }
+            .sidebar.open { transform: translateX(100%); }
         }
-        .sidebar.open {
-          transform: translateX(100%);
-        }
-      }
     </style>
-  </head>
-  <body style="display: none">
+</head>
+<body style="display: none;">
     <div class="mobile-header">
-      <h2 style="margin: 0; color: var(--accent-blue)">Admin</h2>
-      <button
-        class="hamburger-btn"
-        onclick="document.getElementById('sidebar').classList.toggle('open')"
-      >
-        ☰
-      </button>
+        <h2 style="margin:0; color: var(--accent-blue);">Admin</h2>
+        <button class="hamburger-btn" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
     </div>
 
     <div class="admin-layout">
-      <aside class="sidebar" id="sidebar">
-        <div class="mobile-header" style="justify-content: flex-end">
-          <button
-            class="hamburger-btn"
-            onclick="
-              document.getElementById('sidebar').classList.remove('open')
-            "
-          >
-            ✕
-          </button>
-        </div>
-        <div class="sidebar-header">
-          <h2>Admin Panel</h2>
-          <p id="user-email-sidebar"></p>
-        </div>
-        <nav class="sidebar-nav">
-          <ul>
-            <li><a href="index.html">← Return to Home</a></li>
-            <li>
-              <a href="#performance" class="nav-link active">Performance</a>
-            </li>
-            <li><a href="#users" class="nav-link">User Management</a></li>
-            <li>
-              <a href="#featurerequests" class="nav-link">Feature Requests</a>
-            </li>
-            <li><a href="#downloads" class="nav-link">Downloads</a></li>
-            <li><a href="#newsletter" class="nav-link">Newsletter</a></li>
-            <li><a href="account.html">My Account Settings</a></li>
-          </ul>
-        </nav>
-        <button class="sign-out-btn" id="sign-out">Sign Out</button>
-      </aside>
+        <aside class="sidebar" id="sidebar">
+            <div class="mobile-header" style="justify-content: flex-end;">
+                <button class="hamburger-btn" onclick="document.getElementById('sidebar').classList.remove('open')">✕</button>
+            </div>
+            <div class="sidebar-header">
+                <h2>Admin Panel</h2>
+                <p id="user-email-sidebar"></p>
+            </div>
+            <nav class="sidebar-nav">
+                <ul>
+                    <li><a href="index.html">← Return to Home</a></li>
+                    <li><a href="#performance" class="nav-link active">Performance</a></li>
+                    <li><a href="#users" class="nav-link">User Management</a></li>
+                    <li><a href="#featurerequests" class="nav-link">Feature Requests</a></li>
+                    <li><a href="#downloads" class="nav-link">Downloads</a></li>
+                    <li><a href="#newsletter" class="nav-link">Newsletter</a></li>
+                    <li><a href="account.html">My Account Settings</a></li>
+                </ul>
+            </nav>
+            <button class="sign-out-btn" id="sign-out">Sign Out</button>
+        </aside>
 
-      <main class="main-content">
-        <section id="performance" class="content-section active">
-          <h3>Performance Overview</h3>
-          <div class="metrics-grid">
-            <div class="metric-card">
-              <div class="value" id="total-revenue">$-</div>
-              <div class="label">Total Revenue</div>
-            </div>
-            <div class="metric-card">
-              <div class="value" id="total-purchases">-</div>
-              <div class="label">Total Purchases</div>
-            </div>
-            <div class="metric-card">
-              <div class="value" id="total-users">-</div>
-              <div class="label">Total Users</div>
-            </div>
-            <div class="metric-card">
-              <div class="value" id="new-signups">-</div>
-              <div class="label">New Sign-ups (24h)</div>
-            </div>
-            <div class="metric-card">
-              <div class="value" id="checkouts">-</div>
-              <div class="label">Completed Checkouts</div>
-            </div>
-            <div class="metric-card">
-              <div class="value" id="active-carts">-</div>
-              <div class="label">Users with Active Carts</div>
-            </div>
-            <div class="metric-card">
-              <div class="value" id="avg-orders">-</div>
-              <div class="label">Orders per User</div>
-            </div>
-          </div>
+        <main class="main-content">
+            <section id="performance" class="content-section active">
+                <h3>Performance Overview</h3>
+                <div class="metrics-grid">
+                    <div class="metric-card"><div class="value" id="total-revenue">$-</div><div class="label">Total Revenue</div></div>
+                    <div class="metric-card"><div class="value" id="total-purchases">-</div><div class="label">Total Purchases</div></div>
+                    <div class="metric-card"><div class="value" id="total-users">-</div><div class="label">Total Users</div></div>
+                    <div class="metric-card"><div class="value" id="new-signups">-</div><div class="label">New Sign-ups (24h)</div></div>
+                    <div class="metric-card"><div class="value" id="checkouts">-</div><div class="label">Completed Checkouts</div></div>
+                    <div class="metric-card"><div class="value" id="active-carts">-</div><div class="label">Users with Active Carts</div></div>
+                    <div class="metric-card"><div class="value" id="avg-orders">-</div><div class="label">Orders per User</div></div>
+                </div>
 
-          <div class="graph-container">
-            <div class="graph-header">
-              <h4 id="graph-title">Summary</h4>
-              <select id="graph-selector" class="graph-dropdown">
-                <option value="summary">Summary</option>
-                <option value="signups">Sign-ups</option>
-                <option value="purchases">Purchases</option>
-              </select>
-            </div>
-            <canvas id="performance-chart"></canvas>
-          </div>
-        </section>
+                <div class="graph-container">
+                    <div class="graph-header">
+                        <h4 id="graph-title">Summary</h4>
+                        <select id="graph-selector" class="graph-dropdown">
+                            <option value="summary">Summary</option>
+                            <option value="signups">Sign-ups</option>
+                            <option value="purchases">Purchases</option>
+                        </select>
+                    </div>
+                    <canvas id="performance-chart"></canvas>
+                </div>
+            </section>
 
-        <section id="users" class="content-section">
-          <h3>User Management</h3>
-          <div class="user-table-container">
-            <table class="user-table">
-              <thead>
-                <tr>
-                  <th>Username</th>
-                  <th>Email</th>
-                  <th>Sign-up Date</th>
-                  <th>Subscription</th>
-                  <th>Status</th>
-                  <th>Action</th>
-                </tr>
-              </thead>
-              <tbody id="user-list-body"></tbody>
-            </table>
-          </div>
-        </section>
+            <section id="users" class="content-section">
+                <h3>User Management</h3>
+                <div class="user-table-container">
+                    <table class="user-table">
+                        <thead>
+                            <tr>
+                                <th>Username</th>
+                                <th>Email</th>
+                                <th>Sign-up Date</th>
+                                <th>Subscription</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="user-list-body"></tbody>
+                    </table>
+                </div>
+            </section>
 
-        <section id="featurerequests" class="content-section">
-          <h3>App Feature Requests (ezManage)</h3>
-          <div class="user-table-container">
-            <table class="user-table">
-              <thead>
-                <tr>
-                  <th>Date</th>
-                  <th>Email</th>
-                  <th>Message</th>
-                  <th>Tier</th>
-                  <th>Status</th>
-                  <th>Action</th>
-                </tr>
-              </thead>
-              <tbody id="feature-request-list-body"></tbody>
-            </table>
-          </div>
-        </section>
+            <section id="featurerequests" class="content-section">
+                <h3>App Feature Requests (ezManage)</h3>
+                <div class="user-table-container">
+                    <table class="user-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Email</th>
+                                <th>Message</th>
+                                <th>Tier</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="feature-request-list-body"></tbody>
+                    </table>
+                </div>
+            </section>
 
-        <section id="downloads" class="content-section">
-          <h3>Download Statistics</h3>
-          <div class="metrics-grid">
-            <div class="metric-card">
-              <div class="value" id="download-count-infosheet">-</div>
-              <div class="label">Realm Info Sheet</div>
-            </div>
-          </div>
-          <p style="color: var(--text-secondary); margin-top: 20px">
-            These stats track the number of times the "Download Official Info
-            Sheet" button is clicked on the "What's New" page.
-          </p>
-        </section>
+            <section id="downloads" class="content-section">
+                <h3>Download Statistics</h3>
+                <div class="metrics-grid">
+                     <div class="metric-card">
+                        <div class="value" id="download-count-infosheet">-</div>
+                        <div class="label">Realm Info Sheet</div>
+                    </div>
+                </div>
+                <p style="color: var(--text-secondary); margin-top: 20px;">
+                    These stats track the number of times the "Download Official Info Sheet" button is clicked on the "What's New" page.
+                </p>
+            </section>
 
-        <section id="newsletter" class="content-section">
-          <h3>Newsletter Subscribers</h3>
-          <div class="user-table-container">
-            <table class="user-table">
-              <thead>
-                <tr>
-                  <th>Email</th>
-                  <th>Subscription Date</th>
-                </tr>
-              </thead>
-              <tbody id="newsletter-list-body"></tbody>
-            </table>
-          </div>
-        </section>
-      </main>
+            <section id="newsletter" class="content-section">
+                <h3>Newsletter Subscribers</h3>
+                <div class="user-table-container">
+                    <table class="user-table">
+                        <thead><tr><th>Email</th><th>Subscription Date</th></tr></thead>
+                        <tbody id="newsletter-list-body"></tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
     </div>
 
-    <script type="module">
-      import { auth, db } from "/js/auth.js";
-      import {
-        onAuthStateChanged,
-        signOut,
-      } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
-      import {
-        doc,
-        getDoc,
-        collection,
-        getDocs,
-        Timestamp,
-        updateDoc,
-      } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
+   <script type="module">
+        import { auth, db } from '/js/auth.js';
+        import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
+        import { doc, getDoc, collection, getDocs, Timestamp, updateDoc } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
 
-      let performanceChart;
+        let performanceChart;
 
-      onAuthStateChanged(auth, async (user) => {
-        if (user) {
-          const userDocRef = doc(db, "users", user.uid);
-          const userDoc = await getDoc(userDocRef);
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                const userDocRef = doc(db, "users", user.uid);
+                const userDoc = await getDoc(userDocRef);
 
-          if (userDoc.exists() && userDoc.data().isAdmin) {
-            document.body.style.display = "flex";
-            initializeAdminPage(user);
-          } else {
-            window.location.replace("account.html");
-          }
-        } else {
-          window.location.replace("sign in beta.html");
+                if (userDoc.exists() && userDoc.data().isAdmin) {
+                    document.body.style.display = 'flex';
+                    initializeAdminPage(user);
+                } else {
+                    window.location.replace('account.html');
+                }
+            } else {
+                window.location.replace('sign in beta.html');
+            }
+        });
+
+        function initializeAdminPage(adminUser) {
+            document.getElementById('user-email-sidebar').textContent = adminUser.email;
+            loadAdminData();
+            setupEventListeners();
         }
-      });
 
-      function initializeAdminPage(adminUser) {
-        document.getElementById("user-email-sidebar").textContent =
-          adminUser.email;
-        loadAdminData();
-        setupEventListeners();
-      }
+        async function loadAdminData() {
+            try {
+                const usersSnapshot = await getDocs(collection(db, "users"));
+                const users = usersSnapshot.docs.map(d => ({ id: d.id, ...d.data() }));
 
-      async function loadAdminData() {
-        try {
-          const usersSnapshot = await getDocs(collection(db, "users"));
-          const users = usersSnapshot.docs.map((d) => ({
-            id: d.id,
-            ...d.data(),
-          }));
+                const cartsSnapshot = await getDocs(collection(db, "carts"));
+                const carts = cartsSnapshot.docs.map(d => ({ id: d.id, ...d.data() }));
 
-          const cartsSnapshot = await getDocs(collection(db, "carts"));
-          const carts = cartsSnapshot.docs.map((d) => ({
-            id: d.id,
-            ...d.data(),
-          }));
+                const ordersSnapshot = await getDocs(collection(db, "orders"));
+                const orders = ordersSnapshot.docs.map(d => d.data());
 
-          const ordersSnapshot = await getDocs(collection(db, "orders"));
-          const orders = ordersSnapshot.docs.map((d) => d.data());
+                const newsletterSnapshot = await getDocs(collection(db, "newsletterSubscribers"));
+                const subscribers = newsletterSnapshot.docs.map(d => d.data());
 
-          const newsletterSnapshot = await getDocs(
-            collection(db, "newsletterSubscribers"),
-          );
-          const subscribers = newsletterSnapshot.docs.map((d) => d.data());
+                const totalRevenue = orders.reduce((sum, o) => sum + (o.amount || 0), 0);
+                document.getElementById('total-revenue').textContent = `$${totalRevenue.toFixed(2)}`;
+                document.getElementById('total-purchases').textContent = orders.length;
 
-          const totalRevenue = orders.reduce(
-            (sum, o) => sum + (o.amount || 0),
-            0,
-          );
-          document.getElementById("total-revenue").textContent =
-            `$${totalRevenue.toFixed(2)}`;
-          document.getElementById("total-purchases").textContent =
-            orders.length;
+                renderUserTable(users);
+                renderNewsletterTable(subscribers);
+                calculatePerformanceMetrics(users, carts, orders);
+                renderChart('summary', users);
 
-          renderUserTable(users);
-          renderNewsletterTable(subscribers);
-          calculatePerformanceMetrics(users, carts, orders);
-          renderChart("summary", users);
+                // Fetch Feature Requests
+                try {
+                    const featureRequestsSnapshot = await getDocs(collection(db, "feature_requests"));
+                    const requests = featureRequestsSnapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+                    renderFeatureRequestsTable(requests);
+                } catch (frError) {
+                    console.error("Could not load feature requests. Missing Firestore rules?", frError);
+                    document.getElementById('feature-request-list-body').innerHTML = `<tr><td colspan="6" style="text-align:center; color:var(--accent-red);">Failed to load Feature Requests. Please check your Firebase Database Rules.</td></tr>`;
+                }
 
-          // Fetch Feature Requests
-          try {
-            const featureRequestsSnapshot = await getDocs(
-              collection(db, "feature_requests"),
-            );
-            const requests = featureRequestsSnapshot.docs.map((d) => ({
-              id: d.id,
-              ...d.data(),
-            }));
-            renderFeatureRequestsTable(requests);
-          } catch (frError) {
-            console.error(
-              "Could not load feature requests. Missing Firestore rules?",
-              frError,
-            );
-            document.getElementById("feature-request-list-body").innerHTML =
-              `<tr><td colspan="6" style="text-align:center; color:var(--accent-red);">Failed to load Feature Requests. Please check your Firebase Database Rules.</td></tr>`;
-          }
-        } catch (error) {
-          console.error("Error loading admin data:", error);
+            } catch (error) {
+                console.error("Error loading admin data:", error);
+            }
         }
-      }
 
-      function renderUserTable(users) {
-        const userListBody = document.getElementById("user-list-body");
-        userListBody.innerHTML = "";
+        function renderUserTable(users) {
+            const userListBody = document.getElementById('user-list-body');
+            userListBody.innerHTML = '';
 
-        users
-          .filter((user) => !user.isAdmin)
-          .forEach((user) => {
-            const row = document.createElement("tr");
-            const statusBadge = user.isBanned
-              ? `<span class="status-badge banned">Banned</span>`
-              : `<span class="status-badge active">Active</span>`;
-            const actionButton = user.isBanned
-              ? `<button class="btn-sm btn-unban" data-id="${user.id}">Unban</button>`
-              : `<button class="btn-sm btn-ban" data-id="${user.id}">Ban</button>`;
-            const signupDate =
-              user.signupDate?.toDate().toLocaleDateString() || "N/A";
+            users.filter(user => !user.isAdmin).forEach(user => {
+                const row = document.createElement('tr');
+                const statusBadge = user.isBanned ? `<span class="status-badge banned">Banned</span>` : `<span class="status-badge active">Active</span>`;
+                const actionButton = user.isBanned ? `<button class="btn-sm btn-unban" data-id="${user.id}">Unban</button>` : `<button class="btn-sm btn-ban" data-id="${user.id}">Ban</button>`;
+                const signupDate = user.signupDate?.toDate().toLocaleDateString() || 'N/A';
 
-            const subStatus =
-              user.subscription?.status === "active"
-                ? `<span class="subscription-text">Active Pro</span>`
-                : `<span style="color: var(--text-secondary);">Free</span>`;
+                const subStatus = user.subscription?.status === 'active'
+                    ? `<span class="subscription-text">Active Pro</span>`
+                    : `<span style="color: var(--text-secondary);">Free</span>`;
 
-            row.innerHTML = `
+                row.innerHTML = `
                     <td>${user.username || user.name || "N/A"}</td>
                     <td>${user.email}</td>
                     <td>${signupDate}</td>
                     <td>${subStatus}</td>
                     <td>${statusBadge}</td>
                     <td>${actionButton}</td>`;
-            userListBody.appendChild(row);
-          });
-      }
-
-      // NEW RENDERER FOR FEATURE REQUESTS
-      function renderFeatureRequestsTable(requests) {
-        const listBody = document.getElementById("feature-request-list-body");
-        listBody.innerHTML = "";
-
-        if (requests.length === 0) {
-          listBody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:var(--text-secondary);">No requests submitted yet.</td></tr>`;
-          return;
+                userListBody.appendChild(row);
+            });
         }
 
-        // Sort to place newest items at the top
-        requests.sort(
-          (a, b) => new Date(b.timestamp || 0) - new Date(a.timestamp || 0),
-        );
+        // NEW RENDERER FOR FEATURE REQUESTS
+        function renderFeatureRequestsTable(requests) {
+            const listBody = document.getElementById('feature-request-list-body');
+            listBody.innerHTML = '';
 
-        requests.forEach((req) => {
-          const row = document.createElement("tr");
-          const dateRaw = req.timestamp ? new Date(req.timestamp) : new Date();
-          const reqDate = dateRaw.toLocaleDateString();
+            if(requests.length === 0) {
+                listBody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:var(--text-secondary);">No requests submitted yet.</td></tr>`;
+                return;
+            }
 
-          const tierBadge = req.isPro
-            ? `<span class="status-badge pro">Priority (Pro)</span>`
-            : `<span class="status-badge">Free Tier</span>`;
-          const isComplete = req.status === "completed";
-          const statusStr = isComplete
-            ? `<span style="color:var(--accent-green);">Completed</span>`
-            : `<span style="color:var(--accent-yellow);">Pending</span>`;
-          const actionButton = isComplete
-            ? `<button class="btn-sm" style="background-color:var(--border-color); cursor:not-allowed;" disabled>Done</button>`
-            : `<button class="btn-sm btn-unban mark-complete-btn" data-id="${req.id}">Mark Complete</button>`;
+            // Sort to place newest items at the top
+            requests.sort((a,b) => new Date(b.timestamp || 0) - new Date(a.timestamp || 0));
 
-          row.innerHTML = `
+            requests.forEach(req => {
+                const row = document.createElement('tr');
+                const dateRaw = req.timestamp ? new Date(req.timestamp) : new Date();
+                const reqDate = dateRaw.toLocaleDateString();
+
+                const tierBadge = req.isPro ? `<span class="status-badge pro">Priority (Pro)</span>` : `<span class="status-badge">Free Tier</span>`;
+                const isComplete = req.status === 'completed';
+                const statusStr = isComplete ? `<span style="color:var(--accent-green);">Completed</span>` : `<span style="color:var(--accent-yellow);">Pending</span>`;
+                const actionButton = isComplete
+                     ? `<button class="btn-sm" style="background-color:var(--border-color); cursor:not-allowed;" disabled>Done</button>`
+                     : `<button class="btn-sm btn-unban mark-complete-btn" data-id="${req.id}">Mark Complete</button>`;
+
+                row.innerHTML = `
                     <td>${reqDate}</td>
                     <td>${req.email || "Unknown User"}</td>
                     <td style="max-width:300px; word-wrap:break-word;">${req.message}</td>
                     <td>${tierBadge}</td>
                     <td>${statusStr}</td>
                     <td>${actionButton}</td>`;
-          listBody.appendChild(row);
-        });
-      }
-
-      function renderNewsletterTable(subscribers) {
-        const newsletterListBody = document.getElementById(
-          "newsletter-list-body",
-        );
-        newsletterListBody.innerHTML = "";
-
-        if (subscribers.length === 0) {
-          newsletterListBody.innerHTML = `<tr><td colspan="2" style="text-align:center; color:var(--text-secondary);">No subscribers yet.</td></tr>`;
-          return;
+                listBody.appendChild(row);
+            });
         }
 
-        subscribers.forEach((subscriber) => {
-          const row = document.createElement("tr");
-          const subscriptionDate =
-            subscriber.subscribedAt?.toDate().toLocaleDateString() || "N/A";
+        function renderNewsletterTable(subscribers) {
+            const newsletterListBody = document.getElementById('newsletter-list-body');
+            newsletterListBody.innerHTML = '';
 
-          row.innerHTML = `
+            if(subscribers.length === 0) {
+                newsletterListBody.innerHTML = `<tr><td colspan="2" style="text-align:center; color:var(--text-secondary);">No subscribers yet.</td></tr>`;
+                return;
+            }
+
+            subscribers.forEach(subscriber => {
+                const row = document.createElement('tr');
+                const subscriptionDate = subscriber.subscribedAt?.toDate().toLocaleDateString() || 'N/A';
+
+                row.innerHTML = `
                     <td>${subscriber.email}</td>
                     <td>${subscriptionDate}</td>`;
-          newsletterListBody.appendChild(row);
-        });
-      }
-
-      function calculatePerformanceMetrics(users, carts, orders = []) {
-        const twentyFourHoursAgo = Timestamp.fromMillis(
-          Date.now() - 24 * 60 * 60 * 1000,
-        );
-        const newSignups = users.filter(
-          (u) => u.signupDate && u.signupDate > twentyFourHoursAgo,
-        ).length;
-        const activeCarts = carts.filter(
-          (c) => c.items && Object.keys(c.items).length > 0,
-        ).length;
-
-        const totalOrders = orders.length;
-        const totalUsers = users.length;
-        const avgOrders =
-          totalUsers > 0 ? (totalOrders / totalUsers).toFixed(2) : 0;
-
-        document.getElementById("total-users").textContent = totalUsers;
-        document.getElementById("new-signups").textContent = newSignups;
-        document.getElementById("checkouts").textContent = totalOrders;
-        document.getElementById("active-carts").textContent = activeCarts;
-        document.getElementById("avg-orders").textContent = avgOrders;
-      }
-
-      function renderChart(view, usersData) {
-        const ctx = document
-          .getElementById("performance-chart")
-          .getContext("2d");
-        const graphTitleEl = document.getElementById("graph-title");
-
-        graphTitleEl.textContent = document.querySelector(
-          `#graph-selector option[value=${view}]`,
-        ).textContent;
-        if (performanceChart) performanceChart.destroy();
-
-        let chartConfig;
-        switch (view) {
-          case "signups":
-            chartConfig = {
-              type: "line",
-              data: {
-                labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
-                datasets: [
-                  {
-                    label: "New Sign-ups",
-                    data: [5, 9, 3, 5, 2, 3, 7],
-                    borderColor: "#2563EB",
-                    fill: true,
-                    backgroundColor: "rgba(37, 99, 235, 0.2)",
-                  },
-                ],
-              },
-              options: getChartOptions(false),
-            };
-            break;
-          case "purchases":
-            chartConfig = {
-              type: "line",
-              data: {
-                labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
-                datasets: [
-                  {
-                    label: "Purchases",
-                    data: [12, 19, 8, 15, 10, 13, 17],
-                    borderColor: "#16A34A",
-                    fill: true,
-                    backgroundColor: "rgba(22, 163, 74, 0.2)",
-                  },
-                ],
-              },
-              options: getChartOptions(false),
-            };
-            break;
-          default:
-            chartConfig = {
-              type: "doughnut",
-              data: {
-                labels: ["Total Sign-ups", "Total Purchases"],
-                datasets: [
-                  {
-                    data: [296, 173],
-                    backgroundColor: [
-                      "rgba(37, 99, 235, 0.8)",
-                      "rgba(22, 163, 74, 0.8)",
-                    ],
-                    borderColor: ["#2563EB", "#16A34A"],
-                    borderWidth: 2,
-                  },
-                ],
-              },
-              options: getChartOptions(true),
-            };
-            break;
-        }
-        performanceChart = new Chart(ctx, chartConfig);
-      }
-
-      function getChartOptions(isPieChart = false) {
-        return {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: {
-            legend: {
-              position: isPieChart ? "top" : "bottom",
-              labels: { color: "white" },
-            },
-          },
-          scales: !isPieChart
-            ? {
-                y: {
-                  grid: { color: "rgba(255, 255, 255, 0.1)" },
-                  ticks: { color: "white" },
-                },
-                x: {
-                  grid: { color: "rgba(255, 255, 255, 0.1)" },
-                  ticks: { color: "white" },
-                },
-              }
-            : {},
-        };
-      }
-
-      function setupEventListeners() {
-        document
-          .getElementById("user-list-body")
-          .addEventListener("click", async (e) => {
-            const userId = e.target.dataset.id;
-            if (!userId) return;
-            const shouldBeBanned = e.target.classList.contains("btn-ban");
-            if (
-              confirm(
-                `Are you sure you want to ${shouldBeBanned ? "ban" : "unban"} this user?`,
-              )
-            ) {
-              await updateDoc(doc(db, "users", userId), {
-                isBanned: shouldBeBanned,
-              });
-              loadAdminData();
-            }
-          });
-
-        document
-          .getElementById("feature-request-list-body")
-          .addEventListener("click", async (e) => {
-            const reqId = e.target.dataset.id;
-            if (!reqId || !e.target.classList.contains("mark-complete-btn"))
-              return;
-            if (confirm(`Mark this feature request as complete?`)) {
-              await updateDoc(doc(db, "feature_requests", reqId), {
-                status: "completed",
-              });
-              loadAdminData();
-            }
-          });
-
-        document
-          .querySelectorAll('.sidebar-nav a[href^="#"]')
-          .forEach((link) => {
-            link.addEventListener("click", (e) => {
-              e.preventDefault();
-              document
-                .querySelectorAll(".sidebar-nav a")
-                .forEach((l) => l.classList.remove("active"));
-              document
-                .querySelectorAll(".content-section")
-                .forEach((s) => s.classList.remove("active"));
-              e.currentTarget.classList.add("active");
-              document
-                .querySelector(e.currentTarget.getAttribute("href"))
-                .classList.add("active");
-              if (window.innerWidth <= 768) {
-                document.getElementById("sidebar").classList.remove("open");
-              }
+                newsletterListBody.appendChild(row);
             });
-          });
+        }
 
-        document
-          .getElementById("graph-selector")
-          .addEventListener("change", (e) => {
-            renderChart(e.target.value);
-          });
-        document.getElementById("sign-out").addEventListener("click", () => {
-          signOut(auth);
-        });
-      }
+        function calculatePerformanceMetrics(users, carts, orders = []) {
+            const twentyFourHoursAgo = Timestamp.fromMillis(Date.now() - (24 * 60 * 60 * 1000));
+            const newSignups = users.filter(u => u.signupDate && u.signupDate > twentyFourHoursAgo).length;
+            const activeCarts = carts.filter(c => c.items && Object.keys(c.items).length > 0).length;
+
+            const totalOrders = orders.length;
+            const totalUsers = users.length;
+            const avgOrders = totalUsers > 0 ? (totalOrders / totalUsers).toFixed(2) : 0;
+
+            document.getElementById('total-users').textContent = totalUsers;
+            document.getElementById('new-signups').textContent = newSignups;
+            document.getElementById('checkouts').textContent = totalOrders;
+            document.getElementById('active-carts').textContent = activeCarts;
+            document.getElementById('avg-orders').textContent = avgOrders;
+        }
+
+        function renderChart(view, usersData) {
+            const ctx = document.getElementById('performance-chart').getContext('2d');
+            const graphTitleEl = document.getElementById('graph-title');
+
+            graphTitleEl.textContent = document.querySelector(`#graph-selector option[value=${view}]`).textContent;
+            if (performanceChart) performanceChart.destroy();
+
+            let chartConfig;
+            switch(view) {
+                case 'signups':
+                    chartConfig = { type: 'line', data: { labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'], datasets: [{ label: 'New Sign-ups', data: [5, 9, 3, 5, 2, 3, 7], borderColor: '#2563EB', fill: true, backgroundColor: 'rgba(37, 99, 235, 0.2)' }] }, options: getChartOptions(false) };
+                    break;
+                case 'purchases':
+                    chartConfig = { type: 'line', data: { labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'], datasets: [{ label: 'Purchases', data: [12, 19, 8, 15, 10, 13, 17], borderColor: '#16A34A', fill: true, backgroundColor: 'rgba(22, 163, 74, 0.2)' }] }, options: getChartOptions(false) };
+                    break;
+                default:
+                    chartConfig = { type: 'doughnut', data: { labels: ['Total Sign-ups', 'Total Purchases'], datasets: [{ data: [296, 173], backgroundColor: ['rgba(37, 99, 235, 0.8)', 'rgba(22, 163, 74, 0.8)'], borderColor: ['#2563EB', '#16A34A'], borderWidth: 2 }] }, options: getChartOptions(true) };
+                    break;
+            }
+            performanceChart = new Chart(ctx, chartConfig);
+        }
+
+        function getChartOptions(isPieChart = false) {
+            return {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { position: isPieChart ? 'top' : 'bottom', labels: { color: 'white' } } },
+                scales: !isPieChart ? { y: { grid: { color: 'rgba(255, 255, 255, 0.1)' }, ticks: { color: 'white' } }, x: { grid: { color: 'rgba(255, 255, 255, 0.1)' }, ticks: { color: 'white' } } } : {}
+            };
+        }
+
+        function setupEventListeners() {
+            document.getElementById('user-list-body').addEventListener('click', async (e) => {
+                const userId = e.target.dataset.id;
+                if (!userId) return;
+                const shouldBeBanned = e.target.classList.contains('btn-ban');
+                if (confirm(`Are you sure you want to ${shouldBeBanned ? 'ban' : 'unban'} this user?`)) {
+                    await updateDoc(doc(db, "users", userId), { isBanned: shouldBeBanned });
+                    loadAdminData();
+                }
+            });
+
+            document.getElementById('feature-request-list-body').addEventListener('click', async (e) => {
+                const reqId = e.target.dataset.id;
+                if (!reqId || !e.target.classList.contains('mark-complete-btn')) return;
+                if (confirm(`Mark this feature request as complete?`)) {
+                    await updateDoc(doc(db, "feature_requests", reqId), { status: 'completed' });
+                    loadAdminData();
+                }
+            });
+
+            document.querySelectorAll('.sidebar-nav a[href^="#"]').forEach(link => {
+                link.addEventListener('click', e => {
+                    e.preventDefault();
+                    document.querySelectorAll('.sidebar-nav a').forEach(l => l.classList.remove('active'));
+                    document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
+                    e.currentTarget.classList.add('active');
+                    document.querySelector(e.currentTarget.getAttribute('href')).classList.add('active');
+                    if (window.innerWidth <= 768) { document.getElementById('sidebar').classList.remove('open'); }
+                });
+            });
+
+            document.getElementById('graph-selector').addEventListener('change', (e) => { renderChart(e.target.value); });
+            document.getElementById('sign-out').addEventListener('click', () => { signOut(auth); });
+        }
     </script>
-  </body>
+</body>
 </html>
