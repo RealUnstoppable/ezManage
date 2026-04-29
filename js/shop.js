@@ -35,6 +35,11 @@ export const products = [
     }
 ];
 
+export const productMap = products.reduce((acc, product) => {
+    acc[product.id] = product;
+    return acc;
+}, {});
+
 // --- STATE MANAGEMENT ---
 let cart = {}; // { productId: quantity, ... }
 let currentUser = null;
