@@ -1,9 +1,9 @@
-import { loadNavbar } from '../navbar.js';
-import * as authModule from '../auth.js';
+import { loadNavbar } from '../../js/navbar.js';
+import * as authModule from '../../js/auth.js';
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
 import { getDoc } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
 
-jest.mock('../auth.js', () => ({
+jest.mock('../../js/auth.js', () => ({
   auth: {},
   db: {}
 }));
