@@ -414,7 +414,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Update UI
             const isPlayingFav = (currentQueue[currentSongIndex]?.id === songId);
             if(isPlayingFav) {
-                playerLikeBtn.textContent = !isFav ? '❤' : '♡'; // Toggle logic was inverted in var check
+                playerLikeBtn.textContent = isFav ? '♡' : '❤';
                 playerLikeBtn.classList.toggle('active', !isFav);
             }
             if (viewPlaylist.style.display !== 'none' && playlistTitleEl.textContent === "Liked Songs") {

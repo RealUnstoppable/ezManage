@@ -5,6 +5,7 @@ const cors = require("cors")({origin: true});
 admin.initializeApp();
 
 // Fallback "placeholder" string to stop Firebase Analyzer from crashing
+// during deployment
 const stripeKey = process.env.STRIPE_SECRET || "sk_test_placeholder";
 const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET || "whsec_placeholder";
 const stripe = require("stripe")(stripeKey);
@@ -23,7 +24,8 @@ exports.createCheckoutSession = functions.https.onRequest((req, res) => {
     // If the frontend passed a specific discounted amount (Sale or Referral)
     if (amount) {
       const productId = plan === "Business Pro" ?
-        "prod_UFnBrTwFCgb54A" : "prod_UFn8zqZ0mwyy5r";
+        "prod_UFnBrTwFCgb54A" :
+        "prod_UFn8zqZ0mwyy5r";
       lineItems = [{
         price_data: {
           currency: "usd",
@@ -35,9 +37,10 @@ exports.createCheckoutSession = functions.https.onRequest((req, res) => {
         quantity: 1,
       }];
     } else {
-      // Fallback to Actual Price IDs if no custom amount was provided
+      // 🔴 Fallback to Actual Price IDs if no custom amount was provided
       const priceId = plan === "Business Pro" ?
-        "price_1THHbVBp2C5GdKaKvCVoMf1X" : "price_1THHYPBp2C5GdKaKxNpqndNE";
+        "price_1THHbVBp2C5GdKaKvCVoMf1X" :
+        "price_1THHYPBp2C5GdKaKxNpqndNE";
       lineItems = [{price: priceId, quantity: 1}];
     }
 
@@ -49,7 +52,7 @@ exports.createCheckoutSession = functions.https.onRequest((req, res) => {
         line_items: lineItems,
         subscription_data: {trial_period_days: 7}, // ✅ FREE TRIAL
 
-        // Use the URLs passed from the frontend, fallback to hardcoded
+        // Use URLs from frontend, fallback to hardcoded if missing
         success_url: successUrl ||
           "https://dreamstimeskip-beta.pages.dev/tracker?success=true",
         cancel_url: cancelUrl ||
