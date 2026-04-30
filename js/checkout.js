@@ -2,7 +2,7 @@
 import { auth, db } from './auth.js';
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
 import { doc, getDoc, setDoc, serverTimestamp, runTransaction } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
-import { products } from './shop.js';
+import { products, productMap } from './shop.js';
 
 let currentUser = null;
 let userCart = {};
@@ -16,7 +16,9 @@ function renderCheckoutPage() {
     }
 
     const subtotal = Object.entries(userCart).reduce((sum, [productId, quantity]) => {
-        const product = products.find(p => p.id === productId);
+        // ⚡ Bolt Performance Optimization:
+        // Replaced O(N) array.find() with O(1) dictionary lookup using productMap
+        const product = productMap[productId];
         return sum + (product.price * quantity);
     }, 0);
     const tax = subtotal * 0.07; // 7% tax
@@ -57,7 +59,9 @@ function renderCheckoutPage() {
                 <h3>Order Summary</h3>
                 <div id="summary-items">
                     ${Object.entries(userCart).map(([productId, quantity]) => {
-        const product = products.find(p => p.id === productId);
+        // ⚡ Bolt Performance Optimization:
+        // Replaced O(N) array.find() with O(1) dictionary lookup using productMap
+        const product = productMap[productId];
         return `<div class="summary-item"><span>${quantity}x ${product.name}</span> <span>$${(product.price * quantity).toFixed(2)}</span></div>`;
     }).join('')}
                 </div>
