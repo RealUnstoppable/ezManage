@@ -595,13 +595,33 @@
             ? `<button class="btn-sm" style="background-color:var(--border-color); cursor:not-allowed;" disabled>Done</button>`
             : `<button class="btn-sm btn-unban mark-complete-btn" data-id="${req.id}">Mark Complete</button>`;
 
-          row.innerHTML = `
-                    <td>${escapeHTML(reqDate)}</td>
-                    <td>${escapeHTML(req.email || "Unknown User")}</td>
-                    <td style="max-width:300px; word-wrap:break-word;">${escapeHTML(req.message)}</td>
-                    <td>${tierBadge}</td>
-                    <td>${statusStr}</td>
-                    <td>${actionButton}</td>`;
+          const tdDate = document.createElement("td");
+          tdDate.textContent = reqDate;
+
+          const tdEmail = document.createElement("td");
+          tdEmail.textContent = req.email || "Unknown User";
+
+          const tdMessage = document.createElement("td");
+          tdMessage.style.maxWidth = "300px";
+          tdMessage.style.wordWrap = "break-word";
+          tdMessage.textContent = req.message;
+
+          const tdBadge = document.createElement("td");
+          tdBadge.innerHTML = tierBadge;
+
+          const tdStatus = document.createElement("td");
+          tdStatus.innerHTML = statusStr;
+
+          const tdAction = document.createElement("td");
+          tdAction.innerHTML = actionButton;
+
+          row.appendChild(tdDate);
+          row.appendChild(tdEmail);
+          row.appendChild(tdMessage);
+          row.appendChild(tdBadge);
+          row.appendChild(tdStatus);
+          row.appendChild(tdAction);
+
           listBody.appendChild(row);
         });
       }
