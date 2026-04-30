@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+     <script type="module" src="/js/theme-loader.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blog | DTS HUB</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="icon" type="image/png" href="/images/dreams-favicon.png">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/blog.css">
+    <link rel="stylesheet" href="/css/themes.css">
+</head>
+<body>
+<header class="main-header">
+
+    </header>
+    <script type="module">
+      import { auth, db } from '/js/auth.js';
+      import { doc, getDoc } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
+
+      const authLink = document.getElementById('auth-link');
+    </script>
+    <main class="blog-main">
+        <section class="blog-header">
+            <h1>Blogs</h1>
+            <p>News, updates, and behind-the-scenes looks at the Unstoppable ecosystem.</p>
+        </section>
+
+        <section class="blog-grid">
+            <article class="blog-post-card">
+                <img src="/images/UnstoppableHoodieModel300x300.png" alt="Unstoppable brand representative" class="blog-post-image">
+                <div class="blog-post-content">
+                    <div class="post-meta">
+                        <span>July 22, 2025</span> &bull; <span>Community</span>
+                    </div>
+                    <h3>The Philosophy Behind Unstoppable: More Than a Brand</h3>
+                    <p>We've always seen Unstoppable as more than just a name for high-tier gameplay. It's a mindset. It's about pushing boundaries, celebrating gaming culture, and building a community that shares a passion for excellence... </p>
+                    <a href="the-philosophy-behind-unstoppable-more-than-a-brand.html" class="read-more-btn">Read More</a>
+                </div>
+            </article>
+
+            <article class="blog-post-card">
+                <img src="/images/DreamsTimeSkipModel300x300.jpg" alt="Dreams TimeSkip concept art" class="blog-post-image">
+                <div class="blog-post-content">
+                    <div class="post-meta">
+                        <span>July 18, 2025</span> &bull; <span>Development</span>
+                    </div>
+                    <h3>A First Look at Dreams TimeSkip: The Road to 2027</h3>
+                    <p>The question we get most often is: what exactly is Dreams TimeSkip? It’s an epic Minecraft saga, but it’s also an interactive world with a rich story, unique NPCs, and live events that will shape its future. The 2027 release may seem far away, but we're building something truly special... </p>
+                    <a href="#" class="read-more-btn">Read More</a>
+                </div>
+            </article>
+
+            <article class="blog-post-card">
+                <img src="/images/HarmonyTunesModel300x300.png" alt="HarmonyTunes branded cap" class="blog-post-image">
+                <div class="blog-post-content">
+                    <div class="post-meta">
+                        <span>July 15, 2025</span> &bull; <span>Music</span>
+                    </div>
+                    <h3>HarmonyTunes: How We Find the Internet's Biggest Hits</h3>
+                    <p>Every day, our TikTok is filled with the tracks you can't get out of your head. But how do we do it? Our process is a mix of algorithmic analysis and human curation. With the official HarmonyTunes app launching next year, we're excited to give you even more control over your daily dose of music... </p>
+                    <a href="#" class="read-more-btn">Read More</a>
+                </div>
+            </article>
+        </section>
+    </main>
+
+    <footer class="main-footer"></footer>
+
+   <script type="module">
+        import { loadNavbar } from './js/navbar.js';
+        import { loadFooter } from './js/footer.js'; // Add this line
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadNavbar();
+            loadFooter(); // Add this line
+        });
+    </script>
+
+    <script src="/js/script.js"></script>
+
+
+</body>
+</html>

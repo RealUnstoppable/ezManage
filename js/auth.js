@@ -18,8 +18,28 @@ const firebaseConfig = {
 export const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
-export { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
-export { doc, getDoc } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
+
+// Export Firebase Auth & Firestore functions for centralized access
+export {
+    onAuthStateChanged,
+    createUserWithEmailAndPassword,
+    signInWithEmailAndPassword,
+    signOut,
+    sendEmailVerification,
+    deleteUser
+} from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
+
+export {
+    doc,
+    setDoc,
+    getDoc,
+    updateDoc,
+    deleteDoc,
+    collection,
+    getDocs,
+    serverTimestamp,
+    Timestamp
+} from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
 
 // Admin status is verified securely via Firebase Custom Claims or Firestore User Data
 const ADMIN_EMAIL = null;
