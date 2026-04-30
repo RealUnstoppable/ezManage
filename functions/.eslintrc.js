@@ -2,7 +2,6 @@ module.exports = {
   env: {
     es6: true,
     node: true,
-    jest: true,
   },
   parserOptions: {
     "ecmaVersion": 2018,
@@ -22,7 +21,6 @@ module.exports = {
       files: ["**/*.spec.*", "**/*.test.*"],
       env: {
         mocha: true,
-        jest: true,
       },
       rules: {},
     },
