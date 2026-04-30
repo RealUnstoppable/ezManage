@@ -39,8 +39,13 @@ service cloud.firestore {
     match /product_stats/{productId} {
       // Anyone can read product stats
       allow read: if true;
-      // Anyone can update it (or create if it doesn't exist)
-      allow create, update: if true;
+      // Only authenticated users can update or create, and they can only set 'orderedCount' to a number
+      allow create: if request.auth != null
+                    && request.resource.data.keys().hasOnly(['orderedCount'])
+                    && request.resource.data.orderedCount is number;
+      allow update: if request.auth != null
+                    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['orderedCount'])
+                    && request.resource.data.orderedCount is number;
     }
 
     // Newsletter Subscribers Collection
