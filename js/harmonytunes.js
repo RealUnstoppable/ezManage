@@ -283,7 +283,7 @@ document.addEventListener('DOMContentLoaded', () => {
             isPlaying = true;
             playIcon.style.display = 'none';
             pauseIcon.style.display = 'block';
-        }).catch(e => console.error(e));
+        }).catch(e => console.error("Error playing audio:", e));
     }
 
     function pauseSong() {
@@ -414,7 +414,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Update UI
             const isPlayingFav = (currentQueue[currentSongIndex]?.id === songId);
             if(isPlayingFav) {
-                playerLikeBtn.textContent = !isFav ? '❤' : '♡'; // Toggle logic was inverted in var check
+                playerLikeBtn.textContent = isFav ? '♡' : '❤';
                 playerLikeBtn.classList.toggle('active', !isFav);
             }
             if (viewPlaylist.style.display !== 'none' && playlistTitleEl.textContent === "Liked Songs") {
@@ -438,7 +438,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     const favIds = docSnap.data().musicFavorites;
                     userFavorites = librarySongs.filter(song => favIds.includes(song.id));
                 }
-            } catch (e) { console.error(e); }
+            } catch (e) { console.error("Error loading user favorites:", e); }
             
             const hour = new Date().getHours();
             const timeGreeting = hour < 12 ? "Good Morning" : hour < 18 ? "Good Afternoon" : "Good Evening";
