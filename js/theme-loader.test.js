@@ -31,7 +31,8 @@ const { applyTheme } = await import('./theme-loader.js');
 
 describe('applyTheme', () => {
     beforeEach(() => {
-        document.body.dataset = {};
+        // Clear dataset
+        Object.keys(document.body.dataset).forEach(key => delete document.body.dataset[key]);
         localStorage.clear();
         mockAuth.currentUser = null;
     });
