@@ -52,6 +52,131 @@ describe("createCheckoutSession", () => {
     functionsTest.cleanup();
   });
 
+  it("should return 405 if method is not POST", async () => {
+    const req = {
+      method: "GET",
+      headers: {origin: true},
+      get: jest.fn(),
+    };
+
+    const res = {
+      setHeader: jest.fn(),
+      getHeader: jest.fn(),
+      status: jest.fn().mockReturnThis(),
+      send: jest.fn(),
+    };
+
+    // cors is used asynchronously, wait for it using a promise
+    await new Promise((resolve) => {
+      res.send.mockImplementation(() => resolve());
+      createCheckoutSession(req, res);
+    });
+
+    expect(res.status).toHaveBeenCalledWith(405);
+    expect(res.send).toHaveBeenCalledWith("Method Not Allowed");
+  });
+
+  it("should create session successfully with custom amount", async () => {
+    const req = {
+      method: "POST",
+      body: {
+        uid: "test_uid",
+        email: "test@example.com",
+        plan: "Business Pro",
+        amount: 150,
+      },
+      headers: {origin: true},
+      get: jest.fn(),
+    };
+
+    const res = {
+      setHeader: jest.fn(),
+      getHeader: jest.fn(),
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+      send: jest.fn(),
+    };
+
+    mockStripeMock.checkout.sessions.create.mockResolvedValue({url: "https://checkout.url"});
+
+    await new Promise((resolve) => {
+      res.json.mockImplementation(() => resolve());
+      createCheckoutSession(req, res);
+    });
+
+    expect(mockStripeMock.checkout.sessions.create).toHaveBeenCalledWith({
+      mode: "subscription",
+      payment_method_types: ["card"],
+      customer_email: "test@example.com",
+      line_items: [{
+        price_data: {
+          currency: "usd",
+          product: "prod_UFnBrTwFCgb54A",
+          recurring: {interval: "year"},
+          unit_amount: 15000,
+        },
+        quantity: 1,
+      }],
+      subscription_data: {trial_period_days: 7},
+      success_url: "https://dreamstimeskip-beta.pages.dev/tracker?success=true",
+      cancel_url: "https://dreamstimeskip-beta.pages.dev/tracker?canceled=true",
+      metadata: {
+        uid: "test_uid",
+        planName: "Business Pro",
+      },
+    });
+
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json).toHaveBeenCalledWith({url: "https://checkout.url"});
+  });
+
+  it("should create session successfully with default price ID when no amount is provided", async () => {
+    const req = {
+      method: "POST",
+      body: {
+        uid: "test_uid",
+        email: "test2@example.com",
+        plan: "Pro",
+        successUrl: "https://custom.success",
+        cancelUrl: "https://custom.cancel",
+      },
+      headers: {origin: true},
+      get: jest.fn(),
+    };
+
+    const res = {
+      setHeader: jest.fn(),
+      getHeader: jest.fn(),
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+      send: jest.fn(),
+    };
+
+    mockStripeMock.checkout.sessions.create.mockResolvedValue({url: "https://checkout.url"});
+
+    await new Promise((resolve) => {
+      res.json.mockImplementation(() => resolve());
+      createCheckoutSession(req, res);
+    });
+
+    expect(mockStripeMock.checkout.sessions.create).toHaveBeenCalledWith({
+      mode: "subscription",
+      payment_method_types: ["card"],
+      customer_email: "test2@example.com",
+      line_items: [{price: "price_1THHYPBp2C5GdKaKxNpqndNE", quantity: 1}],
+      subscription_data: {trial_period_days: 7},
+      success_url: "https://custom.success",
+      cancel_url: "https://custom.cancel",
+      metadata: {
+        uid: "test_uid",
+        planName: "Pro",
+      },
+    });
+
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json).toHaveBeenCalledWith({url: "https://checkout.url"});
+  });
+
   it("should return 500 when checkout session creation fails", async () => {
     const req = {
       method: "POST",
@@ -78,12 +203,10 @@ describe("createCheckoutSession", () => {
 
     const consoleSpy = jest.spyOn(console, "error").mockImplementation(() => {});
 
-    // Since createCheckoutSession uses cors, the logic is executed asynchronously
-    // We will call the function, wait a bit, then assert
-    createCheckoutSession(req, res);
-
-    // Use a short delay to allow the async operations to finish
-    await new Promise((resolve) => setTimeout(resolve, 50));
+    await new Promise((resolve) => {
+      res.json.mockImplementation(() => resolve());
+      createCheckoutSession(req, res);
+    });
 
     expect(mockStripeMock.checkout.sessions.create).toHaveBeenCalled();
     expect(consoleSpy).toHaveBeenCalledWith("Checkout Error:", expect.any(Error));

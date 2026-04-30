@@ -3,7 +3,6 @@ module.exports = {
     jest: true,
     es6: true,
     node: true,
-    jest: true,
   },
   parserOptions: {
     "ecmaVersion": 2018,
@@ -24,7 +23,6 @@ module.exports = {
       env: {
         jest: true,
         mocha: true,
-        jest: true,
       },
       rules: {},
     },
