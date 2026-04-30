@@ -283,7 +283,7 @@ document.addEventListener('DOMContentLoaded', () => {
             isPlaying = true;
             playIcon.style.display = 'none';
             pauseIcon.style.display = 'block';
-        }).catch(e => console.error("Error playing audio:", e));
+        }).catch(() => {});
     }
 
     function pauseSong() {
