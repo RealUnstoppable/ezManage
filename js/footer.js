@@ -38,6 +38,7 @@ export function loadFooter() {
                         <input type="email" placeholder="your.email@example.com" required>
                         <button type="submit">Sign Up</button>
                     </form>
+                    <div class="newsletter-message" style="margin-top: 10px; font-size: 0.9rem; display: none;"></div>
                 </div>
             </div>
             
