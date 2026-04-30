@@ -67,7 +67,6 @@ describe("cancelSubscription", () => {
   it("should return 405 Method Not Allowed for non-POST requests", async () => {
     req.method = "GET";
 
-    // Call the exported function (which is an Express middleware-like function wrapped by cors)
     cancelSubscription(req, res);
 
     expect(res.status).toHaveBeenCalledWith(405);
@@ -80,8 +79,6 @@ describe("cancelSubscription", () => {
     });
     mockCancel.mockResolvedValue({});
 
-    // Await the function call, wrapping it in a Promise if necessary, but here the inner cors callback is async
-    // Since cancelSubscription(req, res) might execute the cors callback synchronously, let's mock the res.json to resolve a promise
     await new Promise((resolve) => {
       res.json.mockImplementation(() => resolve());
       res.status.mockImplementation(() => res); // Allow chaining res.status().json()
