@@ -14,11 +14,10 @@ module.exports = {
     "no-restricted-globals": ["error", "name", "length"],
     "prefer-arrow-callback": "error",
     "quotes": ["error", "double", {"allowTemplateLiterals": true}],
-    "max-len": ["error", {"code": 140}],
   },
   overrides: [
     {
-      files: ["**/*.spec.*", "**/*.test.*"],
+      files: ["**/*.spec.*"],
       env: {
         mocha: true,
       },

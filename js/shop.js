@@ -35,11 +35,6 @@ export const products = [
     }
 ];
 
-export const productMap = products.reduce((acc, product) => {
-    acc[product.id] = product;
-    return acc;
-}, {});
-
 // --- STATE MANAGEMENT ---
 let cart = {}; // { productId: quantity, ... }
 let currentUser = null;
@@ -81,10 +76,7 @@ function renderCart() {
         checkoutBtn.disabled = true;
     } else {
         cartItemsContainer.innerHTML = Object.entries(cart).map(([productId, quantity]) => {
-            // ⚡ Bolt Performance Optimization:
-            // Replaced O(N) array.find() with O(1) dictionary lookup using productMap
-            // Prevents N*M operations when rendering a cart with M items from a store with N products.
-            const product = productMap[productId];
+            const product = products.find(p => p.id === productId);
             if (!product) return ''; // Should not happen
             return `
                 <div class="cart-item">
@@ -108,9 +100,7 @@ function renderCart() {
 function updateCartSummary() {
     const itemCount = Object.values(cart).reduce((sum, quantity) => sum + quantity, 0);
     const totalPrice = Object.entries(cart).reduce((sum, [productId, quantity]) => {
-        // ⚡ Bolt Performance Optimization:
-        // Replaced O(N) array.find() with O(1) dictionary lookup using productMap
-        const product = productMap[productId];
+        const product = products.find(p => p.id === productId);
         return sum + (product.price * quantity);
     }, 0);
 

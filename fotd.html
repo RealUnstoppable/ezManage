@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+     <script type="module" src="/js/theme-loader.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fact of the Day | DreamsTimekip Hub</title>
+    <meta name="description" content="Explore and save a new fact for every day with our interactive calendar.">
+
+    <link rel="icon" type="image/png" href="/images/dreams-favicon.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/themes.css">
+
+    <style>
+        /* --- Base Theme & Original Styles --- */
+        :root {
+            --accent-color: #007bff;
+            --background-color: #000000;
+            --text-color: #f0f0f0;
+            --card-background: #1a1a1a;
+            --border-color: #333333;
+            --header-height: 70px;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        html, body { height: 100%; }
+        body { font-family: 'Inter', sans-serif; background-color: var(--background-color); color: var(--text-color); display: flex; flex-direction: column; }
+        main { flex: 1 0 auto; padding-top: var(--header-height); }
+
+        #siri-orb { position: fixed; bottom: 30px; left: 50%; width: 60px; height: 60px; background: radial-gradient(circle, #6e45e2, #88d3ce); border-radius: 50%; cursor: pointer; display: flex; justify-content: center; align-items: center; overflow: hidden; z-index: 1000; transition: all 0.6s cubic-bezier(0.23, 1, 0.32, 1); box-shadow: 0 0 20px rgba(110, 69, 226, 0.6); animation: pulse 2.5s infinite; }
+        @keyframes pulse {
+            0% { transform: translateX(-50%) scale(0.95); box-shadow: 0 0 0 0 rgba(110, 69, 226, 0.7); }
+            70% { transform: translateX(-50%) scale(1); box-shadow: 0 0 0 12px rgba(110, 69, 226, 0); }
+            100% { transform: translateX(-50%) scale(0.95); box-shadow: 0 0 0 0 rgba(110, 69, 226, 0); }
+        }
+        #siri-orb.expanded { width: 220px; border-radius: 50px; background: #000; animation: none; box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3); transform: translateX(-50%); }
+        .orb-text { color: white; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-size: 1rem; text-decoration: none; opacity: 0; transition: opacity 0.3s ease 0.4s; white-space: nowrap; transform: translateY(20px); }
+        #siri-orb.expanded .orb-text { opacity: 1; transform: translateY(0); }
+
+
+        /* --- Main Content --- */
+        .fotd-section { padding: 4rem 1rem; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 0 1rem; }
+
+        /* --- Horizontal Date Scroller --- */
+        #date-scroller-container {
+            display: flex;
+            flex-direction: row-reverse;
+            overflow-x: auto;
+            overflow-y: hidden;
+            padding-bottom: 20px;
+            margin-bottom: 40px;
+            scrollbar-width: thin;
+            scrollbar-color: var(--accent-color) var(--card-background);
+        }
+        #date-scroller-container::-webkit-scrollbar { height: 8px; }
+        #date-scroller-container::-webkit-scrollbar-track { background: var(--card-background); border-radius: 4px; }
+        #date-scroller-container::-webkit-scrollbar-thumb { background-color: var(--accent-color); border-radius: 4px; }
+
+        .date-square {
+            flex-shrink: 0;
+            width: 60px;
+            height: 60px;
+            border: 1px solid var(--border-color);
+            margin-left: 10px;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            font-size: 0.9rem;
+            transition: all 0.2s ease-in-out;
+            background-color: var(--card-background);
+            cursor: pointer;
+        }
+        .date-square:hover { transform: translateY(-3px); border-color: var(--accent-color); }
+        .date-square span:first-child { font-size: 0.7rem; text-transform: uppercase; opacity: 0.7; pointer-events: none; }
+        .date-square span:last-child { font-size: 1.5rem; font-weight: 600; pointer-events: none; }
+        .date-square.active { border: 2px solid var(--accent-color); background-color: rgba(0, 123, 255, 0.1); color: var(--accent-color); font-weight: bold; }
+
+        /* --- Fact Display Area --- */
+        #fact-container { text-align: center; padding: 40px 20px; background-color: var(--card-background); border-radius: 12px; border: 1px solid var(--border-color); }
+        #fact-date { color: var(--accent-color); margin-bottom: 1rem; font-size: 1.5rem; font-weight: 700; }
+        #fact-text { font-size: 1.8rem; line-height: 1.6; max-width: 800px; margin: 0 auto 2rem; font-weight: 500; min-height: 100px; }
+        #toggle-calendar-btn { background-color: var(--accent-color); color: #fff; border: none; padding: 12px 24px; font-size: 1rem; font-weight: 600; border-radius: 8px; cursor: pointer; transition: background-color 0.2s, transform 0.2s; }
+        #toggle-calendar-btn:hover { background-color: #0056b3; transform: translateY(-2px); }
+
+        /* --- Full Screen Calendar Modal --- */
+        #calendar-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.95); backdrop-filter: blur(5px); z-index: 1001; display: none; opacity: 0; transition: opacity 0.3s ease-in-out; }
+        #calendar-modal.visible { display: block; opacity: 1; }
+        .modal-content { width: 100%; height: 100%; max-width: 1400px; margin: 0 auto; padding: 2rem; overflow-y: auto; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; color: #fff; margin-bottom: 2rem; }
+        .modal-header h2 { font-size: 2rem; }
+        #close-modal-btn { background: none; border: none; color: #fff; font-size: 2.5rem; cursor: pointer; line-height: 1; }
+        #calendar-grid-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 2rem; }
+        .month-container { background: var(--card-background); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem; }
+        .month-header { text-align: center; font-size: 1.2rem; font-weight: 600; margin-bottom: 1rem; color: var(--accent-color); }
+        .day-names { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; margin-bottom: 0.5rem; font-size: 0.8rem; color: #888; text-align: center;}
+        .days-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
+        .calendar-day { aspect-ratio: 1 / 1; display: flex; justify-content: center; align-items: center; border-radius: 50%; font-size: 0.9rem; cursor: pointer; transition: background-color 0.2s, color 0.2s; position: relative; }
+        .calendar-day.empty { cursor: default; }
+        .calendar-day.past-day:not(.empty) { border: 1px solid var(--border-color); }
+        .calendar-day.past-day:not(.empty):hover { background: var(--accent-color); color: #fff; border-color: var(--accent-color); }
+        .calendar-day.today { background: var(--accent-color); color: #fff; font-weight: bold; }
+
+        /* --- Fact Tooltip --- */
+        #fact-tooltip { position: fixed; display: none; opacity: 0; transform: scale(0.9); background: #fff; color: #111; padding: 15px; border-radius: 8px; max-width: 280px; font-size: 0.95rem; line-height: 1.5; z-index: 1002; pointer-events: none; transition: opacity 0.2s, transform 0.2s; box-shadow: 0 5px 20px rgba(0,0,0,0.5); }
+        #fact-tooltip.visible { display: block; opacity: 1; transform: scale(1); }
+
+        /* --- Footer --- */
+        .main-footer { background-color: var(--card-background); border-top: 1px solid var(--border-color); padding: 3rem 1rem; flex-shrink: 0; }
+        .footer-container { max-width: 1200px; margin: 0 auto; }
+        .footer-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 2rem; }
+        .footer-column h5 { margin-bottom: 1rem; font-size: 1rem; color: #fff; }
+        .footer-column ul { list-style: none; }
+        .footer-column li { margin-bottom: 0.5rem; }
+        .footer-column a { color: #ccc; text-decoration: none; transition: color 0.2s; }
+        .footer-column a:hover { color: var(--accent-color); }
+        .signup-form { display: flex; margin-top: 1rem; }
+        .signup-form input { flex-grow: 1; padding: 0.75rem; border: 1px solid var(--border-color); background: #333; color: #fff; border-radius: 4px 0 0 4px; }
+        .signup-form button { padding: 0.75rem 1rem; border: none; background: var(--accent-color); color: #fff; font-weight: bold; cursor: pointer; border-radius: 0 4px 4px 0; }
+        .footer-bottom { margin-top: 3rem; text-align: center; font-size: 0.9rem; color: #888; border-top: 1px solid var(--border-color); padding-top: 2rem; }
+
+        @media (max-width: 768px) { #fact-text { font-size: 1.3rem; } }
+    </style>
+</head>
+<body>
+
+    <header class="main-header">
+        <nav class="navbar">
+
+            <button class="hamburger" aria-label="Open menu"><span class="bar"></span><span class="bar"></span><span class="bar"></span></button>
+        </nav>
+    </header>
+
+    <main>
+        <section class="fotd-section">
+            <div class="container">
+                <div id="date-scroller-container"></div>
+                <div id="fact-container">
+                    <h2 id="fact-date">Fact for Today</h2>
+                    <p id="fact-text">Loading today's fact... 🤔</p>
+                    <button id="toggle-calendar-btn">View Calendar</button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <div id="calendar-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Facts Calendar</h2>
+                <button id="close-modal-btn" aria-label="Close calendar">&times;</button>
+            </div>
+            <div id="calendar-grid-container"></div>
+        </div>
+    </div>
+
+    <div id="fact-tooltip"></div>
+
+   <footer class="main-footer"></footer>
+
+    <div id="siri-orb">
+        <a href="https://www.dreamstimeskip.com/" class="orb-text">Return Home?</a>
+    </div>
+
+   <script type="module">
+        import { loadNavbar } from './js/navbar.js';
+        import { loadFooter } from './js/footer.js'; // Add this line
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadNavbar();
+            loadFooter(); // Add this line
+        });
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- 0. Local Fact Database ---
+            const localFacts = [
+                "A group of flamingos is called a 'flamboyance'.",
+                "Honey never spoils. Archaeologists have found pots of honey in ancient Egyptian tombs that are over 3,000 years old and still perfectly edible.",
+                "The national animal of Scotland is the unicorn.",
+                "A day on Venus is longer than a year on Venus.",
+                "Octopuses have three hearts.",
+                "There are more trees on Earth than stars in the Milky Way galaxy.",
+                "Bananas are berries, but strawberries aren't.",
+                "The Eiffel Tower can be 15 cm taller during the summer due to the expansion of the iron on hot days.",
+                "A crocodile cannot stick its tongue out.",
+                "Wombat poop is cube-shaped.",
+                "The heart of a blue whale is so big, a human could swim through its arteries.",
+                "It's impossible for most people to lick their own elbow.",
+                "A bolt of lightning is six times hotter than the sun.",
+                "Sloths can take up to a month to digest a single leaf.",
+                "The first oranges weren't orange.",
+                "There’s an island in Japan populated only by friendly rabbits.",
+                "A shrimp's heart is in its head.",
+                "Sea otters hold hands when they sleep so they don't float away from each other.",
+                "The blob of toothpaste on a toothbrush has a name: a 'nurdle'.",
+                "There is a town in Norway called 'Hell'.",
+                "Goats have rectangular pupils.",
+                "An ostrich's eye is bigger than its brain.",
+                "The unicorn is the national animal of Scotland.",
+                "Some cats are allergic to humans.",
+                "Humans share 50% of their DNA with bananas.",
+                "The inventor of the Pringles can is now buried in one.",
+                "In Switzerland, it is illegal to own just one guinea pig.",
+                "The longest English word is 189,819 letters long.",
+                "A single cloud can weigh more than 1 million pounds.",
+                "A 'jiffy' is an actual unit of time: 1/100th of a second.",
+                "The Hawaiian alphabet has only 13 letters.",
+                "Banging your head against a wall for one hour burns 150 calories.",
+                "In the 16th Century, Turkish women could legally divorce their husbands if they didn’t pour coffee for them.",
+                "The word 'nerd' was first coined by Dr. Seuss in 'If I Ran the Zoo'.",
+                "Chewing gum boosts concentration.",
+                "Hot water will turn into ice faster than cold water.",
+                "A small child could swim through the veins of a blue whale.",
+                "Ketchup was sold in the 1830s as medicine.",
+                "There are more fake flamingos in the world than real ones.",
+                "A duel between three people is called a truel.",
+                "Dragonflies have six legs but cannot walk.",
+                "The moon has moonquakes.",
+                "The King of Hearts is the only king without a mustache.",
+                "The ampersand symbol (&) is formed from the letters in 'et,' the Latin word for 'and'.",
+                "It rains diamonds on Saturn and Jupiter.",
+                "You are more likely to be killed by a vending machine than a shark.",
+                "Nintendo was founded in 1889 as a playing card company.",
+                "A sneeze travels at about 100 miles per hour.",
+                "Cap'n Crunch's full name is Horatio Magellan Crunch.",
+                "A group of pandas is called an 'embarrassment'."
+            ];
+
+            // --- 1. Element References ---
+            const factTextEl = document.getElementById('fact-text');
+            const factDateEl = document.getElementById('fact-date');
+            const toggleBtn = document.getElementById('toggle-calendar-btn');
+            const modal = document.getElementById('calendar-modal');
+            const closeModalBtn = document.getElementById('close-modal-btn');
+            const calendarGridContainer = document.getElementById('calendar-grid-container');
+            const factTooltip = document.getElementById('fact-tooltip');
+            const dateScroller = document.getElementById('date-scroller-container');
+
+            // --- 2. Global State & Caching ---
+            const today = new Date();
+            let factCache = JSON.parse(localStorage.getItem('factCache')) || {};
+            let isCalendarGenerated = false;
+
+            const getLocalDateString = (date) => {
+                const year = date.getFullYear();
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const day = String(date.getDate()).padStart(2, '0');
+                return `${year}-${month}-${day}`;
+            };
+            const todayDateString = getLocalDateString(today);
+
+            // --- 3. Core Fact Fetching & Caching Logic (MODIFIED) ---
+            const getFactForDate = (dateString) => {
+                // If a fact for this date is already cached, return it.
+                if (factCache[dateString]) {
+                    return factCache[dateString];
+                }
+
+                // Get all facts that have already been used.
+                const usedFacts = new Set(Object.values(factCache));
+
+                // Find all facts from our local list that haven't been used yet.
+                const availableFacts = localFacts.filter(fact => !usedFacts.has(fact));
+
+                let newFact;
+                if (availableFacts.length > 0) {
+                    // Pick a random fact from the available ones.
+                    newFact = availableFacts[Math.floor(Math.random() * availableFacts.length)];
+                } else {
+                    // If we've run out of unique facts, provide a fallback.
+                    newFact = "You've seen all the available facts! Check back later for more.";
+                }
+
+                // Cache the new fact for the given date and save to local storage.
+                factCache[dateString] = newFact;
+                localStorage.setItem('factCache', JSON.stringify(factCache));
+
+                return newFact;
+            };
+
+            // --- 4. UI Update Functions ---
+            const displayFact = (dateString) => {
+                factTextEl.textContent = 'Loading...';
+                const [year, month, day] = dateString.split('-').map(Number);
+                const date = new Date(year, month - 1, day);
+
+                const fact = getFactForDate(dateString); // No 'await' needed
+
+                const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+                factDateEl.textContent = `Fact for ${date.toLocaleDateString('en-US', options)}`;
+                factTextEl.textContent = fact;
+
+                document.querySelectorAll('.date-square.active').forEach(el => el.classList.remove('active'));
+                const activeSquare = document.querySelector(`.date-square[data-date="${dateString}"]`);
+                if (activeSquare) activeSquare.classList.add('active');
+            };
+
+            // --- 5. Component Generation ---
+            const generateHorizontalScroller = () => {
+                for (let i = 0; i < 90; i++) {
+                    const date = new Date();
+                    date.setDate(today.getDate() - i);
+                    const dateString = getLocalDateString(date);
+
+                    const square = document.createElement('div');
+                    square.className = 'date-square';
+                    square.dataset.date = dateString;
+                    if (i === 0) square.classList.add('active');
+
+                    const month = date.toLocaleString('en-US', { month: 'short' });
+                    const dayNum = date.getDate();
+                    square.innerHTML = `<span>${month}</span><span>${dayNum}</span>`;
+                    dateScroller.appendChild(square);
+                }
+            };
+
+            const generateFullCalendar = () => {
+                const startDate = new Date('2025-01-01');
+                let currentDate = new Date(startDate);
+                while (currentDate <= today) {
+                    const year = currentDate.getFullYear();
+                    const month = currentDate.getMonth();
+                    const monthContainer = document.createElement('div');
+                    monthContainer.className = 'month-container';
+                    monthContainer.innerHTML = `
+                        <div class="month-header">${currentDate.toLocaleString('en-US', { month: 'long' })} ${year}</div>
+                        <div class="day-names">${['S', 'M', 'T', 'W', 'T', 'F', 'S'].map(d => `<div>${d}</div>`).join('')}</div>
+                        <div class="days-grid"></div>
+                    `;
+                    const daysGrid = monthContainer.querySelector('.days-grid');
+                    const firstDayOfMonth = new Date(year, month, 1).getDay();
+                    for (let i = 0; i < firstDayOfMonth; i++) {
+                        daysGrid.innerHTML += '<div class="calendar-day empty"></div>';
+                    }
+                    const daysInMonth = new Date(year, month + 1, 0).getDate();
+                    for (let day = 1; day <= daysInMonth; day++) {
+                        const dayDate = new Date(year, month, day);
+                        if (dayDate > today) break;
+                        const dayString = getLocalDateString(dayDate);
+                        const dayCell = document.createElement('div');
+                        dayCell.className = 'calendar-day';
+                        dayCell.textContent = day;
+                        dayCell.dataset.date = dayString;
+                        if (dayString === todayDateString) {
+                            dayCell.classList.add('today');
+                        } else {
+                            dayCell.classList.add('past-day');
+                        }
+                        daysGrid.appendChild(dayCell);
+                    }
+                    calendarGridContainer.appendChild(monthContainer);
+                    currentDate.setMonth(currentDate.getMonth() + 1);
+                }
+                isCalendarGenerated = true;
+            };
+
+            // --- 6. Event Listeners & Handlers ---
+            const showTooltip = (e) => {
+                const target = e.target;
+                if (!target.dataset.date) return;
+                factTooltip.textContent = 'Fetching fact...';
+                const fact = getFactForDate(target.dataset.date); // No 'await' needed
+                factTooltip.textContent = fact;
+                const rect = target.getBoundingClientRect();
+                factTooltip.style.left = `${rect.left + window.scrollX}px`;
+                factTooltip.style.top = `${rect.bottom + window.scrollY + 5}px`;
+                factTooltip.classList.add('visible');
+            };
+            const hideTooltip = () => factTooltip.classList.remove('visible');
+            const toggleModal = () => {
+                const isVisible = modal.classList.toggle('visible');
+                toggleBtn.textContent = isVisible ? 'Hide Calendar' : 'View Calendar';
+                if (isVisible && !isCalendarGenerated) generateFullCalendar();
+            };
+
+            dateScroller.addEventListener('click', (e) => {
+                const targetSquare = e.target.closest('.date-square');
+                if (targetSquare && targetSquare.dataset.date) {
+                    displayFact(targetSquare.dataset.date);
+                }
+            });
+            toggleBtn.addEventListener('click', toggleModal);
+            closeModalBtn.addEventListener('click', toggleModal);
+            calendarGridContainer.addEventListener('mouseover', showTooltip);
+            calendarGridContainer.addEventListener('mouseout', hideTooltip);
+            calendarGridContainer.addEventListener('click', (e) => {
+                if (e.target.dataset.date) {
+                    displayFact(e.target.dataset.date);
+                    toggleModal();
+                }
+            });
+            document.querySelector('.hamburger').addEventListener('click', () => {
+                document.querySelector('.hamburger').classList.toggle('active');
+                document.querySelector('.nav-links').classList.toggle('active');
+            });
+            const siriOrb = document.getElementById('siri-orb');
+            let inactivityTimeout;
+            siriOrb.addEventListener('click', (event) => {
+                if (event.target.tagName === 'A') return;
+                siriOrb.classList.toggle('expanded');
+                if (siriOrb.classList.contains('expanded')) {
+                    clearTimeout(inactivityTimeout);
+                    inactivityTimeout = setTimeout(() => siriOrb.classList.remove('expanded'), 5000);
+                }
+            });
+
+            // --- 7. INITIALIZE PAGE ---
+            const initializePage = () => {
+                generateHorizontalScroller();
+                displayFact(todayDateString);
+            };
+            initializePage();
+        });
+    </script>
+   ...
+    <script type="module">
+      import { auth, db } from '/js/auth.js';
+      import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
+      onAuthStateChanged(auth, (user) => {
+        if (user) {
+          // User is signed in
+        } else {
+          // User is signed out
+        }
+      });
+    </script>
+
+</body>
+</html>
