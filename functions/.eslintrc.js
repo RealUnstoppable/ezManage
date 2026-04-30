@@ -21,6 +21,7 @@ module.exports = {
       files: ["**/*.spec.*", "**/*.test.*"],
       env: {
         mocha: true,
+        jest: true,
       },
       rules: {},
     },
