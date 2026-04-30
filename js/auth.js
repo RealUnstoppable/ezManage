@@ -103,7 +103,7 @@ if (document.getElementById('auth-form')) {
                 const userCredential = await createUserWithEmailAndPassword(auth, email, password);
                 await setDoc(doc(db, "users", userCredential.user.uid), {
                     username: username || "User",
-                    email: email, // FIX: Use the local variable directly instead of the credential object
+                    email,
                     signupDate: serverTimestamp(),
                     isBanned: false,
                     isAdmin: false, 
