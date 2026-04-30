@@ -104,10 +104,7 @@ if (document.getElementById('auth-form')) {
                 await setDoc(doc(db, "users", userCredential.user.uid), {
                     username: username || "User",
                     email,
-                    signupDate: serverTimestamp(),
-                    isBanned: false,
-                    isAdmin: false, 
-                    membershipLevel: 'free'
+                    signupDate: serverTimestamp()
                 });
                 sessionStorage.setItem('newUser', 'true');
                 window.location.replace('account.html');
