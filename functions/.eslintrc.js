@@ -1,6 +1,5 @@
 module.exports = {
   env: {
-    jest: true,
     es6: true,
     node: true,
     jest: true,
@@ -24,7 +23,6 @@ module.exports = {
       env: {
         jest: true,
         mocha: true,
-        jest: true,
       },
       rules: {},
     },
