@@ -1,6 +1,6 @@
 {
-  "name": "ManagerPro",
-  "short_name": "ManagerPro",
+  "name": "ezManage",
+  "short_name": "ezManage",
   "start_url": ".",
   "display": "standalone",
   "background_color": "#111827",
