@@ -243,7 +243,7 @@
     <aside id="sidebar" class="fixed inset-y-0 left-0 w-80 bg-white dark:bg-slate-950 z-[60] shadow-2xl border-r border-slate-100 dark:border-slate-800 p-8 no-print">
         <div class="flex justify-between items-center mb-12">
             <span class="font-black uppercase tracking-widest text-xs">Menu</span>
-            <button onclick="toggleSidebar()" class="p-2"><i data-lucide="x"></i></button>
+            <button onclick="toggleSidebar()" class="p-2" aria-label="Close menu"><i data-lucide="x"></i></button>
         </div>
 
         <nav class="space-y-6">
@@ -1065,7 +1065,7 @@
                 <input type="text" placeholder="Drawer Label" class="drawer-name" style="flex: 2;" oninput="triggerDraftSync()">
                 <input type="number" step="0.01" class="drawer-val" style="flex: 1;" oninput="calcDrawer(this); triggerDraftSync();">
                 <input type="text" readonly class="drawer-res text-xs font-bold opacity-70" style="flex: 1.5; border:none; background:transparent;">
-                <button type="button" onclick="this.parentElement.remove(); triggerDraftSync();" class="text-red-400 p-2"><i data-lucide="x" class="w-4"></i></button>
+                <button type="button" onclick="this.parentElement.remove(); triggerDraftSync();" class="text-red-400 p-2" aria-label="Remove drawer"><i data-lucide="x" class="w-4"></i></button>
             `;
             div.querySelector('.drawer-name').value = label;
             div.querySelector('.drawer-val').value = val;
@@ -1090,7 +1090,7 @@
                 <input type="text" placeholder="Amount" class="dep-val" style="flex:1;" oninput="triggerDraftSync()">
                 <label class="flex items-center gap-1 text-[10px] font-bold"><input type="checkbox" class="dep-ver accent-sky-500 w-4 h-4" onchange="triggerDraftSync()"> VER</label>
                 <label class="flex items-center gap-1 text-[10px] font-bold"><input type="checkbox" class="dep-val-chk accent-sky-500 w-4 h-4" onchange="triggerDraftSync()"> VAL</label>
-                <button type="button" onclick="this.parentElement.remove(); triggerDraftSync();" class="text-red-400"><i data-lucide="x" class="w-4"></i></button>
+                <button type="button" onclick="this.parentElement.remove(); triggerDraftSync();" class="text-red-400" aria-label="Remove deposit"><i data-lucide="x" class="w-4"></i></button>
             `;
             div.querySelector('.dep-val').value = val;
             div.querySelector('.dep-ver').checked = ver;
@@ -1120,6 +1120,7 @@
             btn.type = "button";
             btn.className = "text-slate-300 hover:text-red-400";
             btn.onclick = function() { this.parentElement.remove(); triggerDraftSync(); };
+            btn.setAttribute('aria-label', 'Remove task');
             btn.innerHTML = '<i data-lucide="trash-2" class="w-4"></i>';
 
             div.appendChild(chk);
@@ -1140,7 +1141,7 @@
                 <input type="text" placeholder="Backline" class="inv-backline" oninput="triggerDraftSync()">
                 <input type="text" placeholder="Cooler" class="inv-cooler" oninput="triggerDraftSync()">
                 <input type="text" placeholder="Freezer" class="inv-freezer" oninput="triggerDraftSync()">
-                <button type="button" onclick="this.parentElement.remove(); triggerDraftSync();" class="text-red-400 text-right"><i data-lucide="minus-circle" class="w-5"></i></button>
+                <button type="button" onclick="this.parentElement.remove(); triggerDraftSync();" class="text-red-400 text-right" aria-label="Remove item"><i data-lucide="minus-circle" class="w-5"></i></button>
             `;
             div.querySelector('.inv-name').value = name;
             div.querySelector('.inv-backline').value = bl;
@@ -1310,7 +1311,7 @@
                             <button class="btn btn-outline btn-sm opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity history-load">
                                 <i data-lucide="download"></i> Load
                             </button>
-                            <button class="text-red-400 p-2 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity history-delete" title="Delete">
+                            <button class="text-red-400 p-2 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity history-delete" title="Delete" aria-label="Delete history record">
                                 <i data-lucide="trash-2" class="w-4 h-4"></i>
                             </button>
                         </div>
@@ -1477,7 +1478,7 @@
                     <span class="font-bold preset-name"></span>
                     <div class="flex gap-2">
                         <button class="btn btn-sm btn-outline opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity load-btn">Load</button>
-                        <button class="text-red-400 p-2 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity delete-btn" title="Delete"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                        <button class="text-red-400 p-2 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity delete-btn" title="Delete" aria-label="Delete template"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
                     </div>
                 `;
                 div.querySelector('.preset-name').textContent = p.name;
