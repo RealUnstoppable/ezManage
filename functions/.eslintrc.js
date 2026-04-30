@@ -1,6 +1,5 @@
 module.exports = {
   env: {
-    jest: true,
     es6: true,
     node: true,
     jest: true,
@@ -22,7 +21,6 @@ module.exports = {
     {
       files: ["**/*.spec.*", "**/*.test.*"],
       env: {
-        jest: true,
         mocha: true,
         jest: true,
       },
