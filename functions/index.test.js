@@ -1,15 +1,15 @@
-const admin = require('firebase-admin');
-const functionsTest = require('firebase-functions-test')();
+const admin = require("firebase-admin");
+const functionsTest = require("firebase-functions-test")();
 
 // Mock dependencies
-jest.mock('firebase-admin', () => {
+jest.mock("firebase-admin", () => {
   const firestoreMock = {
     collection: jest.fn().mockReturnThis(),
     doc: jest.fn().mockReturnThis(),
     set: jest.fn(),
     where: jest.fn().mockReturnThis(),
     get: jest.fn(),
-    update: jest.fn()
+    update: jest.fn(),
   };
   return {
     initializeApp: jest.fn(),
@@ -17,73 +17,124 @@ jest.mock('firebase-admin', () => {
   };
 });
 admin.firestore.FieldValue = {
-    serverTimestamp: jest.fn()
+  serverTimestamp: jest.fn(),
 };
 
 // We must mock Stripe properly since it's instantiated immediately when index.js is required.
 const mockStripeMock = {
-    webhooks: {
-        constructEvent: jest.fn()
+  webhooks: {
+    constructEvent: jest.fn(),
+  },
+  checkout: {
+    sessions: {
+      create: jest.fn(),
     },
-    checkout: {
-        sessions: {
-            create: jest.fn()
-        }
-    },
-    subscriptions: {
-        list: jest.fn(),
-        cancel: jest.fn()
-    }
+  },
+  subscriptions: {
+    list: jest.fn(),
+    cancel: jest.fn(),
+  },
 };
 
-jest.mock('stripe', () => {
-    return jest.fn(() => mockStripeMock);
+jest.mock("stripe", () => {
+  return jest.fn(() => mockStripeMock);
 });
 
 // Import the module after mocking
-const { stripeWebhook } = require('./index.js');
+const {stripeWebhook, createCheckoutSession} = require("./index.js");
 
-describe('stripeWebhook', () => {
-    beforeEach(() => {
-        jest.clearAllMocks();
+describe("createCheckoutSession", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  afterAll(() => {
+    functionsTest.cleanup();
+  });
+
+  it("should return 500 when checkout session creation fails", async () => {
+    const req = {
+      method: "POST",
+      body: {
+        uid: "test_uid",
+        email: "test@example.com",
+        plan: "Business Pro",
+        amount: 100,
+      },
+      headers: {origin: true},
+      get: jest.fn(),
+    };
+
+    const res = {
+      setHeader: jest.fn(),
+      getHeader: jest.fn(),
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+      send: jest.fn(),
+    };
+
+    const errorMessage = "Stripe API error";
+    mockStripeMock.checkout.sessions.create.mockRejectedValue(new Error(errorMessage));
+
+    const consoleSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+
+    // Since createCheckoutSession uses cors, the logic is executed asynchronously
+    // We will call the function, wait a bit, then assert
+    createCheckoutSession(req, res);
+
+    // Use a short delay to allow the async operations to finish
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    expect(mockStripeMock.checkout.sessions.create).toHaveBeenCalled();
+    expect(consoleSpy).toHaveBeenCalledWith("Checkout Error:", expect.any(Error));
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.json).toHaveBeenCalledWith({error: errorMessage});
+
+    consoleSpy.mockRestore();
+  });
+});
+
+describe("stripeWebhook", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  afterAll(() => {
+    functionsTest.cleanup();
+  });
+
+  it("should return 400 when constructEvent throws an error", async () => {
+    const req = {
+      headers: {
+        "stripe-signature": "invalid_signature",
+      },
+      rawBody: "raw_body_data",
+    };
+
+    const res = {
+      status: jest.fn().mockReturnThis(),
+      send: jest.fn(),
+      json: jest.fn(),
+    };
+
+    // Simulate an error from stripe.webhooks.constructEvent
+    const errorMessage = "Invalid signature";
+    mockStripeMock.webhooks.constructEvent.mockImplementation(() => {
+      throw new Error(errorMessage);
     });
 
-    afterAll(() => {
-        functionsTest.cleanup();
-    });
+    // Suppress console.error in tests to avoid noisy output
+    const consoleSpy = jest.spyOn(console, "error").mockImplementation(() => {});
 
-    it('should return 400 when constructEvent throws an error', async () => {
-        const req = {
-            headers: {
-                'stripe-signature': 'invalid_signature'
-            },
-            rawBody: 'raw_body_data'
-        };
+    // Call the webhook
+    await stripeWebhook(req, res);
 
-        const res = {
-            status: jest.fn().mockReturnThis(),
-            send: jest.fn(),
-            json: jest.fn()
-        };
+    // Assertions
+    expect(mockStripeMock.webhooks.constructEvent).toHaveBeenCalledWith("raw_body_data", "invalid_signature", expect.any(String));
+    expect(consoleSpy).toHaveBeenCalledWith("Webhook Error:", expect.any(Error));
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.send).toHaveBeenCalledWith(`Webhook Error: ${errorMessage}`);
 
-        // Simulate an error from stripe.webhooks.constructEvent
-        const errorMessage = 'Invalid signature';
-        mockStripeMock.webhooks.constructEvent.mockImplementation(() => {
-            throw new Error(errorMessage);
-        });
-
-        // Suppress console.error in tests to avoid noisy output
-        const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
-
-        // Call the webhook
-        await stripeWebhook(req, res);
-
-        // Assertions
-        expect(mockStripeMock.webhooks.constructEvent).toHaveBeenCalledWith('raw_body_data', 'invalid_signature', expect.any(String));
-        expect(consoleSpy).toHaveBeenCalledWith('Webhook Error:', expect.any(Error));
-        expect(res.status).toHaveBeenCalledWith(400);
-        expect(res.send).toHaveBeenCalledWith(`Webhook Error: ${errorMessage}`);
-
-        consoleSpy.mockRestore();
-    });
+    consoleSpy.mockRestore();
+  });
 });

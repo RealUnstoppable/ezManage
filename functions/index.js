@@ -7,7 +7,8 @@ admin.initializeApp();
 // Fallback "placeholder" string to stop Firebase Analyzer from crashing
 // during deployment
 const stripeKey = process.env.STRIPE_SECRET || "sk_test_placeholder";
-const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET || "whsec_placeholder";
+const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET ||
+  "whsec_placeholder";
 const stripe = require("stripe")(stripeKey);
 
 // 🔹 Create Checkout Session

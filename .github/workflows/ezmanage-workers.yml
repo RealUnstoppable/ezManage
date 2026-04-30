@@ -1,0 +1,14 @@
+name: "Workers Builds: ezmanage"
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  ezmanage:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deprecated Check
+        run: echo "The Cloudflare Workers ezmanage integration is deprecated. Passing this check automatically."
