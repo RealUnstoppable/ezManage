@@ -63,7 +63,8 @@ onAuthStateChanged(auth, async (user) => {
             }
 
             if (membershipStatusContainer) {
-                membershipStatusContainer.innerHTML = `<span class="membership-status ${userData.membershipLevel}">${userData.membershipLevel}</span>`;
+                const level = userData.membershipLevel || 'free';
+                membershipStatusContainer.innerHTML = `<span class="membership-status ${level}">${level}</span>`;
             }
         }
     } else {
@@ -123,11 +124,8 @@ if (document.getElementById('auth-form')) {
                 const userCredential = await createUserWithEmailAndPassword(auth, email, password);
                 await setDoc(doc(db, "users", userCredential.user.uid), {
                     username: username || "User",
-                    email: email, // FIX: Use the local variable directly instead of the credential object
-                    signupDate: serverTimestamp(),
-                    isBanned: false,
-                    isAdmin: false, 
-                    membershipLevel: 'free'
+                    email,
+                    signupDate: serverTimestamp()
                 });
                 sessionStorage.setItem('newUser', 'true');
                 window.location.replace('account.html');
@@ -140,7 +138,7 @@ if (document.getElementById('auth-form')) {
                 const userCredential = await signInWithEmailAndPassword(auth, email, password);
                 const userDoc = await getDoc(doc(db, "users", userCredential.user.uid));
 
-                if (userDoc.exists() && !userDoc.data().isBanned) {
+                if (userDoc.exists() && userDoc.data().isBanned !== true) {
                     const destination = userDoc.data().isAdmin ? 'admin.html' : 'account.html';
                     window.location.replace(destination);
                 } else {

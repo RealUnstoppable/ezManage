@@ -530,11 +530,9 @@
                   await updateDoc(statsRef, {
                       infoSheet: increment(1)
                   });
-                  console.log("Download counted.");
               } catch (e) {
                   // If the document doesn't exist yet, create it
                   await setDoc(statsRef, { infoSheet: 1 }, { merge: true });
-                  console.log("Download counter initialized.");
               }
           });
       }

@@ -267,20 +267,24 @@
                 calculatePerformanceMetrics(users, carts, orders);
                 renderChart('summary', users);
 
-                // Fetch Feature Requests
-                try {
-                    const featureRequestsSnapshot = await getDocs(collection(db, "feature_requests"));
-                    const requests = featureRequestsSnapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-                    renderFeatureRequestsTable(requests);
-                } catch (frError) {
-                    console.log("Could not load feature requests. Missing Firestore rules?", frError);
-                    document.getElementById('feature-request-list-body').innerHTML = `<tr><td colspan="6" style="text-align:center; color:var(--accent-red);">Failed to load Feature Requests. Please check your Firebase Database Rules.</td></tr>`;
-                }
-
-            } catch (error) {
-                console.error("Error loading admin data:", error);
-            }
+          // Fetch Feature Requests
+          try {
+            const featureRequestsSnapshot = await getDocs(
+              collection(db, "feature_requests"),
+            );
+            const requests = featureRequestsSnapshot.docs.map((d) => ({
+              id: d.id,
+              ...d.data(),
+            }));
+            renderFeatureRequestsTable(requests);
+          } catch (frError) {
+            document.getElementById("feature-request-list-body").innerHTML =
+              `<tr><td colspan="6" style="text-align:center; color:var(--accent-red);">Failed to load Feature Requests. Please check your Firebase Database Rules.</td></tr>`;
+          }
+        } catch (error) {
+          console.error("Error loading admin data:", error);
         }
+      }
 
         function renderUserTable(users) {
             const userListBody = document.getElementById('user-list-body');
@@ -332,16 +336,36 @@
                      ? `<button class="btn-sm" style="background-color:var(--border-color); cursor:not-allowed;" disabled>Done</button>`
                      : `<button class="btn-sm btn-unban mark-complete-btn" data-id="${req.id}">Mark Complete</button>`;
 
-                row.innerHTML = `
-                    <td>${reqDate}</td>
-                    <td>${req.email || "Unknown User"}</td>
-                    <td style="max-width:300px; word-wrap:break-word;">${req.message}</td>
-                    <td>${tierBadge}</td>
-                    <td>${statusStr}</td>
-                    <td>${actionButton}</td>`;
-                listBody.appendChild(row);
-            });
-        }
+          const tdDate = document.createElement("td");
+          tdDate.textContent = reqDate;
+
+          const tdEmail = document.createElement("td");
+          tdEmail.textContent = req.email || "Unknown User";
+
+          const tdMessage = document.createElement("td");
+          tdMessage.style.maxWidth = "300px";
+          tdMessage.style.wordWrap = "break-word";
+          tdMessage.textContent = req.message;
+
+          const tdBadge = document.createElement("td");
+          tdBadge.innerHTML = tierBadge;
+
+          const tdStatus = document.createElement("td");
+          tdStatus.innerHTML = statusStr;
+
+          const tdAction = document.createElement("td");
+          tdAction.innerHTML = actionButton;
+
+          row.appendChild(tdDate);
+          row.appendChild(tdEmail);
+          row.appendChild(tdMessage);
+          row.appendChild(tdBadge);
+          row.appendChild(tdStatus);
+          row.appendChild(tdAction);
+
+          listBody.appendChild(row);
+        });
+      }
 
         function renderNewsletterTable(subscribers) {
             const newsletterListBody = document.getElementById('newsletter-list-body');
