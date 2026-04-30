@@ -26,9 +26,7 @@ document.querySelectorAll('.signup-form').forEach(form => {
                 messageEl.className = 'newsletter-message success';
                 emailInput.value = ''; // Clear the input
             } catch (error) {
-                console.error("Error subscribing to newsletter:", error);
-                messageEl.textContent = "There was an error subscribing. Please try again later.";
-                messageEl.className = 'newsletter-message error';
+                alert("There was an error subscribing. Please try again later.");
             }
         }
     });

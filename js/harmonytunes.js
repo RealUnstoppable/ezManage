@@ -102,7 +102,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     showHome();
                     containerPlaylists.scrollIntoView({ behavior: 'smooth' });
                 } else if (id === 'nav-search') {
-                    alert("Search feature coming soon!");
+                    showToast("Search feature coming soon!");
                 }
             });
         });
@@ -393,9 +393,20 @@ document.addEventListener('DOMContentLoaded', () => {
         return `${min}:${sec < 10 ? '0' : ''}${sec}`;
     }
 
+    function showToast(message) {
+        const toast = document.createElement('div');
+        toast.className = 'toast-notification';
+        toast.textContent = message;
+        document.body.appendChild(toast);
+        setTimeout(() => {
+            toast.classList.add('fade-out');
+            setTimeout(() => toast.remove(), 300);
+        }, 3000);
+    }
+
     async function toggleFavorite(songId) {
         if (!currentUser) {
-            alert("Please sign in to save favorites.");
+            showToast("Please sign in to save favorites.");
             return;
         }
 

@@ -76,7 +76,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     heroSection.appendChild(videoBg);
                 }
                 // Ensure it's playing
-                if (videoBg.paused) videoBg.play().catch(e => console.log("Autoplay blocked:", e));
+                if (videoBg.paused) videoBg.play().catch(() => {});
                 
             } else {
                 if (videoBg) {
