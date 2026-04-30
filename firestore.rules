@@ -1,0 +1,58 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Users Collection
+    match /users/{userId} {
+      // User can read their own profile
+      allow read: if request.auth != null && request.auth.uid == userId;
+
+      // Allow users to create their own profile during signup, but prevent them from setting themselves as admin
+      allow create: if request.auth != null && request.auth.uid == userId
+                    && !request.resource.data.keys().hasAny(['isAdmin', 'isBanned', 'membershipLevel']);
+
+      // Allow users to update their own profile, but prevent modifying critical fields
+      allow update: if request.auth != null && request.auth.uid == userId
+                    && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['isAdmin', 'isBanned', 'membershipLevel', 'plan', 'subscription']);
+    }
+
+    // Carts Collection
+    match /carts/{userId} {
+      // Users can only read and write to their own cart
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Orders Collection
+    match /orders/{orderId} {
+      // Users can create an order, and read their own orders (assuming orderId starts with userId, as per checkout.js: doc(db, "orders", `${currentUser.uid}-${Date.now()}`))
+      // Also ensuring that userId in document matches their own uid.
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+      allow read: if request.auth != null && resource.data.userId == request.auth.uid;
+    }
+
+    // Product Stats Collection
+    match /product_stats/{productId} {
+      // Anyone can read product stats
+      allow read: if true;
+      // Only authenticated users can update or create, and they can only set 'orderedCount' to a number
+      allow create: if request.auth != null
+                    && request.resource.data.keys().hasOnly(['orderedCount'])
+                    && request.resource.data.orderedCount is number;
+      allow update: if request.auth != null
+                    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['orderedCount'])
+                    && request.resource.data.orderedCount is number;
+    }
+
+    // Newsletter Subscribers Collection
+    match /newsletterSubscribers/{email} {
+      // Anyone can add their email
+      allow create: if request.resource.data.email == email;
+    }
+
+  }
+}

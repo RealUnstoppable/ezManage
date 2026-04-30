@@ -15,42 +15,42 @@
             --accent: #2563EB;
             --border: rgba(255,255,255,0.1);
         }
-        body { 
-            background: var(--bg-dark); color: var(--text-main); font-family: 'Inter', sans-serif; 
+        body {
+            background: var(--bg-dark); color: var(--text-main); font-family: 'Inter', sans-serif;
             margin: 0; padding: 15px; display: flex; justify-content: center; align-items: flex-start; min-height: 100vh;
         }
-        .booking-card { 
-            background: var(--bg-card); padding: 25px 20px; border-radius: 12px; 
-            border: 1px solid var(--border); width: 100%; box-sizing: border-box; 
+        .booking-card {
+            background: var(--bg-card); padding: 25px 20px; border-radius: 12px;
+            border: 1px solid var(--border); width: 100%; box-sizing: border-box;
             margin-top: 20px;
         }
         h2 { margin-top: 15px; font-size: 1.5rem; color: #fff; }
-        
+
         .form-group { margin-bottom: 20px; }
         label { display: block; margin-bottom: 8px; color: var(--text-muted); font-size: 0.9rem; font-weight: 600;}
-        input, select { 
-            width: 100%; padding: 14px; background: #222; border: 1px solid #333; 
+        input, select {
+            width: 100%; padding: 14px; background: #222; border: 1px solid #333;
             color: white; border-radius: 6px; box-sizing: border-box; font-size: 1rem;
             -webkit-appearance: none; /* Prevents iOS styling overrides */
         }
         input:focus, select:focus { border-color: var(--accent); outline: none; }
-        
+
         .account-prompt {
             background: #1a1a1a; padding: 15px; border-radius: 6px; border: 1px solid #333; margin-bottom: 20px;
         }
         .checkbox-label { display: flex; align-items: center; font-size: 0.95rem; color: white; cursor: pointer; margin-bottom: 5px; }
         .checkbox-label input[type="checkbox"] { width: auto; margin-right: 10px; transform: scale(1.2); }
         .account-prompt p { margin: 0 0 0 25px; font-size: 0.8rem; color: var(--text-muted); }
-        
-        button { 
-            width: 100%; padding: 16px; background: var(--accent); color: white; border: none; 
-            font-weight: 700; font-size: 1rem; border-radius: 6px; cursor: pointer; transition: 0.2s; 
+
+        button {
+            width: 100%; padding: 16px; background: var(--accent); color: white; border: none;
+            font-weight: 700; font-size: 1rem; border-radius: 6px; cursor: pointer; transition: 0.2s;
         }
         button:hover { background: #1D4ED8; }
         button:disabled { background: #555; cursor: not-allowed; }
-        
+
         #msg { margin-top: 15px; text-align: center; font-size: 0.9rem; font-weight: 600; line-height: 1.4;}
-        
+
         .tabs { display: flex; margin-bottom: 25px; border-bottom: 1px solid #333; }
         .tab { flex: 1; padding: 12px 10px; text-align: center; cursor: pointer; color: var(--text-muted); font-weight: 600; font-size: 0.95rem;}
         .tab.active { color: #fff; border-bottom: 2px solid var(--accent); }
@@ -70,7 +70,7 @@
     <div class="booking-card">
         <a href="index.html" style="color: var(--accent); text-decoration: none; font-size: 0.95rem; font-weight: 600;">&larr; Back to Home</a>
         <h2>Schedule Service</h2>
-        
+
         <div class="tabs">
             <div class="tab active" onclick="switchTab('book')">Book Wash</div>
             <div class="tab" onclick="switchTab('quote')">Request Quote</div>
@@ -78,12 +78,12 @@
 
         <div id="book-tab" class="tab-content active">
             <form id="booking-form">
-                
+
                 <div class="form-group">
                     <label>Full Name *</label>
                     <input type="text" id="b-name" required placeholder="John Doe">
                 </div>
-                
+
                 <div class="form-group">
                     <label>Phone Number *</label>
                     <input type="tel" id="b-phone" required placeholder="(555) 123-4567">
@@ -96,11 +96,11 @@
 
                 <div id="account-creation-block" class="account-prompt">
                     <label class="checkbox-label">
-                        <input type="checkbox" id="create-account-cb"> 
+                        <input type="checkbox" id="create-account-cb">
                         Create an account for faster checkout?
                     </label>
                     <p>Manage appointments and unlock Unstoppable Club discounts.</p>
-                    
+
                     <div id="password-group" style="display: none; margin-top: 15px;">
                         <label>Choose a Password *</label>
                         <input type="password" id="b-password" placeholder="Minimum 6 characters">
@@ -116,13 +116,13 @@
                         <option value="sprinter">Sprinter Van ($400+)</option>
                     </select>
                 </div>
-                
+
                 <div class="form-group">
                     <label>Select Date & Time *</label>
                     <p style="font-size: 0.8rem; color: var(--text-muted); margin: -5px 0 10px 0;">Note: Tuesdays & Thursdays 7AM-3PM are unavailable.</p>
                     <input type="datetime-local" id="b-datetime" required>
                 </div>
-                
+
                 <button type="submit" id="book-submit-btn">Proceed to Booking</button>
             </form>
         </div>
@@ -177,8 +177,8 @@
         });
 
         // Handle logged-in users
-        onAuthStateChanged(auth, (user) => { 
-            currentUser = user; 
+        onAuthStateChanged(auth, (user) => {
+            currentUser = user;
             if(user) {
                 // Auto-fill email and hide account creation if already signed in
                 document.getElementById('b-email').value = user.email;
@@ -205,12 +205,12 @@
 
             // Time Validation
             const dateObj = new Date(dtValue);
-            const day = dateObj.getDay(); 
+            const day = dateObj.getDay();
             const hour = dateObj.getHours();
 
             if ((day === 2 || day === 4) && (hour >= 7 && hour < 15)) {
                 msg.style.color = "var(--accent)"; // Red color from CSS wouldn't pop as well in dark mode, let's use a bright red.
-                msg.style.color = "#ef4444"; 
+                msg.style.color = "#ef4444";
                 msg.textContent = "Error: Tuesdays and Thursdays between 7:00 AM and 3:00 PM are unavailable.";
                 submitBtn.disabled = false;
                 submitBtn.textContent = "Proceed to Booking";
@@ -225,18 +225,15 @@
                     try {
                         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
                         finalUid = userCredential.user.uid;
-                        
+
                         // Create the user profile document
                         await setDoc(doc(db, "users", finalUid), {
                             username: name,
                             email: email,
                             phone: phone,
-                            signupDate: serverTimestamp(),
-                            isBanned: false,
-                            isAdmin: false,
-                            membershipLevel: 'free'
+                            signupDate: serverTimestamp()
                         });
-                        
+
                         // Set session flag to trigger welcome message in dashboard
                         sessionStorage.setItem('newUser', 'true');
                     } catch (authError) {

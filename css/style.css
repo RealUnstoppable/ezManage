@@ -472,7 +472,22 @@ p.section-subtitle {
 
 .signup-form {
     display: flex;
+    flex-wrap: wrap;
     gap: 10px;
+}
+
+.newsletter-message {
+    width: 100%;
+    font-size: 0.9rem;
+    margin-top: 5px;
+}
+
+.newsletter-message.success {
+    color: #10b981;
+}
+
+.newsletter-message.error {
+    color: #ef4444;
 }
 
 .signup-form input {
@@ -648,4 +663,26 @@ p.section-subtitle {
     z-index: 1; /* Sits below content (z-index 2) but above background */
     pointer-events: none; /* Ensures clicking text still works */
     opacity: 0.8; /* Slight transparency to blend with background color */
+}
+/* --- TOAST NOTIFICATION --- */
+.toast-notification {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: var(--primary-card-color);
+    color: var(--text-primary);
+    padding: 12px 24px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+    z-index: 9999;
+    font-size: 0.9rem;
+    font-weight: 500;
+    opacity: 1;
+    transition: opacity 0.3s ease;
+}
+
+.toast-notification.fade-out {
+    opacity: 0;
 }

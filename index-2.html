@@ -1,17 +1,17 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-     <script type="module" src="/js/theme-loader.js"></script>  
+     <script type="module" src="/js/theme-loader.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DreamsTimeskip Hub | The Unstoppable Ecosystem (Beta)</title>
     <meta name="description" content="The central hub for Unstoppable, Dreams TimeSkip, HarmonyTunes, and more. Discover the projects of Catalin Andrian.">
-    
+
      <link rel="icon" type="image/png" href="/images/dreams-favicon.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    
+
     <link rel="stylesheet" href="/css/style.css">
     <link rel="stylesheet" href="/css/themes.css">
 
@@ -278,7 +278,7 @@
                     <a href="https://discord.gg/aYuEdG9Gh7" class="cta-button">Join the Discord</a>
                 </div>
             </section>
-            
+
             <section id="harmony" class="brand-section">
                 <div class="section-background" style="background-image: url('HarmonyTunesModel300x300.png');"></div>
                 <div class="section-overlay" style="background: linear-gradient(0deg, rgba(0,113,227,0.6) 0%, rgba(20,20,20,0.8) 100%);"></div>
@@ -291,7 +291,7 @@
         </div>
     </main>
 
-<footer class="main-footer"></footer> 
+<footer class="main-footer"></footer>
 
     <div id="siri-orb">
         <a href="https://www.dreamstimeskip.com/" class="orb-text">Return Home?</a>
@@ -300,13 +300,13 @@
    <script type="module">
         import { loadNavbar } from './js/navbar.js';
         import { loadFooter } from './js/footer.js'; // Add this line
-        
+
         document.addEventListener('DOMContentLoaded', () => {
             loadNavbar();
             loadFooter(); // Add this line
         });
     </script>
-    
+
   <script src="/js/script.js"></script>
 
     <script>
@@ -323,7 +323,7 @@
 
             siriOrb.addEventListener('click', (event) => {
                 if (event.target.tagName === 'A') return;
-                
+
                 if (!siriOrb.classList.contains('expanded')) {
                     siriOrb.classList.add('expanded');
                     startInactivityTimer();
@@ -333,11 +333,11 @@
             });
         });
     </script>
-    
+
    <script type="module">
       import { auth, db } from './js/auth.js';
 </script>
-    
+
 
     <script>
         // --- START: Pre-register Popup Script ---
@@ -380,6 +380,6 @@
         });
         // --- END: Pre-register Popup Script ---
     </script>
-  
+
 </body>
 </html>

@@ -16,6 +16,8 @@ function renderCheckoutPage() {
     }
 
     const subtotal = Object.entries(userCart).reduce((sum, [productId, quantity]) => {
+        // ⚡ Bolt Performance Optimization:
+        // Replaced O(N) array.find() with O(1) dictionary lookup using productMap
         const product = productMap[productId];
         return sum + (product.price * quantity);
     }, 0);
@@ -57,6 +59,8 @@ function renderCheckoutPage() {
                 <h3>Order Summary</h3>
                 <div id="summary-items">
                     ${Object.entries(userCart).map(([productId, quantity]) => {
+        // ⚡ Bolt Performance Optimization:
+        // Replaced O(N) array.find() with O(1) dictionary lookup using productMap
         const product = productMap[productId];
         return `<div class="summary-item"><span>${quantity}x ${product.name}</span> <span>$${(product.price * quantity).toFixed(2)}</span></div>`;
     }).join('')}
@@ -132,7 +136,6 @@ async function handlePlaceOrder(e) {
         setTimeout(() => window.location.href = './account.html', 3000);
 
     } catch (error) {
-        console.error("Error placing order:", error);
         messageEl.textContent = 'There was an error placing your order. Please try again.';
         messageEl.style.color = 'var(--accent-red)';
         placeOrderBtn.disabled = false;
