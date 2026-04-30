@@ -1105,13 +1105,27 @@
             if(!taskName) return;
             const div = document.createElement('div');
             div.className = "flex items-center gap-3 p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm";
-            div.innerHTML = `
-                <input type="checkbox" class="routine-chk w-5 h-5 accent-sky-500" onchange="triggerDraftSync()">
-                <span class="routine-name flex-1 font-semibold text-sm"></span>
-                <button type="button" onclick="this.parentElement.remove(); triggerDraftSync();" class="text-slate-300 hover:text-red-400"><i data-lucide="trash-2" class="w-4"></i></button>
-            `;
-            div.querySelector('.routine-chk').checked = isChecked;
-            div.querySelector('.routine-name').textContent = taskName;
+
+            const chk = document.createElement('input');
+            chk.type = "checkbox";
+            chk.className = "routine-chk w-5 h-5 accent-sky-500";
+            chk.checked = isChecked;
+            chk.onchange = triggerDraftSync;
+
+            const span = document.createElement('span');
+            span.className = "routine-name flex-1 font-semibold text-sm";
+            span.textContent = taskName;
+
+            const btn = document.createElement('button');
+            btn.type = "button";
+            btn.className = "text-slate-300 hover:text-red-400";
+            btn.onclick = function() { this.parentElement.remove(); triggerDraftSync(); };
+            btn.innerHTML = '<i data-lucide="trash-2" class="w-4"></i>';
+
+            div.appendChild(chk);
+            div.appendChild(span);
+            div.appendChild(btn);
+
             document.getElementById('routineContainer').appendChild(div);
             document.getElementById('newRoutineTask').value = "";
             lucide.createIcons();
@@ -1289,18 +1303,22 @@
                     div.className = "card flex justify-between items-center hover:border-sky-200 dark:hover:border-sky-800 transition-colors group mb-3";
                     div.innerHTML = `
                         <div>
-                            <div class="font-black text-lg">${data.dateSaved}</div>
-                            <div class="text-xs font-bold uppercase tracking-widest text-slate-400">Manager: ${data.manager || 'N/A'} • Duration: ${data.durationMins || 0}m</div>
+                            <div class="font-black text-lg history-date"></div>
+                            <div class="text-xs font-bold uppercase tracking-widest text-slate-400 history-details"></div>
                         </div>
                         <div class="flex gap-2">
-                            <button onclick="loadHistoryShift('${data.id}')" class="btn btn-outline btn-sm opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button class="btn btn-outline btn-sm opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity history-load">
                                 <i data-lucide="download"></i> Load
                             </button>
-                            <button onclick="deleteHistoryShift('${data.id}')" class="text-red-400 p-2 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity" title="Delete">
+                            <button class="text-red-400 p-2 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity history-delete" title="Delete">
                                 <i data-lucide="trash-2" class="w-4 h-4"></i>
                             </button>
                         </div>
                     `;
+                    div.querySelector('.history-date').textContent = data.dateSaved;
+                    div.querySelector('.history-details').textContent = `Manager: ${data.manager || 'N/A'} • Duration: ${data.durationMins || 0}m`;
+                    div.querySelector('.history-load').onclick = () => loadHistoryShift(data.id);
+                    div.querySelector('.history-delete').onclick = () => deleteHistoryShift(data.id);
                     container.appendChild(div);
                 });
             });
@@ -1497,23 +1515,71 @@
             document.getElementById('printTm').innerText = state.timeSaved || 'Not Specified';
             document.getElementById('printDur').innerText = state.durationMins || '0';
             
-            let routineHtml = "";
-            state.routines.forEach(r => {
-                let boxClass = r.checked ? "print-checked" : "";
-                routineHtml += `<tr><td style="text-align:center"><div class="print-checkbox ${boxClass}"></div></td><td>${r.name}</td></tr>`;
-            });
-            document.getElementById('printRoutines').innerHTML = routineHtml || "<tr><td colspan='2'>No routines logged</td></tr>";
+            const printRoutines = document.getElementById('printRoutines');
+            printRoutines.innerHTML = '';
+            if (state.routines && state.routines.length > 0) {
+                state.routines.forEach(r => {
+                    const tr = document.createElement('tr');
+                    const tdCheck = document.createElement('td');
+                    tdCheck.style.textAlign = 'center';
+                    const divCheck = document.createElement('div');
+                    divCheck.className = `print-checkbox ${r.checked ? "print-checked" : ""}`;
+                    tdCheck.appendChild(divCheck);
+                    const tdName = document.createElement('td');
+                    tdName.textContent = r.name;
+                    tr.appendChild(tdCheck);
+                    tr.appendChild(tdName);
+                    printRoutines.appendChild(tr);
+                });
+            } else {
+                printRoutines.innerHTML = "<tr><td colspan='2'>No routines logged</td></tr>";
+            }
 
-            let drawerHtml = "";
-            state.drawers.forEach(d => drawerHtml += `<tr><td>${d.name}</td><td>$${d.val}</td><td>${d.res}</td></tr>`);
-            document.getElementById('printDrawers').innerHTML = drawerHtml || "<tr><td colspan='3'>No drawers logged</td></tr>";
+            const printDrawers = document.getElementById('printDrawers');
+            printDrawers.innerHTML = '';
+            if (state.drawers && state.drawers.length > 0) {
+                state.drawers.forEach(d => {
+                    const tr = document.createElement('tr');
+                    const tdName = document.createElement('td');
+                    tdName.textContent = d.name;
+                    const tdVal = document.createElement('td');
+                    tdVal.textContent = `$${d.val}`;
+                    const tdRes = document.createElement('td');
+                    tdRes.textContent = d.res;
+                    tr.appendChild(tdName);
+                    tr.appendChild(tdVal);
+                    tr.appendChild(tdRes);
+                    printDrawers.appendChild(tr);
+                });
+            } else {
+                printDrawers.innerHTML = "<tr><td colspan='3'>No drawers logged</td></tr>";
+            }
 
             document.getElementById('printSafe').innerText = state.safeCount || "N/A";
             document.getElementById('printChange').innerText = state.changeNeeded || "N/A";
 
-            let invHtml = "";
-            state.inventory.forEach(i => invHtml += `<tr><td>${i.name}</td><td>${i.bl}</td><td>${i.cl}</td><td>${i.fr}</td></tr>`);
-            document.getElementById('printInventoryList').innerHTML = invHtml || "<tr><td colspan='4'>No inventory logged</td></tr>";
+            const printInventory = document.getElementById('printInventoryList');
+            printInventory.innerHTML = '';
+            if (state.inventory && state.inventory.length > 0) {
+                state.inventory.forEach(i => {
+                    const tr = document.createElement('tr');
+                    const tdName = document.createElement('td');
+                    tdName.textContent = i.name;
+                    const tdBl = document.createElement('td');
+                    tdBl.textContent = i.bl;
+                    const tdCl = document.createElement('td');
+                    tdCl.textContent = i.cl;
+                    const tdFr = document.createElement('td');
+                    tdFr.textContent = i.fr;
+                    tr.appendChild(tdName);
+                    tr.appendChild(tdBl);
+                    tr.appendChild(tdCl);
+                    tr.appendChild(tdFr);
+                    printInventory.appendChild(tr);
+                });
+            } else {
+                printInventory.innerHTML = "<tr><td colspan='4'>No inventory logged</td></tr>";
+            }
 
             document.getElementById('printNotesBlock').innerText = state.prepNotes || "No notes provided.";
 
@@ -1702,8 +1768,9 @@
                               <span class="text-xs text-slate-400 font-mono">${new Date(data.timestamp).toLocaleDateString()}</span>
                               <span class="text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded-full ${badgeClass}">${status}</span>
                           </div>
-                          <p class="text-sm font-medium text-slate-700 dark:text-slate-300">"${data.message}"</p>
+                          <p class="text-sm font-medium text-slate-700 dark:text-slate-300 feature-request-message"></p>
                       `;
+                      div.querySelector('.feature-request-message').textContent = `"${data.message}"`;
                       container.appendChild(div);
                   });
               });
