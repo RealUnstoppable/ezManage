@@ -1474,15 +1474,15 @@
                 const div = document.createElement('div');
                 div.className = "flex justify-between items-center p-4 bg-slate-50 dark:bg-slate-900 rounded-xl group border border-slate-100 dark:border-slate-800";
                 div.innerHTML = `
-                    <span class="font-bold custom-preset-name"></span>
+                    <span class="font-bold preset-name"></span>
                     <div class="flex gap-2">
-                        <button class="btn btn-sm btn-outline opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity custom-preset-load">Load</button>
-                        <button class="text-red-400 p-2 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity custom-preset-delete" title="Delete"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                        <button class="btn btn-sm btn-outline opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity load-btn">Load</button>
+                        <button class="text-red-400 p-2 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity delete-btn" title="Delete"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
                     </div>
                 `;
-                div.querySelector('.custom-preset-name').textContent = p.name;
-                div.querySelector('.custom-preset-load').onclick = () => applyCustomPreset(p.id);
-                div.querySelector('.custom-preset-delete').onclick = () => deleteCustomPreset(p.id);
+                div.querySelector('.preset-name').textContent = p.name;
+                div.querySelector('.load-btn').onclick = () => applyCustomPreset(p.id);
+                div.querySelector('.delete-btn').onclick = () => deleteCustomPreset(p.id);
                 container.appendChild(div);
             });
             lucide.createIcons();

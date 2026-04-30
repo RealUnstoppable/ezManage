@@ -43,7 +43,8 @@ onAuthStateChanged(auth, async (user) => {
             }
 
             if (membershipStatusContainer) {
-                membershipStatusContainer.innerHTML = `<span class="membership-status ${userData.membershipLevel}">${userData.membershipLevel}</span>`;
+                const level = userData.membershipLevel || 'free';
+                membershipStatusContainer.innerHTML = `<span class="membership-status ${level}">${level}</span>`;
             }
         }
     } else {
@@ -104,10 +105,7 @@ if (document.getElementById('auth-form')) {
                 await setDoc(doc(db, "users", userCredential.user.uid), {
                     username: username || "User",
                     email,
-                    signupDate: serverTimestamp(),
-                    isBanned: false,
-                    isAdmin: false, 
-                    membershipLevel: 'free'
+                    signupDate: serverTimestamp()
                 });
                 sessionStorage.setItem('newUser', 'true');
                 window.location.replace('account.html');
@@ -120,7 +118,7 @@ if (document.getElementById('auth-form')) {
                 const userCredential = await signInWithEmailAndPassword(auth, email, password);
                 const userDoc = await getDoc(doc(db, "users", userCredential.user.uid));
 
-                if (userDoc.exists() && !userDoc.data().isBanned) {
+                if (userDoc.exists() && userDoc.data().isBanned !== true) {
                     const destination = userDoc.data().isAdmin ? 'admin.html' : 'account.html';
                     window.location.replace(destination);
                 } else {
