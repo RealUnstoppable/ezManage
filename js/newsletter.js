@@ -18,7 +18,6 @@ document.querySelectorAll('.signup-form').forEach(form => {
                 alert("You've successfully subscribed to the newsletter!");
                 emailInput.value = ''; // Clear the input
             } catch (error) {
-                console.error("Error subscribing to newsletter:", error);
                 alert("There was an error subscribing. Please try again later.");
             }
         }
