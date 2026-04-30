@@ -2,7 +2,7 @@
 import { auth, db } from './auth.js';
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
 import { doc, getDoc, setDoc, serverTimestamp, runTransaction } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
-import { products } from './shop.js';
+import { products, productMap } from './shop.js';
 
 let currentUser = null;
 let userCart = {};
@@ -16,7 +16,7 @@ function renderCheckoutPage() {
     }
 
     const subtotal = Object.entries(userCart).reduce((sum, [productId, quantity]) => {
-        const product = products.find(p => p.id === productId);
+        const product = productMap[productId];
         return sum + (product.price * quantity);
     }, 0);
     const tax = subtotal * 0.07; // 7% tax
@@ -57,7 +57,7 @@ function renderCheckoutPage() {
                 <h3>Order Summary</h3>
                 <div id="summary-items">
                     ${Object.entries(userCart).map(([productId, quantity]) => {
-        const product = products.find(p => p.id === productId);
+        const product = productMap[productId];
         return `<div class="summary-item"><span>${quantity}x ${product.name}</span> <span>$${(product.price * quantity).toFixed(2)}</span></div>`;
     }).join('')}
                 </div>
@@ -96,22 +96,33 @@ async function handlePlaceOrder(e) {
     try {
         // New Feature: Use a transaction to ensure atomicity
         await runTransaction(db, async (transaction) => {
-            // 1. Create a new order document
+            // 1. Pre-fetch all necessary read documents before any writes
+            const cartEntries = Object.entries(userCart);
+            const statDocs = await Promise.all(
+                cartEntries.map(([productId]) => {
+                    const productStatRef = doc(db, "product_stats", productId);
+                    return transaction.get(productStatRef);
+                })
+            );
+
+            // 2. Create a new order document
             const newOrderRef = doc(db, "orders", `${currentUser.uid}-${Date.now()}`);
             transaction.set(newOrderRef, orderDetails);
 
-            // 2. Update product order counts
-            for (const [productId, quantity] of Object.entries(userCart)) {
+            // 3. Update product order counts
+            cartEntries.forEach(([productId, quantity], index) => {
+                const statDoc = statDocs[index];
                 const productStatRef = doc(db, "product_stats", productId);
-                const statDoc = await transaction.get(productStatRef);
+
                 if (!statDoc.exists()) {
-    transaction.set(productStatRef, { orderedCount: quantity });
-} else {
-    const newCount = statDoc.data().orderedCount + quantity;
-    transaction.update(productStatRef, { orderedCount: newCount });
-}
-            }
-            // 3. Clear the user's cart
+                    transaction.set(productStatRef, { orderedCount: quantity });
+                } else {
+                    const newCount = statDoc.data().orderedCount + quantity;
+                    transaction.update(productStatRef, { orderedCount: newCount });
+                }
+            });
+
+            // 4. Clear the user's cart
             const userCartRef = doc(db, 'carts', currentUser.uid);
             transaction.set(userCartRef, { items: {} });
         });
