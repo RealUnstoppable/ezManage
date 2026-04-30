@@ -17,22 +17,22 @@ describe('loadFooter', () => {
 
         const footer = document.querySelector('.main-footer');
         expect(footer).not.toBeNull();
+        expect(footer.innerHTML).toContain('class="footer-container"');
         expect(footer.innerHTML).toContain('Navigate');
         expect(footer.innerHTML).toContain('Connect');
         expect(footer.innerHTML).toContain('Company');
         expect(footer.innerHTML).toContain('Stay in the Loop');
+        expect(footer.innerHTML).toContain('Sign Up');
         expect(footer.innerHTML).toContain('2026 Unstoppable LLC');
         expect(footer.innerHTML).toContain('Designed in collaboration with Unstoppable Design, LLC');
     });
 
     it('should not throw if main-footer element does not exist', () => {
-        document.body.innerHTML = ''; // Clear out main-footer
+        document.body.innerHTML = '<div>No footer here</div>';
 
-        expect(() => {
-            loadFooter();
-        }).not.toThrow();
+        expect(() => loadFooter()).not.toThrow();
 
-        // Also verify that nothing was unexpectedly added
+        // Also verify that nothing was unexpectedly added to the body
         expect(document.querySelector('.main-footer')).toBeNull();
     });
 });

@@ -14,8 +14,7 @@ service cloud.firestore {
 
       // Allow users to create their own profile during signup, but prevent them from setting themselves as admin
       allow create: if request.auth != null && request.auth.uid == userId
-                    && (!request.resource.data.keys().hasAny(['isAdmin', 'isBanned', 'membershipLevel'])
-                        || (request.resource.data.isAdmin == false && request.resource.data.isBanned == false && request.resource.data.membershipLevel == 'free'));
+                    && !request.resource.data.keys().hasAny(['isAdmin', 'isBanned', 'membershipLevel']);
 
       // Allow users to update their own profile, but prevent modifying critical fields
       allow update: if request.auth != null && request.auth.uid == userId

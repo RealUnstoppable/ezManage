@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+     <script type="module" src="/js/theme-loader.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DreamsTimeskip Hub | The Unstoppable Ecosystem (Beta)</title>
+    <meta name="description" content="The central hub for Unstoppable, Dreams TimeSkip, HarmonyTunes, and more. Discover the projects of Catalin Andrian.">
+
+     <link rel="icon" type="image/png" href="/images/dreams-favicon.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/themes.css">
+
+    <style>
+        #siri-orb {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            width: 60px;
+            height: 60px;
+            background: radial-gradient(circle, #6e45e2, #88d3ce);
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            z-index: 1000;
+            transition: all 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+            box-shadow: 0 0 20px rgba(110, 69, 226, 0.6);
+            animation: pulse 2.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: translateX(-50%) scale(0.95);
+                box-shadow: 0 0 0 0 rgba(110, 69, 226, 0.7);
+            }
+            70% {
+                transform: translateX(-50%) scale(1);
+                box-shadow: 0 0 0 12px rgba(110, 69, 226, 0);
+            }
+            100% {
+                transform: translateX(-50%) scale(0.95);
+                box-shadow: 0 0 0 0 rgba(110, 69, 226, 0);
+            }
+        }
+
+        #siri-orb.expanded {
+            width: 220px;
+            border-radius: 50px;
+            background: #000;
+            animation: none;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            transform: translateX(-50%);
+        }
+
+        .orb-text {
+            color: white;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            font-size: 1rem;
+            text-decoration: none;
+            opacity: 0;
+            transition: opacity 0.3s ease 0.4s;
+            white-space: nowrap;
+            transform: translateY(20px);
+        }
+
+        #siri-orb.expanded .orb-text {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* --- START: Pre-register Popup Styles --- */
+        #preregister-popup-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1001; /* Higher than the Siri orb */
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.4s ease, visibility 0.4s ease;
+        }
+
+        #preregister-popup-overlay.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .popup-content {
+            background-color: #111;
+            padding: 2.5rem;
+            border-radius: 16px;
+            text-align: center;
+            max-width: 450px;
+            width: 90%;
+            position: relative;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            transform: scale(0.95);
+            opacity: 0;
+            transition: transform 0.4s cubic-bezier(0.23, 1, 0.32, 1), opacity 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+
+        #preregister-popup-overlay.visible .popup-content {
+            transform: scale(1);
+            opacity: 1;
+        }
+
+        .popup-content img {
+            max-width: 80%;
+            height: auto;
+            margin-bottom: 1.5rem;
+            border-radius: 16px;
+        }
+
+        .popup-content h2 {
+            font-family: 'Inter', sans-serif;
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: #fff;
+            margin: 0 0 1.5rem 0;
+            line-height: 1.3;
+        }
+
+        .popup-preregister-btn {
+            display: inline-block;
+            background: linear-gradient(90deg, #6e45e2, #88d3ce);
+            color: #fff;
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+            font-size: 1rem;
+            padding: 14px 30px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            text-decoration: none;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .popup-preregister-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(110, 69, 226, 0.4);
+        }
+
+        .popup-close-btn {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            background: none;
+            border: none;
+            color: #888;
+            font-size: 2rem;
+            line-height: 1;
+            cursor: pointer;
+            transition: color 0.3s ease, transform 0.3s ease;
+        }
+
+        .popup-close-btn:hover {
+            color: #fff;
+            transform: rotate(90deg);
+        }
+        /* --- END: Pre-register Popup Styles --- */
+    </style>
+</head>
+<body>
+
+    <div id="preregister-popup-overlay">
+        <div class="popup-content">
+            <button class="popup-close-btn" aria-label="Close popup">&times;</button>
+            <img src="/images/Pencil-1-logo-light.png" alt="A sleek, modern digital pencil">
+            <h2>The last pencil you'll ever buy.</h2>
+            <a href="sign in beta.html" class="popup-preregister-btn">Pre-register Now</a>
+        </div>
+    </div>
+
+    <header class="main-header">
+        <div id="navbar-placeholder"></div>
+    </header>
+
+    <main>
+        <section class="hero">
+            <div class="hero-content">
+                <div class="orb"></div>
+                <h1 class="reveal" id="dynamic-greeting">Good Afternoon.</h1>
+                <h2 class="reveal">All you want, all in one place.</h2>
+                <p class="section-subtitle reveal">Welcome to the central hub for the Unstoppable ecosystem. Explore our projects, get the latest updates, and join the community.</p>
+                <div class="powered-by reveal">
+                    <span>Powered by Unstoppable AI</span>
+                </div>
+            </div>
+        </section>
+
+        <section id="bento" class="bento-section">
+            <div class="bento-grid">
+                <a href="#unstoppable" class="bento-card reveal" id="bento-unstoppable">
+                    <div class="card-content">
+                        <h3>Unstoppable</h3>
+                        <p>High-tier gameplay & gaming content.</p>
+                    </div>
+                    <img src="/images/un-logo-1.png" alt="Unstoppable Logo">
+                </a>
+                <a href="dreamstimeskip.html" class="bento-card reveal" id="bento-dts">
+                     <div class="card-content">
+                        <h3>Dreams TimeSkip</h3>
+                        <p>Season OG, Relive your childhood.</p>
+                    </div>
+                     <img src="/images/dreams-lobby.jpg" alt="Dreams TimeSkip Lobby">
+                </a>
+                <div class="bento-card reveal" id="bento-status">
+                    <h4>Ecosystem Status</h4>
+                    <div class="status-item">
+                        <span>All Systems</span>
+                        <span class="status-indicator online">Operational</span>
+                    </div>
+                    <div class="status-item">
+                        <span>FOTD | API</span>
+                        <span class="status-indicator down">Maintenance</span>
+                    </div>
+                    <p>Last check: Jan 31, 2026</p>
+                </div>
+                <a href="#harmony" class="bento-card reveal" id="bento-harmony">
+                     <div class="card-content">
+                        <h3>HarmonyTunes</h3>
+                        <p>Your daily dose of trending music.</p>
+                    </div>
+                    <img src="/images/harmony-tunes-card.jpg" alt="HarmonyTunes Card">
+                </a>
+                <a href="fotd.html" class="bento-card reveal" id="bento-fotd">
+                     <div class="card-content">
+                        <h3>Fact of the Day</h3>
+                        <p>The heart of a blue whale is so big, a human could swim through its arteries.</p>
+                    </div>
+                </a>
+                <div class="bento-card reveal" id="bento-founder">
+                     <div class="card-content">
+                        <h4>Founder's Note</h4>
+                        <p>"We're building the future of digital entertainment, one project at a time." - Catalin A.</p>
+                    </div>
+                </div>
+                 <a href="shop.html" class="bento-card reveal" id="bento-shop">
+                     <div class="card-content">
+                        <h3>Unstoppable Collection</h3>
+                        <p>New drops available now.</p>
+                    </div>
+                    <img src="/images/Unstoppable Collection Logo.png" alt="Unstoppable Mousepad">
+                </a>
+            </div>
+        </section>
+
+        <div class="scroll-container">
+            <section id="unstoppable" class="brand-section">
+                <div class="section-background" style="background-image: url('UnstoppableHoodieModel300x300.png');"></div>
+                <div class="section-overlay" style="background: linear-gradient(0deg, rgba(139,0,0,0.7) 0%, rgba(20,20,20,0.8) 100%);"></div>
+                <div class="brand-content reveal">
+                    <h2>Unstoppable</h2>
+                    <p class="section-subtitle">The ultimate destination for high-tier gameplay, deep dives, and gaming culture. Join the action and witness top-level competitive play.</p>
+                    <a href="https://www.youtube.com/@Unstoppab1e?sub_confirmation=1" class="cta-button">Watch on YouTube</a>
+                </div>
+            </section>
+
+            <section id="dts" class="brand-section">
+                <div class="section-background" style="background-image: url('DreamsTimeSkipModel300x300.jpg');"></div>
+                 <div class="section-overlay" style="background: linear-gradient(0deg, rgba(48,25,52,0.7) 0%, rgba(20,20,20,0.8) 100%);"></div>
+                <div class="brand-content reveal">
+                    <h2>Dreams TimeSkip</h2>
+                    <p class="section-subtitle">An epic Minecraft saga awaits. With a rich storyline, interactive NPCs, and live events, this is a server unlike any other. Expected release: 2027.</p>
+                    <a href="https://discord.gg/aYuEdG9Gh7" class="cta-button">Join the Discord</a>
+                </div>
+            </section>
+
+            <section id="harmony" class="brand-section">
+                <div class="section-background" style="background-image: url('HarmonyTunesModel300x300.png');"></div>
+                <div class="section-overlay" style="background: linear-gradient(0deg, rgba(0,113,227,0.6) 0%, rgba(20,20,20,0.8) 100%);"></div>
+                <div class="brand-content reveal">
+                    <h2>HarmonyTunes</h2>
+                    <p class="section-subtitle">Your daily dose of trending music. Follow us on TikTok for the most popular songs, every single day. The official app is launching next year!</p>
+                    <a href="https://www.tiktok.com/@harmonytunesofficial" class="cta-button">Follow the Beat</a>
+                </div>
+            </section>
+        </div>
+    </main>
+
+<footer class="main-footer"></footer>
+
+    <div id="siri-orb">
+        <a href="https://www.dreamstimeskip.com/" class="orb-text">Return Home?</a>
+    </div>
+
+   <script type="module">
+        import { loadNavbar } from './js/navbar.js';
+        import { loadFooter } from './js/footer.js'; // Add this line
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadNavbar();
+            loadFooter(); // Add this line
+        });
+    </script>
+
+  <script src="/js/script.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const siriOrb = document.getElementById('siri-orb');
+            let inactivityTimeout;
+
+            const collapseOrb = () => siriOrb.classList.remove('expanded');
+
+            const startInactivityTimer = () => {
+                clearTimeout(inactivityTimeout);
+                inactivityTimeout = setTimeout(collapseOrb, 5000);
+            };
+
+            siriOrb.addEventListener('click', (event) => {
+                if (event.target.tagName === 'A') return;
+
+                if (!siriOrb.classList.contains('expanded')) {
+                    siriOrb.classList.add('expanded');
+                    startInactivityTimer();
+                } else {
+                    startInactivityTimer();
+                }
+            });
+        });
+    </script>
+
+   <script type="module">
+      import { auth, db } from './js/auth.js';
+</script>
+
+
+    <script>
+        // --- START: Pre-register Popup Script ---
+        document.addEventListener('DOMContentLoaded', () => {
+            const popupOverlay = document.getElementById('preregister-popup-overlay');
+            const closeBtn = popupOverlay.querySelector('.popup-close-btn');
+            const preregisterBtn = popupOverlay.querySelector('.popup-preregister-btn');
+
+            // Function to show the popup
+            const showPopup = () => {
+                popupOverlay.classList.add('visible');
+            };
+
+            // Function to hide the popup
+            const hidePopup = () => {
+                popupOverlay.classList.remove('visible');
+                // Store in sessionStorage that the popup has been seen
+                sessionStorage.setItem('popupShown', 'true');
+            };
+
+            // Show the popup after a short delay, but only if it hasn't been shown in this session
+            if (!sessionStorage.getItem('popupShown')) {
+                setTimeout(showPopup, 1000); // 1-second delay
+            }
+
+            // Event listeners to close the popup
+            closeBtn.addEventListener('click', hidePopup);
+            preregisterBtn.addEventListener('click', (e) => {
+                // e.preventDefault(); // Uncomment this if you want to stop the link from navigating
+                console.log('Pre-register button clicked!');
+                hidePopup();
+            });
+
+            // Also close if the user clicks on the dark overlay
+            popupOverlay.addEventListener('click', (event) => {
+                if (event.target === popupOverlay) {
+                    hidePopup();
+                }
+            });
+        });
+        // --- END: Pre-register Popup Script ---
+    </script>
+
+</body>
+</html>
