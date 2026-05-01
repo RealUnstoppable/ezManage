@@ -1,0 +1,11 @@
+directories:
+  output: dist
+  buildResources: build
+appId: com.realunstoppable.ezmanage
+productName: ezManage
+mac:
+  target: dmg
+  category: public.app-category.business
+  identity: null
+files: []
+electronVersion: 41.4.0

@@ -1,0 +1,8 @@
+version: 1.0.0
+files:
+  - url: ezManage-1.0.0-arm64.dmg
+    sha512: 2mX6euuv8zkkzJm2MMu4WjCH3IGmiCbYXRbo/7PmR6uI74hMCfBWIdNVTMumYLOKie7BSHTalFsOlmISL6Vt+A==
+    size: 115204980
+path: ezManage-1.0.0-arm64.dmg
+sha512: 2mX6euuv8zkkzJm2MMu4WjCH3IGmiCbYXRbo/7PmR6uI74hMCfBWIdNVTMumYLOKie7BSHTalFsOlmISL6Vt+A==
+releaseDate: '2026-05-01T05:13:02.481Z'
