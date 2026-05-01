@@ -57,7 +57,7 @@ exports.createCheckoutSession = functions.https.onRequest((req, res) => {
           metadata: {
             uid: uid || "unknown",
             planName: plan || "Pro",
-          }
+          },
         },
 
         // Use URLs from frontend, fallback to hardcoded if missing
