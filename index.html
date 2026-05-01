@@ -909,6 +909,7 @@
             document.getElementById('tosModal').classList.add('hidden');
             
             db.collection('users').doc(currentUser.uid).set({ cloudSyncEnabled: true }, { merge: true });
+            localStorage.setItem(`ezManage_cloudEnabled_${currentUser.uid}`, 'true');
             updateCloudSyncUI();
             triggerDraftSync(); // Immediately sync local to cloud
         }
@@ -923,6 +924,7 @@
             if (!currentUser) return;
             cloudSyncEnabled = false;
             db.collection('users').doc(currentUser.uid).set({ cloudSyncEnabled: false }, { merge: true });
+            localStorage.setItem(`ezManage_cloudEnabled_${currentUser.uid}`, 'false');
             updateCloudSyncUI();
         }
 
@@ -1661,7 +1663,12 @@
                 phone: document.getElementById('profPhone').value,
                 aiTrainingEnabled: document.getElementById('profileAIToggle').checked
             };
-            db.collection('users').doc(currentUser.uid).set(data, { merge: true }).then(() => alert("Profile Updated!"));
+            db.collection('users').doc(currentUser.uid).set(data, { merge: true }).then(() => {
+                // Save to localStorage for instant cross-page checking
+                localStorage.setItem(`ezManage_aiEnabled_${currentUser.uid}`, data.aiTrainingEnabled);
+                localStorage.setItem(`ezManage_cloudEnabled_${currentUser.uid}`, cloudSyncEnabled);
+                alert("Profile Updated!");
+            });
         }
 
         function changePassword() {

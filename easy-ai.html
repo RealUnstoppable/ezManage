@@ -275,10 +275,23 @@
         let currentUserData = null;
         let latestPrediction = null;
 
+        // Instant Local Check (Pre-Firebase)
+        (function() {
+            const tempUid = localStorage.getItem('ezManage_lastUid'); // We should set this in index.html
+            if (tempUid) {
+                const localAI = localStorage.getItem(`ezManage_aiEnabled_${tempUid}`);
+                const localCloud = localStorage.getItem(`ezManage_cloudEnabled_${tempUid}`);
+                if (localAI === 'false' || localCloud === 'false') {
+                    document.getElementById('aiRestrictionModal').classList.remove('hidden');
+                }
+            }
+        })();
+
         // Main Execution Flow
         auth.onAuthStateChanged((user) => {
             currentUser = user;
             if (user) {
+                localStorage.setItem('ezManage_lastUid', user.uid);
                 db.collection("users").doc(user.uid).onSnapshot(doc => {
                     if (doc.exists) {
                         currentUserData = doc.data();
