@@ -938,12 +938,19 @@
                 btnCloudSave.disabled = false;
                 btnCloudSave.classList.remove('opacity-50', 'cursor-not-allowed');
                 iconCloudSave.setAttribute('data-lucide', 'cloud-upload');
+                
+                document.getElementById('profileAIToggle').disabled = false;
+                document.getElementById('profileAIToggle').parentElement.parentElement.classList.remove('opacity-50');
             } else {
                 statusIndicator.className = "w-2 h-2 rounded-full bg-slate-400";
                 statusText.innerText = "Local Mode Only (Opt-In Required)";
                 btnCloudSave.disabled = true;
                 btnCloudSave.classList.add('opacity-50', 'cursor-not-allowed');
                 iconCloudSave.setAttribute('data-lucide', 'cloud-off');
+
+                document.getElementById('profileAIToggle').disabled = true;
+                document.getElementById('profileAIToggle').checked = false;
+                document.getElementById('profileAIToggle').parentElement.parentElement.classList.add('opacity-50');
             }
             lucide.createIcons();
         }

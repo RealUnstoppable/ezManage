@@ -203,9 +203,12 @@
             </div>
 
             <div class="card p-0 overflow-hidden">
-                <div class="p-6 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 flex items-center gap-3">
-                    <i data-lucide="brain" class="text-sky-500"></i>
-                    <h3 class="text-xl font-black">AI Prediction Results</h3>
+                <div class="p-6 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <i data-lucide="brain" class="text-sky-500"></i>
+                        <h3 class="text-xl font-black">AI Prediction Results</h3>
+                    </div>
+                    <button id="importAllBtn" onclick="importAllPredictions()" class="btn btn-sm btn-accent hidden">Import All</button>
                 </div>
                 
                 <div id="resultsContainer" class="p-6">
@@ -255,6 +258,7 @@
 
         let currentUser = null;
         let currentUserData = null;
+        let latestPrediction = null;
 
         // Main Execution Flow
         auth.onAuthStateChanged((user) => {
@@ -265,10 +269,10 @@
                 db.collection("users").doc(user.uid).onSnapshot(doc => {
                     if (doc.exists) {
                         currentUserData = doc.data();
+                        checkAIRestrictions(currentUserData);
                     }
                 });
                 updateStatus('Fetching Data', 'amber');
-                fetchHistoryData(user.uid);
             } else {
                 navStatus.innerText = "Login / Sign Up";
                 updateStatus('Not Logged In', 'red');
@@ -284,21 +288,35 @@
             ind.innerHTML = `<span class="w-2 h-2 rounded-full bg-${color}-500 ${color === 'amber' || color === 'sky' ? 'animate-pulse' : ''} shadow-[0_0_8px_rgba(var(--tw-colors-${color}-500),0.8)]"></span> ${text}`;
         }
 
+        function checkAIRestrictions(data) {
+            if (!data.cloudSyncEnabled || data.aiTrainingEnabled === false) {
+                updateStatus('AI Disabled', 'amber');
+                document.getElementById('resultsPlaceholder').innerHTML = `
+                    <div class="p-8 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-2xl text-center">
+                        <i data-lucide="shield-alert" class="w-12 h-12 text-amber-500 mx-auto mb-4"></i>
+                        <p class="text-amber-600 dark:text-amber-400 font-bold mb-2">AI Training Disabled</p>
+                        <p class="text-sm text-slate-600 dark:text-slate-400 max-w-sm mx-auto">AI stock forecasting requires <b>Enterprise Cloud Sync</b> and <b>Allow AI Training</b> to be enabled in your Profile settings.</p>
+                        <a href="index.html" class="btn btn-accent btn-sm mt-6">Go to Profile</a>
+                    </div>
+                `;
+                lucide.createIcons();
+                return false;
+            }
+            
+            // If not already fetching, fetch
+            if (document.getElementById('statShiftsFound').innerText === '0') {
+                fetchHistoryData(currentUser.uid);
+            }
+            return true;
+        }
+
         function fetchHistoryData(uid) {
             db.collection("users").doc(uid).get().then(doc => {
                 if (doc.exists) {
                     const data = doc.data();
                     
-                    // Verify Cloud Sync & AI Toggle
-                    if (!data.cloudSyncEnabled || data.aiTrainingEnabled === false) {
-                        updateStatus('AI Disabled', 'amber');
-                        document.getElementById('resultsPlaceholder').innerHTML = `
-                            <p class="text-amber-600 dark:text-amber-400 font-bold mb-2">AI Training Disabled</p>
-                            <p class="text-sm">AI stock forecasting requires <b>Enterprise Cloud Sync</b> and <b>Allow AI Training</b> to be enabled in your Profile settings.</p>
-                            <a href="index.html" class="btn btn-outline btn-sm mt-4">Go to Profile</a>
-                        `;
-                        return;
-                    }
+                    // Final safety check
+                    if (!checkAIRestrictions(data)) return;
 
                     const history = data.shiftHistory || [];
                     
@@ -462,6 +480,7 @@
             };
 
             const prediction = net.run(input);
+            latestPrediction = prediction; // Store for Import All
             displayResults(prediction);
             updateStatus('Analysis Complete', 'emerald');
             document.getElementById('statusIndicator').querySelector('span').classList.remove('animate-pulse');
@@ -522,6 +541,9 @@
 
             if (list.children.length === 0) {
                 list.innerHTML = `<p class="text-center py-8 text-slate-500">The AI could not confidently predict any stock levels above 0. Try logging more data!</p>`;
+                document.getElementById('importAllBtn').classList.add('hidden');
+            } else {
+                document.getElementById('importAllBtn').classList.remove('hidden');
             }
         }
 
@@ -529,59 +551,85 @@
             if (!currentUser) return alert("Please sign in to import data.");
             
             if (confirm(`Import ${name} predictions to your active shift tracker? This will update your current draft.`)) {
-                const draftKey = `ezManage_draft_${currentUser.uid}`;
-                let draft = localStorage.getItem(draftKey);
+                const draft = getDraft();
+                if (!draft) return;
                 
-                if (draft) {
-                    try {
-                        draft = JSON.parse(draft);
-                    } catch (e) {
-                        console.error("Draft parse error", e);
-                        draft = null;
-                    }
-                }
-                
-                if (!draft) {
-                    alert("No active draft found. Please open the Tracker first.");
-                    return;
-                }
-                
-                // Find item in draft inventory
-                let itemFound = false;
-                if (!draft.inventory) draft.inventory = [];
-                
-                draft.inventory.forEach(item => {
-                    if (item.name.trim().toLowerCase() === name.trim().toLowerCase()) {
-                        item.bl = bl.toString();
-                        item.cl = cl.toString();
-                        item.fr = fr.toString();
-                        itemFound = true;
+                applyPredictionToDraft(draft, name, bl, cl, fr);
+                saveDraft(draft, `${name} imported!`);
+            }
+        }
+
+        function importAllPredictions() {
+            if (!currentUser || !latestPrediction) return;
+
+            if (confirm("Import ALL predictions to your active shift tracker? This will update your current draft for all items shown below.")) {
+                const draft = getDraft();
+                if (!draft) return;
+
+                Array.from(uniqueItems).forEach(name => {
+                    const bl = Math.round((latestPrediction[`${name}_bl`] || 0) * maxValues[name].bl);
+                    const cl = Math.round((latestPrediction[`${name}_cl`] || 0) * maxValues[name].cl);
+                    const fr = Math.round((latestPrediction[`${name}_fr`] || 0) * maxValues[name].fr);
+
+                    if (bl > 0 || cl > 0 || fr > 0) {
+                        applyPredictionToDraft(draft, name, bl, cl, fr);
                     }
                 });
-                
-                if (!itemFound) {
-                    draft.inventory.push({
-                        name: name,
-                        bl: bl.toString(),
-                        cl: cl.toString(),
-                        fr: fr.toString()
+
+                saveDraft(draft, "All predictions imported to your tracker!");
+            }
+        }
+
+        function getDraft() {
+            const draftKey = `ezManage_draft_${currentUser.uid}`;
+            let draft = localStorage.getItem(draftKey);
+            if (draft) {
+                try {
+                    return JSON.parse(draft);
+                } catch (e) {
+                    console.error("Draft parse error", e);
+                }
+            }
+            alert("No active draft found. Please open the Tracker first.");
+            return null;
+        }
+
+        function applyPredictionToDraft(draft, name, bl, cl, fr) {
+            if (!draft.inventory) draft.inventory = [];
+            let itemFound = false;
+            
+            draft.inventory.forEach(item => {
+                if (item.name.trim().toLowerCase() === name.trim().toLowerCase()) {
+                    item.bl = bl.toString();
+                    item.cl = cl.toString();
+                    item.fr = fr.toString();
+                    itemFound = true;
+                }
+            });
+            
+            if (!itemFound) {
+                draft.inventory.push({
+                    name: name,
+                    bl: bl.toString(),
+                    cl: cl.toString(),
+                    fr: fr.toString()
+                });
+            }
+        }
+
+        function saveDraft(draft, successMsg) {
+            const draftKey = `ezManage_draft_${currentUser.uid}`;
+            localStorage.setItem(draftKey, JSON.stringify(draft));
+            
+            if (currentUserData && currentUserData.cloudSyncEnabled) {
+                db.collection('users').doc(currentUser.uid).set({ trackerDraft: draft }, { merge: true })
+                    .then(() => alert(successMsg + " (Cloud & Local Sync Complete)"))
+                    .catch(err => {
+                        console.error("Cloud sync error", err);
+                        alert(successMsg + " (Saved locally, but cloud sync failed)");
                     });
-                }
-                
-                // Save back to local storage
-                localStorage.setItem(draftKey, JSON.stringify(draft));
-                
-                // Save to cloud if enabled
-                if (currentUserData && currentUserData.cloudSyncEnabled) {
-                    db.collection('users').doc(currentUser.uid).set({ trackerDraft: draft }, { merge: true })
-                        .then(() => alert(`${name} imported to cloud & local tracker!`))
-                        .catch(err => {
-                            console.error("Cloud sync error", err);
-                            alert(`${name} imported locally, but cloud sync failed.`);
-                        });
-                } else {
-                    alert(`${name} imported to your active local tracker!`);
-                }
+            } else {
+                alert(successMsg + " (Saved to local tracker)");
             }
         }
 
