@@ -1067,7 +1067,7 @@
                 <input type="text" placeholder="Drawer Label" class="drawer-name" style="flex: 2;" oninput="triggerDraftSync()">
                 <input type="number" step="0.01" class="drawer-val" style="flex: 1;" oninput="calcDrawer(this); triggerDraftSync();">
                 <input type="text" readonly class="drawer-res text-xs font-bold opacity-70" style="flex: 1.5; border:none; background:transparent;">
-                <button type="button" onclick="this.parentElement.remove(); triggerDraftSync();" class="text-red-400 p-2" aria-label="Remove drawer"><i data-lucide="x" class="w-4"></i></button>
+                <button type="button" onclick="if(confirm('Are you sure you want to delete this drawer? This action cannot be undone.')) { this.parentElement.remove(); triggerDraftSync(); }" class="text-red-400 p-2" aria-label="Remove drawer"><i data-lucide="x" class="w-4"></i></button>
             `;
             div.querySelector('.drawer-name').value = label;
             div.querySelector('.drawer-val').value = val;
@@ -1092,7 +1092,7 @@
                 <input type="text" placeholder="Amount" class="dep-val" style="flex:1;" oninput="triggerDraftSync()">
                 <label class="flex items-center gap-1 text-[10px] font-bold"><input type="checkbox" class="dep-ver accent-sky-500 w-4 h-4" onchange="triggerDraftSync()"> VER</label>
                 <label class="flex items-center gap-1 text-[10px] font-bold"><input type="checkbox" class="dep-val-chk accent-sky-500 w-4 h-4" onchange="triggerDraftSync()"> VAL</label>
-                <button type="button" onclick="this.parentElement.remove(); triggerDraftSync();" class="text-red-400" aria-label="Remove deposit"><i data-lucide="x" class="w-4"></i></button>
+                <button type="button" onclick="if(confirm('Are you sure you want to delete this deposit? This action cannot be undone.')) { this.parentElement.remove(); triggerDraftSync(); }" class="text-red-400" aria-label="Remove deposit"><i data-lucide="x" class="w-4"></i></button>
             `;
             div.querySelector('.dep-val').value = val;
             div.querySelector('.dep-ver').checked = ver;
@@ -1121,7 +1121,7 @@
             const btn = document.createElement('button');
             btn.type = "button";
             btn.className = "text-slate-300 hover:text-red-400";
-            btn.onclick = function() { this.parentElement.remove(); triggerDraftSync(); };
+            btn.onclick = function() { if(confirm('Are you sure you want to delete this task? This action cannot be undone.')) { this.parentElement.remove(); triggerDraftSync(); } };
             btn.setAttribute('aria-label', 'Remove task');
             btn.innerHTML = '<i data-lucide="trash-2" class="w-4"></i>';
 
@@ -1143,7 +1143,7 @@
                 <input type="text" placeholder="Backline" class="inv-backline" oninput="triggerDraftSync()">
                 <input type="text" placeholder="Cooler" class="inv-cooler" oninput="triggerDraftSync()">
                 <input type="text" placeholder="Freezer" class="inv-freezer" oninput="triggerDraftSync()">
-                <button type="button" onclick="this.parentElement.remove(); triggerDraftSync();" class="text-red-400 text-right" aria-label="Remove item"><i data-lucide="minus-circle" class="w-5"></i></button>
+                <button type="button" onclick="if(confirm('Are you sure you want to delete this item? This action cannot be undone.')) { this.parentElement.remove(); triggerDraftSync(); }" class="text-red-400 text-right" aria-label="Remove item"><i data-lucide="minus-circle" class="w-5"></i></button>
             `;
             div.querySelector('.inv-name').value = name;
             div.querySelector('.inv-backline').value = bl;
@@ -1329,7 +1329,7 @@
         }
 
         function deleteHistoryShift(id) {
-            if(!currentUserData || !confirm("Are you sure you want to delete this shift from history permanently?")) return;
+            if(!currentUserData || !confirm("Are you sure you want to delete this shift from history permanently? This action cannot be undone.")) return;
             const shift = (currentUserData.shiftHistory || []).find(s => s.id === id);
             if (shift) {
                 db.collection('users').doc(currentUser.uid).update({
@@ -1459,7 +1459,7 @@
         }
 
         function deleteCustomPreset(id) {
-            if(!currentUserData || !confirm("Are you sure you want to delete this preset permanently?")) return;
+            if(!currentUserData || !confirm("Are you sure you want to delete this preset permanently? This action cannot be undone.")) return;
             const preset = (currentUserData.customPresets || []).find(p => p.id === id);
             if (preset) {
                 db.collection('users').doc(currentUser.uid).update({
@@ -1670,7 +1670,7 @@
         }
 
         function clearData() {
-            if(confirm("Are you sure? This will wipe the current tracker form.")) {
+            if(confirm("Are you sure? This will wipe the current tracker form. This action cannot be undone.")) {
                 document.getElementById('trackerForm').reset();
                 document.getElementById('drawersContainer').innerHTML = '';
                 document.getElementById('depositsContainer').innerHTML = '';
