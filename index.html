@@ -1780,6 +1780,11 @@
         }
 
         window.onload = () => {
+            const redirect = localStorage.getItem('navTo');
+            if (redirect) {
+                navTo(redirect);
+                localStorage.removeItem('navTo');
+            }
             if(localStorage.getItem('managerProTheme') === 'dark') {
                 document.body.classList.add('dark-mode');
                 document.getElementById('themeToggle').checked = true;
