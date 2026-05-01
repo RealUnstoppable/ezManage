@@ -106,6 +106,7 @@ describe("createCheckoutSession", () => {
 
     expect(mockStripeMock.checkout.sessions.create).toHaveBeenCalledWith({
       mode: "subscription",
+      client_reference_id: "test_uid",
       payment_method_types: ["card"],
       customer_email: "test@example.com",
       line_items: [{
@@ -117,7 +118,13 @@ describe("createCheckoutSession", () => {
         },
         quantity: 1,
       }],
-      subscription_data: {trial_period_days: 7},
+      subscription_data: {
+        trial_period_days: 7,
+        metadata: {
+          uid: "test_uid",
+          planName: "Business Pro",
+        }
+      },
       success_url: "https://dreamstimeskip-beta.pages.dev/tracker?success=true",
       cancel_url: "https://dreamstimeskip-beta.pages.dev/tracker?canceled=true",
       metadata: {
@@ -161,10 +168,17 @@ describe("createCheckoutSession", () => {
 
     expect(mockStripeMock.checkout.sessions.create).toHaveBeenCalledWith({
       mode: "subscription",
+      client_reference_id: "test_uid",
       payment_method_types: ["card"],
       customer_email: "test2@example.com",
       line_items: [{price: "price_1THHYPBp2C5GdKaKxNpqndNE", quantity: 1}],
-      subscription_data: {trial_period_days: 7},
+      subscription_data: {
+        trial_period_days: 7,
+        metadata: {
+          uid: "test_uid",
+          planName: "Pro",
+        }
+      },
       success_url: "https://custom.success",
       cancel_url: "https://custom.cancel",
       metadata: {
