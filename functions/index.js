@@ -48,10 +48,17 @@ exports.createCheckoutSession = functions.https.onRequest((req, res) => {
     try {
       const session = await stripe.checkout.sessions.create({
         mode: "subscription",
+        client_reference_id: uid,
         payment_method_types: ["card"],
         customer_email: email,
         line_items: lineItems,
-        subscription_data: {trial_period_days: 7}, // ✅ FREE TRIAL
+        subscription_data: {
+          trial_period_days: 7,
+          metadata: {
+            uid: uid || "unknown",
+            planName: plan || "Pro",
+          }
+        },
 
         // Use URLs from frontend, fallback to hardcoded if missing
         success_url: successUrl ||

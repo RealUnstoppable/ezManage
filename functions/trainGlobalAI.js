@@ -1,8 +1,7 @@
-const functions = require("firebase-functions");
+const { onSchedule } = require("firebase-functions/v2/scheduler");
 const admin = require("firebase-admin");
-const brain = require("brain.js");
 
-exports.trainGlobalAI = functions.pubsub.schedule("every 24 hours").onRun(async (context) => {
+exports.trainGlobalAI = onSchedule("every 24 hours", async (event) => {
   console.log("Starting Global AI Training...");
   
   const snapshot = await admin.firestore().collection("users")
@@ -100,6 +99,7 @@ exports.trainGlobalAI = functions.pubsub.schedule("every 24 hours").onRun(async 
   if (trainingData.length === 0) return null;
 
   // 3. Train
+  const brain = require("brain.js");
   const net = new brain.NeuralNetwork({ hiddenLayers: [10, 10] });
   net.train(trainingData, { iterations: 2000, errorThresh: 0.011 });
 

@@ -850,12 +850,14 @@
                             initialDraftLoaded = true;
                         }
                         
-                        if (document.querySelector('.view-section.active').id === 'view-auth') navTo('tracker');
+                        const activeView = document.querySelector('.view-section.active');
+                        if (activeView && activeView.id === 'view-auth') navTo('tracker');
                         runAIPatternLogic();
                     } else {
+                        const activeView = document.querySelector('.view-section.active');
                         if (!navigator.onLine) {
-                            if (document.querySelector('.view-section.active').id !== 'view-tracker') navTo('tracker');
-                        } else if (document.querySelector('.view-section.active').id !== 'view-setup') {
+                            if (activeView && activeView.id !== 'view-tracker') navTo('tracker');
+                        } else if (activeView && activeView.id !== 'view-setup') {
                             navTo('setup'); 
                         }
                     }
