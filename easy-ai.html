@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="manifest" href="manifest.json">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ezManage | AI Stock Predictions</title>
+    
+    <link rel="icon" type="image/jpeg" href="ManagerPro.jpg?v=2">
+    <link rel="apple-touch-icon" href="ManagerPro.jpg?v=2">
+    
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="ezManage AI">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: ['class', '.dark-mode'],
+        }
+    </script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+
+    <!-- Brain.js for Neural Network -->
+    <script src="https://unpkg.com/brain.js@2.0.0-beta.23/dist/browser.js"></script>
+
+    <style>
+        :root {
+            --brand-sky: #87ceeb;
+            --brand-dark: #0f172a;
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --primary: #0f172a;
+            --accent: #0ea5e9;
+            --accent-hover: #0284c7;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --radius: 24px;
+            --nav-height: 80px;
+        }
+
+        /* AMOLED Black Optimization for Anti-Fatigue */
+        body.dark-mode {
+            --bg-color: #000000;
+            --card-bg: #0a0a0a;
+            --primary: #ffffff;
+            --text-main: #f1f5f9;
+            --text-muted: #94a3b8;
+            --border: #1a1a1a;
+            --input-bg: #111111;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: var(--bg-color); 
+            color: var(--text-main);
+            transition: background-color 0.3s, color 0.3s;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        [x-cloak] { display: none !important; }
+
+        .glass-nav {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+        .dark-mode .glass-nav {
+            background: rgba(0, 0, 0, 0.7);
+        }
+
+        .card { 
+            background: var(--card-bg); 
+            border-radius: var(--radius); 
+            padding: 2rem; 
+            margin-bottom: 1.5rem; 
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+            border: 1px solid var(--border);
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.8rem 1.8rem;
+            border-radius: 9999px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 0.95rem;
+            gap: 0.5rem;
+        }
+
+        .btn-accent { background: var(--accent); color: white; border: 2px solid var(--accent); }
+        .btn-accent:hover { background: var(--accent-hover); border-color: var(--accent-hover); transform: translateY(-1px); }
+        .btn-outline { background: transparent; border: 2px solid var(--border); color: var(--text-main); }
+        .btn-outline:hover { border-color: var(--text-main); }
+
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg-color); }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+    </style>
+</head>
+<body x-data="{ mobileMenu: false }">
+
+    <!-- Navigation Mirroring index.html -->
+    <nav class="fixed w-full z-50 glass-nav border-b border-slate-200/50 top-0">
+        <div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+            <a href="index.html" class="flex items-center space-x-3 cursor-pointer">
+                <div class="relative group">
+                    <img src="ManagerPro.jpg" 
+                         onerror="this.src='https://ui-avatars.com/api/?name=ez+M&background=87ceeb&color=fff'" 
+                         alt="ezManage Logo" 
+                         class="w-10 h-10 rounded-xl shadow-sm border border-white transform transition-transform group-hover:rotate-6">
+                </div>
+                <span class="text-xl font-black tracking-tighter text-slate-900 dark:text-white uppercase">ezManage <span class="text-sky-500">AI</span></span>
+            </a>
+            
+            <div class="hidden md:flex space-x-10 text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">
+                <a href="index.html" class="hover:text-sky-600 transition-colors">Home</a>
+                <a href="index.html#tracker" class="hover:text-sky-600 transition-colors" onclick="localStorage.setItem('navTo', 'tracker')">App</a>
+            </div>
+            
+            <div class="flex items-center space-x-4">
+                <div class="flex items-center justify-between bg-slate-50 dark:bg-slate-900 rounded-full border border-slate-100 dark:border-slate-800 p-1 px-2">
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="themeToggle" class="sr-only peer" onchange="toggleTheme()">
+                        <div class="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:bg-sky-500 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all"></div>
+                    </label>
+                    <span class="text-[9px] font-bold uppercase ml-2 mr-1">Dark Mode</span>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="pt-[var(--nav-height)] min-h-screen pb-20">
+        <div class="max-w-5xl mx-auto px-6 mt-12">
+            
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
+                <div>
+                    <h1 class="text-4xl font-black tracking-tight">AI Stock Forecasting</h1>
+                    <p class="text-slate-500 font-medium mt-2">Powered by neural networks trained on your history.</p>
+                </div>
+                <div id="statusIndicator" class="inline-flex items-center px-4 py-2 text-xs font-black tracking-[0.1em] text-slate-700 uppercase bg-slate-100 dark:bg-slate-800 dark:text-slate-300 rounded-full gap-2 shadow-sm border border-slate-200 dark:border-slate-700 transition-all">
+                    <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span> Analyzing Data...
+                </div>
+            </div>
+
+            <!-- Dashboard -->
+            <div class="grid md:grid-cols-3 gap-6 mb-8">
+                <div class="card text-center relative overflow-hidden">
+                    <div class="absolute inset-0 bg-sky-50 dark:bg-sky-900/10 -z-10"></div>
+                    <div class="text-4xl font-black text-sky-500 mb-2" id="statShiftsFound">0</div>
+                    <div class="text-[10px] font-black uppercase tracking-widest text-slate-400">Past Shifts Analyzed</div>
+                </div>
+                <div class="card text-center relative overflow-hidden">
+                    <div class="absolute inset-0 bg-purple-50 dark:bg-purple-900/10 -z-10"></div>
+                    <div class="text-4xl font-black text-purple-500 mb-2" id="statItemsTracked">0</div>
+                    <div class="text-[10px] font-black uppercase tracking-widest text-slate-400">Unique Items Tracked</div>
+                </div>
+                <div class="card text-center relative overflow-hidden md:col-span-1 col-span-full">
+                    <div class="absolute inset-0 bg-emerald-50 dark:bg-emerald-900/10 -z-10"></div>
+                    <div class="text-4xl font-black text-emerald-500 mb-2" id="predictionDay">Today</div>
+                    <div class="text-[10px] font-black uppercase tracking-widest text-slate-400">Forecasting For</div>
+                </div>
+            </div>
+
+            <div class="card p-0 overflow-hidden">
+                <div class="p-6 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 flex items-center gap-3">
+                    <i data-lucide="brain" class="text-sky-500"></i>
+                    <h3 class="text-xl font-black">AI Prediction Results</h3>
+                </div>
+                
+                <div id="resultsContainer" class="p-6">
+                    <div class="text-center py-12 text-slate-500 font-medium" id="resultsPlaceholder">
+                        Authenticating and fetching shift data...
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <script>
+        // Init Lucide Icons
+        lucide.createIcons();
+
+        // Theme management
+        const savedTheme = localStorage.getItem('managerProTheme');
+        if (savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.body.classList.add('dark-mode');
+            document.getElementById('themeToggle').checked = true;
+        }
+
+        function toggleTheme() {
+            const isDark = document.getElementById('themeToggle').checked;
+            document.body.classList.toggle('dark-mode', isDark);
+            localStorage.setItem('managerProTheme', isDark ? 'dark' : 'light');
+        }
+
+        // FIREBASE CONFIG
+        const firebaseConfig = {
+            apiKey: "AIzaSyBgrI9HwJPSc5b4pu2Egsv4DE7shNwptSw",
+            authDomain: "dts-hub-website.firebaseapp.com",
+            projectId: "dts-hub-website",
+            storageBucket: "dts-hub-website.firebasestorage.app",
+            messagingSenderId: "48345990988",
+            appId: "1:48345990988:web:e3662c9b508168546471e9",
+            measurementId: "G-ZN3YJPHVGX"
+        };
+
+        if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // Neural Network Variables
+        let maxValues = {}; // Store max values for normalization/denormalization
+        let uniqueItems = new Set();
+        let trainingData = [];
+
+        // Main Execution Flow
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                updateStatus('Fetching Data', 'amber');
+                fetchHistoryData(user.uid);
+            } else {
+                updateStatus('Not Logged In', 'red');
+                document.getElementById('resultsPlaceholder').innerHTML = `
+                    <p class="mb-4">You must be logged in to view your AI stock predictions.</p>
+                    <a href="index.html" class="btn btn-outline">Go to Login</a>
+                `;
+            }
+        });
+
+        function updateStatus(text, color) {
+            const ind = document.getElementById('statusIndicator');
+            ind.innerHTML = `<span class="w-2 h-2 rounded-full bg-${color}-500 ${color === 'amber' || color === 'sky' ? 'animate-pulse' : ''} shadow-[0_0_8px_rgba(var(--tw-colors-${color}-500),0.8)]"></span> ${text}`;
+        }
+
+        function fetchHistoryData(uid) {
+            db.collection("users").doc(uid).get().then(doc => {
+                if (doc.exists) {
+                    const data = doc.data();
+                    const history = data.shiftHistory || [];
+                    
+                    document.getElementById('statShiftsFound').innerText = history.length;
+
+                    if (history.length < 3) {
+                        updateStatus('Insufficient Data', 'amber');
+                        document.getElementById('resultsPlaceholder').innerHTML = `
+                            <p class="text-amber-600 dark:text-amber-400 mb-2">Not enough shift history.</p>
+                            <p class="text-sm">The AI needs at least 3 completed shifts with inventory data to find meaningful patterns.</p>
+                        `;
+                        return;
+                    }
+
+                    processDataForNN(history);
+                } else {
+                    updateStatus('No Data', 'red');
+                    document.getElementById('resultsPlaceholder').innerText = 'No account data found.';
+                }
+            }).catch(err => {
+                console.error(err);
+                updateStatus('Error', 'red');
+                document.getElementById('resultsPlaceholder').innerText = 'Failed to load data from Firebase.';
+            });
+        }
+
+        // Helper to convert typical Date format (MM/DD/YYYY or YYYY-MM-DD) to Day of Week
+        function getDayOfWeek(dateString) {
+            // Using a simple regex to catch dates. Assuming either YYYY-MM-DD or M/D/YYYY
+            let d;
+            if (dateString.includes('-')) {
+                // YYYY-MM-DD
+                d = new Date(dateString + 'T12:00:00Z');
+            } else {
+                d = new Date(dateString);
+            }
+            if (isNaN(d.getTime())) return -1;
+            return d.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+        }
+
+        // Parse numerical values out of strings like "10 boxes" -> 10
+        function parseNum(val) {
+            if (!val) return 0;
+            const parsed = parseFloat(val.toString().replace(/[^0-9.]/g, ''));
+            return isNaN(parsed) ? 0 : parsed;
+        }
+
+        function processDataForNN(history) {
+            updateStatus('Training Model...', 'sky');
+
+            // 1. First pass to find all unique items and their max values for normalization
+            history.forEach(shift => {
+                if (shift.inventory && Array.isArray(shift.inventory)) {
+                    shift.inventory.forEach(item => {
+                        if (!item.name) return;
+                        const name = item.name.trim();
+                        uniqueItems.add(name);
+                        
+                        if (!maxValues[name]) maxValues[name] = { bl: 0, cl: 0, fr: 0 };
+                        
+                        const bl = parseNum(item.bl);
+                        const cl = parseNum(item.cl);
+                        const fr = parseNum(item.fr);
+                        
+                        if (bl > maxValues[name].bl) maxValues[name].bl = bl;
+                        if (cl > maxValues[name].cl) maxValues[name].cl = cl;
+                        if (fr > maxValues[name].fr) maxValues[name].fr = fr;
+                    });
+                }
+            });
+
+            document.getElementById('statItemsTracked').innerText = uniqueItems.size;
+
+            if (uniqueItems.size === 0) {
+                updateStatus('No Inventory', 'amber');
+                document.getElementById('resultsPlaceholder').innerText = 'Your past shifts have no inventory data logged.';
+                return;
+            }
+
+            // Fallback for max values being 0 (prevent division by 0)
+            Object.keys(maxValues).forEach(k => {
+                if (maxValues[k].bl === 0) maxValues[k].bl = 1;
+                if (maxValues[k].cl === 0) maxValues[k].cl = 1;
+                if (maxValues[k].fr === 0) maxValues[k].fr = 1;
+            });
+
+            // 2. Second pass to create training data
+            trainingData = [];
+            history.forEach(shift => {
+                const day = getDayOfWeek(shift.dateSaved);
+                if (day === -1) return;
+
+                // One-hot encoding for the day
+                const input = { 
+                    sun: day === 0 ? 1 : 0, 
+                    mon: day === 1 ? 1 : 0, 
+                    tue: day === 2 ? 1 : 0, 
+                    wed: day === 3 ? 1 : 0, 
+                    thu: day === 4 ? 1 : 0, 
+                    fri: day === 5 ? 1 : 0, 
+                    sat: day === 6 ? 1 : 0 
+                };
+
+                const output = {};
+                
+                // Initialize all outputs to 0
+                Array.from(uniqueItems).forEach(name => {
+                    output[`${name}_bl`] = 0;
+                    output[`${name}_cl`] = 0;
+                    output[`${name}_fr`] = 0;
+                });
+
+                if (shift.inventory) {
+                    shift.inventory.forEach(item => {
+                        if (!item.name) return;
+                        const name = item.name.trim();
+                        output[`${name}_bl`] = parseNum(item.bl) / maxValues[name].bl;
+                        output[`${name}_cl`] = parseNum(item.cl) / maxValues[name].cl;
+                        output[`${name}_fr`] = parseNum(item.fr) / maxValues[name].fr;
+                    });
+                }
+
+                trainingData.push({ input, output });
+            });
+
+            if (trainingData.length === 0) {
+                updateStatus('Parsing Error', 'amber');
+                document.getElementById('resultsPlaceholder').innerText = 'Could not parse dates from history.';
+                return;
+            }
+
+            // Yield to UI thread before training (since it's synchronous in browser without web workers)
+            setTimeout(() => runNeuralNetwork(), 100);
+        }
+
+        function runNeuralNetwork() {
+            // brain.js setup
+            const net = new brain.NeuralNetwork({ hiddenLayers: [10, 10] });
+            
+            // Train
+            net.train(trainingData, {
+                iterations: 2000,
+                log: false,
+                logPeriod: 500,
+                learningRate: 0.05
+            });
+
+            // Predict for Today
+            const todayDay = new Date().getDay();
+            const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+            document.getElementById('predictionDay').innerText = days[todayDay];
+            
+            const input = { 
+                sun: todayDay === 0 ? 1 : 0, 
+                mon: todayDay === 1 ? 1 : 0, 
+                tue: todayDay === 2 ? 1 : 0, 
+                wed: todayDay === 3 ? 1 : 0, 
+                thu: todayDay === 4 ? 1 : 0, 
+                fri: todayDay === 5 ? 1 : 0, 
+                sat: todayDay === 6 ? 1 : 0 
+            };
+
+            const prediction = net.run(input);
+            displayResults(prediction);
+            updateStatus('Analysis Complete', 'emerald');
+            document.getElementById('statusIndicator').querySelector('span').classList.remove('animate-pulse');
+        }
+
+        function displayResults(prediction) {
+            const container = document.getElementById('resultsContainer');
+            container.innerHTML = `
+                <div class="hidden md:grid grid-cols-4 gap-4 px-4 mb-4 text-[10px] font-black uppercase tracking-widest text-slate-400 border-b border-slate-100 dark:border-slate-800 pb-2">
+                    <div class="col-span-1">Item Name</div>
+                    <div>Est. Backline</div>
+                    <div>Est. Cooler</div>
+                    <div>Est. Freezer</div>
+                </div>
+                <div class="space-y-3" id="predictionsList"></div>
+            `;
+
+            const list = document.getElementById('predictionsList');
+
+            Array.from(uniqueItems).sort().forEach(name => {
+                // Denormalize
+                const bl = Math.round((prediction[`${name}_bl`] || 0) * maxValues[name].bl);
+                const cl = Math.round((prediction[`${name}_cl`] || 0) * maxValues[name].cl);
+                const fr = Math.round((prediction[`${name}_fr`] || 0) * maxValues[name].fr);
+
+                // Only show if at least one > 0 (prevents clutter)
+                if (bl === 0 && cl === 0 && fr === 0) return;
+
+                const div = document.createElement('div');
+                div.className = "grid grid-cols-2 md:grid-cols-4 gap-3 p-4 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm items-center hover:border-sky-300 dark:hover:border-sky-700 transition-colors";
+                
+                div.innerHTML = `
+                    <div class="col-span-2 md:col-span-1 font-bold text-slate-800 dark:text-slate-200">${name}</div>
+                    
+                    <div class="flex flex-col">
+                        <span class="md:hidden text-[9px] font-black uppercase text-slate-400 mb-1">Backline</span>
+                        <span class="font-mono bg-slate-50 dark:bg-slate-800 px-3 py-1 rounded-lg border border-slate-100 dark:border-slate-700 w-full text-center">${bl}</span>
+                    </div>
+                    
+                    <div class="flex flex-col">
+                        <span class="md:hidden text-[9px] font-black uppercase text-slate-400 mb-1">Cooler</span>
+                        <span class="font-mono bg-sky-50 dark:bg-sky-900/20 text-sky-700 dark:text-sky-300 px-3 py-1 rounded-lg border border-sky-100 dark:border-sky-800 w-full text-center">${cl}</span>
+                    </div>
+                    
+                    <div class="flex flex-col">
+                        <span class="md:hidden text-[9px] font-black uppercase text-slate-400 mb-1">Freezer</span>
+                        <span class="font-mono bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-300 px-3 py-1 rounded-lg border border-indigo-100 dark:border-indigo-800 w-full text-center">${fr}</span>
+                    </div>
+                `;
+                
+                list.appendChild(div);
+            });
+
+            if (list.children.length === 0) {
+                list.innerHTML = `<p class="text-center py-8 text-slate-500">The AI could not confidently predict any stock levels above 0. Try logging more data!</p>`;
+            }
+        }
+    </script>
+</body>
+</html>
