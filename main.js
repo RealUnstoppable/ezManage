@@ -7,7 +7,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Import and start your existing Express server
-import './server.cjs'; 
+import './server.cjs';
 
 let mainWindow;
 
