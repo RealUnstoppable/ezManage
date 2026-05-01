@@ -829,8 +829,8 @@
                 navStatus.innerText = "Manager: " + (user.displayName || "Online");
                 document.getElementById('profEmail').value = user.email;
                 
-                unsubscribeUser = db.collection("users").doc(user.uid).onSnapshot(doc => {
-                    if (doc.exists) {
+                unsubscribeUser = db.collection("users").doc(user.uid).onSnapshot(async doc => {
+                    if (doc.exists && doc.data().name) {
                         currentUserData = doc.data();
                         
                         // Enforce Opt-In Cloud Policy
@@ -854,6 +854,18 @@
                         if (activeView && activeView.id === 'view-auth') navTo('tracker');
                         runAIPatternLogic();
                     } else {
+                        // Attempt to recover data if it was manually keyed by email in Firestore
+                        if (!doc.exists || !doc.data().name) {
+                            try {
+                                const emailDoc = await db.collection("users").doc(user.email).get();
+                                if (emailDoc.exists) {
+                                    await db.collection("users").doc(user.uid).set(emailDoc.data(), {merge: true});
+                                    // Don't delete the old one just in case, let the new one populate via snapshot
+                                    return; 
+                                }
+                            } catch(e) { console.warn("Email recovery check skipped", e); }
+                        }
+
                         const activeView = document.querySelector('.view-section.active');
                         if (!navigator.onLine) {
                             if (activeView && activeView.id !== 'view-tracker') navTo('tracker');
@@ -1043,14 +1055,15 @@
                 store: document.getElementById('setupStore').value,
                 location: document.getElementById('setupLocation').value,
                 email: currentUser.email,
-                plan: 'Free',
-                cloudSyncEnabled: false,
                 signupDate: firebase.firestore.FieldValue.serverTimestamp()
             };
 
+            if (!currentUserData || !currentUserData.plan) data.plan = 'Free';
+            if (!currentUserData || currentUserData.cloudSyncEnabled === undefined) data.cloudSyncEnabled = false;
+
             if(!data.name) return alert("Name is required.");
 
-            db.collection('users').doc(currentUser.uid).set(data).then(() => {
+            db.collection('users').doc(currentUser.uid).set(data, { merge: true }).then(() => {
                 currentUser.updateProfile({ displayName: data.name });
                 document.getElementById('shiftManager').value = data.name;
                 // Force user to see ToS on first app load if they try to use cloud later
