@@ -1,4 +1,4 @@
-// js/theme-loader.js
+
 (function() {
     const localTheme = localStorage.getItem('userTheme');
     const localAccent = localStorage.getItem('userAccent');
@@ -11,7 +11,6 @@ export const applyTheme = (theme, accentColor) => {
     document.body.dataset.theme = theme || 'dark';
     document.body.dataset.accent = accentColor || 'blue';
 
-    // Persist theme for non-logged-in users
     if (!auth.currentUser) {
         localStorage.setItem('userTheme', document.body.dataset.theme);
         localStorage.setItem('userAccent', document.body.dataset.accent);
@@ -27,7 +26,7 @@ onAuthStateChanged(auth, async (user) => {
                 const userData = userDoc.data();
                 applyTheme(userData.theme, userData.accentColor);
             } else {
-                // Fallback for new users or data not found
+
                 applyTheme('dark', 'blue');
             }
         } catch (error) {
@@ -35,12 +34,11 @@ onAuthStateChanged(auth, async (user) => {
             applyTheme('dark', 'blue');
         }
     } else {
-        // Load theme from localStorage for guests
+
         const localTheme = localStorage.getItem('userTheme');
         const localAccent = localStorage.getItem('userAccent');
         applyTheme(localTheme, localAccent);
     }
 });
 
-// Expose a function to be called from the account page for instant theme updates
 window.updateTheme = applyTheme;

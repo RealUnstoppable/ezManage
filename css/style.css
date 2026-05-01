@@ -1,5 +1,5 @@
-/* css/style.css */
-/* --- CSS VARIABLES & GLOBAL STYLES --- */
+
+
 :root {
     --bg-color: #0A0A0A;
     --primary-card-color: #141414;
@@ -12,11 +12,9 @@
     --accent-green: #16A34A;
     --font-main: 'Inter', sans-serif;
 
-    /* Default Accent Color */
     --accent-color: var(--accent-blue);
 }
 
-/* --- THEME ACCENT COLORS --- */
 [data-accent="blue"] {
     --accent-color: var(--accent-blue);
 }
@@ -32,7 +30,6 @@
 [data-accent="purple"] {
     --accent-color: var(--accent-purple);
 }
-
 
 *,
 *::before,
@@ -55,7 +52,6 @@ body {
     -moz-osx-font-smoothing: grayscale;
 }
 
-/* --- HEADER / NAVIGATION --- */
 .main-header {
     position: fixed;
     top: 0;
@@ -132,7 +128,6 @@ body {
     display: none;
 }
 
-/* --- HERO SECTION & 3D ORB --- */
 .hero {
     display: flex;
     justify-content: center;
@@ -214,7 +209,6 @@ body {
     }
 }
 
-
 h1 {
     font-size: clamp(2rem, 5vw, 3.5rem);
     font-weight: 700;
@@ -247,7 +241,6 @@ p.section-subtitle {
     display: inline-block;
 }
 
-/* --- BENTO GRID SECTION --- */
 .bento-section {
     padding: 100px 40px;
 }
@@ -294,7 +287,6 @@ p.section-subtitle {
     line-height: 1.5;
 }
 
-/* Grid item sizing */
 #bento-unstoppable {
     grid-column: span 2;
 }
@@ -323,7 +315,6 @@ p.section-subtitle {
     grid-column: span 2;
 }
 
-/* Bento card specific styles */
 .bento-card img {
     position: absolute;
     right: 0;
@@ -366,7 +357,6 @@ p.section-subtitle {
     font-style: italic;
 }
 
-/* --- SCROLL-SNAPPING SECTIONS --- */
 .scroll-container {
     height: 100vh;
     overflow-y: scroll;
@@ -420,7 +410,6 @@ p.section-subtitle {
     letter-spacing: -3px;
 }
 
-/* --- FOOTER --- */
 .main-footer {
     background-color: #000;
     color: var(--text-secondary);
@@ -526,7 +515,6 @@ p.section-subtitle {
     gap: 20px;
 }
 
-/* --- ANIMATIONS & RESPONSIVE DESIGN --- */
 .reveal {
     opacity: 0;
     transform: translateY(30px);
@@ -652,7 +640,6 @@ p.section-subtitle {
     letter-spacing: -5.5px;
 }
 
-/* --- NEW YEAR VIDEO BACKGROUND --- */
 .new-year-video {
     position: absolute;
     top: 0;
@@ -660,11 +647,11 @@ p.section-subtitle {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    z-index: 1; /* Sits below content (z-index 2) but above background */
-    pointer-events: none; /* Ensures clicking text still works */
-    opacity: 0.8; /* Slight transparency to blend with background color */
+    z-index: 1;
+    pointer-events: none;
+    opacity: 0.8;
 }
-/* --- TOAST NOTIFICATION --- */
+
 .toast-notification {
     position: fixed;
     bottom: 20px;

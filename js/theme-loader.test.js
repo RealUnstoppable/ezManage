@@ -1,6 +1,5 @@
 import { jest } from '@jest/globals';
 
-// Simple DOM & LocalStorage shim for Node environment
 global.document = {
     body: {
         dataset: {}
@@ -17,7 +16,6 @@ global.window = {
     updateTheme: null
 };
 
-// Mock auth.js to control auth state
 const mockAuth = { currentUser: null };
 jest.unstable_mockModule('./auth.js', () => ({
   auth: mockAuth,

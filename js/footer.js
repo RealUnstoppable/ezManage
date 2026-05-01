@@ -1,4 +1,4 @@
-// js/footer.js
+
 
 export function loadFooter() {
     const footerHTML = `
@@ -41,7 +41,7 @@ export function loadFooter() {
                     <div class="newsletter-message" style="margin-top: 10px; font-size: 0.9rem; display: none;"></div>
                 </div>
             </div>
-            
+
             <div class="footer-bottom">
                 <p>&copy; 2026 Unstoppable LLC. All Rights Reserved.</p>
                 <p>Designed in collaboration with Unstoppable Design, LLC.</p>

@@ -20,7 +20,7 @@ self.addEventListener('install', (event) => {
         caches.open(CACHE_NAME)
             .then((cache) => {
                 console.log('Opened cache');
-                // Use addAll, but we handle failures gracefully if some CDNs fail to cache
+
                 return Promise.allSettled(
                     ASSETS_TO_CACHE.map(url => cache.add(url).catch(err => console.log('Failed to cache:', url, err)))
                 );
@@ -45,12 +45,12 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-    // Stale-while-revalidate strategy for maximum offline availability
+
     if (event.request.method === 'GET') {
         event.respondWith(
             caches.match(event.request).then((cachedResponse) => {
                 const fetchPromise = fetch(event.request).then((networkResponse) => {
-                    // Update cache with new response
+
                     if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
                         caches.open(CACHE_NAME).then((cache) => {
                             cache.put(event.request, networkResponse.clone());
@@ -58,9 +58,9 @@ self.addEventListener('fetch', (event) => {
                     }
                     return networkResponse;
                 }).catch(() => {
-                    // Network failed, we've already returned cached response if available
+
                 });
-                
+
                 return cachedResponse || fetchPromise;
             })
         );

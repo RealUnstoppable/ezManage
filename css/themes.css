@@ -1,6 +1,5 @@
-/* themes.css */
 
-/* --- DARK THEME (DEFAULT) --- */
+
 body[data-theme="dark"] {
     --bg-color: #0A0A0A;
     --primary-card-color: #141414;
@@ -11,7 +10,6 @@ body[data-theme="dark"] {
     --input-bg: #2c2c2c;
 }
 
-/* --- LIGHT THEME (FIXED VISIBILITY) --- */
 body[data-theme="light"] {
     --bg-color: #F3F4F6;
     --primary-card-color: #FFFFFF;
@@ -22,7 +20,6 @@ body[data-theme="light"] {
     --input-bg: #FFFFFF;
 }
 
-/* --- MIDNIGHT THEME (NEW) --- */
 body[data-theme="midnight"] {
     --bg-color: #0f172a;
     --primary-card-color: #1e293b;
@@ -33,7 +30,6 @@ body[data-theme="midnight"] {
     --input-bg: #0f172a;
 }
 
-/* --- FOREST THEME (NEW) --- */
 body[data-theme="forest"] {
     --bg-color: #064e3b;
     --primary-card-color: #065f46;
@@ -44,7 +40,6 @@ body[data-theme="forest"] {
     --input-bg: #022c22;
 }
 
-/* Global Form Input Fixes for Themes */
 input, select, textarea {
     background-color: var(--input-bg) !important;
     color: var(--text-primary) !important;

@@ -1,5 +1,5 @@
-/* css/style.css */
-/* --- CSS VARIABLES & GLOBAL STYLES --- */
+
+
 :root {
     --bg-color: #0A0A0A;
     --primary-card-color: #141414;
@@ -12,11 +12,9 @@
     --accent-green: #16A34A;
     --font-main: 'Inter', sans-serif;
 
-    /* Default Accent Color */
     --accent-color: var(--accent-blue);
 }
 
-/* --- THEME ACCENT COLORS --- */
 [data-accent="blue"] {
     --accent-color: var(--accent-blue);
 }
@@ -32,7 +30,6 @@
 [data-accent="purple"] {
     --accent-color: var(--accent-purple);
 }
-
 
 *,
 *::before,
@@ -55,7 +52,6 @@ body {
     -moz-osx-font-smoothing: grayscale;
 }
 
-/* --- HEADER / NAVIGATION --- */
 .main-header {
     position: fixed;
     top: 0;
@@ -132,7 +128,6 @@ body {
     display: none;
 }
 
-/* --- HERO SECTION & 3D ORB --- */
 .hero {
     display: flex;
     justify-content: center;
@@ -214,7 +209,6 @@ body {
     }
 }
 
-
 h1 {
     font-size: clamp(2rem, 5vw, 3.5rem);
     font-weight: 700;
@@ -247,7 +241,6 @@ p.section-subtitle {
     display: inline-block;
 }
 
-/* --- BENTO GRID SECTION --- */
 .bento-section {
     padding: 100px 40px;
 }
@@ -294,7 +287,6 @@ p.section-subtitle {
     line-height: 1.5;
 }
 
-/* Grid item sizing */
 #bento-unstoppable {
     grid-column: span 2;
 }
@@ -323,7 +315,6 @@ p.section-subtitle {
     grid-column: span 2;
 }
 
-/* Bento card specific styles */
 .bento-card img {
     position: absolute;
     right: 0;
@@ -366,7 +357,6 @@ p.section-subtitle {
     font-style: italic;
 }
 
-/* --- SCROLL-SNAPPING SECTIONS --- */
 .scroll-container {
     height: 100vh;
     overflow-y: scroll;
@@ -420,7 +410,6 @@ p.section-subtitle {
     letter-spacing: -3px;
 }
 
-/* --- FOOTER --- */
 .main-footer {
     background-color: #000;
     color: var(--text-secondary);
@@ -526,7 +515,6 @@ p.section-subtitle {
     gap: 20px;
 }
 
-/* --- ANIMATIONS & RESPONSIVE DESIGN --- */
 .reveal {
     opacity: 0;
     transform: translateY(30px);
@@ -652,24 +640,21 @@ p.section-subtitle {
     letter-spacing: -5.5px;
 }
 
-/* --- NEW YEAR EVENT STYLES --- */
 .hero.fireworks-bg {
-    /* Replace with your local image path if preferred, e.g., url('/images/fireworks.gif') */
-    background-image: url('https://media.giphy.com/media/26tOZ42Mg6pbTUPvy/giphy.gif'); 
+
+    background-image: url('https://media.giphy.com/media/26tOZ42Mg6pbTUPvy/giphy.gif');
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
 }
 
-/* Increases text contrast so it's readable over the fireworks */
-.hero.fireworks-bg h1, 
-.hero.fireworks-bg h2, 
+.hero.fireworks-bg h1,
+.hero.fireworks-bg h2,
 .hero.fireworks-bg p {
     text-shadow: 0 4px 15px rgba(0, 0, 0, 1);
-    z-index: 10; /* Ensures text stays on top */
+    z-index: 10;
 }
 
-/* Adjust the orb/aurora effect during fireworks if needed */
 .hero.fireworks-bg::before {
-    opacity: 0.4; /* Dim the aurora slightly so fireworks show through */
+    opacity: 0.4;
 }

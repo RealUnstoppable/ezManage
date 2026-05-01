@@ -10,7 +10,7 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(express.json());
 
-const stripe = Stripe(""); // 🔴 replace
+const stripe = Stripe("");
 
 app.post("/create-checkout-session", async (req, res) => {
   const { plan } = req.body;
@@ -18,7 +18,7 @@ app.post("/create-checkout-session", async (req, res) => {
   try {
     const priceId =
       plan === "Business Pro"
-        ? ""   // 🔴 from Stripe dashboard
+        ? ""
         : "price_individual_id";
 
     const session = await stripe.checkout.sessions.create({

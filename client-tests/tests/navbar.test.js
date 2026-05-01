@@ -64,7 +64,6 @@ describe('loadNavbar', () => {
 
     loadNavbar();
 
-    // We need to wait for the async callback to finish
     await new Promise(process.nextTick);
 
     const authLink = document.getElementById('auth-link');

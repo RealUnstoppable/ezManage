@@ -3,22 +3,22 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.15.0/fi
 import { doc, getDoc, setDoc, updateDoc, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
 
 document.addEventListener('DOMContentLoaded', () => {
-    // --- STATE ---
+
     const librarySongs = [
-        { 
+        {
             id: 'deorc-decuple',
-            title: "Deorc Decuple", 
-            artist: "FormantX", 
-            duration: "3:45", 
-            src: "/music/ES_Deorc Decuple - FormantX.mp3", 
+            title: "Deorc Decuple",
+            artist: "FormantX",
+            duration: "3:45",
+            src: "/music/ES_Deorc Decuple - FormantX.mp3",
             art: "/images/harmony-tunes-card.jpg"
         },
-        { 
+        {
             id: 'no-pole-remix',
-            title: "No Pole x Where Have You Been", 
-            artist: "Remix", 
-            duration: "2:30", 
-            src: "/music/No Pole x Where Have You Been (Remix).mp3", 
+            title: "No Pole x Where Have You Been",
+            artist: "Remix",
+            duration: "2:30",
+            src: "/music/No Pole x Where Have You Been (Remix).mp3",
             art: "/images/dreams-lobby.jpg"
         }
     ];
@@ -36,28 +36,24 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentSongIndex = 0;
     let isPlaying = false;
     let isShuffle = false;
-    let repeatMode = 0; // 0: none, 1: all, 2: one
+    let repeatMode = 0;
     let currentUser = null;
 
-    // --- DOM ELEMENTS ---
     const viewHome = document.getElementById('view-home');
     const viewPlaylist = document.getElementById('view-playlist');
     const navPills = document.querySelectorAll('.nav-pill');
     const backToHomeBtn = document.getElementById('back-to-home');
-    
-    // Containers
+
     const containerJumpBack = document.getElementById('container-jump-back-in');
     const containerRecommended = document.getElementById('container-recommended');
     const containerTikToks = document.getElementById('container-tiktoks');
     const containerPlaylists = document.getElementById('container-playlists');
     const songListBody = document.getElementById('song-list-body');
-    
-    // Playlist Elements
+
     const playlistTitleEl = document.getElementById('playlist-title');
     const playlistDescEl = document.getElementById('playlist-desc');
     const playlistPlayBtn = document.getElementById('playlist-play-btn');
-    
-    // Player Elements
+
     const audioPlayer = document.getElementById('audio-player');
     const playPauseBtn = document.getElementById('play-pause-btn');
     const playIcon = playPauseBtn.querySelector('.play-icon');
@@ -76,29 +72,26 @@ document.addEventListener('DOMContentLoaded', () => {
     const playerArt = document.getElementById('player-album-art');
     const playerLikeBtn = document.getElementById('player-like-btn');
 
-    // --- INITIALIZATION ---
     function init() {
         renderHome();
         setupNavigation();
         setupPlayerEvents();
     }
 
-    // --- NAVIGATION ---
     function setupNavigation() {
         navPills.forEach(pill => {
             pill.addEventListener('click', () => {
-                // UI Toggle
+
                 navPills.forEach(p => p.classList.remove('active'));
                 pill.classList.add('active');
 
-                // Logic
                 const id = pill.id;
                 if (id === 'nav-home') {
                     showHome();
                 } else if (id === 'nav-favorites') {
                     loadPlaylistView('favorites');
                 } else if (id === 'nav-playlists') {
-                    // Just scroll to playlist section on home for now
+
                     showHome();
                     containerPlaylists.scrollIntoView({ behavior: 'smooth' });
                 } else if (id === 'nav-search') {
@@ -122,7 +115,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function loadPlaylistView(type) {
         viewHome.style.display = 'none';
         viewPlaylist.style.display = 'block';
-        
+
         if (type === 'favorites') {
             playlistTitleEl.textContent = "Liked Songs";
             playlistDescEl.textContent = `${currentUser ? currentUser.displayName || 'User' : 'Guest'}'s Favorites • ${userFavorites.length} songs`;
@@ -131,7 +124,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (userFavorites.length > 0) playContext(userFavorites, 0);
             };
         } else {
-            // Default Main
+
             playlistTitleEl.textContent = "All Available Tracks";
             playlistDescEl.textContent = "Unstoppable Media • Official Library";
             renderSongTable(librarySongs);
@@ -141,16 +134,13 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // --- RENDERING HOME ---
     function renderHome() {
-        // 1. Jump Back In
+
         containerJumpBack.innerHTML = librarySongs.slice(0, 2).map(song => createSongCard(song)).join('');
 
-        // 2. Recommended
         const recommended = [...librarySongs].sort(() => 0.5 - Math.random());
         containerRecommended.innerHTML = recommended.map(song => createSongCard(song)).join('');
 
-        // 3. TikToks
         containerTikToks.innerHTML = tiktokData.map(tk => `
             <div class="tiktok-card" onclick="window.open('${tk.url}', '_blank')">
                 <img src="${tk.img}" alt="${tk.title}">
@@ -160,7 +150,6 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
         `).join('');
 
-        // 4. Playlists
         const playlists = [
             { id: 'main', title: "All Tracks", desc: "Complete Library" },
             { id: 'favorites', title: "Liked Songs", desc: "Your Favorites" }
@@ -176,7 +165,6 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
         `).join('');
 
-        // Card Play Buttons
         document.querySelectorAll('.music-card .card-play-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 e.stopPropagation();
@@ -207,10 +195,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const songIndex = librarySongs.findIndex(s => s.id === id);
         if (songIndex > -1) playContext(librarySongs, songIndex);
     };
-    
+
     window.loadPlaylistView = loadPlaylistView;
 
-    // --- RENDERING TABLE (Fixed Duration Bug) ---
     function renderSongTable(songs) {
         songListBody.innerHTML = '';
         if (songs.length === 0) {
@@ -220,11 +207,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         songs.forEach((song, index) => {
             const row = document.createElement('tr');
-            
+
             const isActive = (currentQueue[currentSongIndex]?.id === song.id);
             if (isActive) row.classList.add('playing');
 
-            // REMOVED HEART COLUMN, ADDED DURATION
             row.innerHTML = `
                 <td>
                     <span class="song-index" style="${isActive ? 'display:none' : ''}">${index + 1}</span>
@@ -243,7 +229,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // --- PLAYER LOGIC ---
     function playContext(newQueue, startIndex) {
         currentQueue = [...newQueue];
         if (isShuffle) {
@@ -261,7 +246,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function loadSong(index) {
         if (index < 0 || index >= currentQueue.length) return;
         const song = currentQueue[index];
-        
+
         audioPlayer.src = song.src;
         playerTitle.textContent = song.title;
         playerArtist.textContent = song.artist;
@@ -324,12 +309,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // --- EVENTS ---
     function setupPlayerEvents() {
         playPauseBtn.addEventListener('click', togglePlayPause);
         nextBtn.addEventListener('click', nextSong);
         prevBtn.addEventListener('click', prevSong);
-        
+
         audioPlayer.addEventListener('timeupdate', updateProgress);
         audioPlayer.addEventListener('ended', () => {
             if (repeatMode === 2) {
@@ -422,7 +406,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 userFavorites.push(song);
                 await updateDoc(userRef, { musicFavorites: arrayUnion(songId) });
             }
-            // Update UI
+
             const isPlayingFav = (currentQueue[currentSongIndex]?.id === songId);
             if(isPlayingFav) {
                 playerLikeBtn.textContent = isFav ? '♡' : '❤';
@@ -450,7 +434,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     userFavorites = librarySongs.filter(song => favIds.includes(song.id));
                 }
             } catch (e) { console.error("Error loading user favorites:", e); }
-            
+
             const hour = new Date().getHours();
             const timeGreeting = hour < 12 ? "Good Morning" : hour < 18 ? "Good Afternoon" : "Good Evening";
             document.getElementById('greeting').textContent = `${timeGreeting}, ${user.displayName || 'Friend'}`;

@@ -32,7 +32,6 @@
         padding: 40px 20px;
       }
 
-      /* Mobile Hamburger Styles */
       .mobile-header {
         display: none;
         width: 100%;
@@ -512,7 +511,6 @@
           calculatePerformanceMetrics(users, carts, orders);
           renderChart("summary", users);
 
-          // Fetch Feature Requests
           try {
             const featureRequestsSnapshot = await getDocs(
               collection(db, "feature_requests"),
@@ -564,7 +562,6 @@
           });
       }
 
-      // NEW RENDERER FOR FEATURE REQUESTS
       function renderFeatureRequestsTable(requests) {
         const listBody = document.getElementById("feature-request-list-body");
         listBody.innerHTML = "";
@@ -574,7 +571,6 @@
           return;
         }
 
-        // Sort to place newest items at the top
         requests.sort(
           (a, b) => new Date(b.timestamp || 0) - new Date(a.timestamp || 0),
         );

@@ -5,10 +5,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>ezManage | Elevate Your Store Management</title>
-    
+
     <link rel="icon" type="image/jpeg" href="ManagerPro.jpg?v=2">
     <link rel="apple-touch-icon" href="ManagerPro.jpg?v=2">
-    
+
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="ezManage">
@@ -21,11 +21,11 @@
     </script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
-    
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-    
+
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
@@ -47,7 +47,6 @@
             --nav-height: 80px;
         }
 
-        /* AMOLED Black Optimization for Anti-Fatigue */
         body.dark-mode {
             --bg-color: #000000;
             --card-bg: #0a0a0a;
@@ -59,10 +58,10 @@
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        
-        body { 
-            font-family: 'Inter', sans-serif; 
-            background-color: var(--bg-color); 
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
             color: var(--text-main);
             transition: background-color 0.3s, color 0.3s;
             -webkit-font-smoothing: antialiased;
@@ -81,17 +80,17 @@
 
         .view-section { display: none; width: 100%; }
         .view-section.active { display: block; animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
-        
+
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
         }
 
-        .card { 
-            background: var(--card-bg); 
-            border-radius: var(--radius); 
-            padding: 2rem; 
-            margin-bottom: 1.5rem; 
+        .card {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            padding: 2rem;
+            margin-bottom: 1.5rem;
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
             border: 1px solid var(--border);
         }
@@ -101,7 +100,7 @@
             align-items: center;
             justify-content: center;
             padding: 0.8rem 1.8rem;
-            border-radius: 9999px; /* Pill-shaped aesthetic mandate */
+            border-radius: 9999px;
             font-weight: 700;
             cursor: pointer;
             transition: all 0.2s ease;
@@ -121,7 +120,7 @@
         input[type="text"], input[type="number"], input[type="date"], input[type="time"], input[type="password"], input[type="email"], textarea, select {
             padding: 0.85rem 1.2rem;
             border: 1px solid var(--border);
-            border-radius: 9999px; /* Pill-shaped aesthetic mandate */
+            border-radius: 9999px;
             outline: none;
             width: 100%;
             background-color: var(--card-bg);
@@ -129,7 +128,7 @@
             font-size: 1rem;
             transition: border-color 0.2s, box-shadow 0.2s;
         }
-        textarea { border-radius: 20px; resize: vertical; } /* Exceptions for textareas */
+        textarea { border-radius: 20px; resize: vertical; }
         input:focus, textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1); }
 
         .inventory-item {
@@ -161,7 +160,6 @@
         }
         #sidebar.open { transform: translateX(0); }
 
-        /* The PDF Output Mirror CSS */
         @media print {
             body { background: white; color: black; font-family: 'Times New Roman', serif; }
             main, nav, aside, .no-print { display: none !important; }
@@ -180,7 +178,7 @@
     <div id="tosModal" class="hidden fixed inset-0 z-[100] bg-black/80 flex items-center justify-center p-6 backdrop-blur-sm no-print" x-data>
         <div class="bg-white dark:bg-slate-900 w-full max-w-3xl rounded-2xl p-8 max-h-[90vh] overflow-y-auto border border-slate-200 dark:border-slate-700 shadow-2xl relative">
             <h2 class="text-3xl font-black mb-6">Terms of Service & Enterprise Cloud Sync Policy</h2>
-            
+
             <div class="space-y-6 text-sm text-slate-600 dark:text-slate-400 font-medium mb-8">
                 <div>
                     <h3 class="text-slate-900 dark:text-white font-bold text-lg mb-2">1. The "Shadow IT" & Corporate Policy Clause</h3>
@@ -215,21 +213,21 @@
         <div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
             <div class="flex items-center space-x-3 cursor-pointer" onclick="navTo('welcome')">
                 <div class="relative group">
-                    <img src="ManagerPro.jpg" 
-                         onerror="this.src='https://ui-avatars.com/api/?name=ez+M&background=87ceeb&color=fff'" 
-                         alt="ezManage Logo" 
+                    <img src="ManagerPro.jpg"
+                         onerror="this.src='https://ui-avatars.com/api/?name=ez+M&background=87ceeb&color=fff'"
+                         alt="ezManage Logo"
                          class="w-10 h-10 rounded-xl shadow-sm border border-white transform transition-transform group-hover:rotate-6">
                 </div>
                 <span class="text-xl font-black tracking-tighter text-slate-900 dark:text-white uppercase">ezManage</span>
             </div>
-            
+
             <div class="hidden md:flex space-x-10 text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">
                 <a href="#" onclick="navTo('welcome')" class="hover:text-sky-600 transition-colors">Home</a>
                 <a href="#" onclick="navTo('tracker')" class="hover:text-sky-600 transition-colors">App</a>
                 <a href="easy-ai.html" class="hover:text-sky-600 transition-colors text-sky-500">AI Predictor</a>
                 <a href="#" onclick="navTo('pricing')" class="hover:text-sky-600 transition-colors">Pricing</a>
             </div>
-            
+
             <div class="flex items-center space-x-4">
                 <div id="navUserStatus" class="hidden sm:block text-[10px] font-black uppercase tracking-widest text-sky-600 cursor-pointer" onclick="handleNavAccountClick()">
                     Login / Sign Up
@@ -278,7 +276,7 @@
                 <div class="absolute inset-0 -z-10">
                     <div class="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-sky-50/50 dark:from-sky-900/10 to-transparent"></div>
                 </div>
-                
+
                 <div class="max-w-6xl mx-auto flex flex-col items-center text-center">
                     <div class="relative mb-12">
                         <div class="absolute inset-0 bg-sky-200 blur-2xl opacity-40 rounded-full scale-110"></div>
@@ -323,7 +321,7 @@
                     </div>
                     <button type="submit" id="authBtn" class="btn btn-accent w-full py-4 mt-4">Sign In</button>
                 </form>
-                
+
                 <div class="relative my-8">
                     <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-slate-100 dark:border-slate-800"></div></div>
                     <div class="relative flex justify-center text-xs uppercase"><span class="bg-white dark:bg-[#0a0a0a] px-2 text-slate-400">Or continue with</span></div>
@@ -334,7 +332,7 @@
                 </button>
 
                 <p class="mt-8 text-sm text-slate-500">
-                    <span id="authToggleText">Don't have an account?</span> 
+                    <span id="authToggleText">Don't have an account?</span>
                     <a href="#" onclick="toggleAuthMode(event)" id="authToggleLink" class="text-sky-600 font-bold">Create one</a>
                 </p>
             </div>
@@ -344,7 +342,7 @@
             <div class="max-w-2xl mx-auto card shadow-2xl border-0">
                 <h2 class="text-3xl font-black mb-4">Complete Profile</h2>
                 <p class="text-slate-500 mb-8 font-medium">Customize your management dashboard.</p>
-                
+
                 <div class="grid md:grid-cols-2 gap-6 text-left">
                     <div class="space-y-2">
                         <label class="text-xs font-black uppercase tracking-widest text-slate-400">Full Name</label>
@@ -378,7 +376,7 @@
         </div>
 
         <div id="view-tracker" class="view-section pb-32 relative">
-            
+
             <div class="sticky top-[80px] z-40 bg-white/90 dark:bg-black/90 backdrop-blur pb-4 pt-4 border-b border-slate-200 dark:border-slate-800 mb-8 overflow-x-auto no-print px-6">
                 <div class="flex gap-4 max-w-5xl mx-auto">
                     <button onclick="document.getElementById('section-routine').scrollIntoView({behavior: 'smooth', block: 'center'})" class="btn btn-sm btn-outline whitespace-nowrap bg-white dark:bg-black">Routine</button>
@@ -567,7 +565,7 @@
         <div id="view-presets" class="view-section px-6 py-12">
             <div class="max-w-4xl mx-auto">
                 <h1 class="text-4xl font-black mb-12">Templates & Presets</h1>
-                
+
                 <div class="grid md:grid-cols-2 gap-12">
                     <div class="space-y-8">
                         <div class="card">
@@ -605,7 +603,7 @@
                     <h1 class="text-4xl font-black">Manager Performance</h1>
                     <button class="btn btn-outline btn-sm" onclick="exportPerformanceCSV()">Export CSV</button>
                 </div>
-                
+
                 <div class="grid md:grid-cols-3 gap-6 mb-12">
                     <div class="card text-center">
                         <div class="text-4xl font-black text-sky-500 mb-2" id="statShifts">0</div>
@@ -652,7 +650,7 @@
                     <div class="card">
                         <h3 class="text-xl font-black mb-6">Data & Cloud Controls</h3>
                         <p class="text-slate-500 mb-6 text-sm">Manage where your data is stored securely.</p>
-                        
+
                         <div class="p-4 border border-slate-200 dark:border-slate-800 rounded-xl mb-4 bg-slate-50 dark:bg-slate-900">
                             <label class="flex items-center gap-3 cursor-pointer">
                                 <input type="checkbox" id="profileCloudSyncToggle" onchange="triggerCloudOptIn(this)" class="w-5 h-5 accent-sky-500">
@@ -668,7 +666,7 @@
                             </label>
                             <p class="text-xs text-slate-400 mt-2">Allows the local neural network to train on your cloud history. Requires Cloud Sync.</p>
                         </div>
-                        
+
                         <button onclick="exportDataJSON()" class="btn btn-outline w-full mb-4">Export All Data to JSON File</button>
                     </div>
                 </div>
@@ -747,7 +745,7 @@
 
     <div id="print-wrapper" class="hidden print:block absolute top-0 left-0 w-full bg-white z-50 p-8 text-black">
         <h1 class="text-3xl font-black border-b-4 border-black pb-4 mb-6 uppercase tracking-wider" id="printHeader">Store Shift Logbook</h1>
-        
+
         <div class="print-header-info font-bold text-sm">
             <div>Manager: <span id="printMgr" class="font-normal"></span></div>
             <div>Date: <span id="printDt" class="font-normal"></span></div>
@@ -789,7 +787,7 @@
     </div>
 
     <script>
-        // FIREBASE CONFIG
+
         const firebaseConfig = {
             apiKey: "AIzaSyBgrI9HwJPSc5b4pu2Egsv4DE7shNwptSw",
             authDomain: "dts-hub-website.firebaseapp.com",
@@ -803,7 +801,7 @@
         if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
         const auth = firebase.auth();
         const db = firebase.firestore();
-        
+
         db.enablePersistence().catch(err => console.error("Offline sync error:", err));
 
         let currentUser = null;
@@ -814,26 +812,24 @@
         let cloudSyncTimeout = null;
         let hasReferralDiscount = false;
         let unsubscribeUser = null;
-        let initialDraftLoaded = false; 
-        
-        // Legal & Privacy Settings
+        let initialDraftLoaded = false;
+
         let cloudSyncEnabled = false;
 
         auth.onAuthStateChanged((user) => {
             currentUser = user;
             const navStatus = document.getElementById('navUserStatus');
-            
+
             if (unsubscribeUser) unsubscribeUser();
 
             if (user) {
                 navStatus.innerText = "Manager: " + (user.displayName || "Online");
                 document.getElementById('profEmail').value = user.email;
-                
+
                 unsubscribeUser = db.collection("users").doc(user.uid).onSnapshot(async doc => {
                     if (doc.exists && doc.data().name) {
                         currentUserData = doc.data();
-                        
-                        // Enforce Opt-In Cloud Policy
+
                         cloudSyncEnabled = !!currentUserData.cloudSyncEnabled;
                         document.getElementById('profileCloudSyncToggle').checked = cloudSyncEnabled;
                         updateCloudSyncUI();
@@ -844,24 +840,24 @@
                         renderHistory();
                         updateStorageBar();
                         fetchFeatureRequests();
-                        
+
                         if (!initialDraftLoaded) {
-                            syncDraftFromServer(); 
+                            syncDraftFromServer();
                             initialDraftLoaded = true;
                         }
-                        
+
                         const activeView = document.querySelector('.view-section.active');
                         if (activeView && activeView.id === 'view-auth') navTo('tracker');
                         runAIPatternLogic();
                     } else {
-                        // Attempt to recover data if it was manually keyed by email in Firestore
+
                         if (!doc.exists || !doc.data().name) {
                             try {
                                 const emailDoc = await db.collection("users").doc(user.email).get();
                                 if (emailDoc.exists) {
                                     await db.collection("users").doc(user.uid).set(emailDoc.data(), {merge: true});
-                                    // Don't delete the old one just in case, let the new one populate via snapshot
-                                    return; 
+
+                                    return;
                                 }
                             } catch(e) { console.warn("Email recovery check skipped", e); }
                         }
@@ -870,7 +866,7 @@
                         if (!navigator.onLine) {
                             if (activeView && activeView.id !== 'view-tracker') navTo('tracker');
                         } else if (activeView && activeView.id !== 'view-setup') {
-                            navTo('setup'); 
+                            navTo('setup');
                         }
                     }
                 });
@@ -883,12 +879,11 @@
             }
         });
 
-        // AI Workflow Pattern Logic
         function runAIPatternLogic() {
             const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
             const today = days[new Date().getDay()];
             let msg = `AI: It's ${today}. Setting up standard floor.`;
-            
+
             if(today === 'Tuesday' || today === 'Friday') {
                 msg = `AI: It's ${today}. Truck delivery anticipated. Check cooler inventory presets.`;
             } else if (today === 'Saturday' || today === 'Sunday') {
@@ -897,10 +892,9 @@
             document.getElementById('aiSuggestionText').innerText = msg;
         }
 
-        // ToS & Cloud Opt-In Logic
         function triggerCloudOptIn(checkbox) {
             if (checkbox.checked) {
-                // Temporarily uncheck until they accept the ToS
+
                 checkbox.checked = false;
                 document.getElementById('tosModal').classList.remove('hidden');
             } else {
@@ -911,7 +905,7 @@
         function acceptToSAndEnableCloud() {
             if (!currentUser) return;
             const isBusiness = (currentUserData && currentUserData.plan && currentUserData.plan.includes('Business'));
-            
+
             if(!isBusiness) {
                 alert("Enterprise Cloud Sync is only available for the Business Pro plan.");
                 document.getElementById('tosModal').classList.add('hidden');
@@ -921,11 +915,11 @@
             cloudSyncEnabled = true;
             document.getElementById('profileCloudSyncToggle').checked = true;
             document.getElementById('tosModal').classList.add('hidden');
-            
+
             db.collection('users').doc(currentUser.uid).set({ cloudSyncEnabled: true }, { merge: true });
             localStorage.setItem(`ezManage_cloudEnabled_${currentUser.uid}`, 'true');
             updateCloudSyncUI();
-            triggerDraftSync(); // Immediately sync local to cloud
+            triggerDraftSync();
         }
 
         function declineToS() {
@@ -954,7 +948,7 @@
                 btnCloudSave.disabled = false;
                 btnCloudSave.classList.remove('opacity-50', 'cursor-not-allowed');
                 iconCloudSave.setAttribute('data-lucide', 'cloud-upload');
-                
+
                 document.getElementById('profileAIToggle').disabled = false;
                 document.getElementById('profileAIToggle').parentElement.parentElement.classList.remove('opacity-50');
             } else {
@@ -998,7 +992,7 @@
                 } catch (err) {
                     alert("Invalid JSON file.");
                 }
-                event.target.value = ""; // Reset input
+                event.target.value = "";
             };
             reader.readAsText(file);
         }
@@ -1066,7 +1060,7 @@
             db.collection('users').doc(currentUser.uid).set(data, { merge: true }).then(() => {
                 currentUser.updateProfile({ displayName: data.name });
                 document.getElementById('shiftManager').value = data.name;
-                // Force user to see ToS on first app load if they try to use cloud later
+
                 navTo('tracker');
             });
         }
@@ -1104,7 +1098,7 @@
                 clearInterval(timerInterval);
                 const mins = Math.round((Date.now() - shiftStartTime) / 60000);
                 disp.innerText = `Log: ${mins}m`;
-                shiftStartTime = null; 
+                shiftStartTime = null;
                 btn.innerHTML = `<i data-lucide="play" class="w-4"></i> Resume`;
                 btn.classList.replace('btn-danger', 'btn-success');
             }
@@ -1246,21 +1240,19 @@
         }
 
         document.getElementById('trackerForm').addEventListener('input', triggerDraftSync);
-        
+
         function triggerDraftSync() {
             if (!initialDraftLoaded || !currentUser) return;
 
             const state = getTrackerState();
-            
-            // Local Storage (Always active - "Save to Files" focus)
+
             localStorage.setItem(`ezManage_draft_${currentUser.uid}`, JSON.stringify(state));
 
-            // Enterprise Cloud Sync (Opt-In Only)
             if (cloudSyncEnabled) {
                 clearTimeout(cloudSyncTimeout);
                 cloudSyncTimeout = setTimeout(() => {
                     db.collection('users').doc(currentUser.uid).set({ trackerDraft: state }, { merge: true });
-                }, 3000); 
+                }, 3000);
             }
         }
 
@@ -1274,13 +1266,13 @@
             document.getElementById('beefTempered').value = draft.beefTempered || "";
             document.getElementById('laborVariance').value = draft.laborVariance || "";
             document.getElementById('changeNeeded').value = draft.changeNeeded || "";
-            
+
             document.getElementById('routineContainer').innerHTML = '';
             if(draft.routines) draft.routines.forEach(r => addRoutineTask(r.name, r.checked));
-            
+
             document.getElementById('inventoryContainer').innerHTML = '';
             if(draft.inventory) draft.inventory.forEach(i => addInventoryItem(i.name, i.bl, i.cl, i.fr));
-            
+
             document.getElementById('drawersContainer').innerHTML = '';
             if(draft.drawers) draft.drawers.forEach(d => addDrawerItem(d.val, d.name));
 
@@ -1296,11 +1288,10 @@
                 try {
                     const parsed = JSON.parse(localDraft);
                     populateTrackerFromState(parsed);
-                    return; 
+                    return;
                 } catch(e) { console.error("Local parse err", e); }
             }
 
-            // Fallback to Cloud if local empty and cloud is enabled
             if (cloudSyncEnabled && currentUserData && currentUserData.trackerDraft) {
                 populateTrackerFromState(currentUserData.trackerDraft);
             } else {
@@ -1311,7 +1302,7 @@
         function manualSaveHistory() {
             if(!currentUser) return alert("Please Sign In first.");
             if(!cloudSyncEnabled) return alert("Enterprise Cloud Sync is required to save shift history to the cloud.");
-            
+
             const state = getTrackerState();
             db.collection('users').doc(currentUser.uid).set({
                 shiftHistory: firebase.firestore.FieldValue.arrayUnion(state)
@@ -1324,7 +1315,7 @@
             if(!currentUserData) return;
             const container = document.getElementById('historyListContainer');
             const searchInput = document.getElementById('historySearch').value.toLowerCase();
-            
+
             if(!cloudSyncEnabled) {
                 container.innerHTML = "<p class='text-center py-10 opacity-60'>Cloud Sync is disabled. History relies on Enterprise Cloud Data.</p>";
                 return;
@@ -1339,9 +1330,9 @@
             });
 
             container.innerHTML = "";
-            if(history.length === 0) { 
-                container.innerHTML = "<p class='text-center py-20 opacity-40'>No logs found matching your criteria.</p>"; 
-                return; 
+            if(history.length === 0) {
+                container.innerHTML = "<p class='text-center py-20 opacity-40'>No logs found matching your criteria.</p>";
+                return;
             }
 
             const grouped = {};
@@ -1401,9 +1392,9 @@
         function updateStorageBar() {
             if(!currentUserData) return;
             const historyCount = (currentUserData.shiftHistory || []).length;
-            const usedKB = historyCount * 5; 
+            const usedKB = historyCount * 5;
             const usedMB = (usedKB / 1024).toFixed(2);
-            
+
             const plan = currentUserData.plan || 'Free';
             let maxGB = 1;
             if (plan.includes('Individual')) maxGB = 3;
@@ -1422,7 +1413,7 @@
 
             const history = currentUserData.shiftHistory || [];
             const shift = history.find(s => s.id === id);
-            
+
             if(shift) {
                 populateTrackerFromState(shift);
                 navTo('tracker');
@@ -1433,15 +1424,15 @@
 
         function exportPerformanceCSV() {
             if(!currentUserData || !currentUserData.shiftHistory || currentUserData.shiftHistory.length === 0) return alert("No history available to export.");
-            
+
             let csv = "Date,Time,Manager,Duration(m),Routines Completed,Safe Count,Prep Notes\n";
-            
+
             currentUserData.shiftHistory.forEach(h => {
                 let routinesDone = h.routines ? h.routines.filter(r => r.checked).length : 0;
                 let routinesTotal = h.routines ? h.routines.length : 0;
                 let safeCount = h.safeCount ? h.safeCount.replace(/,/g, '') : "0";
                 let prepNotes = h.prepNotes ? h.prepNotes.replace(/,/g, ';').replace(/\n/g, ' ') : "";
-                
+
                 csv += `${h.dateSaved},${h.timeSaved},${h.manager},${h.durationMins},${routinesDone}/${routinesTotal},${safeCount},${prepNotes}\n`;
             });
 
@@ -1460,10 +1451,10 @@
             if(!currentUserData) return;
             const history = currentUserData.shiftHistory || [];
             document.getElementById('statShifts').innerText = history.length;
-            
+
             let totalRoutines = 0; let checkedRoutines = 0;
             let totalTime = 0;
-            
+
             history.forEach(d => {
                 totalTime += (d.durationMins || 0);
                 (d.routines || []).forEach(r => { totalRoutines++; if(r.checked) checkedRoutines++; });
@@ -1500,7 +1491,7 @@
             if(!currentUser) return;
             const name = document.getElementById('customPresetName').value || "Unnamed Preset";
             const state = getTrackerState();
-            
+
             const presetData = {
                 id: Date.now().toString(),
                 name: name,
@@ -1509,7 +1500,7 @@
                 drawers: state.drawers,
                 deposits: state.deposits
             };
-            
+
             db.collection('users').doc(currentUser.uid).set({
                 customPresets: firebase.firestore.FieldValue.arrayUnion(presetData)
             }, { merge: true }).then(() => {
@@ -1571,13 +1562,12 @@
 
         function generateReport() {
             const state = getTrackerState();
-            
-            // Populate the Perfect PDF Mirror HTML
+
             document.getElementById('printMgr').innerText = state.manager || 'Not Specified';
             document.getElementById('printDt').innerText = state.dateSaved || 'Not Specified';
             document.getElementById('printTm').innerText = state.timeSaved || 'Not Specified';
             document.getElementById('printDur').innerText = state.durationMins || '0';
-            
+
             const printRoutines = document.getElementById('printRoutines');
             printRoutines.innerHTML = '';
             if (state.routines && state.routines.length > 0) {
@@ -1646,14 +1636,13 @@
 
             document.getElementById('printNotesBlock').innerText = state.prepNotes || "No notes provided.";
 
-            // Save to cloud only if enabled, else save locally
             if (cloudSyncEnabled) {
                 manualSaveHistory();
             } else {
                 localStorage.setItem(`ezManage_draft_${currentUser?.uid || 'guest'}`, JSON.stringify(state));
             }
-            
-            try { window.print(); } 
+
+            try { window.print(); }
             catch(e) { alert("Printing blocked by browser."); }
         }
 
@@ -1664,8 +1653,7 @@
             document.getElementById('profRole').value = data.role || "";
             document.getElementById('profPhone').value = data.phone || "";
             if(data.name) document.getElementById('profileAvatar').innerText = data.name.charAt(0).toUpperCase();
-            
-            // Default AI Training to true unless explicitly false
+
             const aiEnabled = data.aiTrainingEnabled !== false;
             document.getElementById('profileAIToggle').checked = aiEnabled;
         }
@@ -1679,7 +1667,7 @@
                 aiTrainingEnabled: document.getElementById('profileAIToggle').checked
             };
             db.collection('users').doc(currentUser.uid).set(data, { merge: true }).then(() => {
-                // Save to localStorage for instant cross-page checking
+
                 localStorage.setItem(`ezManage_aiEnabled_${currentUser.uid}`, data.aiTrainingEnabled);
                 localStorage.setItem(`ezManage_cloudEnabled_${currentUser.uid}`, cloudSyncEnabled);
                 alert("Profile Updated!");
@@ -1708,8 +1696,8 @@
                 const data = await res.json();
                 if(data.success) {
                     alert("Subscription canceled successfully.");
-                    db.collection('users').doc(currentUser.uid).update({ 
-                        "subscription.status": "canceled", 
+                    db.collection('users').doc(currentUser.uid).update({
+                        "subscription.status": "canceled",
                         plan: "Free",
                         cloudSyncEnabled: false
                     });
@@ -1723,7 +1711,7 @@
         function deleteAccount() {
             if(!currentUser) return;
             if(!confirm("WARNING: Are you sure you want to permanently delete your account and all associated data? This right to forget action cannot be undone.")) return;
-            
+
             db.collection('users').doc(currentUser.uid).delete().then(() => {
                 localStorage.removeItem(`ezManage_draft_${currentUser.uid}`);
                 currentUser.delete().then(() => {
@@ -1768,10 +1756,10 @@
 
             let basePrice = (planName === 'Business Pro') ? 207 : 61;
             let finalPrice = basePrice;
-            
+
             if (hasReferralDiscount) finalPrice *= 0.9;
             if (currentUserData && currentUserData.hasPromoCode) finalPrice *= 0.9;
-            
+
             finalPrice = Math.floor(finalPrice);
 
             try {
@@ -1782,7 +1770,7 @@
                         uid: currentUser.uid,
                         email: currentUser.email,
                         plan: planName,
-                        amount: finalPrice, 
+                        amount: finalPrice,
                         successUrl: window.location.origin + window.location.pathname + "?success=true",
                         cancelUrl: window.location.href
                     })
@@ -1790,7 +1778,7 @@
 
                 const data = await res.json();
                 if (data.url) {
-                    window.location.href = data.url; 
+                    window.location.href = data.url;
                 } else {
                     alert("Error creating checkout session: " + (data.error || "Unknown error"));
                 }
@@ -1808,9 +1796,9 @@
                 message: msg,
                 status: "In Progress",
                 timestamp: new Date().toISOString()
-            }).then(() => { 
-                alert("Sent!"); 
-                document.getElementById('featureReqText').value = ""; 
+            }).then(() => {
+                alert("Sent!");
+                document.getElementById('featureReqText').value = "";
             });
         }
 
@@ -1825,11 +1813,11 @@
                       container.innerHTML = "<p class='text-sm text-slate-500'>You haven't submitted any requests yet.</p>";
                       return;
                   }
-                  
+
                   snap.forEach(doc => {
                       const data = doc.data();
                       const status = data.status || 'In Progress';
-                      
+
                       let badgeClass = "bg-amber-100 text-amber-700";
                       if(status === 'Completed') badgeClass = "bg-emerald-100 text-emerald-700";
                       if(status === 'Declined') badgeClass = "bg-red-100 text-red-700";
@@ -1862,14 +1850,12 @@
             lucide.createIcons();
             initDefaults();
 
-            // Service Worker Registration
             if ('serviceWorker' in navigator) {
                 navigator.serviceWorker.register('./sw.js')
                 .then(() => console.log("Service Worker Registered"))
                 .catch(err => console.error("Service Worker Registration Failed:", err));
             }
 
-            // Network status handlers
             window.addEventListener('offline', updateNetworkStatus);
             window.addEventListener('online', updateNetworkStatus);
             updateNetworkStatus();
@@ -1878,14 +1864,14 @@
         function updateNetworkStatus() {
             const syncStatus = document.getElementById('cloudSyncStatus');
             const syncText = document.getElementById('cloudSyncText');
-            
+
             if (!navigator.onLine) {
                 syncStatus.className = 'w-2 h-2 rounded-full bg-red-500';
                 syncText.innerText = 'Offline - Local Mode Only';
                 syncText.classList.add('text-red-500');
             } else {
                 syncText.classList.remove('text-red-500');
-                updateCloudSyncUI(); // Revert to normal cloud sync UI state
+                updateCloudSyncUI();
             }
         }
 
