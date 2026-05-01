@@ -100,21 +100,33 @@ async function handlePlaceOrder(e) {
     try {
         // New Feature: Use a transaction to ensure atomicity
         await runTransaction(db, async (transaction) => {
+            // ⚡ Bolt Performance Optimization:
+            // Pre-fetch all product_stats documents concurrently before writing to prevent N+1 query bottlenecks
+            // and satisfy Firestore's strict read-before-write transaction constraints.
+            const statDocs = await Promise.all(
+                Object.keys(userCart).map(productId =>
+                    transaction.get(doc(db, "product_stats", productId))
+                )
+            );
+
             // 1. Create a new order document
             const newOrderRef = doc(db, "orders", `${currentUser.uid}-${Date.now()}`);
             transaction.set(newOrderRef, orderDetails);
 
             // 2. Update product order counts
-            for (const [productId, quantity] of Object.entries(userCart)) {
+            statDocs.forEach((statDoc) => {
+                const productId = statDoc.id;
+                const quantity = userCart[productId];
                 const productStatRef = doc(db, "product_stats", productId);
-                const statDoc = await transaction.get(productStatRef);
+
                 if (!statDoc.exists()) {
-    transaction.set(productStatRef, { orderedCount: quantity });
-} else {
-    const newCount = statDoc.data().orderedCount + quantity;
-    transaction.update(productStatRef, { orderedCount: newCount });
-}
-            }
+                    transaction.set(productStatRef, { orderedCount: quantity });
+                } else {
+                    const newCount = statDoc.data().orderedCount + quantity;
+                    transaction.update(productStatRef, { orderedCount: newCount });
+                }
+            });
+
             // 3. Clear the user's cart
             const userCartRef = doc(db, 'carts', currentUser.uid);
             transaction.set(userCartRef, { items: {} });
