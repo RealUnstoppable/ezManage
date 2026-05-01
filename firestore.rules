@@ -2,57 +2,94 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    // Helper Functions
+    function isAdmin() {
+       return request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('isAdmin', false) == true;
+    }
+
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+
     // Default deny
     match /{document=**} {
       allow read, write: if false;
     }
 
-    // Users Collection
+    // USERS - Strict Data Controller Ownership Enforced
     match /users/{userId} {
-      // User can read their own profile
-      allow read: if request.auth != null && request.auth.uid == userId;
-
-      // Allow users to create their own profile during signup, but prevent them from setting themselves as admin
-      allow create: if request.auth != null && request.auth.uid == userId
-                    && !request.resource.data.keys().hasAny(['isAdmin', 'isBanned', 'membershipLevel']);
-
-      // Allow users to update their own profile, but prevent modifying critical fields
-      allow update: if request.auth != null && request.auth.uid == userId
-                    && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['isAdmin', 'isBanned', 'membershipLevel', 'plan', 'subscription']);
+      allow read: if isOwner(userId) || isAdmin() || (request.auth != null && resource.data.orgId == request.auth.uid);
+      
+      allow create: if isOwner(userId) 
+                    && request.resource.data.get('isAdmin', false) == false
+                    && !request.resource.data.keys().hasAny(['isBanned', 'membershipLevel']);
+      
+      allow update: if (isOwner(userId) 
+                        && request.resource.data.get('isAdmin', false) == resource.data.get('isAdmin', false)
+                        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['isBanned', 'membershipLevel', 'plan', 'subscription']))
+                    || isAdmin();
+      
+      allow delete: if isOwner(userId) || isAdmin(); 
     }
 
-    // Carts Collection
+    // CARTS
     match /carts/{userId} {
-      // Users can only read and write to their own cart
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read, write: if isOwner(userId) || isAdmin();
     }
 
-    // Orders Collection
+    // ORDERS
     match /orders/{orderId} {
-      // Users can create an order, and read their own orders (assuming orderId starts with userId, as per checkout.js: doc(db, "orders", `${currentUser.uid}-${Date.now()}`))
-      // Also ensuring that userId in document matches their own uid.
-      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
-      allow read: if request.auth != null && resource.data.userId == request.auth.uid;
+      allow create: if request.auth != null 
+                    && request.resource.data.userId == request.auth.uid
+                    && request.resource.data.status == 'Processing';
+       
+      allow read: if request.auth != null && (resource.data.userId == request.auth.uid || isAdmin());
+       
+      allow update, delete: if isAdmin();
     }
 
-    // Product Stats Collection
+    // INVITES (Corporate/Business linking)
+    match /invites/{inviteId} {
+      allow read, write: if request.auth != null;
+    }
+
+    // SONG REQUESTS
+    match /song_requests/{requestId} {
+      allow create: if request.auth != null;
+      allow read: if request.auth != null;
+      allow update: if isAdmin();
+    }
+
+    // PRODUCT STATS
     match /product_stats/{productId} {
-      // Anyone can read product stats
       allow read: if true;
-      // Only authenticated users can update or create, and they can only set 'orderedCount' to a number
-      allow create: if request.auth != null
+      allow create: if request.auth != null 
                     && request.resource.data.keys().hasOnly(['orderedCount'])
                     && request.resource.data.orderedCount is number;
-      allow update: if request.auth != null
-                    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['orderedCount'])
+      allow update: if request.auth != null 
+                    && request.resource.data.orderedCount > resource.data.orderedCount
                     && request.resource.data.orderedCount is number;
     }
-
-    // Newsletter Subscribers Collection
+    
+    // NEWSLETTER
     match /newsletterSubscribers/{email} {
-      // Anyone can add their email
       allow create: if request.resource.data.email == email;
+      allow write: if true; // Allow anyone to subscribe
+      allow read: if isAdmin();
+    }
+    
+    // SITE STATS
+    match /site_stats/{docId} {
+        allow read: if true;
+        allow write: if true;
     }
 
+    // FEATURE REQUESTS (ezManage)
+    match /feature_requests/{requestId} {
+      allow create: if request.auth != null && request.resource.data.uid == request.auth.uid;
+      allow read: if request.auth != null && (resource.data.uid == request.auth.uid || isAdmin());
+      allow delete: if request.auth != null && (resource.data.uid == request.auth.uid || isAdmin());
+      allow update: if isAdmin();
+    }
   }
 }
