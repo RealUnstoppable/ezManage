@@ -398,6 +398,9 @@
                         </p>
                     </div>
                     <div class="flex items-center gap-3">
+                        <button onclick="document.getElementById('jsonImportInput').click()" class="btn btn-outline btn-sm" title="Import JSON"><i data-lucide="upload" class="w-4"></i></button>
+                        <button onclick="exportDataJSON()" class="btn btn-outline btn-sm" title="Export JSON"><i data-lucide="download" class="w-4"></i></button>
+                        <input type="file" id="jsonImportInput" accept=".json" class="hidden" onchange="importDataJSON(event)">
                         <button onclick="navTo('presets')" class="btn btn-outline btn-sm"><i data-lucide="layout" class="w-4"></i> Templates</button>
                         <button onclick="clearData()" class="btn btn-outline btn-sm text-red-500 border-red-200 hover:bg-red-50"><i data-lucide="trash-2" class="w-4"></i> Reset</button>
                     </div>
@@ -657,6 +660,14 @@
                             </label>
                             <p class="text-xs text-slate-400 mt-2">Requires Business Pro plan. Binds you to Data Controller ToS.</p>
                         </div>
+
+                        <div class="p-4 border border-slate-200 dark:border-slate-800 rounded-xl mb-4 bg-slate-50 dark:bg-slate-900">
+                            <label class="flex items-center gap-3 cursor-pointer">
+                                <input type="checkbox" id="profileAIToggle" checked class="w-5 h-5 accent-sky-500">
+                                <span class="font-bold text-sm">Allow AI Training</span>
+                            </label>
+                            <p class="text-xs text-slate-400 mt-2">Allows the local neural network to train on your cloud history. Requires Cloud Sync.</p>
+                        </div>
                         
                         <button onclick="exportDataJSON()" class="btn btn-outline w-full mb-4">Export All Data to JSON File</button>
                     </div>
@@ -842,7 +853,11 @@
                         if (document.querySelector('.view-section.active').id === 'view-auth') navTo('tracker');
                         runAIPatternLogic();
                     } else {
-                        if (document.querySelector('.view-section.active').id !== 'view-setup') navTo('setup'); 
+                        if (!navigator.onLine) {
+                            if (document.querySelector('.view-section.active').id !== 'view-tracker') navTo('tracker');
+                        } else if (document.querySelector('.view-section.active').id !== 'view-setup') {
+                            navTo('setup'); 
+                        }
                     }
                 });
             } else {
@@ -942,6 +957,27 @@
             document.body.appendChild(dlAnchorElem);
             dlAnchorElem.click();
             document.body.removeChild(dlAnchorElem);
+        }
+
+        function importDataJSON(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const state = JSON.parse(e.target.result);
+                    if (confirm("This will overwrite your current tracker draft. Proceed?")) {
+                        populateTrackerFromState(state);
+                        triggerDraftSync();
+                        alert("Data imported successfully!");
+                    }
+                } catch (err) {
+                    alert("Invalid JSON file.");
+                }
+                event.target.value = ""; // Reset input
+            };
+            reader.readAsText(file);
         }
 
         function toggleAuthModeUI() {
@@ -1604,6 +1640,10 @@
             document.getElementById('profRole').value = data.role || "";
             document.getElementById('profPhone').value = data.phone || "";
             if(data.name) document.getElementById('profileAvatar').innerText = data.name.charAt(0).toUpperCase();
+            
+            // Default AI Training to true unless explicitly false
+            const aiEnabled = data.aiTrainingEnabled !== false;
+            document.getElementById('profileAIToggle').checked = aiEnabled;
         }
 
         function saveProfileToFirebase() {
@@ -1611,7 +1651,8 @@
             const data = {
                 name: document.getElementById('profName').value,
                 role: document.getElementById('profRole').value,
-                phone: document.getElementById('profPhone').value
+                phone: document.getElementById('profPhone').value,
+                aiTrainingEnabled: document.getElementById('profileAIToggle').checked
             };
             db.collection('users').doc(currentUser.uid).set(data, { merge: true }).then(() => alert("Profile Updated!"));
         }
@@ -1791,7 +1832,33 @@
             }
             lucide.createIcons();
             initDefaults();
+
+            // Service Worker Registration
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('./sw.js')
+                .then(() => console.log("Service Worker Registered"))
+                .catch(err => console.error("Service Worker Registration Failed:", err));
+            }
+
+            // Network status handlers
+            window.addEventListener('offline', updateNetworkStatus);
+            window.addEventListener('online', updateNetworkStatus);
+            updateNetworkStatus();
         };
+
+        function updateNetworkStatus() {
+            const syncStatus = document.getElementById('cloudSyncStatus');
+            const syncText = document.getElementById('cloudSyncText');
+            
+            if (!navigator.onLine) {
+                syncStatus.className = 'w-2 h-2 rounded-full bg-red-500';
+                syncText.innerText = 'Offline - Local Mode Only';
+                syncText.classList.add('text-red-500');
+            } else {
+                syncText.classList.remove('text-red-500');
+                updateCloudSyncUI(); // Revert to normal cloud sync UI state
+            }
+        }
 
     </script>
 </body>
