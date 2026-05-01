@@ -29,6 +29,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-storage-compat.js"></script>
 
     <!-- Brain.js for Neural Network -->
     <script src="https://unpkg.com/brain.js@2.0.0-beta.23/dist/browser.js"></script>
@@ -130,22 +131,38 @@
                 </div>
                 <span class="text-xl font-black tracking-tighter text-slate-900 dark:text-white uppercase">ezManage <span class="text-sky-500">AI</span></span>
             </div>
-            
-            <div class="hidden md:flex space-x-10 text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">
-                <a href="index.html" class="hover:text-sky-600 transition-colors">Home</a>
-                <a href="#" onclick="navTo('tracker')" class="hover:text-sky-600 transition-colors">App</a>
-            </div>
-            
-            <div class="flex items-center space-x-4">
-                <div id="navUserStatus" class="hidden sm:block text-[10px] font-black uppercase tracking-widest text-sky-600 cursor-pointer" onclick="handleNavAccountClick()">
-                    Login / Sign Up
+            <div class="flex items-center space-x-6">
+                <div class="hidden md:flex items-center gap-2 px-3 py-1 bg-slate-100 dark:bg-slate-800 rounded-full">
+                    <div id="statusIndicator" class="w-2 h-2 rounded-full bg-slate-300"></div>
+                    <span class="text-[10px] font-black uppercase tracking-widest text-slate-500">Initializing</span>
                 </div>
-                <button onclick="toggleSidebar()" class="p-2 text-slate-600 dark:text-slate-300" aria-label="Toggle Menu">
-                    <i data-lucide="menu"></i>
+                <button onclick="toggleSidebar()" class="text-slate-400 hover:text-sky-500 transition-colors">
+                    <i data-lucide="menu" class="w-6 h-6"></i>
                 </button>
             </div>
         </div>
     </nav>
+
+    <!-- AI Restriction Modal -->
+    <div id="aiRestrictionModal" class="fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-md hidden flex items-center justify-center p-6">
+        <div class="bg-white dark:bg-slate-900 p-8 md:p-12 rounded-3xl max-w-lg w-full shadow-2xl border border-slate-200 dark:border-slate-800 text-center animate-fadeIn">
+            <div class="w-20 h-20 bg-amber-100 dark:bg-amber-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
+                <i data-lucide="shield-alert" class="w-10 h-10 text-amber-500"></i>
+            </div>
+            <h2 class="text-3xl font-black text-slate-900 dark:text-white mb-4 tracking-tight">AI Training Disabled</h2>
+            <p class="text-slate-500 dark:text-slate-400 mb-8 leading-relaxed">
+                To access the AI Predictor, you must explicitly opt-in to <b>Enterprise Cloud Sync</b> and <b>Allow AI Training</b> in your profile settings. This ensures you maintain full control over your data.
+            </p>
+            <div class="space-y-3">
+                <button onclick="navTo('profile')" class="btn w-full py-4 text-white font-bold rounded-xl" style="background: var(--accent);">
+                    Enable in Profile Settings
+                </button>
+                <button onclick="navTo('tracker')" class="btn btn-outline w-full py-4 rounded-xl">
+                    Return to Tracker
+                </button>
+            </div>
+        </div>
+    </div>
 
     <aside id="sidebar" class="fixed inset-y-0 left-0 w-80 bg-white dark:bg-slate-950 z-[60] shadow-2xl border-r border-slate-100 dark:border-slate-800 p-8 no-print">
         <div class="flex justify-between items-center mb-12">
@@ -177,9 +194,6 @@
                 <div>
                     <h1 class="text-4xl font-black tracking-tight">AI Stock Forecasting</h1>
                     <p class="text-slate-500 font-medium mt-2">Powered by neural networks trained on your history.</p>
-                </div>
-                <div id="statusIndicator" class="inline-flex items-center px-4 py-2 text-xs font-black tracking-[0.1em] text-slate-700 uppercase bg-slate-100 dark:bg-slate-800 dark:text-slate-300 rounded-full gap-2 shadow-sm border border-slate-200 dark:border-slate-700 transition-all">
-                    <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span> Analyzing Data...
                 </div>
             </div>
 
@@ -250,6 +264,7 @@
         if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
         const auth = firebase.auth();
         const db = firebase.firestore();
+        const storage = firebase.storage();
 
         // Neural Network Variables
         let maxValues = {}; // Store max values for normalization/denormalization
@@ -263,9 +278,7 @@
         // Main Execution Flow
         auth.onAuthStateChanged((user) => {
             currentUser = user;
-            const navStatus = document.getElementById('navUserStatus');
             if (user) {
-                navStatus.innerText = "Manager: " + (user.displayName || "Online");
                 db.collection("users").doc(user.uid).onSnapshot(doc => {
                     if (doc.exists) {
                         currentUserData = doc.data();
@@ -274,7 +287,6 @@
                 });
                 updateStatus('Fetching Data', 'amber');
             } else {
-                navStatus.innerText = "Login / Sign Up";
                 updateStatus('Not Logged In', 'red');
                 document.getElementById('resultsPlaceholder').innerHTML = `
                     <p class="mb-4">You must be logged in to view your AI stock predictions.</p>
@@ -289,18 +301,14 @@
         }
 
         function checkAIRestrictions(data) {
+            const modal = document.getElementById('aiRestrictionModal');
             if (!data.cloudSyncEnabled || data.aiTrainingEnabled === false) {
                 updateStatus('AI Disabled', 'amber');
-                document.getElementById('resultsPlaceholder').innerHTML = `
-                    <div class="p-8 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-2xl text-center">
-                        <i data-lucide="shield-alert" class="w-12 h-12 text-amber-500 mx-auto mb-4"></i>
-                        <p class="text-amber-600 dark:text-amber-400 font-bold mb-2">AI Training Disabled</p>
-                        <p class="text-sm text-slate-600 dark:text-slate-400 max-w-sm mx-auto">AI stock forecasting requires <b>Enterprise Cloud Sync</b> and <b>Allow AI Training</b> to be enabled in your Profile settings.</p>
-                        <a href="index.html" class="btn btn-accent btn-sm mt-6">Go to Profile</a>
-                    </div>
-                `;
-                lucide.createIcons();
+                modal.classList.remove('hidden');
+                document.getElementById('resultsPlaceholder').innerHTML = `Access Restricted.`;
                 return false;
+            } else {
+                modal.classList.add('hidden');
             }
             
             // If not already fetching, fetch
@@ -311,7 +319,7 @@
         }
 
         function fetchHistoryData(uid) {
-            db.collection("users").doc(uid).get().then(doc => {
+            db.collection("users").doc(uid).get().then(async doc => {
                 if (doc.exists) {
                     const data = doc.data();
                     
@@ -319,22 +327,33 @@
                     if (!checkAIRestrictions(data)) return;
 
                     const history = data.shiftHistory || [];
-                    
                     document.getElementById('statShiftsFound').innerText = history.length;
 
+                    // Try to load Global Model first
+                    updateStatus('Connecting to Global Model...', 'sky');
+                    try {
+                        const url = await storage.ref('models/global_model.json').getDownloadURL();
+                        const response = await fetch(url);
+                        if (response.ok) {
+                            const globalData = await response.json();
+                            runGlobalModel(globalData);
+                            return;
+                        }
+                    } catch (e) {
+                        console.log("No global model found or failed to load. Falling back to personal training.");
+                    }
+
+                    // Fallback: Local Personal Training
                     if (history.length < 3) {
                         updateStatus('Insufficient Data', 'amber');
                         document.getElementById('resultsPlaceholder').innerHTML = `
                             <p class="text-amber-600 dark:text-amber-400 mb-2">Not enough shift history.</p>
-                            <p class="text-sm">The AI needs at least 3 completed shifts with inventory data to find meaningful patterns.</p>
+                            <p class="text-sm">The AI needs at least 3 completed shifts with inventory data to find meaningful patterns locally, and the Community Model is currently training.</p>
                         `;
                         return;
                     }
 
                     processDataForNN(history);
-                } else {
-                    updateStatus('No Data', 'red');
-                    document.getElementById('resultsPlaceholder').innerText = 'No account data found.';
                 }
             }).catch(err => {
                 console.error(err);
@@ -343,21 +362,33 @@
             });
         }
 
+        function runGlobalModel(globalData) {
+            updateStatus('Running Community AI', 'sky');
+            const net = new brain.NeuralNetwork();
+            net.fromJSON(globalData.model);
+            
+            maxValues = globalData.maxValues;
+            uniqueItems = new Set(globalData.uniqueItems);
+            
+            // Set stats
+            document.getElementById('statShiftsFound').innerText = globalData.totalShifts + "+";
+            document.getElementById('statItemsTracked').innerText = uniqueItems.size;
+
+            runPrediction(net);
+        }
+
         // Helper to convert typical Date format (MM/DD/YYYY or YYYY-MM-DD) to Day of Week
         function getDayOfWeek(dateString) {
-            // Using a simple regex to catch dates. Assuming either YYYY-MM-DD or M/D/YYYY
             let d;
             if (dateString.includes('-')) {
-                // YYYY-MM-DD
                 d = new Date(dateString + 'T12:00:00Z');
             } else {
                 d = new Date(dateString);
             }
             if (isNaN(d.getTime())) return -1;
-            return d.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+            return d.getDay();
         }
 
-        // Parse numerical values out of strings like "10 boxes" -> 10
         function parseNum(val) {
             if (!val) return 0;
             const parsed = parseFloat(val.toString().replace(/[^0-9.]/g, ''));
@@ -367,7 +398,6 @@
         function processDataForNN(history) {
             updateStatus('Training Model...', 'sky');
 
-            // 1. First pass to find all unique items and their max values for normalization
             history.forEach(shift => {
                 if (shift.inventory && Array.isArray(shift.inventory)) {
                     shift.inventory.forEach(item => {
@@ -390,26 +420,17 @@
 
             document.getElementById('statItemsTracked').innerText = uniqueItems.size;
 
-            if (uniqueItems.size === 0) {
-                updateStatus('No Inventory', 'amber');
-                document.getElementById('resultsPlaceholder').innerText = 'Your past shifts have no inventory data logged.';
-                return;
-            }
-
-            // Fallback for max values being 0 (prevent division by 0)
             Object.keys(maxValues).forEach(k => {
                 if (maxValues[k].bl === 0) maxValues[k].bl = 1;
                 if (maxValues[k].cl === 0) maxValues[k].cl = 1;
                 if (maxValues[k].fr === 0) maxValues[k].fr = 1;
             });
 
-            // 2. Second pass to create training data
             trainingData = [];
             history.forEach(shift => {
                 const day = getDayOfWeek(shift.dateSaved);
                 if (day === -1) return;
 
-                // One-hot encoding for the day
                 const input = { 
                     sun: day === 0 ? 1 : 0, 
                     mon: day === 1 ? 1 : 0, 
@@ -421,8 +442,6 @@
                 };
 
                 const output = {};
-                
-                // Initialize all outputs to 0
                 Array.from(uniqueItems).forEach(name => {
                     output[`${name}_bl`] = 0;
                     output[`${name}_cl`] = 0;
@@ -438,33 +457,17 @@
                         output[`${name}_fr`] = parseNum(item.fr) / maxValues[name].fr;
                     });
                 }
-
                 trainingData.push({ input, output });
             });
 
-            if (trainingData.length === 0) {
-                updateStatus('Parsing Error', 'amber');
-                document.getElementById('resultsPlaceholder').innerText = 'Could not parse dates from history.';
-                return;
-            }
-
-            // Yield to UI thread before training (since it's synchronous in browser without web workers)
-            setTimeout(() => runNeuralNetwork(), 100);
+            setTimeout(() => {
+                const net = new brain.NeuralNetwork({ hiddenLayers: [10, 10] });
+                net.train(trainingData, { iterations: 2000, errorThresh: 0.011 });
+                runPrediction(net);
+            }, 100);
         }
 
-        function runNeuralNetwork() {
-            // brain.js setup
-            const net = new brain.NeuralNetwork({ hiddenLayers: [10, 10] });
-            
-            // Train
-            net.train(trainingData, {
-                iterations: 2000,
-                log: false,
-                logPeriod: 500,
-                learningRate: 0.05
-            });
-
-            // Predict for Today
+        function runPrediction(net) {
             const todayDay = new Date().getDay();
             const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
             document.getElementById('predictionDay').innerText = days[todayDay];

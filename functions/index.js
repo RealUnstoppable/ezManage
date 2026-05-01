@@ -149,3 +149,4 @@ exports.cancelSubscription = functions.https.onRequest((req, res) => {
     }
   });
 });
+exports.trainGlobalAI = require("./trainGlobalAI").trainGlobalAI;
