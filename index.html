@@ -405,8 +405,8 @@
                         </p>
                     </div>
                     <div class="flex items-center gap-3">
-                        <button onclick="document.getElementById('jsonImportInput').click()" class="btn btn-outline btn-sm" title="Import JSON"><i data-lucide="upload" class="w-4"></i></button>
-                        <button onclick="exportDataJSON()" class="btn btn-outline btn-sm" title="Export JSON"><i data-lucide="download" class="w-4"></i></button>
+                        <button onclick="document.getElementById('jsonImportInput').click()" class="btn btn-outline btn-sm" title="Import JSON" aria-label="Import JSON"><i data-lucide="upload" class="w-4"></i></button>
+                        <button onclick="exportDataJSON()" class="btn btn-outline btn-sm" title="Export JSON" aria-label="Export JSON"><i data-lucide="download" class="w-4"></i></button>
                         <input type="file" id="jsonImportInput" accept=".json" class="hidden" onchange="importDataJSON(event)">
                         <button onclick="navTo('presets')" class="btn btn-outline btn-sm"><i data-lucide="layout" class="w-4"></i> Templates</button>
                         <button onclick="clearData()" class="btn btn-outline btn-sm text-red-500 border-red-200 hover:bg-red-50"><i data-lucide="trash-2" class="w-4"></i> Reset</button>
@@ -1131,9 +1131,9 @@
             const div = document.createElement('div');
             div.className = "flex gap-2 items-center animate-fadeIn";
             div.innerHTML = `
-                <input type="text" placeholder="Drawer Label" class="drawer-name" style="flex: 2;" oninput="triggerDraftSync()">
-                <input type="number" step="0.01" class="drawer-val" style="flex: 1;" oninput="calcDrawer(this); triggerDraftSync();">
-                <input type="text" readonly class="drawer-res text-xs font-bold opacity-70" style="flex: 1.5; border:none; background:transparent;">
+                <input type="text" placeholder="Drawer Label" class="drawer-name" style="flex: 2;" aria-label="Drawer Label" oninput="triggerDraftSync()">
+                <input type="number" step="0.01" class="drawer-val" style="flex: 1;" aria-label="Drawer Amount" oninput="calcDrawer(this); triggerDraftSync();">
+                <input type="text" readonly class="drawer-res text-xs font-bold opacity-70" style="flex: 1.5; border:none; background:transparent;" aria-label="Drawer Result">
                 <button type="button" onclick="if(confirm('Are you sure you want to delete this drawer? This action cannot be undone.')) { this.parentElement.remove(); triggerDraftSync(); }" class="text-red-400 p-2" aria-label="Remove drawer"><i data-lucide="x" class="w-4"></i></button>
             `;
             div.querySelector('.drawer-name').value = label;
@@ -1156,7 +1156,7 @@
             const div = document.createElement('div');
             div.className = "flex gap-4 items-center bg-slate-50 dark:bg-slate-800 p-3 rounded-xl animate-fadeIn";
             div.innerHTML = `
-                <input type="text" placeholder="Amount" class="dep-val" style="flex:1;" oninput="triggerDraftSync()">
+                <input type="text" placeholder="Amount" class="dep-val" style="flex:1;" aria-label="Deposit Amount" oninput="triggerDraftSync()">
                 <label class="flex items-center gap-1 text-[10px] font-bold"><input type="checkbox" class="dep-ver accent-sky-500 w-4 h-4" onchange="triggerDraftSync()"> VER</label>
                 <label class="flex items-center gap-1 text-[10px] font-bold"><input type="checkbox" class="dep-val-chk accent-sky-500 w-4 h-4" onchange="triggerDraftSync()"> VAL</label>
                 <button type="button" onclick="if(confirm('Are you sure you want to delete this deposit? This action cannot be undone.')) { this.parentElement.remove(); triggerDraftSync(); }" class="text-red-400" aria-label="Remove deposit"><i data-lucide="x" class="w-4"></i></button>
@@ -1206,10 +1206,10 @@
             const div = document.createElement('div');
             div.className = 'inventory-item animate-fadeIn border-slate-200 dark:border-slate-800';
             div.innerHTML = `
-                <input type="text" placeholder="Item Name" class="inv-name" oninput="triggerDraftSync()">
-                <input type="text" placeholder="Backline" class="inv-backline" oninput="triggerDraftSync()">
-                <input type="text" placeholder="Cooler" class="inv-cooler" oninput="triggerDraftSync()">
-                <input type="text" placeholder="Freezer" class="inv-freezer" oninput="triggerDraftSync()">
+                <input type="text" placeholder="Item Name" class="inv-name" aria-label="Item Name" oninput="triggerDraftSync()">
+                <input type="text" placeholder="Backline" class="inv-backline" aria-label="Backline Count" oninput="triggerDraftSync()">
+                <input type="text" placeholder="Cooler" class="inv-cooler" aria-label="Cooler Count" oninput="triggerDraftSync()">
+                <input type="text" placeholder="Freezer" class="inv-freezer" aria-label="Freezer Count" oninput="triggerDraftSync()">
                 <button type="button" onclick="if(confirm('Are you sure you want to delete this item? This action cannot be undone.')) { this.parentElement.remove(); triggerDraftSync(); }" class="text-red-400 text-right" aria-label="Remove item"><i data-lucide="minus-circle" class="w-5"></i></button>
             `;
             div.querySelector('.inv-name').value = name;
