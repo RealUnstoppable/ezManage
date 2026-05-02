@@ -9,9 +9,7 @@ const corsOptions = {
 };
 app.use(cors(corsOptions));
 app.use(express.json());
-
-const stripe = Stripe(""); // 🔴 replace
-
+const stripe = Stripe("sk_test_placeholder"); // 🔴 replace with real key later
 app.post("/create-checkout-session", async (req, res) => {
   const { plan } = req.body;
 
