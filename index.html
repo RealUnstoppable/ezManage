@@ -678,12 +678,14 @@
                     </div>
 
                     <div id="section-routine" class="card" x-data="{ expanded: true }">
-                        <h3 @click="expanded = !expanded"
-                            class="text-xl font-black mb-2 flex items-center justify-between cursor-pointer">
-                            <div class="flex items-center gap-3"><i data-lucide="list-checks" class="text-sky-500"></i>
-                                Routine & ServSafe</div>
-                            <i data-lucide="chevron-down" class="transition-transform no-print"
-                                :class="expanded ? 'rotate-180' : ''"></i>
+                        <h3 class="text-xl font-black mb-2">
+                            <button @click="expanded = !expanded" :aria-expanded="expanded" type="button"
+                                class="w-full flex items-center justify-between cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 rounded-lg">
+                                <div class="flex items-center gap-3"><i data-lucide="list-checks" class="text-sky-500"></i>
+                                    Routine & ServSafe</div>
+                                <i data-lucide="chevron-down" class="transition-transform no-print"
+                                    :class="expanded ? 'rotate-180' : ''"></i>
+                            </button>
                         </h3>
                         <div x-show="expanded" x-transition>
                             <div id="routineContainer" class="grid sm:grid-cols-2 gap-4 mt-4"></div>
@@ -696,12 +698,14 @@
                     </div>
 
                     <div id="section-stats" class="card" x-data="{ expanded: true }">
-                        <h3 @click="expanded = !expanded"
-                            class="text-xl font-black mb-2 flex items-center justify-between cursor-pointer">
-                            <div class="flex items-center gap-3"><i data-lucide="beef" class="text-amber-600"></i> Prep
-                                & Labor Stats</div>
-                            <i data-lucide="chevron-down" class="transition-transform no-print"
-                                :class="expanded ? 'rotate-180' : ''"></i>
+                        <h3 class="text-xl font-black mb-2">
+                            <button @click="expanded = !expanded" :aria-expanded="expanded" type="button"
+                                class="w-full flex items-center justify-between cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 rounded-lg">
+                                <div class="flex items-center gap-3"><i data-lucide="beef" class="text-amber-600"></i> Prep
+                                    & Labor Stats</div>
+                                <i data-lucide="chevron-down" class="transition-transform no-print"
+                                    :class="expanded ? 'rotate-180' : ''"></i>
+                            </button>
                         </h3>
                         <div x-show="expanded" x-transition class="mt-4">
                             <div class="grid md:grid-cols-2 gap-8">
@@ -739,12 +743,14 @@
                     </div>
 
                     <div id="section-cash" class="card" x-data="{ expanded: true }">
-                        <h3 @click="expanded = !expanded"
-                            class="text-xl font-black mb-2 flex items-center justify-between cursor-pointer">
-                            <div class="flex items-center gap-3"><i data-lucide="banknote" class="text-emerald-500"></i>
-                                Cash & Registers</div>
-                            <i data-lucide="chevron-down" class="transition-transform no-print"
-                                :class="expanded ? 'rotate-180' : ''"></i>
+                        <h3 class="text-xl font-black mb-2">
+                            <button @click="expanded = !expanded" :aria-expanded="expanded" type="button"
+                                class="w-full flex items-center justify-between cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 rounded-lg">
+                                <div class="flex items-center gap-3"><i data-lucide="banknote" class="text-emerald-500"></i>
+                                    Cash & Registers</div>
+                                <i data-lucide="chevron-down" class="transition-transform no-print"
+                                    :class="expanded ? 'rotate-180' : ''"></i>
+                            </button>
                         </h3>
                         <div x-show="expanded" x-transition class="mt-4">
                             <div class="grid lg:grid-cols-2 gap-12">
@@ -787,12 +793,14 @@
 
                     <div id="section-inventory" class="card" x-data="{ expanded: true }">
                         <div class="flex justify-between items-center mb-6">
-                            <h3 @click="expanded = !expanded"
-                                class="text-xl font-black flex items-center gap-3 cursor-pointer w-full">
-                                <div class="flex items-center gap-3"><i data-lucide="package"
-                                        class="text-purple-500"></i> Inventory Count</div>
-                                <i data-lucide="chevron-down" class="transition-transform no-print ml-auto mr-4"
-                                    :class="expanded ? 'rotate-180' : ''"></i>
+                            <h3 class="text-xl font-black w-full">
+                                <button @click="expanded = !expanded" :aria-expanded="expanded" type="button"
+                                    class="w-full flex items-center gap-3 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 rounded-lg">
+                                    <div class="flex items-center gap-3"><i data-lucide="package"
+                                            class="text-purple-500"></i> Inventory Count</div>
+                                    <i data-lucide="chevron-down" class="transition-transform no-print ml-auto mr-4"
+                                        :class="expanded ? 'rotate-180' : ''"></i>
+                                </button>
                             </h3>
                             <button type="button" onclick="addInventoryItem()"
                                 class="btn btn-outline btn-sm no-print whitespace-nowrap">+ Add Item</button>
