@@ -74,14 +74,14 @@ service cloud.firestore {
     // NEWSLETTER
     match /newsletterSubscribers/{email} {
       allow create: if request.resource.data.email == email;
-      allow write: if true; // Allow anyone to subscribe
+      allow write: if isAdmin();
       allow read: if isAdmin();
     }
     
     // SITE STATS
     match /site_stats/{docId} {
         allow read: if true;
-        allow write: if true;
+        allow write: if isAdmin();
     }
 
     // FEATURE REQUESTS (ezManage)
