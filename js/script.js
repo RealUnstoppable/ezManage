@@ -134,12 +134,14 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Bento Card 3D Tilt Effect ---
     const bentoCards = document.querySelectorAll('.bento-card');
     bentoCards.forEach(card => {
-        let isTicking = false;
+        let ticking = false; // ⚡ Bolt Optimization: State flag for requestAnimationFrame
+
         card.addEventListener('mousemove', (e) => {
-            if (!isTicking) {
-                // ⚡ Bolt Performance Optimization:
-                // Throttled mousemove DOM calculations and style updates using requestAnimationFrame.
-                // Prevents layout thrashing and ensures smooth 60fps animations by syncing with display refresh rate.
+            // ⚡ Bolt Performance Optimization:
+            // Throttling the high-frequency mousemove event using requestAnimationFrame.
+            // This syncs DOM measurements (getBoundingClientRect) and style updates with the display refresh rate,
+            // reducing layout thrashing and jank on lower-end devices.
+            if (!ticking) {
                 window.requestAnimationFrame(() => {
                     const rect = card.getBoundingClientRect();
                     const x = e.clientX - rect.left;
@@ -152,9 +154,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     const rotateY = ((x - centerX) / centerX) * 5;  // Max 5deg rotation
 
                     card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-4px)`;
-                    isTicking = false;
+                    ticking = false;
                 });
-                isTicking = true;
+                ticking = true;
             }
         });
 

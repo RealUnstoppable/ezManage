@@ -45,6 +45,18 @@
       "output": "dist",
       "buildResources": "build"
     },
+    "files": [
+      "**/*",
+      "!downloads/*",
+      "!.github/*",
+      "!.jules/*",
+      "!tests/*",
+      "!client-tests/*",
+      "!functions/*",
+      "!dts-hub-website/*",
+      "!ManagerPro.jpg",
+      "!*.dmg"
+    ],
     "mac": {
       "target": "dmg",
       "category": "public.app-category.business",
