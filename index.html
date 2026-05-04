@@ -1608,20 +1608,31 @@
 
         document.getElementById('trackerForm').addEventListener('input', triggerDraftSync);
 
+        let localDraftSyncTimeout = null;
         function triggerDraftSync() {
             if (!initialDraftLoaded || !currentUser) return;
 
-            const state = getTrackerState();
-
-            // Local Storage (Always active - "Save to Files" focus)
-            localStorage.setItem(`ezManage_draft_${currentUser.uid}`, JSON.stringify(state));
-
+            // ⚡ Bolt Performance Optimization:
+            // Debouncing the local storage draft sync.
+            // Previously, this function synchronously called getTrackerState() (which queries the DOM extensively)
+            // and wrote to localStorage on every single keystroke. This blocks the main thread and causes jank for fast typists.
+            // By debouncing it, we only perform these operations after the user has paused typing.
+            clearTimeout(localDraftSyncTimeout);
             if (cloudSyncEnabled) {
                 clearTimeout(cloudSyncTimeout);
-                cloudSyncTimeout = setTimeout(() => {
-                    db.collection('users').doc(currentUser.uid).set({ trackerDraft: state }, { merge: true });
-                }, 3000);
             }
+            localDraftSyncTimeout = setTimeout(() => {
+                const state = getTrackerState();
+
+                // Local Storage (Always active - "Save to Files" focus)
+                localStorage.setItem(`ezManage_draft_${currentUser.uid}`, JSON.stringify(state));
+
+                if (cloudSyncEnabled) {
+                    cloudSyncTimeout = setTimeout(() => {
+                        db.collection('users').doc(currentUser.uid).set({ trackerDraft: state }, { merge: true });
+                    }, 3000); // Keep cloud sync delay relative to local save execution
+                }
+            }, 500);
         }
 
         function populateTrackerFromState(draft) {
