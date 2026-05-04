@@ -328,13 +328,13 @@
 <body style="display: none;">
   <div class="mobile-header">
     <h2 style="margin:0; color: var(--accent-blue);">Admin</h2>
-    <button class="hamburger-btn" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
+    <button class="hamburger-btn" onclick="document.getElementById('sidebar').classList.toggle('open')" aria-label="Open sidebar menu">☰</button>
   </div>
 
   <div class="admin-layout">
     <aside class="sidebar" id="sidebar">
       <div class="mobile-header" style="justify-content: flex-end;">
-        <button class="hamburger-btn" onclick="document.getElementById('sidebar').classList.remove('open')">✕</button>
+        <button class="hamburger-btn" onclick="document.getElementById('sidebar').classList.remove('open')" aria-label="Close sidebar menu">✕</button>
       </div>
       <div class="sidebar-header">
         <h2>Admin Panel</h2>
