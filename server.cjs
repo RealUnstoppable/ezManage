@@ -3,15 +3,15 @@ const cors = require("cors");
 const Stripe = require("stripe");
 
 const app = express();
+const path = require("path");
 const corsOptions = {
   origin: "http://localhost:3000",
   optionsSuccessStatus: 200
 };
 app.use(cors(corsOptions));
 app.use(express.json());
-
-const stripe = Stripe(""); // 🔴 replace
-
+app.use(express.static(path.join(__dirname)));
+const stripe = Stripe("sk_test_placeholder"); // 🔴 replace with real key later
 app.post("/create-checkout-session", async (req, res) => {
   const { plan } = req.body;
 

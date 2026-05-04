@@ -10,7 +10,7 @@
 **Vulnerability:** N/A (Process issue)
 **Learning:** When operating as Sentinel under strict constraints (fix *one* issue, under 50 lines), do not run blanket auto-formatters (e.g., `npm run lint -- --fix`) or attempt to fix multiple disconnected vulnerabilities simultaneously. This violates the role's instructions and introduces unrelated code changes, causing PR rejection.
 **Prevention:** Strictly limit code edits to the single identified vulnerability. Only run linters or formatters on the specific lines modified, or disable auto-fixing if it modifies unrelated code.
-## 2026-05-02 - Public API Keys are NOT Secrets in Firebase Web Apps
-**Vulnerability:** N/A (Misidentified issue)
-**Learning:** Firebase client-side Web API keys (e.g., `AIzaSy...`) are designed to be public and exposed in the browser. They are simply identifiers that connect the frontend app to the Firebase project backend. Removing or trying to hide this key via an environment variable fallback like `process.env.FIREBASE_API_KEY` in a native browser environment (where `process` is undefined) causes the application to crash completely due to a missing initialization parameter.
-**Prevention:** Do not attempt to hide Firebase Web API keys. App security relies exclusively on server-side rules (like `firestore.rules`) and App Check, not on obscuring the public API key.
+## 2026-05-03 - Insecure Public Write Access to Global Collections
+**Vulnerability:** The `/site_stats/{docId}` and `/newsletterSubscribers/{email}` collections in `firestore.rules` allowed unauthenticated public writes (`allow write: if true;`). This enabled any visitor to modify or delete global site statistics and the entire newsletter subscriber list.
+**Learning:** `allow write` in Firestore includes `create`, `update`, and `delete`. Using `allow write: if true` for a public submission form (like a newsletter) inadvertently grants full deletion and modification rights to unauthenticated users.
+**Prevention:** Always use specific verbs (`create`, `update`, `delete`) instead of `write` when configuring rules for public-facing data. Restrict `delete` and broad `update` operations to administrators or the data owner.
