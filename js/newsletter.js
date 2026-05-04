@@ -21,12 +21,10 @@ document.querySelectorAll('.signup-form').forEach(form => {
                     subscribedAt: serverTimestamp()
                 });
 
-                // Show a success message
                 messageEl.textContent = "You've successfully subscribed to the newsletter!";
                 messageEl.className = 'newsletter-message success';
-                emailInput.value = ''; // Clear the input
+                emailInput.value = '';
 
-                // Hide the message after a few seconds
                 setTimeout(() => {
                     messageEl.style.display = 'none';
                 }, 5000);

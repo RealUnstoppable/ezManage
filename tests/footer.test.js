@@ -2,7 +2,7 @@ import { loadFooter } from '../js/footer.js';
 
 describe('loadFooter', () => {
     beforeEach(() => {
-        // Setup document body
+
         document.body.innerHTML = `
             <div class="main-footer"></div>
         `;
@@ -32,7 +32,6 @@ describe('loadFooter', () => {
 
         expect(() => loadFooter()).not.toThrow();
 
-        // Also verify that nothing was unexpectedly added to the body
         expect(document.querySelector('.main-footer')).toBeNull();
     });
 });

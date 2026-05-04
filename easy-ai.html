@@ -5,10 +5,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>ezManage | AI Stock Predictions</title>
-    
+
     <link rel="icon" type="image/jpeg" href="ManagerPro.jpg?v=2">
     <link rel="apple-touch-icon" href="ManagerPro.jpg?v=2">
-    
+
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="ezManage AI">
@@ -21,17 +21,16 @@
     </script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
-    
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-    
+
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-storage-compat.js"></script>
 
-    <!-- Brain.js for Neural Network -->
     <script src="https://unpkg.com/brain.js@2.0.0-beta.23/dist/browser.js"></script>
 
     <style>
@@ -50,7 +49,6 @@
             --nav-height: 80px;
         }
 
-        /* AMOLED Black Optimization for Anti-Fatigue */
         body.dark-mode {
             --bg-color: #000000;
             --card-bg: #0a0a0a;
@@ -62,10 +60,10 @@
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        
-        body { 
-            font-family: 'Inter', sans-serif; 
-            background-color: var(--bg-color); 
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
             color: var(--text-main);
             transition: background-color 0.3s, color 0.3s;
             -webkit-font-smoothing: antialiased;
@@ -82,11 +80,11 @@
             background: rgba(0, 0, 0, 0.7);
         }
 
-        .card { 
-            background: var(--card-bg); 
-            border-radius: var(--radius); 
-            padding: 2rem; 
-            margin-bottom: 1.5rem; 
+        .card {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            padding: 2rem;
+            margin-bottom: 1.5rem;
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
             border: 1px solid var(--border);
         }
@@ -124,9 +122,9 @@
         <div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
             <div class="flex items-center space-x-3 cursor-pointer" onclick="window.location.href='index.html'">
                 <div class="relative group">
-                    <img src="ManagerPro.jpg" 
-                         onerror="this.src='https://ui-avatars.com/api/?name=ez+M&background=87ceeb&color=fff'" 
-                         alt="ezManage Logo" 
+                    <img src="ManagerPro.jpg"
+                         onerror="this.src='https://ui-avatars.com/api/?name=ez+M&background=87ceeb&color=fff'"
+                         alt="ezManage Logo"
                          class="w-10 h-10 rounded-xl shadow-sm border border-white transform transition-transform group-hover:rotate-6">
                 </div>
                 <span class="text-xl font-black tracking-tighter text-slate-900 dark:text-white uppercase">ezManage <span class="text-sky-500">AI</span></span>
@@ -143,7 +141,6 @@
         </div>
     </nav>
 
-    <!-- AI Restriction Modal -->
     <div id="aiRestrictionModal" class="fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-md hidden flex items-center justify-center p-6">
         <div class="bg-white dark:bg-slate-900 p-8 md:p-12 rounded-3xl max-w-lg w-full shadow-2xl border border-slate-200 dark:border-slate-800 text-center animate-fadeIn">
             <div class="w-20 h-20 bg-amber-100 dark:bg-amber-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
@@ -189,7 +186,7 @@
 
     <main class="pt-[var(--nav-height)] min-h-screen pb-20">
         <div class="max-w-5xl mx-auto px-6 mt-12">
-            
+
             <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
                 <div>
                     <h1 class="text-4xl font-black tracking-tight">AI Stock Forecasting</h1>
@@ -197,7 +194,6 @@
                 </div>
             </div>
 
-            <!-- Dashboard -->
             <div class="grid md:grid-cols-3 gap-6 mb-8">
                 <div class="card text-center relative overflow-hidden">
                     <div class="absolute inset-0 bg-sky-50 dark:bg-sky-900/10 -z-10"></div>
@@ -224,7 +220,7 @@
                     </div>
                     <button id="importAllBtn" onclick="importAllPredictions()" class="btn btn-sm btn-accent hidden">Import All</button>
                 </div>
-                
+
                 <div id="resultsContainer" class="p-6">
                     <div class="text-center py-12 text-slate-500 font-medium" id="resultsPlaceholder">
                         Authenticating and fetching shift data...
@@ -236,10 +232,9 @@
     </main>
 
     <script>
-        // Init Lucide Icons
+
         lucide.createIcons();
 
-        // Theme management
         const savedTheme = localStorage.getItem('managerProTheme');
         if (savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
             document.body.classList.add('dark-mode');
@@ -250,7 +245,6 @@
         function handleNavAccountClick() { navTo('profile'); }
         function signOut() { auth.signOut().then(() => window.location.href = 'index.html'); }
 
-        // FIREBASE CONFIG
         const firebaseConfig = {
             apiKey: "AIzaSyBgrI9HwJPSc5b4pu2Egsv4DE7shNwptSw",
             authDomain: "dts-hub-website.firebaseapp.com",
@@ -266,8 +260,7 @@
         const db = firebase.firestore();
         const storage = firebase.storage();
 
-        // Neural Network Variables
-        let maxValues = {}; // Store max values for normalization/denormalization
+        let maxValues = {};
         let uniqueItems = new Set();
         let trainingData = [];
 
@@ -275,9 +268,8 @@
         let currentUserData = null;
         let latestPrediction = null;
 
-        // Instant Local Check (Pre-Firebase)
         (function() {
-            const tempUid = localStorage.getItem('ezManage_lastUid'); // We should set this in index.html
+            const tempUid = localStorage.getItem('ezManage_lastUid');
             if (tempUid) {
                 const localAI = localStorage.getItem(`ezManage_aiEnabled_${tempUid}`);
                 const localCloud = localStorage.getItem(`ezManage_cloudEnabled_${tempUid}`);
@@ -287,7 +279,6 @@
             }
         })();
 
-        // Main Execution Flow
         auth.onAuthStateChanged((user) => {
             currentUser = user;
             if (user) {
@@ -323,8 +314,7 @@
             } else {
                 modal.classList.add('hidden');
             }
-            
-            // If not already fetching, fetch
+
             if (document.getElementById('statShiftsFound').innerText === '0') {
                 fetchHistoryData(currentUser.uid);
             }
@@ -335,14 +325,12 @@
             db.collection("users").doc(uid).get().then(async doc => {
                 if (doc.exists) {
                     const data = doc.data();
-                    
-                    // Final safety check
+
                     if (!checkAIRestrictions(data)) return;
 
                     const history = data.shiftHistory || [];
                     document.getElementById('statShiftsFound').innerText = history.length;
 
-                    // Try to load Global Model first
                     updateStatus('Connecting to Global Model...', 'sky');
                     try {
                         const url = await storage.ref('models/global_model.json').getDownloadURL();
@@ -356,7 +344,6 @@
                         console.log("No global model found or failed to load. Falling back to personal training.");
                     }
 
-                    // Fallback: Local Personal Training
                     if (history.length < 3) {
                         updateStatus('Insufficient Data', 'amber');
                         document.getElementById('resultsPlaceholder').innerHTML = `
@@ -379,18 +366,16 @@
             updateStatus('Running Community AI', 'sky');
             const net = new brain.NeuralNetwork();
             net.fromJSON(globalData.model);
-            
+
             maxValues = globalData.maxValues;
             uniqueItems = new Set(globalData.uniqueItems);
-            
-            // Set stats
+
             document.getElementById('statShiftsFound').innerText = globalData.totalShifts + "+";
             document.getElementById('statItemsTracked').innerText = uniqueItems.size;
 
             runPrediction(net);
         }
 
-        // Helper to convert typical Date format (MM/DD/YYYY or YYYY-MM-DD) to Day of Week
         function getDayOfWeek(dateString) {
             let d;
             if (dateString.includes('-')) {
@@ -417,13 +402,13 @@
                         if (!item.name) return;
                         const name = item.name.trim();
                         uniqueItems.add(name);
-                        
+
                         if (!maxValues[name]) maxValues[name] = { bl: 0, cl: 0, fr: 0 };
-                        
+
                         const bl = parseNum(item.bl);
                         const cl = parseNum(item.cl);
                         const fr = parseNum(item.fr);
-                        
+
                         if (bl > maxValues[name].bl) maxValues[name].bl = bl;
                         if (cl > maxValues[name].cl) maxValues[name].cl = cl;
                         if (fr > maxValues[name].fr) maxValues[name].fr = fr;
@@ -444,14 +429,14 @@
                 const day = getDayOfWeek(shift.dateSaved);
                 if (day === -1) return;
 
-                const input = { 
-                    sun: day === 0 ? 1 : 0, 
-                    mon: day === 1 ? 1 : 0, 
-                    tue: day === 2 ? 1 : 0, 
-                    wed: day === 3 ? 1 : 0, 
-                    thu: day === 4 ? 1 : 0, 
-                    fri: day === 5 ? 1 : 0, 
-                    sat: day === 6 ? 1 : 0 
+                const input = {
+                    sun: day === 0 ? 1 : 0,
+                    mon: day === 1 ? 1 : 0,
+                    tue: day === 2 ? 1 : 0,
+                    wed: day === 3 ? 1 : 0,
+                    thu: day === 4 ? 1 : 0,
+                    fri: day === 5 ? 1 : 0,
+                    sat: day === 6 ? 1 : 0
                 };
 
                 const output = {};
@@ -484,19 +469,19 @@
             const todayDay = new Date().getDay();
             const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
             document.getElementById('predictionDay').innerText = days[todayDay];
-            
-            const input = { 
-                sun: todayDay === 0 ? 1 : 0, 
-                mon: todayDay === 1 ? 1 : 0, 
-                tue: todayDay === 2 ? 1 : 0, 
-                wed: todayDay === 3 ? 1 : 0, 
-                thu: todayDay === 4 ? 1 : 0, 
-                fri: todayDay === 5 ? 1 : 0, 
-                sat: todayDay === 6 ? 1 : 0 
+
+            const input = {
+                sun: todayDay === 0 ? 1 : 0,
+                mon: todayDay === 1 ? 1 : 0,
+                tue: todayDay === 2 ? 1 : 0,
+                wed: todayDay === 3 ? 1 : 0,
+                thu: todayDay === 4 ? 1 : 0,
+                fri: todayDay === 5 ? 1 : 0,
+                sat: todayDay === 6 ? 1 : 0
             };
 
             const prediction = net.run(input);
-            latestPrediction = prediction; // Store for Import All
+            latestPrediction = prediction;
             displayResults(prediction);
             updateStatus('Analysis Complete', 'emerald');
             document.getElementById('statusIndicator').querySelector('span').classList.remove('animate-pulse');
@@ -518,30 +503,29 @@
             const list = document.getElementById('predictionsList');
 
             Array.from(uniqueItems).sort().forEach(name => {
-                // Denormalize
+
                 const bl = Math.round((prediction[`${name}_bl`] || 0) * maxValues[name].bl);
                 const cl = Math.round((prediction[`${name}_cl`] || 0) * maxValues[name].cl);
                 const fr = Math.round((prediction[`${name}_fr`] || 0) * maxValues[name].fr);
 
-                // Only show if at least one > 0 (prevents clutter)
                 if (bl === 0 && cl === 0 && fr === 0) return;
 
                 const div = document.createElement('div');
                 div.className = "grid grid-cols-2 md:grid-cols-4 gap-3 p-4 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm items-center hover:border-sky-300 dark:hover:border-sky-700 transition-colors";
-                
+
                 div.innerHTML = `
                     <div class="col-span-2 md:col-span-1 font-bold text-slate-800 dark:text-slate-200">${name}</div>
-                    
+
                     <div class="flex flex-col">
                         <span class="md:hidden text-[9px] font-black uppercase text-slate-400 mb-1">Backline</span>
                         <span class="font-mono bg-slate-50 dark:bg-slate-800 px-3 py-1 rounded-lg border border-slate-100 dark:border-slate-700 w-full text-center">${bl}</span>
                     </div>
-                    
+
                     <div class="flex flex-col">
                         <span class="md:hidden text-[9px] font-black uppercase text-slate-400 mb-1">Cooler</span>
                         <span class="font-mono bg-sky-50 dark:bg-sky-900/20 text-sky-700 dark:text-sky-300 px-3 py-1 rounded-lg border border-sky-100 dark:border-sky-800 w-full text-center">${cl}</span>
                     </div>
-                    
+
                     <div class="flex flex-col">
                         <span class="md:hidden text-[9px] font-black uppercase text-slate-400 mb-1">Freezer</span>
                         <span class="font-mono bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-300 px-3 py-1 rounded-lg border border-indigo-100 dark:border-indigo-800 w-full text-center">${fr}</span>
@@ -551,7 +535,7 @@
                         <button onclick="importPrediction('${name}', ${bl}, ${cl}, ${fr})" class="btn btn-sm btn-accent w-full md:w-auto">Import</button>
                     </div>
                 `;
-                
+
                 list.appendChild(div);
             });
 
@@ -565,11 +549,11 @@
 
         function importPrediction(name, bl, cl, fr) {
             if (!currentUser) return alert("Please sign in to import data.");
-            
+
             if (confirm(`Import ${name} predictions to your active shift tracker? This will update your current draft.`)) {
                 const draft = getDraft();
                 if (!draft) return;
-                
+
                 applyPredictionToDraft(draft, name, bl, cl, fr);
                 saveDraft(draft, `${name} imported!`);
             }
@@ -613,7 +597,7 @@
         function applyPredictionToDraft(draft, name, bl, cl, fr) {
             if (!draft.inventory) draft.inventory = [];
             let itemFound = false;
-            
+
             draft.inventory.forEach(item => {
                 if (item.name.trim().toLowerCase() === name.trim().toLowerCase()) {
                     item.bl = bl.toString();
@@ -622,7 +606,7 @@
                     itemFound = true;
                 }
             });
-            
+
             if (!itemFound) {
                 draft.inventory.push({
                     name: name,
@@ -636,7 +620,7 @@
         function saveDraft(draft, successMsg) {
             const draftKey = `ezManage_draft_${currentUser.uid}`;
             localStorage.setItem(draftKey, JSON.stringify(draft));
-            
+
             if (currentUserData && currentUserData.cloudSyncEnabled) {
                 db.collection('users').doc(currentUser.uid).set({ trackerDraft: draft }, { merge: true })
                     .then(() => alert(successMsg + " (Cloud & Local Sync Complete)"))
@@ -649,14 +633,12 @@
             }
         }
 
-        // Service Worker Registration
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('./sw.js')
             .then(() => console.log("Service Worker Registered"))
             .catch(err => console.error("Service Worker Registration Failed:", err));
         }
 
-        // Network status handlers
         window.addEventListener('offline', updateNetworkStatus);
         window.addEventListener('online', updateNetworkStatus);
         updateNetworkStatus();
@@ -666,7 +648,7 @@
             if (!navigator.onLine) {
                 ind.innerHTML = `<span class="w-2 h-2 rounded-full bg-red-500 shadow-[0_0_8px_rgba(var(--tw-colors-red-500),0.8)]"></span> Offline - Predictions Unavailable`;
             } else if (currentUser) {
-                // Return to normal
+
                 ind.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(var(--tw-colors-emerald-500),0.8)]"></span> Analysis Complete`;
             }
         }

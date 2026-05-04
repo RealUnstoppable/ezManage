@@ -49,7 +49,6 @@
             --nav-height: 80px;
         }
 
-        /* AMOLED Black Optimization for Anti-Fatigue */
         body.dark-mode {
             --bg-color: #000000;
             --card-bg: #0a0a0a;
@@ -254,7 +253,6 @@
             transform: translateX(0);
         }
 
-        /* The PDF Output Mirror CSS */
         @media print {
             body {
                 background: white;
@@ -1154,7 +1152,7 @@
     </div>
 
     <script>
-        // FIREBASE CONFIG
+
         const firebaseConfig = {
             apiKey: "AIzaSyBgrI9HwJPSc5b4pu2Egsv4DE7shNwptSw",
             authDomain: "dts-hub-website.firebaseapp.com",
@@ -1219,7 +1217,7 @@
                         if (activeView && activeView.id === 'view-auth') navTo('tracker');
                         runAIPatternLogic();
                     } else {
-                        // Attempt to recover data if it was manually keyed by email in Firestore
+
                         if (!doc.exists || !doc.data().name) {
                             try {
                                 const emailDoc = await db.collection("users").doc(user.email).get();
@@ -1248,7 +1246,6 @@
             }
         });
 
-        // AI Workflow Pattern Logic
         function runAIPatternLogic() {
             const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
             const today = days[new Date().getDay()];
@@ -1262,10 +1259,9 @@
             document.getElementById('aiSuggestionText').innerText = msg;
         }
 
-        // ToS & Cloud Opt-In Logic
         function triggerCloudOptIn(checkbox) {
             if (checkbox.checked) {
-                // Temporarily uncheck until they accept the ToS
+
                 checkbox.checked = false;
                 document.getElementById('tosModal').classList.remove('hidden');
             } else {
@@ -1290,7 +1286,7 @@
             db.collection('users').doc(currentUser.uid).set({ cloudSyncEnabled: true }, { merge: true });
             localStorage.setItem(`ezManage_cloudEnabled_${currentUser.uid}`, 'true');
             updateCloudSyncUI();
-            triggerDraftSync(); // Immediately sync local to cloud
+            triggerDraftSync();
         }
 
         function declineToS() {
@@ -1363,7 +1359,7 @@
                 } catch (err) {
                     alert("Invalid JSON file.");
                 }
-                event.target.value = ""; // Reset input
+                event.target.value = "";
             };
             reader.readAsText(file);
         }
@@ -1431,7 +1427,7 @@
             db.collection('users').doc(currentUser.uid).set(data, { merge: true }).then(() => {
                 currentUser.updateProfile({ displayName: data.name });
                 document.getElementById('shiftManager').value = data.name;
-                // Force user to see ToS on first app load if they try to use cloud later
+
                 navTo('tracker');
             });
         }
@@ -1620,7 +1616,6 @@
             // Local Storage (Always active - "Save to Files" focus)
             localStorage.setItem(`ezManage_draft_${currentUser.uid}`, JSON.stringify(state));
 
-            // Enterprise Cloud Sync (Opt-In Only)
             if (cloudSyncEnabled) {
                 clearTimeout(cloudSyncTimeout);
                 cloudSyncTimeout = setTimeout(() => {
@@ -1665,7 +1660,6 @@
                 } catch (e) { console.error("Local parse err", e); }
             }
 
-            // Fallback to Cloud if local empty and cloud is enabled
             if (cloudSyncEnabled && currentUserData && currentUserData.trackerDraft) {
                 populateTrackerFromState(currentUserData.trackerDraft);
             } else {
@@ -2011,7 +2005,6 @@
 
             document.getElementById('printNotesBlock').innerText = state.prepNotes || "No notes provided.";
 
-            // Save to cloud only if enabled, else save locally
             if (cloudSyncEnabled) {
                 manualSaveHistory();
             } else {
@@ -2044,7 +2037,7 @@
                 aiTrainingEnabled: document.getElementById('profileAIToggle').checked
             };
             db.collection('users').doc(currentUser.uid).set(data, { merge: true }).then(() => {
-                // Save to localStorage for instant cross-page checking
+
                 localStorage.setItem(`ezManage_aiEnabled_${currentUser.uid}`, data.aiTrainingEnabled);
                 localStorage.setItem(`ezManage_cloudEnabled_${currentUser.uid}`, cloudSyncEnabled);
                 alert("Profile Updated!");
@@ -2227,14 +2220,12 @@
             lucide.createIcons();
             initDefaults();
 
-            // Service Worker Registration
             if ('serviceWorker' in navigator) {
                 navigator.serviceWorker.register('./sw.js')
                     .then(() => console.log("Service Worker Registered"))
                     .catch(err => console.error("Service Worker Registration Failed:", err));
             }
 
-            // Network status handlers
             window.addEventListener('offline', updateNetworkStatus);
             window.addEventListener('online', updateNetworkStatus);
             updateNetworkStatus();
@@ -2250,7 +2241,7 @@
                 syncText.classList.add('text-red-500');
             } else {
                 syncText.classList.remove('text-red-500');
-                updateCloudSyncUI(); // Revert to normal cloud sync UI state
+                updateCloudSyncUI();
             }
         }
 

@@ -1,4 +1,4 @@
-// js/checkout.js
+
 import { auth, db } from './auth.js';
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
 import { doc, getDoc, setDoc, serverTimestamp, runTransaction } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
@@ -16,12 +16,11 @@ function renderCheckoutPage() {
     }
 
     const subtotal = Object.entries(userCart).reduce((sum, [productId, quantity]) => {
-        // ⚡ Bolt Performance Optimization:
-        // Replaced O(N) array.find() with O(1) dictionary lookup using productMap
+
         const product = productMap[productId];
         return sum + (product.price * quantity);
     }, 0);
-    const tax = subtotal * 0.07; // 7% tax
+    const tax = subtotal * 0.07;
     const total = subtotal + tax;
 
     checkoutContainer.innerHTML = `
@@ -59,8 +58,7 @@ function renderCheckoutPage() {
                 <h3>Order Summary</h3>
                 <div id="summary-items">
                     ${Object.entries(userCart).map(([productId, quantity]) => {
-        // ⚡ Bolt Performance Optimization:
-        // Replaced O(N) array.find() with O(1) dictionary lookup using productMap
+
         const product = productMap[productId];
         return `<div class="summary-item"><span>${quantity}x ${product.name}</span> <span>$${(product.price * quantity).toFixed(2)}</span></div>`;
     }).join('')}
@@ -98,7 +96,7 @@ async function handlePlaceOrder(e) {
     };
 
     try {
-        // New Feature: Use a transaction to ensure atomicity
+
         await runTransaction(db, async (transaction) => {
             // ⚡ Bolt Performance Optimization:
             // Pre-fetch all product_stats documents concurrently before writing to prevent N+1 query bottlenecks

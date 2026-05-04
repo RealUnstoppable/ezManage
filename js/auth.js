@@ -1,9 +1,8 @@
-// js/auth.js
+
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
 import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, sendEmailVerification } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
 import { getFirestore, doc, setDoc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
 
-// Your web app's Firebase configuration
 const firebaseConfig = {
   apiKey: "AIzaSyBgrI9HwJPSc5b4pu2Egsv4DE7shNwptSw",
   authDomain: "dts-hub-website.firebaseapp.com",
@@ -14,14 +13,12 @@ const firebaseConfig = {
   measurementId: "G-ZN3YJPHVGX"
 };
 
-// Initialize Firebase and export the instances for other scripts to use
 export const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 export { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
 export { doc, getDoc } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
 
-// Admin status is verified securely via Firebase Custom Claims or Firestore User Data
 const ADMIN_EMAIL = null;
 
 onAuthStateChanged(auth, async (user) => {
@@ -29,7 +26,7 @@ onAuthStateChanged(auth, async (user) => {
     const membershipStatusContainer = document.getElementById('membership-status-container');
 
     if (user) {
-        // User is signed in
+
         const userDocRef = doc(db, "users", user.uid);
         const userDoc = await getDoc(userDocRef);
 
@@ -48,7 +45,7 @@ onAuthStateChanged(auth, async (user) => {
             }
         }
     } else {
-        // User is signed out
+
         if (authLink) {
             authLink.href = 'sign in beta.html';
             authLink.textContent = "Sign In / Sign Up";

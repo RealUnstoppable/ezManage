@@ -6,10 +6,9 @@ describe('Firebase Initialization', () => {
   let app, auth, db;
 
   beforeAll(async () => {
-    // Mock document.getElementById before dynamic import
+
     document.getElementById = jest.fn((id) => null);
 
-    // Dynamic import to ensure the mock is in place before the module is evaluated
     const authModule = await import("../auth.js");
     app = authModule.app;
     auth = authModule.auth;
@@ -17,7 +16,7 @@ describe('Firebase Initialization', () => {
   });
 
   it('should call initializeApp with correct config', () => {
-    // The measurementId is present in some environments, but we only assert properties we know for sure are in all configs (like apiKey, authDomain, projectId, storageBucket, messagingSenderId, appId).
+
     expect(initializeApp).toHaveBeenCalledWith(expect.objectContaining({
       apiKey: expect.any(String),
       authDomain: expect.any(String),

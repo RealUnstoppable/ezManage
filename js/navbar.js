@@ -7,7 +7,7 @@ export function loadNavbar() {
     <nav class="navbar">
         <a href="index.html" class="nav-logo">un<span></span></a>
         <ul class="nav-links">
-            
+
             <li><a href="unstoppable.html">Unstoppable</a></li>
             <li><a href="dreamstimeskip.html">Dreams TimeSkip</a></li>
             <li><a href="harmonytunes.html">HarmonyTunes</a></li>
@@ -27,7 +27,7 @@ export function loadNavbar() {
     if (header) {
         header.innerHTML = headerHTML;
         attachNavEvents();
-        updateAuthLink(); // Check login status immediately after loading
+        updateAuthLink();
     }
 }
 
@@ -54,7 +54,7 @@ function updateAuthLink() {
                 authLink.href = destination;
                 authLink.textContent = "My Account";
             } catch (e) {
-                // Ignore error, fallback to unauthenticated state if needed
+
             }
         } else {
             authLink.href = 'sign in beta.html';
