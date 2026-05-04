@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ezManage | Admin Intelligence Panel</title>
+    <link rel="icon" type="image/jpeg" href="ManagerPro.jpg?v=2">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --bg: #050508;
+            --surface: #0d0d14;
+            --surface2: #13131e;
+            --border: #1e1e2e;
+            --accent: #6366f1;
+            --accent2: #22d3ee;
+            --accent3: #a78bfa;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --text: #e2e8f0;
+            --muted: #64748b;
+            --radius: 16px;
+        }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+        /* ---- GATE ---- */
+        #gate { position: fixed; inset: 0; z-index: 999; background: var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; }
+        #gate h1 { font-size: 2rem; font-weight: 900; background: linear-gradient(135deg, var(--accent), var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        #gate p { color: var(--muted); font-size: 0.9rem; }
+        #gate input { background: var(--surface2); border: 1px solid var(--border); color: var(--text); padding: 12px 18px; border-radius: 10px; font-size: 1rem; width: 320px; outline: none; }
+        #gate input:focus { border-color: var(--accent); }
+        #gate button { background: var(--accent); color: #fff; border: none; padding: 12px 32px; border-radius: 10px; font-weight: 700; cursor: pointer; font-size: 0.95rem; transition: opacity 0.2s; }
+        #gate button:hover { opacity: 0.85; }
+        #gate .err { color: var(--danger); font-size: 0.85rem; }
+
+        /* ---- LAYOUT ---- */
+        #app { display: none; }
+        nav { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 32px; height: 64px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 50; }
+        nav .brand { display: flex; align-items: center; gap: 10px; font-weight: 900; font-size: 1.1rem; }
+        nav .brand span { background: linear-gradient(135deg, var(--accent), var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        nav .badge { background: var(--accent); color: #fff; font-size: 0.65rem; font-weight: 800; letter-spacing: 0.1em; padding: 3px 8px; border-radius: 99px; text-transform: uppercase; }
+        nav .nav-right { display: flex; align-items: center; gap: 16px; font-size: 0.85rem; color: var(--muted); }
+        nav .nav-right strong { color: var(--text); }
+        nav .sign-out { background: var(--surface2); border: 1px solid var(--border); color: var(--muted); padding: 7px 16px; border-radius: 8px; cursor: pointer; font-size: 0.8rem; transition: all 0.2s; }
+        nav .sign-out:hover { border-color: var(--danger); color: var(--danger); }
+
+        main { padding: 32px; max-width: 1600px; margin: 0 auto; }
+
+        /* ---- CARDS ---- */
+        .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; }
+        .card-title { font-size: 0.7rem; font-weight: 800; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+        .card-value { font-size: 2.4rem; font-weight: 900; line-height: 1; }
+        .card-sub { font-size: 0.8rem; color: var(--muted); margin-top: 4px; }
+
+        /* ---- GRID ---- */
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 28px; }
+        .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 28px; }
+        .full-grid { display: grid; grid-template-columns: 1fr; gap: 20px; }
+
+        @media (max-width: 900px) { .charts-grid { grid-template-columns: 1fr; } main { padding: 16px; } }
+
+        /* ---- TABLE ---- */
+        .tbl-wrap { overflow-x: auto; margin-top: 16px; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+        th { text-align: left; padding: 10px 14px; font-size: 0.65rem; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); border-bottom: 1px solid var(--border); }
+        td { padding: 12px 14px; border-bottom: 1px solid var(--border); color: var(--text); vertical-align: middle; }
+        tr:last-child td { border-bottom: none; }
+        tr:hover td { background: var(--surface2); }
+
+        /* ---- BADGES ---- */
+        .pill { display: inline-block; font-size: 0.65rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; padding: 3px 9px; border-radius: 99px; }
+        .pill-pro { background: rgba(99,102,241,.2); color: var(--accent3); }
+        .pill-free { background: rgba(100,116,139,.15); color: var(--muted); }
+        .pill-active { background: rgba(16,185,129,.15); color: var(--success); }
+        .pill-off { background: rgba(239,68,68,.1); color: var(--danger); }
+
+        /* ---- ACCENT NUMBERS ---- */
+        .accent-indigo { color: var(--accent); }
+        .accent-cyan   { color: var(--accent2); }
+        .accent-purple { color: var(--accent3); }
+        .accent-green  { color: var(--success); }
+        .accent-amber  { color: var(--warning); }
+
+        /* ---- SECTION HEADER ---- */
+        .section-hd { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+        .section-hd h2 { font-size: 1rem; font-weight: 800; }
+        .section-hd p  { font-size: 0.8rem; color: var(--muted); margin-top: 2px; }
+
+        /* ---- LOADING ---- */
+        .spinner { width: 36px; height: 36px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 60px auto; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ---- TOP ITEM BARS ---- */
+        .item-bar { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+        .item-bar-label { font-size: 0.85rem; font-weight: 600; min-width: 140px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .item-bar-track { flex: 1; height: 8px; background: var(--surface2); border-radius: 99px; overflow: hidden; }
+        .item-bar-fill { height: 100%; border-radius: 99px; background: linear-gradient(90deg, var(--accent), var(--accent2)); }
+        .item-bar-val { font-size: 0.8rem; font-weight: 700; color: var(--muted); min-width: 40px; text-align: right; }
+
+        canvas { max-height: 280px; }
+    </style>
+</head>
+<body>
+
+<!-- AUTH GATE -->
+<div id="gate">
+    <div style="font-size:2.5rem; margin-bottom:4px;">🔐</div>
+    <h1>Admin Intelligence Panel</h1>
+    <p>Restricted access — sign in with your admin account.</p>
+    <input type="email" id="gEmail" placeholder="Email" autocomplete="email">
+    <input type="password" id="gPass" placeholder="Password" style="margin-top:4px;" autocomplete="current-password">
+    <button onclick="gateSignIn()">Sign In</button>
+    <p class="err" id="gateErr"></p>
+</div>
+
+<!-- MAIN APP -->
+<div id="app">
+    <nav>
+        <div class="brand">
+            <span>ezManage</span>
+            <div class="badge">Admin Panel</div>
+        </div>
+        <div class="nav-right">
+            Signed in as <strong id="navEmail">—</strong>
+            <button class="sign-out" onclick="auth.signOut().then(()=>location.reload())">Sign Out</button>
+        </div>
+    </nav>
+
+    <main>
+        <div id="loadingSpinner"><div class="spinner"></div></div>
+        <div id="dashboard" style="display:none;">
+
+            <!-- KPI ROW -->
+            <div class="stats-grid" id="kpiGrid"></div>
+
+            <!-- CHARTS ROW -->
+            <div class="charts-grid">
+                <div class="card">
+                    <div class="section-hd">
+                        <div><h2>Shifts per Day of Week</h2><p>Which days generate the most activity</p></div>
+                    </div>
+                    <canvas id="chartDays"></canvas>
+                </div>
+                <div class="card">
+                    <div class="section-hd">
+                        <div><h2>Shifts Over Time</h2><p>Monthly aggregate across all users</p></div>
+                    </div>
+                    <canvas id="chartMonthly"></canvas>
+                </div>
+            </div>
+
+            <!-- TOP ITEMS + PLAN SPLIT -->
+            <div class="charts-grid">
+                <div class="card">
+                    <div class="section-hd"><div><h2>Most Tracked Inventory Items</h2><p>Ranked by total appearances in AI training data</p></div></div>
+                    <div id="topItems"></div>
+                </div>
+                <div class="card">
+                    <div class="section-hd"><div><h2>Plan Distribution</h2><p>User subscription breakdown</p></div></div>
+                    <canvas id="chartPlans"></canvas>
+                </div>
+            </div>
+
+            <!-- USER TABLE -->
+            <div class="card">
+                <div class="section-hd">
+                    <div><h2>All Users</h2><p>Complete user roster with AI opt-in status</p></div>
+                    <span id="userCount" style="font-size:0.8rem; color:var(--muted);"></span>
+                </div>
+                <div class="tbl-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Plan</th>
+                                <th>Cloud Sync</th>
+                                <th>AI Training</th>
+                                <th>Shifts Saved</th>
+                                <th>Avg Duration</th>
+                                <th>Signup</th>
+                            </tr>
+                        </thead>
+                        <tbody id="userTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div><!-- /dashboard -->
+    </main>
+</div>
+
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyBgrI9HwJPSc5b4pu2Egsv4DE7shNwptSw",
+        authDomain: "dts-hub-website.firebaseapp.com",
+        projectId: "dts-hub-website",
+        storageBucket: "dts-hub-website.firebasestorage.app",
+        messagingSenderId: "48345990988",
+        appId: "1:48345990988:web:e3662c9b508168546471e9"
+    };
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db   = firebase.firestore();
+
+    const ADMIN_EMAIL = 'catalinandrian1@gmail.com';
+
+    /* ---------- GATE ---------- */
+    function gateSignIn() {
+        const email = document.getElementById('gEmail').value.trim();
+        const pass  = document.getElementById('gPass').value;
+        const err   = document.getElementById('gateErr');
+        err.textContent = '';
+        auth.signInWithEmailAndPassword(email, pass)
+            .catch(e => { err.textContent = e.message; });
+    }
+    document.getElementById('gPass').addEventListener('keydown', e => { if(e.key==='Enter') gateSignIn(); });
+
+    auth.onAuthStateChanged(user => {
+        if (!user) { document.getElementById('gate').style.display = 'flex'; document.getElementById('app').style.display = 'none'; return; }
+        if (user.email !== ADMIN_EMAIL) {
+            auth.signOut();
+            document.getElementById('gateErr').textContent = 'Access denied. Admin only.';
+            return;
+        }
+        document.getElementById('gate').style.display = 'none';
+        document.getElementById('app').style.display = 'block';
+        document.getElementById('navEmail').textContent = user.email;
+        loadDashboard();
+    });
+
+    /* ---------- CHARTS ---------- */
+    function mkChart(id, type, labels, datasets, opts = {}) {
+        const ctx = document.getElementById(id).getContext('2d');
+        return new Chart(ctx, {
+            type,
+            data: { labels, datasets },
+            options: {
+                responsive: true,
+                plugins: { legend: { labels: { color: '#94a3b8', font: { family: 'Inter', size: 11 } } } },
+                scales: type !== 'pie' && type !== 'doughnut' ? {
+                    x: { ticks: { color: '#64748b', font: { family: 'Inter' } }, grid: { color: '#1e1e2e' } },
+                    y: { ticks: { color: '#64748b', font: { family: 'Inter' } }, grid: { color: '#1e1e2e' } }
+                } : {},
+                ...opts
+            }
+        });
+    }
+
+    /* ---------- HELPERS ---------- */
+    function fmt(ts) {
+        if (!ts) return '—';
+        const d = ts.toDate ? ts.toDate() : new Date(ts);
+        return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    }
+
+    function parseNum(val) {
+        if (!val) return 0;
+        const n = parseFloat(val.toString().replace(/[^0-9.]/g, ''));
+        return isNaN(n) ? 0 : n;
+    }
+
+    /* ---------- LOAD ---------- */
+    async function loadDashboard() {
+        const snap = await db.collection('users').get();
+
+        const users = [];
+        snap.forEach(doc => {
+            const d = doc.data();
+            d._uid = doc.id;
+            users.push(d);
+        });
+
+        // Aggregate
+        let totalShifts = 0, totalTime = 0, aiOptIns = 0, cloudOptIns = 0;
+        const dayCount = [0,0,0,0,0,0,0];
+        const monthMap = {};
+        const itemCount = {};
+        const planCount = {};
+
+        users.forEach(u => {
+            const shifts = u.shiftHistory || [];
+            totalShifts += shifts.length;
+            const plan = u.plan || 'Free';
+            planCount[plan] = (planCount[plan] || 0) + 1;
+            if (u.cloudSyncEnabled)   cloudOptIns++;
+            if (u.aiTrainingEnabled !== false && u.cloudSyncEnabled) aiOptIns++;
+
+            shifts.forEach(s => {
+                totalTime += (s.durationMins || 0);
+
+                // Day of week
+                const raw = s.dateSaved || s.date;
+                if (raw) {
+                    let d;
+                    if (String(raw).includes('-')) {
+                        const [y,m,dy] = raw.split('-');
+                        d = new Date(+y, +m-1, +dy);
+                    } else { d = new Date(raw); }
+                    if (!isNaN(d)) dayCount[d.getDay()]++;
+
+                    // Monthly
+                    const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+                    monthMap[key] = (monthMap[key] || 0) + 1;
+                }
+
+                // Inventory items
+                (s.inventory || []).forEach(it => {
+                    if (!it.name) return;
+                    const n = it.name.trim();
+                    itemCount[n] = (itemCount[n] || 0) + 1;
+                });
+            });
+        });
+
+        const avgMins = totalShifts > 0 ? Math.round(totalTime / totalShifts) : 0;
+
+        /* KPIs */
+        const kpis = [
+            { label:'Total Users',         value: users.length,     color:'accent-cyan',   icon:'users' },
+            { label:'Total Shifts Saved',  value: totalShifts,      color:'accent-indigo', icon:'calendar' },
+            { label:'Cloud Sync Users',    value: cloudOptIns,      color:'accent-purple', icon:'cloud' },
+            { label:'AI Training Opt-Ins', value: aiOptIns,         color:'accent-green',  icon:'brain' },
+            { label:'Avg Shift Duration',  value: avgMins+'m',      color:'accent-amber',  icon:'clock' },
+        ];
+        const grid = document.getElementById('kpiGrid');
+        kpis.forEach(k => {
+            grid.innerHTML += `
+            <div class="card" style="display:flex;flex-direction:column;gap:6px;">
+                <div class="card-title">${k.label}</div>
+                <div class="card-value ${k.color}">${k.value}</div>
+            </div>`;
+        });
+
+        /* Day chart */
+        mkChart('chartDays', 'bar',
+            ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'],
+            [{ label:'Shifts', data: dayCount,
+               backgroundColor: ['#6366f1','#22d3ee','#a78bfa','#10b981','#f59e0b','#ef4444','#ec4899'],
+               borderRadius: 8, borderSkipped: false }]);
+
+        /* Monthly chart */
+        const months = Object.keys(monthMap).sort();
+        mkChart('chartMonthly', 'line',
+            months,
+            [{ label:'Shifts', data: months.map(m=>monthMap[m]),
+               borderColor:'#6366f1', backgroundColor:'rgba(99,102,241,0.15)',
+               fill: true, tension: 0.4, pointBackgroundColor:'#6366f1' }]);
+
+        /* Plans doughnut */
+        const planLabels = Object.keys(planCount);
+        const palettes = ['#6366f1','#22d3ee','#a78bfa','#10b981','#f59e0b'];
+        mkChart('chartPlans', 'doughnut', planLabels,
+            [{ data: planLabels.map(p=>planCount[p]),
+               backgroundColor: planLabels.map((_,i)=>palettes[i % palettes.length]),
+               borderWidth: 2, borderColor:'#0d0d14' }]);
+
+        /* Top items bars */
+        const topItems = Object.entries(itemCount).sort((a,b)=>b[1]-a[1]).slice(0, 12);
+        const maxCount = topItems[0]?.[1] || 1;
+        const wrap = document.getElementById('topItems');
+        topItems.forEach(([name, cnt]) => {
+            const pct = Math.round((cnt/maxCount)*100);
+            wrap.innerHTML += `
+            <div class="item-bar">
+                <div class="item-bar-label" title="${name}">${name}</div>
+                <div class="item-bar-track"><div class="item-bar-fill" style="width:${pct}%"></div></div>
+                <div class="item-bar-val">${cnt}</div>
+            </div>`;
+        });
+        if (topItems.length === 0) wrap.innerHTML = '<p style="color:var(--muted);font-size:0.85rem;">No inventory data yet.</p>';
+
+        /* User table */
+        document.getElementById('userCount').textContent = `${users.length} users`;
+        const tbody = document.getElementById('userTableBody');
+
+        function escapeHTML(str) {
+            if (!str) return "";
+            const p = document.createElement("p");
+            p.textContent = str;
+            return p.innerHTML;
+        }
+
+        users.sort((a,b) => (b.shiftHistory||[]).length - (a.shiftHistory||[]).length)
+             .forEach(u => {
+            const shifts = u.shiftHistory || [];
+            const avgD   = shifts.length ? Math.round(shifts.reduce((s,h)=>s+(h.durationMins||0),0)/shifts.length) : 0;
+            const plan   = u.plan || 'Free';
+            const planPill = (plan.toLowerCase().includes('pro') || plan.toLowerCase().includes('business'))
+                ? `<span class="pill pill-pro">${plan}</span>`
+                : `<span class="pill pill-free">${plan}</span>`;
+            const cloudPill = u.cloudSyncEnabled ? `<span class="pill pill-active">On</span>` : `<span class="pill pill-off">Off</span>`;
+            const aiPill    = (u.aiTrainingEnabled !== false && u.cloudSyncEnabled) ? `<span class="pill pill-active">On</span>` : `<span class="pill pill-off">Off</span>`;
+            tbody.innerHTML += `
+            <tr>
+                <td style="font-weight:700;">${escapeHTML(u.name) || '—'}</td>
+                <td style="color:var(--muted); font-size:0.8rem;">${escapeHTML(u.email) || '—'}</td>
+                <td>${planPill}</td>
+                <td>${cloudPill}</td>
+                <td>${aiPill}</td>
+                <td style="font-weight:700; color:var(--accent2);">${shifts.length}</td>
+                <td>${avgD ? avgD+'m' : '—'}</td>
+                <td style="color:var(--muted); font-size:0.8rem;">${fmt(u.signupDate)}</td>
+            </tr>`;
+        });
+
+        document.getElementById('loadingSpinner').style.display = 'none';
+        document.getElementById('dashboard').style.display = 'block';
+        lucide.createIcons();
+    }
+</script>
+</body>
+</html>

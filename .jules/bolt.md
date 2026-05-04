@@ -1,6 +1,6 @@
-## 2026-04-29 - [Optimized array.find to dictionary lookup]
-**Learning:** Found that `js/shop.js` was doing O(N) array lookups using `.find` when updating the cart, which had an existing dictionary lookup `productMap` available. Also learned that trying to fix tests by modifying `package.json` violates Bolt constraints.
-**Action:** Use existing lookup tables when they are available instead of array searches. Always adhere to constraints of not modifying `package.json` or `tsconfig.json` unless explicitly instructed to.
-## 2026-04-30 - [Import errors for performance maps]
-**Learning:** When attempting to improve performance in `js/checkout.js` by converting O(N) array `.find` lookups to an O(1) dictionary lookup via `productMap`, standard ES6 imports require the export to be explicitly present in `js/shop.js`.
-**Action:** Ensure imports for new performance mappings are correctly referenced and exported from their source files before optimizing the path.
+## 2024-05-24 - [Firestore Transaction N+1 Queries]
+**Learning:** Sequential reads (`await transaction.get()`) inside loops in Firestore transactions create N+1 query performance bottlenecks and can inadvertently violate the strict "read-before-write" SDK constraints if writes (like initializing order docs) are placed before the loop.
+**Action:** Always pre-fetch all required documents concurrently at the start of the transaction using `Promise.all` before executing any write operations (`set`, `update`, `delete`).
+## 2024-05-24 - [Bento Card Mousemove Optimization]
+**Learning:** High-frequency mouse events like `mousemove` that trigger DOM measurements (`getBoundingClientRect`) and style updates (`transform`) cause significant layout thrashing. Wrapping this logic in `requestAnimationFrame` effectively throttles execution to sync with the display refresh rate.
+**Action:** Consistently use `requestAnimationFrame` when updating styles continuously based on high-frequency DOM events (like mouse or scroll events) to ensure smooth animations.

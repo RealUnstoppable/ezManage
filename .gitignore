@@ -10,3 +10,24 @@ functions/node_modules/
 .firebase/
 firebase-debug.log
 coverage/
+
+# Environments
+.env
+functions/.env
+
+# Node modules
+node_modules/
+functions/node_modules/
+
+# Firebase
+.firebase/
+firebase-debug.log
+coverage/
+
+# Electron Build Output (ADD THESE LINES)
+dist/
+release/
+out/
+build/
+*.dmg
+*.app
