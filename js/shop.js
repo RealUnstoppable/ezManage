@@ -39,6 +39,14 @@ export const productMap = products.reduce((acc, product) => {
     return acc;
 }, {});
 
+export function calculateCartTotal(cartData, prodMap) {
+    return Object.entries(cartData).reduce((sum, [productId, quantity]) => {
+        const product = prodMap[productId];
+        if (!product) return sum;
+        return sum + (product.price * quantity);
+    }, 0);
+}
+
 let cart = {};
 let currentUser = null;
 
@@ -100,11 +108,7 @@ function renderCart() {
 
 function updateCartSummary() {
     const itemCount = Object.values(cart).reduce((sum, quantity) => sum + quantity, 0);
-    const totalPrice = Object.entries(cart).reduce((sum, [productId, quantity]) => {
-
-        const product = productMap[productId];
-        return sum + (product.price * quantity);
-    }, 0);
+    const totalPrice = calculateCartTotal(cart, productMap);
 
     cartItemCountEl.textContent = itemCount;
     cartTotalPriceEl.textContent = `$${totalPrice.toFixed(2)}`;
@@ -133,13 +137,12 @@ async function handleRemoveFromCart(productId) {
 }
 
 async function saveCart() {
-    updateCartSummary();
     if (currentUser) {
         try {
             const userCartRef = doc(db, 'carts', currentUser.uid);
             await setDoc(userCartRef, { items: cart });
         } catch (error) {
-
+            console.error("Error saving cart:", error);
         }
     } else {
 
@@ -207,19 +210,23 @@ document.addEventListener('DOMContentLoaded', () => {
         const localCart = localCartData ? JSON.parse(localCartData) : {};
 
         if (user) {
+            try {
+                const userCartRef = doc(db, 'carts', user.uid);
+                const docSnap = await getDoc(userCartRef);
+                const firestoreCart = docSnap.exists() ? docSnap.data().items : {};
 
-            const userCartRef = doc(db, 'carts', user.uid);
-            const docSnap = await getDoc(userCartRef);
-            const firestoreCart = docSnap.exists() ? docSnap.data().items : {};
+                const mergedCart = { ...firestoreCart };
+                for (const [productId, quantity] of Object.entries(localCart)) {
+                    mergedCart[productId] = (mergedCart[productId] || 0) + quantity;
+                }
 
-            const mergedCart = { ...firestoreCart };
-            for (const [productId, quantity] of Object.entries(localCart)) {
-                mergedCart[productId] = (mergedCart[productId] || 0) + quantity;
+                cart = mergedCart;
+                await saveCart();
+                localStorage.removeItem('localCart');
+            } catch (error) {
+                console.error("Error loading cart:", error);
+                cart = localCart;
             }
-
-            cart = mergedCart;
-            await saveCart();
-            localStorage.removeItem('localCart');
         } else {
 
             cart = localCart;

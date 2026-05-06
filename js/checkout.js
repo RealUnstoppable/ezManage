@@ -2,7 +2,7 @@
 import { auth, db } from './auth.js';
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
 import { doc, getDoc, setDoc, serverTimestamp, runTransaction } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
-import { products, productMap } from './shop.js';
+import { products, productMap, calculateCartTotal } from './shop.js';
 
 let currentUser = null;
 let userCart = {};
@@ -15,11 +15,7 @@ function renderCheckoutPage() {
         return;
     }
 
-    const subtotal = Object.entries(userCart).reduce((sum, [productId, quantity]) => {
-
-        const product = productMap[productId];
-        return sum + (product.price * quantity);
-    }, 0);
+    const subtotal = calculateCartTotal(userCart, productMap);
     const tax = subtotal * 0.07;
     const total = subtotal + tax;
 
@@ -135,6 +131,7 @@ async function handlePlaceOrder(e) {
         setTimeout(() => window.location.href = './account.html', 3000);
 
     } catch (error) {
+        console.error("Order processing error:", error);
         messageEl.textContent = 'There was an error placing your order. Please try again.';
         messageEl.style.color = 'var(--accent-red)';
         placeOrderBtn.disabled = false;
@@ -145,9 +142,14 @@ async function handlePlaceOrder(e) {
 onAuthStateChanged(auth, async (user) => {
     if (user) {
         currentUser = user;
-        const userCartRef = doc(db, 'carts', user.uid);
-        const docSnap = await getDoc(userCartRef);
-        userCart = docSnap.exists() ? docSnap.data().items : {};
+        try {
+            const userCartRef = doc(db, 'carts', user.uid);
+            const docSnap = await getDoc(userCartRef);
+            userCart = docSnap.exists() ? docSnap.data().items : {};
+        } catch (error) {
+            console.error("Error loading cart:", error);
+            userCart = {};
+        }
         renderCheckoutPage();
     } else {
         window.location.replace('/sign in beta.html');

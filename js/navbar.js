@@ -54,7 +54,8 @@ function updateAuthLink() {
                 authLink.href = destination;
                 authLink.textContent = "My Account";
             } catch (e) {
-
+                console.error("Error fetching user role:", e);
+                // Ignore error, fallback to unauthenticated state if needed
             }
         } else {
             authLink.href = 'sign in beta.html';
