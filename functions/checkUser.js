@@ -4,6 +4,9 @@ admin.initializeApp({
   projectId: "dts-hub-website",
 });
 
+/**
+ * Checks if a specific user exists in Firebase Auth and Firestore.
+ */
 async function run() {
   try {
     const userRecord = await admin.auth().getUserByEmail("catalinandrian1@gmail.com");

@@ -4,3 +4,6 @@
 ## 2024-05-24 - [Bento Card Mousemove Optimization]
 **Learning:** High-frequency mouse events like `mousemove` that trigger DOM measurements (`getBoundingClientRect`) and style updates (`transform`) cause significant layout thrashing. Wrapping this logic in `requestAnimationFrame` effectively throttles execution to sync with the display refresh rate.
 **Action:** Consistently use `requestAnimationFrame` when updating styles continuously based on high-frequency DOM events (like mouse or scroll events) to ensure smooth animations.
+## 2024-05-24 - [Firestore Dashboard N+1 Queries]
+**Learning:** Sequential reads (`await getDocs()`) for independent collections in dashboard views create N+1 query performance bottlenecks and significantly increase overall page load latency.
+**Action:** Always fetch independent data requirements concurrently using `Promise.all` or `Promise.allSettled` when initializing complex dashboard pages.

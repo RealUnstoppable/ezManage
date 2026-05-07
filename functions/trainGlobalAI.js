@@ -30,6 +30,11 @@ exports.trainGlobalAI = onSchedule("every 24 hours", async (event) => {
     return null;
   }
 
+  /**
+   * Parses a date string and returns the day of the week (0-6).
+   * @param {string} dateString - The date string to parse.
+   * @return {number} The day of the week, or -1 if invalid.
+   */
   function getDayOfWeek(dateString) {
     if (!dateString) return -1;
     let d;
@@ -43,6 +48,11 @@ exports.trainGlobalAI = onSchedule("every 24 hours", async (event) => {
     return d.getDay();
   }
 
+  /**
+   * Parses a value into a floating point number.
+   * @param {any} val - The value to parse.
+   * @return {number} The parsed number, or 0 if invalid.
+   */
   function parseNum(val) {
     if (!val) return 0;
     const parsed = parseFloat(val.toString().replace(/[^0-9.]/g, ""));
