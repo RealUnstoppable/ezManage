@@ -2,7 +2,7 @@
 import { auth, db } from './auth.js';
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
 import { doc, getDoc, setDoc, serverTimestamp, runTransaction } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
-import { products, productMap } from './shop.js';
+import { products, productMap, calculateCartTotal } from './shop.js';
 
 let currentUser = null;
 let userCart = {};
@@ -15,11 +15,7 @@ function renderCheckoutPage() {
         return;
     }
 
-    const subtotal = Object.entries(userCart).reduce((sum, [productId, quantity]) => {
-
-        const product = productMap[productId];
-        return sum + (product.price * quantity);
-    }, 0);
+    const subtotal = calculateCartTotal(userCart, productMap);
     const tax = subtotal * 0.07;
     const total = subtotal + tax;
 
@@ -135,6 +131,7 @@ async function handlePlaceOrder(e) {
         setTimeout(() => window.location.href = './account.html', 3000);
 
     } catch (error) {
+        console.error("Checkout order error:", error);
         messageEl.textContent = 'There was an error placing your order. Please try again.';
         messageEl.style.color = 'var(--accent-red)';
         placeOrderBtn.disabled = false;

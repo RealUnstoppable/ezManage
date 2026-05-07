@@ -29,7 +29,9 @@ document.querySelectorAll('.signup-form').forEach(form => {
                     messageEl.style.display = 'none';
                 }, 5000);
             } catch (error) {
-                alert("There was an error subscribing. Please try again later.");
+                console.error("Newsletter subscription error:", error);
+                messageEl.textContent = "There was an error subscribing. Please try again later.";
+                messageEl.className = 'newsletter-message error';
             }
         }
     });

@@ -98,22 +98,30 @@ function renderCart() {
     updateCartSummary();
 }
 
-function updateCartSummary() {
-    const itemCount = Object.values(cart).reduce((sum, quantity) => sum + quantity, 0);
-    const totalPrice = Object.entries(cart).reduce((sum, [productId, quantity]) => {
-
-        const product = productMap[productId];
+export function calculateCartTotal(cartData, productMapData) {
+    return Object.entries(cartData).reduce((sum, [productId, quantity]) => {
+        const product = productMapData[productId];
+        if (!product) return sum;
         return sum + (product.price * quantity);
     }, 0);
+}
+
+function updateCartSummary() {
+    const itemCount = Object.values(cart).reduce((sum, quantity) => sum + quantity, 0);
+    const totalPrice = calculateCartTotal(cart, productMap);
 
     cartItemCountEl.textContent = itemCount;
     cartTotalPriceEl.textContent = `$${totalPrice.toFixed(2)}`;
 }
 
-async function handleAddToCart(productId) {
-    cart[productId] = (cart[productId] || 0) + 1;
+async function updateCartState() {
     await saveCart();
     renderCart();
+}
+
+async function handleAddToCart(productId) {
+    cart[productId] = (cart[productId] || 0) + 1;
+    await updateCartState();
 }
 
 async function handleUpdateQuantity(productId, quantity) {
@@ -121,28 +129,24 @@ async function handleUpdateQuantity(productId, quantity) {
         await handleRemoveFromCart(productId);
     } else {
         cart[productId] = parseInt(quantity, 10);
-        await saveCart();
-        renderCart();
+        await updateCartState();
     }
 }
 
 async function handleRemoveFromCart(productId) {
     delete cart[productId];
-    await saveCart();
-    renderCart();
+    await updateCartState();
 }
 
 async function saveCart() {
-    updateCartSummary();
     if (currentUser) {
         try {
             const userCartRef = doc(db, 'carts', currentUser.uid);
             await setDoc(userCartRef, { items: cart });
         } catch (error) {
-
+            console.error("Cart save error:", error);
         }
     } else {
-
         localStorage.setItem('localCart', JSON.stringify(cart));
     }
 }
