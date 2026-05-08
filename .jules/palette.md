@@ -5,3 +5,7 @@
 ## 2024-05-02 - ARIA labels for dynamic inputs and icon-only buttons
 **Learning:** Icon-only action buttons (like Import/Export JSON) and dynamically generated form inputs (like dynamically added drawer or inventory rows) often lack implicit labels that screen readers rely on. Providing `aria-label` attributes for these dynamic inputs ensures the accessibility tree correctly associates the generated controls with their contextual purpose (e.g., "Drawer Amount", "Freezer Count").
 **Action:** Always ensure that dynamically injected `<input>` elements have either an explicit wrapping `<label>`, an explicit `for` associated `<label>`, or an `aria-label` attribute if screen space prohibits a visible label, so screen reader users understand the input's purpose.
+
+## 2024-05-25 - ARIA labels for icon-only structural controls
+**Learning:** Icon-only navigation controls that are structurally important (such as hamburger menus, close buttons, or sidebar toggles) utilizing text characters (like ☰ or ✕) or simple SVGs often lack implicit labels that screen readers need. This results in them being read out ambiguously or not at all.
+**Action:** Always ensure that custom structural navigation controls without visible text have an `aria-label` attribute (e.g., `aria-label="Open menu"`) to provide clear, actionable context for screen reader users.
