@@ -349,10 +349,12 @@ describe("stripeWebhook", () => {
     mockStripeMock.webhooks.constructEvent.mockReturnValue(mockEvent);
 
     const mockUpdate = jest.fn();
-    const mockDocs = [
-      {id: "user_1", ref: {update: mockUpdate}},
-      {id: "user_2", ref: {update: mockUpdate}},
-    ];
+    const mockDocs = {
+      docs: [
+        {id: "user_1", ref: {update: mockUpdate}},
+        {id: "user_2", ref: {update: mockUpdate}},
+      ]
+    };
 
     const firestoreMock = admin.firestore();
     firestoreMock.get.mockResolvedValue(mockDocs);
@@ -383,9 +385,11 @@ describe("stripeWebhook", () => {
     mockStripeMock.webhooks.constructEvent.mockReturnValue(mockEvent);
 
     const mockUpdate = jest.fn();
-    const mockDocs = [
-      {id: "user_3", ref: {update: mockUpdate}},
-    ];
+    const mockDocs = {
+      docs: [
+        {id: "user_3", ref: {update: mockUpdate}},
+      ]
+    };
 
     const firestoreMock = admin.firestore();
     firestoreMock.get.mockResolvedValue(mockDocs);
