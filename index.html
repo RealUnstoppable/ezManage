@@ -948,12 +948,12 @@
                     <div class="card">
                         <h3 class="text-xl font-black mb-6">Personal Details</h3>
                         <div class="space-y-4">
-                            <input type="text" id="profName" placeholder="Name">
-                            <input type="text" id="profRole" placeholder="Role">
-                            <input type="email" id="profEmail" readonly
+                            <input type="text" id="profName" aria-label="Name" placeholder="Name">
+                            <input type="text" id="profRole" aria-label="Role" placeholder="Role">
+                            <input type="email" id="profEmail" aria-label="Email" readonly
                                 class="bg-slate-50 opacity-60 dark:bg-slate-800">
-                            <input type="text" id="profPhone" placeholder="Phone">
-                            <button onclick="saveProfileToFirebase()" class="btn btn-accent w-full mt-4">Save
+                            <input type="text" id="profPhone" aria-label="Phone" placeholder="Phone">
+                            <button id="saveProfileBtn" onclick="saveProfileToFirebase()" class="btn btn-accent w-full mt-4 disabled:opacity-70 disabled:cursor-not-allowed">Save
                                 Changes</button>
                         </div>
                     </div>
@@ -2050,6 +2050,12 @@
 
         function saveProfileToFirebase() {
             if (!currentUser) return;
+
+            const btn = document.getElementById('saveProfileBtn');
+            const originalText = btn.innerText;
+            btn.disabled = true;
+            btn.innerText = "Saving...";
+
             const data = {
                 name: document.getElementById('profName').value,
                 role: document.getElementById('profRole').value,
@@ -2060,7 +2066,19 @@
 
                 localStorage.setItem(`ezManage_aiEnabled_${currentUser.uid}`, data.aiTrainingEnabled);
                 localStorage.setItem(`ezManage_cloudEnabled_${currentUser.uid}`, cloudSyncEnabled);
-                alert("Profile Updated!");
+
+                btn.classList.replace('btn-accent', 'btn-success');
+                btn.innerText = "Saved!";
+
+                setTimeout(() => {
+                    btn.classList.replace('btn-success', 'btn-accent');
+                    btn.innerText = originalText;
+                    btn.disabled = false;
+                }, 2000);
+            }).catch(err => {
+                alert("Error saving profile: " + err.message);
+                btn.innerText = originalText;
+                btn.disabled = false;
             });
         }
 
