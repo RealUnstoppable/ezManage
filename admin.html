@@ -566,17 +566,18 @@
     async function loadAdminData() {
       try {
         // ⚡ Bolt Performance Optimization:
-        // Refactored sequential Firestore queries into concurrent requests using Promise.allSettled.
-        // This eliminates N+1 fetch bottlenecks, cutting the initial dashboard load time significantly
-        // while safely handling individual collection access errors.
+        // Execute independent Firestore collection fetches concurrently using Promise.allSettled()
+        // instead of sequential await calls. This resolves the N+1 query latency bottleneck
+        // and significantly reduces dashboard load times while maintaining isolated error handling.
         const [
           usersResult,
           cartsResult,
           ordersResult,
-          newsletterResult,
+          subscribersResult,
           bookingsResult,
           quotesResult,
-          featureRequestsResult
+          featureRequestsResult,
+          statsResult
         ] = await Promise.allSettled([
           getDocs(collection(db, "users")),
           getDocs(collection(db, "carts")),
@@ -584,7 +585,8 @@
           getDocs(collection(db, "newsletterSubscribers")),
           getDocs(collection(db, "bookings")),
           getDocs(collection(db, "quotes")),
-          getDocs(collection(db, "feature_requests"))
+          getDocs(collection(db, "feature_requests")),
+          getDoc(doc(db, "site_stats", "downloads"))
         ]);
 
         let users = [];
@@ -609,10 +611,10 @@
         }
 
         let subscribers = [];
-        if (newsletterResult.status === 'fulfilled') {
-          subscribers = newsletterResult.value.docs.map(d => d.data());
+        if (subscribersResult.status === 'fulfilled') {
+          subscribers = subscribersResult.value.docs.map(d => d.data());
         } else {
-          console.error("Error fetching newsletter:", newsletterResult.reason);
+          console.error("Error fetching newsletter:", subscribersResult.reason);
         }
 
         let bookings = [];
@@ -643,7 +645,7 @@
         renderBookingsTable(bookings);
         renderQuotesTable(quotes);
 
-        // Fetch Feature Requests
+        // Fetch Feature Requests (Handle specific error output from original code)
         if (featureRequestsResult.status === 'fulfilled') {
           const requests = featureRequestsResult.value.docs.map(d => ({ id: d.id, ...d.data() }));
           renderFeatureRequestsTable(requests);
@@ -653,13 +655,12 @@
         }
 
         // Download Stats
-        try {
-          const statsRef = doc(db, "site_stats", "downloads");
-          const statsDoc = await getDoc(statsRef);
-          if (statsDoc.exists()) {
-            document.getElementById('download-count-infosheet').textContent = statsDoc.data().infoSheet || 0;
+        if (statsResult.status === 'fulfilled' && statsResult.value.exists()) {
+          document.getElementById('download-count-infosheet').textContent = statsResult.value.data().infoSheet || 0;
+        } else {
+          if (statsResult.status === 'rejected') {
+            console.error("Error loading stats:", statsResult.reason);
           }
-        } catch (e) {
           document.getElementById('download-count-infosheet').textContent = "N/A";
         }
 

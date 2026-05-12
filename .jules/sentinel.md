@@ -14,3 +14,8 @@
 **Vulnerability:** The `/site_stats/{docId}` and `/newsletterSubscribers/{email}` collections in `firestore.rules` allowed unauthenticated public writes (`allow write: if true;`). This enabled any visitor to modify or delete global site statistics and the entire newsletter subscriber list.
 **Learning:** `allow write` in Firestore includes `create`, `update`, and `delete`. Using `allow write: if true` for a public submission form (like a newsletter) inadvertently grants full deletion and modification rights to unauthenticated users.
 **Prevention:** Always use specific verbs (`create`, `update`, `delete`) instead of `write` when configuring rules for public-facing data. Restrict `delete` and broad `update` operations to administrators or the data owner.
+
+## 2026-05-04 - Mass Assignment Vulnerability in User Creation
+**Vulnerability:** The `/users/{userId}` `allow create` rule in `firestore.rules` prevented injection of `isBanned` and `membershipLevel` keys but failed to prevent injection of `plan` and `subscription` keys. This allowed an unauthenticated attacker creating a new user document to elevate their privileges to a paid tier immediately.
+**Learning:** Security controls on document creation must mirror the strictness of document updates. When using `request.resource.data.keys().hasAny()`, it is critical to perform an exhaustive review of all sensitive fields present in the schema to ensure no privileged attributes can be injected via mass assignment.
+**Prevention:** Ensure that the forbidden key lists in `hasAny()` for `create` rules are synchronized with the `hasAny()` lists for `update` rules, comprehensively covering all fields related to roles, billing, and system flags.
