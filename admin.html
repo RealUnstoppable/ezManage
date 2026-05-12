@@ -328,13 +328,13 @@
 <body style="display: none;">
   <div class="mobile-header">
     <h2 style="margin:0; color: var(--accent-blue);">Admin</h2>
-    <button class="hamburger-btn" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
+    <button class="hamburger-btn" aria-label="Toggle Menu" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
   </div>
 
   <div class="admin-layout">
     <aside class="sidebar" id="sidebar">
       <div class="mobile-header" style="justify-content: flex-end;">
-        <button class="hamburger-btn" onclick="document.getElementById('sidebar').classList.remove('open')">✕</button>
+        <button class="hamburger-btn" aria-label="Close Menu" onclick="document.getElementById('sidebar').classList.remove('open')">✕</button>
       </div>
       <div class="sidebar-header">
         <h2>Admin Panel</h2>
@@ -566,18 +566,29 @@
     async function loadAdminData() {
       try {
         // ⚡ Bolt Performance Optimization:
-        // Replaced sequential `await getDocs()` with a concurrent `Promise.allSettled()` execution.
-        // This resolves N+1 latency bottlenecks on dashboard load, fetching all collections in parallel.
-        const [usersResult, cartsResult, ordersResult, newsletterResult, bookingsResult, quotesResult] = await Promise.allSettled([
+        // Execute independent Firestore collection fetches concurrently using Promise.allSettled()
+        // instead of sequential await calls. This resolves the N+1 query latency bottleneck
+        // and significantly reduces dashboard load times while maintaining isolated error handling.
+        const [
+          usersResult,
+          cartsResult,
+          ordersResult,
+          subscribersResult,
+          bookingsResult,
+          quotesResult,
+          featureRequestsResult,
+          statsResult
+        ] = await Promise.allSettled([
           getDocs(collection(db, "users")),
           getDocs(collection(db, "carts")),
           getDocs(collection(db, "orders")),
           getDocs(collection(db, "newsletterSubscribers")),
           getDocs(collection(db, "bookings")),
-          getDocs(collection(db, "quotes"))
+          getDocs(collection(db, "quotes")),
+          getDocs(collection(db, "feature_requests")),
+          getDoc(doc(db, "site_stats", "downloads"))
         ]);
 
-        // Fetch Core Data
         let users = [];
         if (usersResult.status === 'fulfilled') {
           users = usersResult.value.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -600,13 +611,12 @@
         }
 
         let subscribers = [];
-        if (newsletterResult.status === 'fulfilled') {
-          subscribers = newsletterResult.value.docs.map(d => d.data());
+        if (subscribersResult.status === 'fulfilled') {
+          subscribers = subscribersResult.value.docs.map(d => d.data());
         } else {
-          console.error("Error fetching newsletter:", newsletterResult.reason);
+          console.error("Error fetching newsletter:", subscribersResult.reason);
         }
 
-        // Fetch Detailing Bookings & Quotes
         let bookings = [];
         if (bookingsResult.status === 'fulfilled') {
           bookings = bookingsResult.value.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -635,24 +645,22 @@
         renderBookingsTable(bookings);
         renderQuotesTable(quotes);
 
-        // Fetch Feature Requests
-        try {
-          const featureRequestsSnapshot = await getDocs(collection(db, "feature_requests"));
-          const requests = featureRequestsSnapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+        // Fetch Feature Requests (Handle specific error output from original code)
+        if (featureRequestsResult.status === 'fulfilled') {
+          const requests = featureRequestsResult.value.docs.map(d => ({ id: d.id, ...d.data() }));
           renderFeatureRequestsTable(requests);
-        } catch (frError) {
-          console.log("Could not load feature requests. Missing Firestore rules?", frError);
+        } else {
+          console.log("Could not load feature requests. Missing Firestore rules?", featureRequestsResult.reason);
           document.getElementById('feature-request-list-body').innerHTML = `<tr><td colspan="6" style="text-align:center; color:var(--accent-red);">Failed to load Feature Requests. Please check your Firebase Database Rules.</td></tr>`;
         }
 
         // Download Stats
-        try {
-          const statsRef = doc(db, "site_stats", "downloads");
-          const statsDoc = await getDoc(statsRef);
-          if (statsDoc.exists()) {
-            document.getElementById('download-count-infosheet').textContent = statsDoc.data().infoSheet || 0;
+        if (statsResult.status === 'fulfilled' && statsResult.value.exists()) {
+          document.getElementById('download-count-infosheet').textContent = statsResult.value.data().infoSheet || 0;
+        } else {
+          if (statsResult.status === 'rejected') {
+            console.error("Error loading stats:", statsResult.reason);
           }
-        } catch (e) {
           document.getElementById('download-count-infosheet').textContent = "N/A";
         }
 
