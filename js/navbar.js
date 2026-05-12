@@ -1,4 +1,4 @@
-import { auth, db } from './auth.js';
+import { auth, db, getUserRedirectPath } from './auth.js';
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
 import { doc, getDoc } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
 
@@ -50,12 +50,11 @@ function updateAuthLink() {
         if (user) {
             try {
                 const userDoc = await getDoc(doc(db, "users", user.uid));
-                const destination = userDoc.exists() && userDoc.data().isAdmin ? 'admin.html' : 'account.html';
+                const destination = userDoc.exists() ? getUserRedirectPath(userDoc.data()) : 'account.html';
                 authLink.href = destination;
                 authLink.textContent = "My Account";
             } catch (e) {
-                console.error("Error fetching user role:", e);
-                // Ignore error, fallback to unauthenticated state if needed
+                console.error("Navbar auth state error:", e);
             }
         } else {
             authLink.href = 'sign in beta.html';

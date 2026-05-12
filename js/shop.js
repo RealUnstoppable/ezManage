@@ -116,8 +116,8 @@ function updateCartSummary() {
 
 async function handleAddToCart(productId) {
     cart[productId] = (cart[productId] || 0) + 1;
-    await saveCart();
     renderCart();
+    await saveCart();
 }
 
 async function handleUpdateQuantity(productId, quantity) {
@@ -125,15 +125,15 @@ async function handleUpdateQuantity(productId, quantity) {
         await handleRemoveFromCart(productId);
     } else {
         cart[productId] = parseInt(quantity, 10);
-        await saveCart();
         renderCart();
+        await saveCart();
     }
 }
 
 async function handleRemoveFromCart(productId) {
     delete cart[productId];
-    await saveCart();
     renderCart();
+    await saveCart();
 }
 
 async function saveCart() {
@@ -142,7 +142,7 @@ async function saveCart() {
             const userCartRef = doc(db, 'carts', currentUser.uid);
             await setDoc(userCartRef, { items: cart });
         } catch (error) {
-            console.error("Error saving cart:", error);
+            console.error("Error saving cart to Firestore:", error);
         }
     } else {
 

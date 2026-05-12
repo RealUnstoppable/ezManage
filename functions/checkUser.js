@@ -4,6 +4,9 @@ admin.initializeApp({
   projectId: "dts-hub-website",
 });
 
+/**
+ * Run function.
+ */
 async function run() {
   try {
     const userRecord = await admin.auth().getUserByEmail("catalinandrian1@gmail.com");
