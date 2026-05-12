@@ -381,8 +381,7 @@
         <div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
             <div class="flex items-center space-x-3 cursor-pointer" onclick="navTo('welcome')">
                 <div class="relative group">
-                    <img src="ManagerPro.jpg"
-                        alt="ezManage Logo"
+                    <img src="ManagerPro.jpg" alt="ezManage Logo"
                         class="w-10 h-10 rounded-xl shadow-sm border border-white transform transition-transform group-hover:rotate-6">
                 </div>
                 <span
@@ -475,8 +474,7 @@
                 <div class="max-w-6xl mx-auto flex flex-col items-center text-center">
                     <div class="relative mb-12">
                         <div class="absolute inset-0 bg-sky-200 blur-2xl opacity-40 rounded-full scale-110"></div>
-                        <img src="ManagerPro.jpg"
-                            alt="ManagerPro App Logo"
+                        <img src="ManagerPro.jpg" alt="ManagerPro App Logo"
                             class="relative w-28 h-28 rounded-[2.5rem] shadow-2xl ring-1 ring-slate-200">
                     </div>
 
@@ -533,7 +531,9 @@
                             class="text-xs font-black uppercase tracking-widest text-slate-400">Password</label>
                         <input type="password" id="authPass" placeholder="••••••••" required>
                     </div>
-                    <button type="submit" id="authBtn" class="btn btn-accent w-full py-4 mt-4 disabled:opacity-70 disabled:cursor-not-allowed transition-all">Sign In</button>
+                    <button type="submit" id="authBtn"
+                        class="btn btn-accent w-full py-4 mt-4 disabled:opacity-70 disabled:cursor-not-allowed transition-all">Sign
+                        In</button>
                 </form>
 
                 <div class="relative my-8">
@@ -546,7 +546,8 @@
 
                 <button onclick="signInWithGoogle()"
                     class="btn btn-outline w-full py-4 font-bold flex items-center justify-center gap-3">
-                    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="" class="w-5"> Google
+                    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="" class="w-5">
+                    Google
                 </button>
 
                 <p class="mt-8 text-sm text-slate-500">
@@ -630,10 +631,10 @@
                     </div>
                     <div class="flex items-center gap-3">
                         <button onclick="document.getElementById('jsonImportInput').click()"
-                            class="btn btn-outline btn-sm" title="Import JSON" aria-label="Import JSON"><i data-lucide="upload"
-                                class="w-4"></i></button>
-                        <button onclick="exportDataJSON()" class="btn btn-outline btn-sm" title="Export JSON" aria-label="Export JSON"><i
-                                data-lucide="download" class="w-4"></i></button>
+                            class="btn btn-outline btn-sm" title="Import JSON" aria-label="Import JSON"><i
+                                data-lucide="upload" class="w-4"></i></button>
+                        <button onclick="exportDataJSON()" class="btn btn-outline btn-sm" title="Export JSON"
+                            aria-label="Export JSON"><i data-lucide="download" class="w-4"></i></button>
                         <input type="file" id="jsonImportInput" accept=".json" class="hidden"
                             onchange="importDataJSON(event)">
                         <button onclick="navTo('presets')" class="btn btn-outline btn-sm"><i data-lucide="layout"
@@ -679,7 +680,8 @@
                         <h3 class="text-xl font-black mb-2">
                             <button @click="expanded = !expanded" :aria-expanded="expanded" type="button"
                                 class="w-full flex items-center justify-between cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 rounded-lg">
-                                <div class="flex items-center gap-3"><i data-lucide="list-checks" class="text-sky-500"></i>
+                                <div class="flex items-center gap-3"><i data-lucide="list-checks"
+                                        class="text-sky-500"></i>
                                     Routine & ServSafe</div>
                                 <i data-lucide="chevron-down" class="transition-transform no-print"
                                     :class="expanded ? 'rotate-180' : ''"></i>
@@ -699,7 +701,8 @@
                         <h3 class="text-xl font-black mb-2">
                             <button @click="expanded = !expanded" :aria-expanded="expanded" type="button"
                                 class="w-full flex items-center justify-between cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 rounded-lg">
-                                <div class="flex items-center gap-3"><i data-lucide="beef" class="text-amber-600"></i> Prep
+                                <div class="flex items-center gap-3"><i data-lucide="beef" class="text-amber-600"></i>
+                                    Prep
                                     & Labor Stats</div>
                                 <i data-lucide="chevron-down" class="transition-transform no-print"
                                     :class="expanded ? 'rotate-180' : ''"></i>
@@ -744,7 +747,8 @@
                         <h3 class="text-xl font-black mb-2">
                             <button @click="expanded = !expanded" :aria-expanded="expanded" type="button"
                                 class="w-full flex items-center justify-between cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 rounded-lg">
-                                <div class="flex items-center gap-3"><i data-lucide="banknote" class="text-emerald-500"></i>
+                                <div class="flex items-center gap-3"><i data-lucide="banknote"
+                                        class="text-emerald-500"></i>
                                     Cash & Registers</div>
                                 <i data-lucide="chevron-down" class="transition-transform no-print"
                                     :class="expanded ? 'rotate-180' : ''"></i>
@@ -953,7 +957,8 @@
                             <input type="email" id="profEmail" aria-label="Email" readonly
                                 class="bg-slate-50 opacity-60 dark:bg-slate-800">
                             <input type="text" id="profPhone" aria-label="Phone" placeholder="Phone">
-                            <button id="saveProfileBtn" onclick="saveProfileToFirebase()" class="btn btn-accent w-full mt-4 disabled:opacity-70 disabled:cursor-not-allowed">Save
+                            <button id="saveProfileBtn" onclick="saveProfileToFirebase()"
+                                class="btn btn-accent w-full mt-4 disabled:opacity-70 disabled:cursor-not-allowed">Save
                                 Changes</button>
                         </div>
                     </div>
@@ -1078,8 +1083,8 @@
                 <div class="card shadow-2xl mb-12">
                     <h1 class="text-3xl font-black mb-4">Submit Request</h1>
                     <p class="text-slate-500 mb-8">Direct line to the engineering team. Pro users receive priority.</p>
-                    <textarea id="featureReqText" class="h-32 mb-6"
-                        placeholder="I would love it if ezManage could..." aria-label="Feature request description"></textarea>
+                    <textarea id="featureReqText" class="h-32 mb-6" placeholder="I would love it if ezManage could..."
+                        aria-label="Feature request description"></textarea>
                     <button onclick="submitFeatureRequest()" class="btn btn-accent w-full py-4">Send Directly to
                         Admin</button>
                 </div>
