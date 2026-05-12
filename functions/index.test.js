@@ -123,7 +123,7 @@ describe("createCheckoutSession", () => {
         metadata: {
           uid: "test_uid",
           planName: "Business Pro",
-        }
+        },
       },
       success_url: "https://dreamstimeskip-beta.pages.dev/tracker?success=true",
       cancel_url: "https://dreamstimeskip-beta.pages.dev/tracker?canceled=true",
@@ -177,7 +177,7 @@ describe("createCheckoutSession", () => {
         metadata: {
           uid: "test_uid",
           planName: "Pro",
-        }
+        },
       },
       success_url: "https://custom.success",
       cancel_url: "https://custom.cancel",

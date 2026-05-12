@@ -4,6 +4,6 @@
 ## 2024-05-24 - [Bento Card Mousemove Optimization]
 **Learning:** High-frequency mouse events like `mousemove` that trigger DOM measurements (`getBoundingClientRect`) and style updates (`transform`) cause significant layout thrashing. Wrapping this logic in `requestAnimationFrame` effectively throttles execution to sync with the display refresh rate.
 **Action:** Consistently use `requestAnimationFrame` when updating styles continuously based on high-frequency DOM events (like mouse or scroll events) to ensure smooth animations.
-## 2024-05-24 - [Admin Dashboard Concurrent Data Fetching]
-**Learning:** Sequential `await getDocs()` calls on multiple independent collections inside a single function (like an admin dashboard loader) create a severe N+1 network latency bottleneck.
-**Action:** Group independent initial data fetches into a `Promise.allSettled()` array to execute them concurrently, drastically reducing the total time to interactive.
+## 2025-02-28 - [Dashboard N+1 Fetch Bottleneck]
+**Learning:** In dashboards loading multiple independent data sources (like Firebase collections), sequential `await` calls compound latency (N+1 delay).
+**Action:** Always fetch independent datasets concurrently using `Promise.allSettled()` to restrict total load time to the duration of the slowest query, preserving isolated error handling per resource.

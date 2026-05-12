@@ -328,13 +328,13 @@
 <body style="display: none;">
   <div class="mobile-header">
     <h2 style="margin:0; color: var(--accent-blue);">Admin</h2>
-    <button class="hamburger-btn" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
+    <button class="hamburger-btn" aria-label="Toggle Menu" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
   </div>
 
   <div class="admin-layout">
     <aside class="sidebar" id="sidebar">
       <div class="mobile-header" style="justify-content: flex-end;">
-        <button class="hamburger-btn" onclick="document.getElementById('sidebar').classList.remove('open')">✕</button>
+        <button class="hamburger-btn" aria-label="Close Menu" onclick="document.getElementById('sidebar').classList.remove('open')">✕</button>
       </div>
       <div class="sidebar-header">
         <h2>Admin Panel</h2>
@@ -566,13 +566,14 @@
     async function loadAdminData() {
       try {
         // ⚡ Bolt Performance Optimization:
-        // Execute all independent Firestore queries concurrently using Promise.allSettled()
-        // to prevent sequential N+1 network latency bottlenecks and speed up dashboard load time.
+        // Execute independent Firestore collection fetches concurrently using Promise.allSettled()
+        // instead of sequential await calls. This resolves the N+1 query latency bottleneck
+        // and significantly reduces dashboard load times while maintaining isolated error handling.
         const [
           usersResult,
           cartsResult,
           ordersResult,
-          newsletterResult,
+          subscribersResult,
           bookingsResult,
           quotesResult,
           featureRequestsResult,
@@ -591,33 +592,45 @@
         let users = [];
         if (usersResult.status === 'fulfilled') {
           users = usersResult.value.docs.map(d => ({ id: d.id, ...d.data() }));
-        } else { console.error("Error fetching users:", usersResult.reason); }
+        } else {
+          console.error("Error fetching users:", usersResult.reason);
+        }
 
         let carts = [];
         if (cartsResult.status === 'fulfilled') {
           carts = cartsResult.value.docs.map(d => ({ id: d.id, ...d.data() }));
-        } else { console.error("Error fetching carts:", cartsResult.reason); }
+        } else {
+          console.error("Error fetching carts:", cartsResult.reason);
+        }
 
         let orders = [];
         if (ordersResult.status === 'fulfilled') {
           orders = ordersResult.value.docs.map(d => d.data());
-        } else { console.error("Error fetching orders:", ordersResult.reason); }
+        } else {
+          console.error("Error fetching orders:", ordersResult.reason);
+        }
 
         let subscribers = [];
-        if (newsletterResult.status === 'fulfilled') {
-          subscribers = newsletterResult.value.docs.map(d => d.data());
-        } else { console.error("Error fetching newsletter:", newsletterResult.reason); }
+        if (subscribersResult.status === 'fulfilled') {
+          subscribers = subscribersResult.value.docs.map(d => d.data());
+        } else {
+          console.error("Error fetching newsletter:", subscribersResult.reason);
+        }
 
         let bookings = [];
         if (bookingsResult.status === 'fulfilled') {
           bookings = bookingsResult.value.docs.map(d => ({ id: d.id, ...d.data() }));
           bookings.sort((a, b) => new Date(b.appointmentDate) - new Date(a.appointmentDate));
-        } else { console.error("Error fetching bookings:", bookingsResult.reason); }
+        } else {
+          console.error("Error fetching bookings:", bookingsResult.reason);
+        }
 
         let quotes = [];
         if (quotesResult.status === 'fulfilled') {
           quotes = quotesResult.value.docs.map(d => ({ id: d.id, ...d.data() }));
-        } else { console.error("Error fetching quotes:", quotesResult.reason); }
+        } else {
+          console.error("Error fetching quotes:", quotesResult.reason);
+        }
 
         // Core Calculations
         const totalRevenue = orders.reduce((sum, o) => sum + (o.amount || 0), 0);
@@ -632,7 +645,7 @@
         renderBookingsTable(bookings);
         renderQuotesTable(quotes);
 
-        // Feature Requests Renderer
+        // Fetch Feature Requests (Handle specific error output from original code)
         if (featureRequestsResult.status === 'fulfilled') {
           const requests = featureRequestsResult.value.docs.map(d => ({ id: d.id, ...d.data() }));
           renderFeatureRequestsTable(requests);
@@ -641,12 +654,13 @@
           document.getElementById('feature-request-list-body').innerHTML = `<tr><td colspan="6" style="text-align:center; color:var(--accent-red);">Failed to load Feature Requests. Please check your Firebase Database Rules.</td></tr>`;
         }
 
-        // Download Stats Renderer
-        if (statsResult.status === 'fulfilled') {
-          if (statsResult.value.exists()) {
-            document.getElementById('download-count-infosheet').textContent = statsResult.value.data().infoSheet || 0;
-          }
+        // Download Stats
+        if (statsResult.status === 'fulfilled' && statsResult.value.exists()) {
+          document.getElementById('download-count-infosheet').textContent = statsResult.value.data().infoSheet || 0;
         } else {
+          if (statsResult.status === 'rejected') {
+            console.error("Error loading stats:", statsResult.reason);
+          }
           document.getElementById('download-count-infosheet').textContent = "N/A";
         }
 
