@@ -4,6 +4,6 @@
 ## 2024-05-24 - [Bento Card Mousemove Optimization]
 **Learning:** High-frequency mouse events like `mousemove` that trigger DOM measurements (`getBoundingClientRect`) and style updates (`transform`) cause significant layout thrashing. Wrapping this logic in `requestAnimationFrame` effectively throttles execution to sync with the display refresh rate.
 **Action:** Consistently use `requestAnimationFrame` when updating styles continuously based on high-frequency DOM events (like mouse or scroll events) to ensure smooth animations.
-## 2024-05-24 - [Draft Sync Debounce Optimization]
-**Learning:** High-frequency input events (`oninput`) that trigger expensive operations like extensive DOM querying (e.g., parsing a complex form to build a state object) and synchronous `localStorage` writes can block the main UI thread, causing typing jank and layout thrashing.
-**Action:** Always debounce functions tied to high-frequency text input events using `setTimeout` (e.g., 500ms) to batch processing and ensure smooth typing performance.
+## 2025-02-28 - [Dashboard N+1 Fetch Bottleneck]
+**Learning:** In dashboards loading multiple independent data sources (like Firebase collections), sequential `await` calls compound latency (N+1 delay).
+**Action:** Always fetch independent datasets concurrently using `Promise.allSettled()` to restrict total load time to the duration of the slowest query, preserving isolated error handling per resource.
