@@ -71,12 +71,13 @@ exports.trainGlobalAI = onSchedule("every 24 hours", async (event) => {
 
   // 2. Format Training Data
   const trainingData = [];
+  // Optimization: Move constant array outside the loop to prevent re-allocation on every iteration
+  const days = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
   allHistory.forEach((shift) => {
     const day = getDayOfWeek(shift.date);
     if (day === -1) return;
 
     const input = {sun: 0, mon: 0, tue: 0, wed: 0, thu: 0, fri: 0, sat: 0};
-    const days = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
     input[days[day]] = 1;
 
     const output = {};
