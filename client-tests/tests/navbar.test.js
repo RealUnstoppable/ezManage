@@ -5,7 +5,8 @@ import { getDoc } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-fires
 
 jest.mock('../../js/auth.js', () => ({
   auth: {},
-  db: {}
+  db: {},
+  getUserRedirectPath: (userData) => userData && userData.isAdmin ? 'admin.html' : 'account.html'
 }));
 
 describe('loadNavbar', () => {

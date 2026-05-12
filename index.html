@@ -533,7 +533,7 @@
                             class="text-xs font-black uppercase tracking-widest text-slate-400">Password</label>
                         <input type="password" id="authPass" placeholder="••••••••" required>
                     </div>
-                    <button type="submit" id="authBtn" class="btn btn-accent w-full py-4 mt-4">Sign In</button>
+                    <button type="submit" id="authBtn" class="btn btn-accent w-full py-4 mt-4 disabled:opacity-70 disabled:cursor-not-allowed transition-all">Sign In</button>
                 </form>
 
                 <div class="relative my-8">
@@ -1382,17 +1382,30 @@
             const email = document.getElementById('authEmail').value;
             const pass = document.getElementById('authPass').value;
             const btn = document.getElementById('authBtn');
+
+            const originalText = btn.innerText;
             btn.disabled = true;
+            btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> Please wait...`;
+            lucide.createIcons();
+
+            btn.innerHTML = `<i data-lucide="loader-2" class="animate-spin w-5 h-5 mr-2"></i> ${isRegisterMode ? 'Creating Account...' : 'Signing In...'}`;
+            lucide.createIcons();
 
             if (isRegisterMode) {
                 auth.createUserWithEmailAndPassword(email, pass)
                     .then(() => navTo('setup'))
                     .catch(err => alert(err.message))
-                    .finally(() => btn.disabled = false);
+                    .finally(() => {
+                        btn.disabled = false;
+                        btn.innerText = originalText;
+                    });
             } else {
                 auth.signInWithEmailAndPassword(email, pass)
                     .catch(err => alert(err.message))
-                    .finally(() => btn.disabled = false);
+                    .finally(() => {
+                        btn.disabled = false;
+                        btn.innerText = originalText;
+                    });
             }
         }
 
@@ -1608,20 +1621,27 @@
 
         document.getElementById('trackerForm').addEventListener('input', triggerDraftSync);
 
+        let draftSyncDebounceTimer = null; // ⚡ Bolt Optimization: Debounce timer
         function triggerDraftSync() {
             if (!initialDraftLoaded || !currentUser) return;
 
-            const state = getTrackerState();
+            // ⚡ Bolt Performance Optimization:
+            // Debouncing high-frequency events (like typing) to prevent continuous
+            // extensive DOM querying (getTrackerState) and synchronous localStorage writes.
+            clearTimeout(draftSyncDebounceTimer);
+            draftSyncDebounceTimer = setTimeout(() => {
+                const state = getTrackerState();
 
-            // Local Storage (Always active - "Save to Files" focus)
-            localStorage.setItem(`ezManage_draft_${currentUser.uid}`, JSON.stringify(state));
+                // Local Storage (Always active - "Save to Files" focus)
+                localStorage.setItem(`ezManage_draft_${currentUser.uid}`, JSON.stringify(state));
 
-            if (cloudSyncEnabled) {
-                clearTimeout(cloudSyncTimeout);
-                cloudSyncTimeout = setTimeout(() => {
-                    db.collection('users').doc(currentUser.uid).set({ trackerDraft: state }, { merge: true });
-                }, 3000);
-            }
+                if (cloudSyncEnabled) {
+                    clearTimeout(cloudSyncTimeout);
+                    cloudSyncTimeout = setTimeout(() => {
+                        db.collection('users').doc(currentUser.uid).set({ trackerDraft: state }, { merge: true });
+                    }, 3000);
+                }
+            }, 500);
         }
 
         function populateTrackerFromState(draft) {

@@ -6,6 +6,6 @@
 **Learning:** Icon-only action buttons (like Import/Export JSON) and dynamically generated form inputs (like dynamically added drawer or inventory rows) often lack implicit labels that screen readers rely on. Providing `aria-label` attributes for these dynamic inputs ensures the accessibility tree correctly associates the generated controls with their contextual purpose (e.g., "Drawer Amount", "Freezer Count").
 **Action:** Always ensure that dynamically injected `<input>` elements have either an explicit wrapping `<label>`, an explicit `for` associated `<label>`, or an `aria-label` attribute if screen space prohibits a visible label, so screen reader users understand the input's purpose.
 
-## 2026-05-10 - Inline notifications over blocking alerts
-**Learning:** Using `alert()` for success notifications (like saving a profile) abruptly blocks the UI thread and provides a jarring user experience. Transitioning the save button itself into an inline success state (e.g., swapping class to `btn-success` and changing text to "Saved!" temporarily) provides immediate, contextual feedback without disrupting the user flow.
-**Action:** Replace blocking `alert()` popups for routine success notifications with inline, timed UI state changes (using `setTimeout` to revert to default) directly on the interacting element.
+## 2024-05-24 - Async Button Loading States
+**Learning:** Using generic textual changes like "Wait..." on submission buttons often feels disjointed. Adding a combination of `disabled` Tailwind utility classes (`disabled:opacity-70 disabled:cursor-not-allowed`) alongside an animated icon (like Lucide's `loader-2` with `animate-spin`) provides superior visual feedback. It prevents duplicate form submissions and clarifies system state immediately.
+**Action:** Always implement explicit loading and disabled states for asynchronous actions like form submissions, keeping original button text preserved for post-request restoration.

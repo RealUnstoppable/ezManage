@@ -19,6 +19,10 @@ export const db = getFirestore(app);
 export { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
 export { doc, getDoc } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
 
+export function getUserRedirectPath(userData) {
+    return userData && userData.isAdmin ? 'admin.html' : 'account.html';
+}
+
 const ADMIN_EMAIL = null;
 
 onAuthStateChanged(auth, async (user) => {
@@ -32,7 +36,7 @@ onAuthStateChanged(auth, async (user) => {
 
         if (userDoc.exists()) {
             const userData = userDoc.data();
-            const destination = userData.isAdmin ? 'admin.html' : 'account.html';
+            const destination = getUserRedirectPath(userData);
 
             if (authLink) {
                 authLink.href = destination;
@@ -107,6 +111,7 @@ if (document.getElementById('auth-form')) {
                 sessionStorage.setItem('newUser', 'true');
                 window.location.replace('account.html');
             } catch (error) {
+                console.error("Sign up error:", error);
                 showMessage(getFirebaseErrorMessage(error));
                 submitBtn.disabled = false;
             }
@@ -116,7 +121,7 @@ if (document.getElementById('auth-form')) {
                 const userDoc = await getDoc(doc(db, "users", userCredential.user.uid));
 
                 if (userDoc.exists() && userDoc.data().isBanned !== true) {
-                    const destination = userDoc.data().isAdmin ? 'admin.html' : 'account.html';
+                    const destination = getUserRedirectPath(userDoc.data());
                     window.location.replace(destination);
                 } else {
                     await signOut(auth);
@@ -124,6 +129,7 @@ if (document.getElementById('auth-form')) {
                     submitBtn.disabled = false;
                 }
             } catch (error) {
+                console.error("Sign in error:", error);
                 showMessage(getFirebaseErrorMessage(error));
                 submitBtn.disabled = false;
             }
