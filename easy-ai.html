@@ -299,6 +299,13 @@
             }
         });
 
+        function escapeHTML(str) {
+            if (!str) return "";
+            const p = document.createElement("p");
+            p.textContent = str;
+            return p.innerHTML;
+        }
+
         function updateStatus(text, color) {
             const ind = document.getElementById('statusIndicator');
             ind.innerHTML = `<span class="w-2 h-2 rounded-full bg-${color}-500 ${color === 'amber' || color === 'sky' ? 'animate-pulse' : ''} shadow-[0_0_8px_rgba(var(--tw-colors-${color}-500),0.8)]"></span> ${text}`;
@@ -514,7 +521,7 @@
                 div.className = "grid grid-cols-2 md:grid-cols-4 gap-3 p-4 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm items-center hover:border-sky-300 dark:hover:border-sky-700 transition-colors";
 
                 div.innerHTML = `
-                    <div class="col-span-2 md:col-span-1 font-bold text-slate-800 dark:text-slate-200">${name}</div>
+                    <div class="col-span-2 md:col-span-1 font-bold text-slate-800 dark:text-slate-200">${escapeHTML(name)}</div>
 
                     <div class="flex flex-col">
                         <span class="md:hidden text-[9px] font-black uppercase text-slate-400 mb-1">Backline</span>

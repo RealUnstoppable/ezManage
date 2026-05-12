@@ -14,3 +14,12 @@
 **Vulnerability:** The `/site_stats/{docId}` and `/newsletterSubscribers/{email}` collections in `firestore.rules` allowed unauthenticated public writes (`allow write: if true;`). This enabled any visitor to modify or delete global site statistics and the entire newsletter subscriber list.
 **Learning:** `allow write` in Firestore includes `create`, `update`, and `delete`. Using `allow write: if true` for a public submission form (like a newsletter) inadvertently grants full deletion and modification rights to unauthenticated users.
 **Prevention:** Always use specific verbs (`create`, `update`, `delete`) instead of `write` when configuring rules for public-facing data. Restrict `delete` and broad `update` operations to administrators or the data owner.
+## 2026-05-05 - Insecure Access Controls on Unused Collections (IDOR)
+**Vulnerability:** The `/invites/{inviteId}` collection in `firestore.rules` allowed overly permissive access (`allow read, write: if request.auth != null;`), creating an Insecure Direct Object Reference (IDOR) vulnerability where any authenticated user could read or modify any invite.
+**Learning:** Even if a collection is not actively used in the current frontend codebase, overly permissive rules on backend data structures can expose the database to unauthorized scraping or data manipulation if the endpoints exist.
+**Prevention:** Always restrict access to data structures using the Principle of Least Privilege, enforcing strict bounds (like `isAdmin()`) when explicit document ownership mappings are unknown.
+
+## 2026-05-05 - Cross-Site Scripting (XSS) via Unsanitized Interpolation
+**Vulnerability:** In `easy-ai.html`, object keys (`name`) derived from dynamic predictions were interpolated directly into the DOM via `div.innerHTML = \`<div ...>${name}</div>\``.
+**Learning:** Even when data isn't directly sourced from user input (e.g., dynamically inferred object keys), interpolating variables directly into `innerHTML` without escaping can create XSS vectors if upstream dependencies or user configurations define those keys.
+**Prevention:** Always use a utility function (like `escapeHTML`) to sanitize dynamically generated variables before using them in `innerHTML`, or prefer using safer DOM manipulation methods like `.textContent`.
