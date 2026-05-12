@@ -14,3 +14,7 @@
 **Vulnerability:** The `/site_stats/{docId}` and `/newsletterSubscribers/{email}` collections in `firestore.rules` allowed unauthenticated public writes (`allow write: if true;`). This enabled any visitor to modify or delete global site statistics and the entire newsletter subscriber list.
 **Learning:** `allow write` in Firestore includes `create`, `update`, and `delete`. Using `allow write: if true` for a public submission form (like a newsletter) inadvertently grants full deletion and modification rights to unauthenticated users.
 **Prevention:** Always use specific verbs (`create`, `update`, `delete`) instead of `write` when configuring rules for public-facing data. Restrict `delete` and broad `update` operations to administrators or the data owner.
+## 2024-05-10 - Privilege Escalation via User Creation
+**Vulnerability:** The `/users/{userId}` collection allowed unauthenticated attackers to assign themselves roles and billing via the `plan` and `subscription` fields during account creation in Firestore, as only `isBanned` and `membershipLevel` were restricted.
+**Learning:** Security rules MUST enforce field-level restrictions uniformly across BOTH document creation (`create`) and modification (`update`). Allowing free field assignment on `create` while locking them down on `update` creates a gaping privilege escalation hole.
+**Prevention:** Always mirror or expand restricted field lists from `update` statements into the `create` blocks, ensuring that sensitive role or billing fields are strictly prohibited from client-side initiation.
