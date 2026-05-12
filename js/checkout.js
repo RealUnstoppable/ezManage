@@ -131,7 +131,7 @@ async function handlePlaceOrder(e) {
         setTimeout(() => window.location.href = './account.html', 3000);
 
     } catch (error) {
-        console.error("Checkout order error:", error);
+        console.error("Error processing checkout:", error);
         messageEl.textContent = 'There was an error placing your order. Please try again.';
         messageEl.style.color = 'var(--accent-red)';
         placeOrderBtn.disabled = false;
@@ -142,9 +142,14 @@ async function handlePlaceOrder(e) {
 onAuthStateChanged(auth, async (user) => {
     if (user) {
         currentUser = user;
-        const userCartRef = doc(db, 'carts', user.uid);
-        const docSnap = await getDoc(userCartRef);
-        userCart = docSnap.exists() ? docSnap.data().items : {};
+        try {
+            const userCartRef = doc(db, 'carts', user.uid);
+            const docSnap = await getDoc(userCartRef);
+            userCart = docSnap.exists() ? docSnap.data().items : {};
+        } catch (error) {
+            console.error("Error loading cart:", error);
+            userCart = {};
+        }
         renderCheckoutPage();
     } else {
         window.location.replace('/sign in beta.html');

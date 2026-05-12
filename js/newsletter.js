@@ -30,8 +30,7 @@ document.querySelectorAll('.signup-form').forEach(form => {
                 }, 5000);
             } catch (error) {
                 console.error("Newsletter subscription error:", error);
-                messageEl.textContent = "There was an error subscribing. Please try again later.";
-                messageEl.className = 'newsletter-message error';
+                alert("There was an error subscribing. Please try again later.");
             }
         }
     });
