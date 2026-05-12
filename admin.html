@@ -818,8 +818,20 @@
         if (!userId) return;
         const shouldBeBanned = e.target.classList.contains('btn-ban');
         if (confirm(`Are you sure you want to ${shouldBeBanned ? 'ban' : 'unban'} this user?`)) {
-          await updateDoc(doc(db, "users", userId), { isBanned: shouldBeBanned });
-          loadAdminData();
+          try {
+            await updateDoc(doc(db, "users", userId), { isBanned: shouldBeBanned });
+
+            // Localized UI update
+            const row = e.target.closest('tr');
+            const statusCell = row.cells[4];
+            statusCell.innerHTML = shouldBeBanned ? `<span class="status-badge banned">Banned</span>` : `<span class="status-badge active">Active</span>`;
+
+            e.target.textContent = shouldBeBanned ? 'Unban' : 'Ban';
+            e.target.classList.toggle('btn-ban');
+            e.target.classList.toggle('btn-unban');
+          } catch (err) {
+            console.error('Error updating ban status:', err);
+          }
         }
       });
 
@@ -828,8 +840,19 @@
         const reqId = e.target.dataset.id;
         if (!reqId || !e.target.classList.contains('mark-complete-btn')) return;
         if (confirm(`Mark this feature request as complete?`)) {
-          await updateDoc(doc(db, "feature_requests", reqId), { status: 'completed' });
-          loadAdminData();
+          try {
+            await updateDoc(doc(db, "feature_requests", reqId), { status: 'completed' });
+
+            // Localized UI update
+            const row = e.target.closest('tr');
+            const statusCell = row.cells[4];
+            statusCell.innerHTML = `<span style="color:var(--accent-green);">Completed</span>`;
+
+            const actionCell = row.cells[5];
+            actionCell.innerHTML = `<button class="btn-sm" style="background-color:var(--border-color); cursor:not-allowed;" disabled>Done</button>`;
+          } catch (err) {
+            console.error('Error completing feature request:', err);
+          }
         }
       });
 
@@ -839,12 +862,27 @@
         if (!btn) return;
         const action = btn.dataset.action;
         const id = btn.dataset.id;
-        if (action === 'cancel' && confirm("Cancel this booking?")) {
-          await updateDoc(doc(db, "bookings", id), { status: 'cancelled' });
-        } else if (action === 'complete') {
-          await updateDoc(doc(db, "bookings", id), { status: 'completed' });
+        try {
+          if (action === 'cancel' && confirm("Cancel this booking?")) {
+            await updateDoc(doc(db, "bookings", id), { status: 'cancelled' });
+            // Localized UI Update
+            const row = btn.closest('tr');
+            if (row && row.cells[4]) {
+              row.cells[4].innerHTML = `<span class="status-badge cancelled">Cancelled</span>`;
+              row.cells[5].innerHTML = ''; // Clear actions
+            }
+          } else if (action === 'complete') {
+            await updateDoc(doc(db, "bookings", id), { status: 'completed' });
+            // Localized UI Update
+            const row = btn.closest('tr');
+            if (row && row.cells[4]) {
+               row.cells[4].innerHTML = `<span class="status-badge complete">Completed</span>`;
+               row.cells[5].innerHTML = ''; // Clear actions
+            }
+          }
+        } catch (err) {
+          console.error('Error updating booking status:', err);
         }
-        loadAdminData();
       });
 
       // Quotes Action Buttons
@@ -853,12 +891,16 @@
         if (!btn) return;
         const action = btn.dataset.action;
         const id = btn.dataset.id;
-        if (action === 'responded') {
-          await updateDoc(doc(db, "quotes", id), { status: 'responded' });
-        } else if (action === 'delete' && confirm("Delete this quote request?")) {
-          await deleteDoc(doc(db, "quotes", id));
+        try {
+          if (action === 'responded') {
+            await updateDoc(doc(db, "quotes", id), { status: 'responded' });
+          } else if (action === 'delete' && confirm("Delete this quote request?")) {
+            await deleteDoc(doc(db, "quotes", id));
+          }
+          loadAdminData();
+        } catch (err) {
+          console.error('Error processing quote action:', err);
         }
-        loadAdminData();
       });
 
       // Navigation
