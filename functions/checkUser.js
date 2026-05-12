@@ -5,7 +5,7 @@ admin.initializeApp({
 });
 
 /**
- * Checks if a specific user exists in Firebase Auth and Firestore.
+ * Run function.
  */
 async function run() {
   try {
