@@ -328,13 +328,13 @@
 <body style="display: none;">
   <div class="mobile-header">
     <h2 style="margin:0; color: var(--accent-blue);">Admin</h2>
-    <button class="hamburger-btn" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
+    <button class="hamburger-btn" aria-label="Toggle Menu" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
   </div>
 
   <div class="admin-layout">
     <aside class="sidebar" id="sidebar">
       <div class="mobile-header" style="justify-content: flex-end;">
-        <button class="hamburger-btn" onclick="document.getElementById('sidebar').classList.remove('open')">✕</button>
+        <button class="hamburger-btn" aria-label="Close Menu" onclick="document.getElementById('sidebar').classList.remove('open')">✕</button>
       </div>
       <div class="sidebar-header">
         <h2>Admin Panel</h2>
@@ -566,10 +566,19 @@
     async function loadAdminData() {
       try {
         // ⚡ Bolt Performance Optimization:
-        // Execute independent database queries concurrently using Promise.allSettled.
-        // This prevents N+1 latency issues where each await blocks the next query,
-        // drastically reducing total dashboard load time.
-        const promises = [
+        // Execute independent Firestore collection fetches concurrently using Promise.allSettled()
+        // instead of sequential await calls. This resolves the N+1 query latency bottleneck
+        // and significantly reduces dashboard load times while maintaining isolated error handling.
+        const [
+          usersResult,
+          cartsResult,
+          ordersResult,
+          subscribersResult,
+          bookingsResult,
+          quotesResult,
+          featureRequestsResult,
+          statsResult
+        ] = await Promise.allSettled([
           getDocs(collection(db, "users")),
           getDocs(collection(db, "carts")),
           getDocs(collection(db, "orders")),
@@ -578,40 +587,50 @@
           getDocs(collection(db, "quotes")),
           getDocs(collection(db, "feature_requests")),
           getDoc(doc(db, "site_stats", "downloads"))
-        ];
-
-        const results = await Promise.allSettled(promises);
+        ]);
 
         let users = [];
-        if (results[0].status === 'fulfilled') {
-          users = results[0].value.docs.map(d => ({ id: d.id, ...d.data() }));
-        } else { console.error("Error fetching users:", results[0].reason); }
+        if (usersResult.status === 'fulfilled') {
+          users = usersResult.value.docs.map(d => ({ id: d.id, ...d.data() }));
+        } else {
+          console.error("Error fetching users:", usersResult.reason);
+        }
 
         let carts = [];
-        if (results[1].status === 'fulfilled') {
-          carts = results[1].value.docs.map(d => ({ id: d.id, ...d.data() }));
-        } else { console.error("Error fetching carts:", results[1].reason); }
+        if (cartsResult.status === 'fulfilled') {
+          carts = cartsResult.value.docs.map(d => ({ id: d.id, ...d.data() }));
+        } else {
+          console.error("Error fetching carts:", cartsResult.reason);
+        }
 
         let orders = [];
-        if (results[2].status === 'fulfilled') {
-          orders = results[2].value.docs.map(d => d.data());
-        } else { console.error("Error fetching orders:", results[2].reason); }
+        if (ordersResult.status === 'fulfilled') {
+          orders = ordersResult.value.docs.map(d => d.data());
+        } else {
+          console.error("Error fetching orders:", ordersResult.reason);
+        }
 
         let subscribers = [];
-        if (results[3].status === 'fulfilled') {
-          subscribers = results[3].value.docs.map(d => d.data());
-        } else { console.error("Error fetching newsletter:", results[3].reason); }
+        if (subscribersResult.status === 'fulfilled') {
+          subscribers = subscribersResult.value.docs.map(d => d.data());
+        } else {
+          console.error("Error fetching newsletter:", subscribersResult.reason);
+        }
 
         let bookings = [];
-        if (results[4].status === 'fulfilled') {
-          bookings = results[4].value.docs.map(d => ({ id: d.id, ...d.data() }));
+        if (bookingsResult.status === 'fulfilled') {
+          bookings = bookingsResult.value.docs.map(d => ({ id: d.id, ...d.data() }));
           bookings.sort((a, b) => new Date(b.appointmentDate) - new Date(a.appointmentDate));
-        } else { console.error("Error fetching bookings:", results[4].reason); }
+        } else {
+          console.error("Error fetching bookings:", bookingsResult.reason);
+        }
 
         let quotes = [];
-        if (results[5].status === 'fulfilled') {
-          quotes = results[5].value.docs.map(d => ({ id: d.id, ...d.data() }));
-        } else { console.error("Error fetching quotes:", results[5].reason); }
+        if (quotesResult.status === 'fulfilled') {
+          quotes = quotesResult.value.docs.map(d => ({ id: d.id, ...d.data() }));
+        } else {
+          console.error("Error fetching quotes:", quotesResult.reason);
+        }
 
         // Core Calculations
         const totalRevenue = orders.reduce((sum, o) => sum + (o.amount || 0), 0);
@@ -626,26 +645,23 @@
         renderBookingsTable(bookings);
         renderQuotesTable(quotes);
 
-        // Feature Requests
-        if (results[6].status === 'fulfilled') {
-          const requests = results[6].value.docs.map(d => ({ id: d.id, ...d.data() }));
+        // Fetch Feature Requests (Handle specific error output from original code)
+        if (featureRequestsResult.status === 'fulfilled') {
+          const requests = featureRequestsResult.value.docs.map(d => ({ id: d.id, ...d.data() }));
           renderFeatureRequestsTable(requests);
         } else {
-          console.log("Could not load feature requests. Missing Firestore rules?", results[6].reason);
+          console.log("Could not load feature requests. Missing Firestore rules?", featureRequestsResult.reason);
           document.getElementById('feature-request-list-body').innerHTML = `<tr><td colspan="6" style="text-align:center; color:var(--accent-red);">Failed to load Feature Requests. Please check your Firebase Database Rules.</td></tr>`;
         }
 
         // Download Stats
-        if (results[7].status === 'fulfilled') {
-          const statsDoc = results[7].value;
-          if (statsDoc.exists()) {
-            const countEl = document.getElementById('total-downloads') || document.getElementById('download-count-infosheet');
-            if (countEl) countEl.textContent = statsDoc.data().count || statsDoc.data().infoSheet || 0;
-          }
+        if (statsResult.status === 'fulfilled' && statsResult.value.exists()) {
+          document.getElementById('download-count-infosheet').textContent = statsResult.value.data().infoSheet || 0;
         } else {
-          console.error("Error fetching downloads:", results[7].reason);
-          const countEl = document.getElementById('total-downloads') || document.getElementById('download-count-infosheet');
-          if (countEl) countEl.textContent = "N/A";
+          if (statsResult.status === 'rejected') {
+            console.error("Error loading stats:", statsResult.reason);
+          }
+          document.getElementById('download-count-infosheet').textContent = "N/A";
         }
 
       } catch (error) {

@@ -1,3 +1,4 @@
+import { jest } from "@jest/globals";
 import { loadNavbar } from '../../js/navbar.js';
 import * as authModule from '../../js/auth.js';
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
@@ -5,7 +6,8 @@ import { getDoc } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-fires
 
 jest.mock('../../js/auth.js', () => ({
   auth: {},
-  db: {}
+  db: {},
+  getUserRedirectPath: (userData) => userData && userData.isAdmin ? 'admin.html' : 'account.html'
 }));
 
 describe('loadNavbar', () => {
