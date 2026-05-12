@@ -139,7 +139,8 @@ async function saveCart() {
             const userCartRef = doc(db, 'carts', currentUser.uid);
             await setDoc(userCartRef, { items: cart });
         } catch (error) {
-
+            console.error("Error saving cart to Firestore. Please check your connection or permissions:", error);
+            // Ignore error, fallback to unauthenticated state if needed
         }
     } else {
 
