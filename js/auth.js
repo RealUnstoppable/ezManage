@@ -45,7 +45,11 @@ onAuthStateChanged(auth, async (user) => {
 
             if (membershipStatusContainer) {
                 const level = userData.membershipLevel || 'free';
-                membershipStatusContainer.innerHTML = `<span class="membership-status ${level}">${level}</span>`;
+                membershipStatusContainer.textContent = '';
+                const statusSpan = document.createElement('span');
+                statusSpan.className = `membership-status ${level}`;
+                statusSpan.textContent = level;
+                membershipStatusContainer.appendChild(statusSpan);
             }
         }
     } else {
@@ -56,7 +60,7 @@ onAuthStateChanged(auth, async (user) => {
         }
 
         if (membershipStatusContainer) {
-            membershipStatusContainer.innerHTML = '';
+            membershipStatusContainer.textContent = '';
         }
     }
 });
