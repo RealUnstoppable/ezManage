@@ -1,11 +1,9 @@
-module.exports = {
+export default {
   testEnvironment: 'jsdom',
+  transform: {},
   moduleNameMapper: {
     '^https://www.gstatic.com/firebasejs/(.*)$': '<rootDir>/__mocks__/firebase.js'
   },
-  transform: {
-    '^.+\\.jsx?$': 'babel-jest',
-  },
   rootDir: '.',
-  roots: ['<rootDir>/tests'],
+  roots: ['<rootDir>/tests']
 };
