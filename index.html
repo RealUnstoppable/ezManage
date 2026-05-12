@@ -474,7 +474,7 @@
                 <div class="max-w-6xl mx-auto flex flex-col items-center text-center">
                     <div class="relative mb-12">
                         <div class="absolute inset-0 bg-sky-200 blur-2xl opacity-40 rounded-full scale-110"></div>
-                        <img src="ManagerPro.jpg" alt="ManagerPro App Logo"
+                        <img src="ManagerPro.jpg"
                             class="relative w-28 h-28 rounded-[2.5rem] shadow-2xl ring-1 ring-slate-200">
                     </div>
 
@@ -531,9 +531,7 @@
                             class="text-xs font-black uppercase tracking-widest text-slate-400">Password</label>
                         <input type="password" id="authPass" placeholder="••••••••" required>
                     </div>
-                    <button type="submit" id="authBtn"
-                        class="btn btn-accent w-full py-4 mt-4 disabled:opacity-70 disabled:cursor-not-allowed transition-all">Sign
-                        In</button>
+                    <button type="submit" id="authBtn" class="btn btn-accent w-full py-4 mt-4">Sign In</button>
                 </form>
 
                 <div class="relative my-8">
@@ -546,8 +544,7 @@
 
                 <button onclick="signInWithGoogle()"
                     class="btn btn-outline w-full py-4 font-bold flex items-center justify-center gap-3">
-                    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="" class="w-5">
-                    Google
+                    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-5"> Google
                 </button>
 
                 <p class="mt-8 text-sm text-slate-500">
@@ -631,10 +628,10 @@
                     </div>
                     <div class="flex items-center gap-3">
                         <button onclick="document.getElementById('jsonImportInput').click()"
-                            class="btn btn-outline btn-sm" title="Import JSON" aria-label="Import JSON"><i
-                                data-lucide="upload" class="w-4"></i></button>
-                        <button onclick="exportDataJSON()" class="btn btn-outline btn-sm" title="Export JSON"
-                            aria-label="Export JSON"><i data-lucide="download" class="w-4"></i></button>
+                            class="btn btn-outline btn-sm" title="Import JSON"><i data-lucide="upload"
+                                class="w-4"></i></button>
+                        <button onclick="exportDataJSON()" class="btn btn-outline btn-sm" title="Export JSON"><i
+                                data-lucide="download" class="w-4"></i></button>
                         <input type="file" id="jsonImportInput" accept=".json" class="hidden"
                             onchange="importDataJSON(event)">
                         <button onclick="navTo('presets')" class="btn btn-outline btn-sm"><i data-lucide="layout"
@@ -691,7 +688,7 @@
                             <div id="routineContainer" class="grid sm:grid-cols-2 gap-4 mt-4"></div>
                             <div class="mt-8 flex gap-3 no-print">
                                 <input type="text" id="newRoutineTask" placeholder="Add custom daily task..."
-                                    class="flex-1" aria-label="Add custom daily task">
+                                    class="flex-1">
                                 <button type="button" onclick="addRoutineTask()" class="btn btn-outline">Add</button>
                             </div>
                         </div>
@@ -893,7 +890,7 @@
                                 checklists, and register setups so you can recall them instantly.</p>
                             <div class="flex gap-2 mb-8">
                                 <input type="text" id="customPresetName" placeholder="e.g. Closing Shift Layout"
-                                    class="flex-1" aria-label="Custom Preset Name">
+                                    class="flex-1">
                                 <button onclick="saveCustomPreset()" class="btn btn-outline whitespace-nowrap">Save
                                     Current</button>
                             </div>
@@ -952,13 +949,12 @@
                     <div class="card">
                         <h3 class="text-xl font-black mb-6">Personal Details</h3>
                         <div class="space-y-4">
-                            <input type="text" id="profName" aria-label="Name" placeholder="Name">
-                            <input type="text" id="profRole" aria-label="Role" placeholder="Role">
-                            <input type="email" id="profEmail" aria-label="Email" readonly
+                            <input type="text" id="profName" placeholder="Name">
+                            <input type="text" id="profRole" placeholder="Role">
+                            <input type="email" id="profEmail" readonly
                                 class="bg-slate-50 opacity-60 dark:bg-slate-800">
-                            <input type="text" id="profPhone" aria-label="Phone" placeholder="Phone">
-                            <button id="saveProfileBtn" onclick="saveProfileToFirebase()"
-                                class="btn btn-accent w-full mt-4 disabled:opacity-70 disabled:cursor-not-allowed">Save
+                            <input type="text" id="profPhone" placeholder="Phone">
+                            <button onclick="saveProfileToFirebase()" class="btn btn-accent w-full mt-4">Save
                                 Changes</button>
                         </div>
                     </div>
@@ -1083,8 +1079,8 @@
                 <div class="card shadow-2xl mb-12">
                     <h1 class="text-3xl font-black mb-4">Submit Request</h1>
                     <p class="text-slate-500 mb-8">Direct line to the engineering team. Pro users receive priority.</p>
-                    <textarea id="featureReqText" class="h-32 mb-6" placeholder="I would love it if ezManage could..."
-                        aria-label="Feature request description"></textarea>
+                    <textarea id="featureReqText" class="h-32 mb-6"
+                        placeholder="I would love it if ezManage could..."></textarea>
                     <button onclick="submitFeatureRequest()" class="btn btn-accent w-full py-4">Send Directly to
                         Admin</button>
                 </div>
@@ -1387,30 +1383,17 @@
             const email = document.getElementById('authEmail').value;
             const pass = document.getElementById('authPass').value;
             const btn = document.getElementById('authBtn');
-
-            const originalText = btn.innerText;
             btn.disabled = true;
-            btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> Please wait...`;
-            lucide.createIcons();
-
-            btn.innerHTML = `<i data-lucide="loader-2" class="animate-spin w-5 h-5 mr-2"></i> ${isRegisterMode ? 'Creating Account...' : 'Signing In...'}`;
-            lucide.createIcons();
 
             if (isRegisterMode) {
                 auth.createUserWithEmailAndPassword(email, pass)
                     .then(() => navTo('setup'))
                     .catch(err => alert(err.message))
-                    .finally(() => {
-                        btn.disabled = false;
-                        btn.innerText = originalText;
-                    });
+                    .finally(() => btn.disabled = false);
             } else {
                 auth.signInWithEmailAndPassword(email, pass)
                     .catch(err => alert(err.message))
-                    .finally(() => {
-                        btn.disabled = false;
-                        btn.innerText = originalText;
-                    });
+                    .finally(() => btn.disabled = false);
             }
         }
 
@@ -1626,27 +1609,20 @@
 
         document.getElementById('trackerForm').addEventListener('input', triggerDraftSync);
 
-        let draftSyncDebounceTimer = null; // ⚡ Bolt Optimization: Debounce timer
         function triggerDraftSync() {
             if (!initialDraftLoaded || !currentUser) return;
 
-            // ⚡ Bolt Performance Optimization:
-            // Debouncing high-frequency events (like typing) to prevent continuous
-            // extensive DOM querying (getTrackerState) and synchronous localStorage writes.
-            clearTimeout(draftSyncDebounceTimer);
-            draftSyncDebounceTimer = setTimeout(() => {
-                const state = getTrackerState();
+            const state = getTrackerState();
 
-                // Local Storage (Always active - "Save to Files" focus)
-                localStorage.setItem(`ezManage_draft_${currentUser.uid}`, JSON.stringify(state));
+            // Local Storage (Always active - "Save to Files" focus)
+            localStorage.setItem(`ezManage_draft_${currentUser.uid}`, JSON.stringify(state));
 
-                if (cloudSyncEnabled) {
-                    clearTimeout(cloudSyncTimeout);
-                    cloudSyncTimeout = setTimeout(() => {
-                        db.collection('users').doc(currentUser.uid).set({ trackerDraft: state }, { merge: true });
-                    }, 3000);
-                }
-            }, 500);
+            if (cloudSyncEnabled) {
+                clearTimeout(cloudSyncTimeout);
+                cloudSyncTimeout = setTimeout(() => {
+                    db.collection('users').doc(currentUser.uid).set({ trackerDraft: state }, { merge: true });
+                }, 3000);
+            }
         }
 
         function populateTrackerFromState(draft) {
@@ -2055,12 +2031,6 @@
 
         function saveProfileToFirebase() {
             if (!currentUser) return;
-
-            const btn = document.getElementById('saveProfileBtn');
-            const originalText = btn.innerText;
-            btn.disabled = true;
-            btn.innerText = "Saving...";
-
             const data = {
                 name: document.getElementById('profName').value,
                 role: document.getElementById('profRole').value,
@@ -2071,19 +2041,7 @@
 
                 localStorage.setItem(`ezManage_aiEnabled_${currentUser.uid}`, data.aiTrainingEnabled);
                 localStorage.setItem(`ezManage_cloudEnabled_${currentUser.uid}`, cloudSyncEnabled);
-
-                btn.classList.replace('btn-accent', 'btn-success');
-                btn.innerText = "Saved!";
-
-                setTimeout(() => {
-                    btn.classList.replace('btn-success', 'btn-accent');
-                    btn.innerText = originalText;
-                    btn.disabled = false;
-                }, 2000);
-            }).catch(err => {
-                alert("Error saving profile: " + err.message);
-                btn.innerText = originalText;
-                btn.disabled = false;
+                alert("Profile Updated!");
             });
         }
 
