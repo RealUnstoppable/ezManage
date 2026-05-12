@@ -6,6 +6,6 @@
 **Learning:** Icon-only action buttons (like Import/Export JSON) and dynamically generated form inputs (like dynamically added drawer or inventory rows) often lack implicit labels that screen readers rely on. Providing `aria-label` attributes for these dynamic inputs ensures the accessibility tree correctly associates the generated controls with their contextual purpose (e.g., "Drawer Amount", "Freezer Count").
 **Action:** Always ensure that dynamically injected `<input>` elements have either an explicit wrapping `<label>`, an explicit `for` associated `<label>`, or an `aria-label` attribute if screen space prohibits a visible label, so screen reader users understand the input's purpose.
 
-## 2024-05-04 - ARIA labels for icon-only mobile menu buttons
-**Learning:** Icon-only navigation buttons in custom panels (like `admin.html` and `easy-ai.html`) that use simple text characters (e.g., `☰`, `✕`) or SVGs for icons are completely opaque to screen readers.
-**Action:** Always ensure that structural, icon-only navigation controls (hamburger menus, close buttons) have clear `aria-label`s like `aria-label="Open sidebar menu"` to make the application's layout accessible to screen reader users.
+## 2024-05-24 - Async Button Loading States
+**Learning:** Using generic textual changes like "Wait..." on submission buttons often feels disjointed. Adding a combination of `disabled` Tailwind utility classes (`disabled:opacity-70 disabled:cursor-not-allowed`) alongside an animated icon (like Lucide's `loader-2` with `animate-spin`) provides superior visual feedback. It prevents duplicate form submissions and clarifies system state immediately.
+**Action:** Always implement explicit loading and disabled states for asynchronous actions like form submissions, keeping original button text preserved for post-request restoration.
