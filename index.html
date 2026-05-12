@@ -1621,20 +1621,27 @@
 
         document.getElementById('trackerForm').addEventListener('input', triggerDraftSync);
 
+        let draftSyncDebounceTimer = null; // ⚡ Bolt Optimization: Debounce timer
         function triggerDraftSync() {
             if (!initialDraftLoaded || !currentUser) return;
 
-            const state = getTrackerState();
+            // ⚡ Bolt Performance Optimization:
+            // Debouncing high-frequency events (like typing) to prevent continuous
+            // extensive DOM querying (getTrackerState) and synchronous localStorage writes.
+            clearTimeout(draftSyncDebounceTimer);
+            draftSyncDebounceTimer = setTimeout(() => {
+                const state = getTrackerState();
 
-            // Local Storage (Always active - "Save to Files" focus)
-            localStorage.setItem(`ezManage_draft_${currentUser.uid}`, JSON.stringify(state));
+                // Local Storage (Always active - "Save to Files" focus)
+                localStorage.setItem(`ezManage_draft_${currentUser.uid}`, JSON.stringify(state));
 
-            if (cloudSyncEnabled) {
-                clearTimeout(cloudSyncTimeout);
-                cloudSyncTimeout = setTimeout(() => {
-                    db.collection('users').doc(currentUser.uid).set({ trackerDraft: state }, { merge: true });
-                }, 3000);
-            }
+                if (cloudSyncEnabled) {
+                    clearTimeout(cloudSyncTimeout);
+                    cloudSyncTimeout = setTimeout(() => {
+                        db.collection('users').doc(currentUser.uid).set({ trackerDraft: state }, { merge: true });
+                    }, 3000);
+                }
+            }, 500);
         }
 
         function populateTrackerFromState(draft) {
