@@ -22,7 +22,7 @@ service cloud.firestore {
       
       allow create: if isOwner(userId) 
                     && request.resource.data.get('isAdmin', false) == false
-                    && !request.resource.data.keys().hasAny(['isBanned', 'membershipLevel']);
+                    && !request.resource.data.keys().hasAny(['isBanned', 'membershipLevel', 'plan', 'subscription']);
       
       allow update: if (isOwner(userId) 
                         && request.resource.data.get('isAdmin', false) == resource.data.get('isAdmin', false)
