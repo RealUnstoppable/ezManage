@@ -123,7 +123,7 @@ describe("createCheckoutSession", () => {
         metadata: {
           uid: "test_uid",
           planName: "Business Pro",
-        }
+        },
       },
       success_url: "https://dreamstimeskip-beta.pages.dev/tracker?success=true",
       cancel_url: "https://dreamstimeskip-beta.pages.dev/tracker?canceled=true",
@@ -177,7 +177,7 @@ describe("createCheckoutSession", () => {
         metadata: {
           uid: "test_uid",
           planName: "Pro",
-        }
+        },
       },
       success_url: "https://custom.success",
       cancel_url: "https://custom.cancel",
@@ -349,10 +349,12 @@ describe("stripeWebhook", () => {
     mockStripeMock.webhooks.constructEvent.mockReturnValue(mockEvent);
 
     const mockUpdate = jest.fn();
-    const mockDocs = [
-      {id: "user_1", ref: {update: mockUpdate}},
-      {id: "user_2", ref: {update: mockUpdate}},
-    ];
+    const mockDocs = {
+      docs: [
+        {id: "user_1", ref: {update: mockUpdate}},
+        {id: "user_2", ref: {update: mockUpdate}},
+      ]
+    };
 
     const firestoreMock = admin.firestore();
     firestoreMock.get.mockResolvedValue(mockDocs);
@@ -383,9 +385,11 @@ describe("stripeWebhook", () => {
     mockStripeMock.webhooks.constructEvent.mockReturnValue(mockEvent);
 
     const mockUpdate = jest.fn();
-    const mockDocs = [
-      {id: "user_3", ref: {update: mockUpdate}},
-    ];
+    const mockDocs = {
+      docs: [
+        {id: "user_3", ref: {update: mockUpdate}},
+      ]
+    };
 
     const firestoreMock = admin.firestore();
     firestoreMock.get.mockResolvedValue(mockDocs);
