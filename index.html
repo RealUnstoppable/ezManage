@@ -1388,6 +1388,9 @@
             btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> Please wait...`;
             lucide.createIcons();
 
+            btn.innerHTML = `<i data-lucide="loader-2" class="animate-spin w-5 h-5 mr-2"></i> ${isRegisterMode ? 'Creating Account...' : 'Signing In...'}`;
+            lucide.createIcons();
+
             if (isRegisterMode) {
                 auth.createUserWithEmailAndPassword(email, pass)
                     .then(() => navTo('setup'))
