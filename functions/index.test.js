@@ -277,6 +277,42 @@ describe("stripeWebhook", () => {
     expect(res.send).toHaveBeenCalledWith("Webhook Error: Invalid signature");
   });
 
+  it("should return 400 when stripe-signature header is missing", async () => {
+    delete req.headers["stripe-signature"];
+
+    mockStripeMock.webhooks.constructEvent.mockImplementation(() => {
+      throw new Error("No stripe-signature header value was provided.");
+    });
+
+    await stripeWebhook(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.send).toHaveBeenCalledWith("Webhook Error: No stripe-signature header value was provided.");
+  });
+
+  it("should handle firestore error during checkout.session.completed", async () => {
+    const mockEvent = {
+      type: "checkout.session.completed",
+      data: {
+        object: {
+          customer: "cus_123",
+          subscription: "sub_123",
+          metadata: {
+            uid: "user_error",
+            planName: "Pro",
+          },
+        },
+      },
+    };
+    mockStripeMock.webhooks.constructEvent.mockReturnValue(mockEvent);
+
+    const firestoreMock = admin.firestore();
+    firestoreMock.set.mockRejectedValueOnce(new Error("Firestore write failed"));
+
+    await expect(stripeWebhook(req, res)).rejects.toThrow("Firestore write failed");
+    expect(firestoreMock.set).toHaveBeenCalled();
+  });
+
   it("should process checkout.session.completed with a valid UID", async () => {
     const mockEvent = {
       type: "checkout.session.completed",
@@ -368,6 +404,25 @@ describe("stripeWebhook", () => {
       "subscription.status": "canceled",
       "updatedAt": admin.firestore.FieldValue.serverTimestamp(),
     });
+  });
+
+  it("should handle firestore error during customer.subscription.deleted", async () => {
+    const mockEvent = {
+      type: "customer.subscription.deleted",
+      data: {
+        object: {
+          customer: "cus_error",
+        },
+      },
+    };
+
+    mockStripeMock.webhooks.constructEvent.mockReturnValue(mockEvent);
+
+    const firestoreMock = admin.firestore();
+    firestoreMock.get.mockRejectedValueOnce(new Error("Firestore query failed"));
+
+    await expect(stripeWebhook(req, res)).rejects.toThrow("Firestore query failed");
+    expect(firestoreMock.where).toHaveBeenCalledWith("subscription.customerId", "==", "cus_error");
   });
 
   it("should process customer.subscription.canceled", async () => {
