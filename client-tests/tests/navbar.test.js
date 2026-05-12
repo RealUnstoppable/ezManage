@@ -1,3 +1,4 @@
+import { jest } from "@jest/globals";
 import { loadNavbar } from '../../js/navbar.js';
 import * as authModule from '../../js/auth.js';
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
