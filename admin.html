@@ -566,62 +566,70 @@
     async function loadAdminData() {
       try {
         // ⚡ Bolt Performance Optimization:
-        // Execute multiple independent Firestore getDocs() queries concurrently using Promise.allSettled().
-        // This eliminates sequential N+1 latency bottlenecks during dashboard initialization
-        // while preserving error isolation (one query failure won't block the others).
-        let users = [];
-        let carts = [];
-        let orders = [];
-        let subscribers = [];
-        let bookings = [];
-        let quotes = [];
-
-        const queries = [
+        // Execute independent Firestore collection fetches concurrently using Promise.allSettled()
+        // instead of sequential await calls. This resolves the N+1 query latency bottleneck
+        // and significantly reduces dashboard load times while maintaining isolated error handling.
+        const [
+          usersResult,
+          cartsResult,
+          ordersResult,
+          subscribersResult,
+          bookingsResult,
+          quotesResult,
+          featureRequestsResult,
+          statsResult
+        ] = await Promise.allSettled([
           getDocs(collection(db, "users")),
           getDocs(collection(db, "carts")),
           getDocs(collection(db, "orders")),
           getDocs(collection(db, "newsletterSubscribers")),
           getDocs(collection(db, "bookings")),
-          getDocs(collection(db, "quotes"))
-        ];
+          getDocs(collection(db, "quotes")),
+          getDocs(collection(db, "feature_requests")),
+          getDoc(doc(db, "site_stats", "downloads"))
+        ]);
 
-        const results = await Promise.allSettled(queries);
-
-        if (results[0].status === 'fulfilled') {
-          users = results[0].value.docs.map(d => ({ id: d.id, ...d.data() }));
+        let users = [];
+        if (usersResult.status === 'fulfilled') {
+          users = usersResult.value.docs.map(d => ({ id: d.id, ...d.data() }));
         } else {
-          console.error("Error fetching users:", results[0].reason);
+          console.error("Error fetching users:", usersResult.reason);
         }
 
-        if (results[1].status === 'fulfilled') {
-          carts = results[1].value.docs.map(d => ({ id: d.id, ...d.data() }));
+        let carts = [];
+        if (cartsResult.status === 'fulfilled') {
+          carts = cartsResult.value.docs.map(d => ({ id: d.id, ...d.data() }));
         } else {
-          console.error("Error fetching carts:", results[1].reason);
+          console.error("Error fetching carts:", cartsResult.reason);
         }
 
-        if (results[2].status === 'fulfilled') {
-          orders = results[2].value.docs.map(d => d.data());
+        let orders = [];
+        if (ordersResult.status === 'fulfilled') {
+          orders = ordersResult.value.docs.map(d => d.data());
         } else {
-          console.error("Error fetching orders:", results[2].reason);
+          console.error("Error fetching orders:", ordersResult.reason);
         }
 
-        if (results[3].status === 'fulfilled') {
-          subscribers = results[3].value.docs.map(d => d.data());
+        let subscribers = [];
+        if (subscribersResult.status === 'fulfilled') {
+          subscribers = subscribersResult.value.docs.map(d => d.data());
         } else {
-          console.error("Error fetching newsletter:", results[3].reason);
+          console.error("Error fetching newsletter:", subscribersResult.reason);
         }
 
-        if (results[4].status === 'fulfilled') {
-          bookings = results[4].value.docs.map(d => ({ id: d.id, ...d.data() }));
+        let bookings = [];
+        if (bookingsResult.status === 'fulfilled') {
+          bookings = bookingsResult.value.docs.map(d => ({ id: d.id, ...d.data() }));
           bookings.sort((a, b) => new Date(b.appointmentDate) - new Date(a.appointmentDate));
         } else {
-          console.error("Error fetching bookings:", results[4].reason);
+          console.error("Error fetching bookings:", bookingsResult.reason);
         }
 
-        if (results[5].status === 'fulfilled') {
-          quotes = results[5].value.docs.map(d => ({ id: d.id, ...d.data() }));
+        let quotes = [];
+        if (quotesResult.status === 'fulfilled') {
+          quotes = quotesResult.value.docs.map(d => ({ id: d.id, ...d.data() }));
         } else {
-          console.error("Error fetching quotes:", results[5].reason);
+          console.error("Error fetching quotes:", quotesResult.reason);
         }
 
         // Core Calculations
@@ -637,24 +645,22 @@
         renderBookingsTable(bookings);
         renderQuotesTable(quotes);
 
-        // Fetch Feature Requests
-        try {
-          const featureRequestsSnapshot = await getDocs(collection(db, "feature_requests"));
-          const requests = featureRequestsSnapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+        // Fetch Feature Requests (Handle specific error output from original code)
+        if (featureRequestsResult.status === 'fulfilled') {
+          const requests = featureRequestsResult.value.docs.map(d => ({ id: d.id, ...d.data() }));
           renderFeatureRequestsTable(requests);
-        } catch (frError) {
-          console.log("Could not load feature requests. Missing Firestore rules?", frError);
+        } else {
+          console.log("Could not load feature requests. Missing Firestore rules?", featureRequestsResult.reason);
           document.getElementById('feature-request-list-body').innerHTML = `<tr><td colspan="6" style="text-align:center; color:var(--accent-red);">Failed to load Feature Requests. Please check your Firebase Database Rules.</td></tr>`;
         }
 
         // Download Stats
-        try {
-          const statsRef = doc(db, "site_stats", "downloads");
-          const statsDoc = await getDoc(statsRef);
-          if (statsDoc.exists()) {
-            document.getElementById('download-count-infosheet').textContent = statsDoc.data().infoSheet || 0;
+        if (statsResult.status === 'fulfilled' && statsResult.value.exists()) {
+          document.getElementById('download-count-infosheet').textContent = statsResult.value.data().infoSheet || 0;
+        } else {
+          if (statsResult.status === 'rejected') {
+            console.error("Error loading stats:", statsResult.reason);
           }
-        } catch (e) {
           document.getElementById('download-count-infosheet').textContent = "N/A";
         }
 

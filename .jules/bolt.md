@@ -4,6 +4,6 @@
 ## 2024-05-24 - [Bento Card Mousemove Optimization]
 **Learning:** High-frequency mouse events like `mousemove` that trigger DOM measurements (`getBoundingClientRect`) and style updates (`transform`) cause significant layout thrashing. Wrapping this logic in `requestAnimationFrame` effectively throttles execution to sync with the display refresh rate.
 **Action:** Consistently use `requestAnimationFrame` when updating styles continuously based on high-frequency DOM events (like mouse or scroll events) to ensure smooth animations.
-## 2024-05-24 - [Concurrent Firestore Queries]
-**Learning:** Sequentially awaiting multiple independent Firestore `getDocs()` queries (like fetching users, carts, orders, etc., individually) during dashboard load creates a significant N+1 latency bottleneck.
-**Action:** When multiple independent collections must be fetched on page load, aggregate the query promises into an array and execute them concurrently using `Promise.allSettled()`. This pattern effectively eliminates the bottleneck while isolating failures so that one faulty query doesn't block the rendering of the rest of the dashboard.
+## 2025-02-28 - [Dashboard N+1 Fetch Bottleneck]
+**Learning:** In dashboards loading multiple independent data sources (like Firebase collections), sequential `await` calls compound latency (N+1 delay).
+**Action:** Always fetch independent datasets concurrently using `Promise.allSettled()` to restrict total load time to the duration of the slowest query, preserving isolated error handling per resource.
