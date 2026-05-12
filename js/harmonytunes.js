@@ -416,6 +416,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 renderSongTable(userFavorites);
             }
         } catch (e) {
+            console.error("Error toggling favorite:", e);
             if (e.code === 'not-found') {
                 await setDoc(userRef, { musicFavorites: [songId] }, { merge: true });
                 userFavorites.push(song);

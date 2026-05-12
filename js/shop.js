@@ -111,25 +111,46 @@ function updateCartSummary() {
 }
 
 async function handleAddToCart(productId) {
+    const prevCart = { ...cart };
     cart[productId] = (cart[productId] || 0) + 1;
-    await saveCart();
     renderCart();
+    try {
+        await saveCart();
+    } catch (e) {
+        cart = prevCart;
+        renderCart();
+        console.error("Rollback handleAddToCart:", e);
+    }
 }
 
 async function handleUpdateQuantity(productId, quantity) {
+    const prevCart = { ...cart };
     if (quantity <= 0) {
         await handleRemoveFromCart(productId);
     } else {
         cart[productId] = parseInt(quantity, 10);
-        await saveCart();
         renderCart();
+        try {
+            await saveCart();
+        } catch (e) {
+            cart = prevCart;
+            renderCart();
+            console.error("Rollback handleUpdateQuantity:", e);
+        }
     }
 }
 
 async function handleRemoveFromCart(productId) {
+    const prevCart = { ...cart };
     delete cart[productId];
-    await saveCart();
     renderCart();
+    try {
+        await saveCart();
+    } catch (e) {
+        cart = prevCart;
+        renderCart();
+        console.error("Rollback handleRemoveFromCart:", e);
+    }
 }
 
 async function saveCart() {
@@ -139,7 +160,8 @@ async function saveCart() {
             const userCartRef = doc(db, 'carts', currentUser.uid);
             await setDoc(userCartRef, { items: cart });
         } catch (error) {
-
+            console.error("Error saving cart:", error);
+            throw error;
         }
     } else {
 
