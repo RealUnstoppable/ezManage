@@ -7,3 +7,6 @@
 ## 2025-02-28 - [Dashboard N+1 Fetch Bottleneck]
 **Learning:** In dashboards loading multiple independent data sources (like Firebase collections), sequential `await` calls compound latency (N+1 delay).
 **Action:** Always fetch independent datasets concurrently using `Promise.allSettled()` to restrict total load time to the duration of the slowest query, preserving isolated error handling per resource.
+## 2026-05-13 - [Search Input Debouncing]
+**Learning:** High-frequency input events (like `oninput`) that trigger expensive DOM manipulations (like rendering history lists) cause the main UI thread to block, leading to typing jank.
+**Action:** Use a debounce function with `setTimeout` to delay the execution of the render function until the user stops typing, ensuring smooth UI performance.
