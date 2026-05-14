@@ -32,6 +32,12 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-storage-compat.js"></script>
 
     <script src="https://unpkg.com/brain.js@2.0.0-beta.23/dist/browser.js"></script>
+    <script type="module">
+        import { parseNum } from './js/utils/parseUtils.js';
+        import { getDayOfWeek } from './js/utils/dateUtils.js';
+        window.parseNum = parseNum;
+        window.getDayOfWeek = getDayOfWeek;
+    </script>
 
     <style>
         :root {
@@ -375,22 +381,7 @@
             runPrediction(net);
         }
 
-        function getDayOfWeek(dateString) {
-            let d;
-            if (dateString.includes('-')) {
-                d = new Date(dateString + 'T12:00:00Z');
-            } else {
-                d = new Date(dateString);
-            }
-            if (isNaN(d.getTime())) return -1;
-            return d.getDay();
-        }
 
-        function parseNum(val) {
-            if (!val) return 0;
-            const parsed = parseFloat(val.toString().replace(/[^0-9.]/g, ''));
-            return isNaN(parsed) ? 0 : parsed;
-        }
 
         function processDataForNN(history) {
             updateStatus('Training Model...', 'sky');

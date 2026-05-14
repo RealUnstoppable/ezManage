@@ -1,3 +1,4 @@
+import { getFirebaseErrorMessage } from './utils/errorUtils.js';
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
 import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, sendEmailVerification } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
@@ -136,22 +137,7 @@ if (document.getElementById('auth-form')) {
         }
     });
 
-    function getFirebaseErrorMessage(error) {
-        switch (error.code) {
-            case 'auth/invalid-email':
-                return 'Please enter a valid email address.';
-            case 'auth/user-not-found':
-            case 'auth/wrong-password':
-            case 'auth/invalid-credential':
-                return 'Invalid email or password.';
-            case 'auth/email-already-in-use':
-                return 'An account with this email already exists.';
-            case 'auth/weak-password':
-                return 'Password should be at least 6 characters.';
-            default:
-                return 'An unexpected error occurred. Please try again.';
-        }
-    }
+
 
     function showMessage(msg) { messageEl.textContent = msg; }
     updateFormView();
