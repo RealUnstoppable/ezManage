@@ -120,11 +120,6 @@ async function handleAddToCart(productId) {
     await saveCart();
 }
 
-async function handleAddToCart(productId) {
-    cart[productId] = (cart[productId] || 0) + 1;
-    await updateCartState();
-}
-
 async function handleUpdateQuantity(productId, quantity) {
     if (quantity <= 0) {
         await handleRemoveFromCart(productId);
