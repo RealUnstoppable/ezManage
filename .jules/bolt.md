@@ -7,3 +7,6 @@
 ## 2025-02-28 - [Dashboard N+1 Fetch Bottleneck]
 **Learning:** In dashboards loading multiple independent data sources (like Firebase collections), sequential `await` calls compound latency (N+1 delay).
 **Action:** Always fetch independent datasets concurrently using `Promise.allSettled()` to restrict total load time to the duration of the slowest query, preserving isolated error handling per resource.
+## 2024-05-24 - [DOM Insertion Loop Bottleneck]
+**Learning:** Using `element.innerHTML +=` or `element.appendChild()` in a loop causes O(n²) performance degradation and layout thrashing as the browser parses strings and recalculates layout on every single iteration.
+**Action:** When updating lists or rendering multiple components in the frontend, always batch DOM updates. Either accumulate HTML strings in an array, use `Array.prototype.map().join('')`, and apply via a single `.innerHTML` assignment, or use a `DocumentFragment` to batch node appends prior to injecting them into the DOM.

@@ -333,13 +333,13 @@
             { label:'Avg Shift Duration',  value: avgMins+'m',      color:'accent-amber',  icon:'clock' },
         ];
         const grid = document.getElementById('kpiGrid');
-        kpis.forEach(k => {
-            grid.innerHTML += `
+        // ⚡ Bolt Optimization: Replace O(N^2) innerHTML += in loops with batched string map/join
+        // This reduces browser parsing overhead and costly layout recalculations.
+        grid.innerHTML = kpis.map(k => `
             <div class="card" style="display:flex;flex-direction:column;gap:6px;">
                 <div class="card-title">${k.label}</div>
                 <div class="card-value ${k.color}">${k.value}</div>
-            </div>`;
-        });
+            </div>`).join('');
 
         /* Day chart */
         mkChart('chartDays', 'bar',
@@ -368,15 +368,15 @@
         const topItems = Object.entries(itemCount).sort((a,b)=>b[1]-a[1]).slice(0, 12);
         const maxCount = topItems[0]?.[1] || 1;
         const wrap = document.getElementById('topItems');
-        topItems.forEach(([name, cnt]) => {
+        wrap.innerHTML = topItems.map(([name, cnt]) => {
             const pct = Math.round((cnt/maxCount)*100);
-            wrap.innerHTML += `
+            return `
             <div class="item-bar">
                 <div class="item-bar-label" title="${name}">${name}</div>
                 <div class="item-bar-track"><div class="item-bar-fill" style="width:${pct}%"></div></div>
                 <div class="item-bar-val">${cnt}</div>
             </div>`;
-        });
+        }).join('');
         if (topItems.length === 0) wrap.innerHTML = '<p style="color:var(--muted);font-size:0.85rem;">No inventory data yet.</p>';
 
         /* User table */
@@ -390,8 +390,8 @@
             return p.innerHTML;
         }
 
-        users.sort((a,b) => (b.shiftHistory||[]).length - (a.shiftHistory||[]).length)
-             .forEach(u => {
+        tbody.innerHTML = users.sort((a,b) => (b.shiftHistory||[]).length - (a.shiftHistory||[]).length)
+             .map(u => {
             const shifts = u.shiftHistory || [];
             const avgD   = shifts.length ? Math.round(shifts.reduce((s,h)=>s+(h.durationMins||0),0)/shifts.length) : 0;
             const plan   = u.plan || 'Free';
@@ -400,7 +400,7 @@
                 : `<span class="pill pill-free">${plan}</span>`;
             const cloudPill = u.cloudSyncEnabled ? `<span class="pill pill-active">On</span>` : `<span class="pill pill-off">Off</span>`;
             const aiPill    = (u.aiTrainingEnabled !== false && u.cloudSyncEnabled) ? `<span class="pill pill-active">On</span>` : `<span class="pill pill-off">Off</span>`;
-            tbody.innerHTML += `
+            return `
             <tr>
                 <td style="font-weight:700;">${escapeHTML(u.name) || '—'}</td>
                 <td style="color:var(--muted); font-size:0.8rem;">${escapeHTML(u.email) || '—'}</td>
@@ -411,7 +411,7 @@
                 <td>${avgD ? avgD+'m' : '—'}</td>
                 <td style="color:var(--muted); font-size:0.8rem;">${fmt(u.signupDate)}</td>
             </tr>`;
-        });
+        }).join('');
 
         document.getElementById('loadingSpinner').style.display = 'none';
         document.getElementById('dashboard').style.display = 'block';
