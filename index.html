@@ -428,6 +428,9 @@
             <a href="#" onclick="navTo('history')"
                 class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="clock"></i>
                 History</a>
+            <a href="#" onclick="navTo('shiftNotes')"
+                class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="clipboard-list"></i>
+                Shift Notes</a>
             <a href="#" onclick="navTo('performance')"
                 class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="bar-chart-3"></i>
                 Performance</a>
@@ -858,6 +861,73 @@
                 </div>
 
                 <div id="historyListContainer" class="space-y-6"></div>
+            </div>
+        </div>
+
+        <div id="view-shiftNotes" class="view-section px-6 py-12">
+            <div class="max-w-4xl mx-auto">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+                    <h1 class="text-4xl font-black">Shift Notes</h1>
+
+                    <div id="shiftNotesGroupControls" class="flex flex-wrap items-center gap-3 w-full md:w-auto">
+                        <!-- Populated by JS based on user's orgId status -->
+                    </div>
+                </div>
+
+                <div id="createGroupModal" class="hidden bg-white dark:bg-slate-900 rounded-3xl p-6 md:p-8 shadow-sm border border-slate-100 dark:border-slate-800 mb-12">
+                    <h2 class="text-xl font-bold mb-4">Create a Management Group</h2>
+                    <p class="text-sm text-slate-500 mb-6">Create a group to share shift notes with other managers securely.</p>
+                    <div class="space-y-4">
+                        <input type="text" id="newGroupName" placeholder="Group Name (e.g. Store #1234)" class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
+                        <input type="password" id="newGroupPassword" placeholder="Group Password" class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
+                        <div class="flex justify-end gap-3 pt-2">
+                            <button onclick="document.getElementById('createGroupModal').classList.add('hidden')" class="btn btn-outline px-6 py-2">Cancel</button>
+                            <button onclick="createShiftGroup()" class="btn btn-primary px-6 py-2">Create Group</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="joinGroupModal" class="hidden bg-white dark:bg-slate-900 rounded-3xl p-6 md:p-8 shadow-sm border border-slate-100 dark:border-slate-800 mb-12">
+                    <h2 class="text-xl font-bold mb-4">Join a Management Group</h2>
+                    <p class="text-sm text-slate-500 mb-6">Ask your store owner/GM for the Group ID and Password.</p>
+                    <div class="space-y-4">
+                        <input type="text" id="joinGroupId" placeholder="Group ID" class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
+                        <input type="password" id="joinGroupPassword" placeholder="Group Password" class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
+                        <div class="flex justify-end gap-3 pt-2">
+                            <button onclick="document.getElementById('joinGroupModal').classList.add('hidden')" class="btn btn-outline px-6 py-2">Cancel</button>
+                            <button onclick="requestJoinShiftGroup()" class="btn btn-primary px-6 py-2">Request Access</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="groupRequestsPanel" class="hidden bg-amber-50 dark:bg-amber-950/20 rounded-3xl p-6 shadow-sm border border-amber-200 dark:border-amber-900/50 mb-12">
+                    <h2 class="text-lg font-bold mb-4 flex items-center gap-2"><i data-lucide="user-plus" class="text-amber-500"></i> Pending Join Requests</h2>
+                    <div id="groupRequestsContainer" class="space-y-3">
+                        <!-- Populated via JS if user is group owner -->
+                    </div>
+                </div>
+
+                <div id="shiftNotesPostArea" class="bg-white dark:bg-slate-900 rounded-3xl p-6 md:p-8 shadow-sm border border-slate-100 dark:border-slate-800 mb-12 hidden">
+                    <h2 class="text-xl font-bold mb-4">Post a Note</h2>
+                    <textarea id="shiftNoteContent" rows="3" class="w-full bg-slate-50 dark:bg-slate-800 p-4 rounded-xl border-none focus:ring-2 focus:ring-sky-500 mb-4 resize-none" placeholder="Leave a note, warning, or handover instruction..."></textarea>
+                    <div class="flex justify-between items-center">
+                        <select id="shiftNotePriority" class="bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500 font-medium">
+                            <option value="Normal">Normal Priority</option>
+                            <option value="Urgent">🚨 Urgent Issue</option>
+                        </select>
+                        <button onclick="submitShiftNote()" class="btn btn-primary px-8 py-3">Post Note</button>
+                    </div>
+                </div>
+
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-black">Active Notes</h2>
+                    <button onclick="fetchShiftNotes()" class="text-sm font-bold text-sky-500 hover:text-sky-600 flex items-center gap-2">
+                        <i data-lucide="refresh-cw" class="w-4 h-4"></i> Refresh
+                    </button>
+                </div>
+                <div id="shiftNotesContainer" class="space-y-6">
+                    <!-- Notes populated via JS -->
+                </div>
             </div>
         </div>
 
@@ -2206,6 +2276,289 @@
                         container.appendChild(div);
                     });
                 });
+        }
+
+        async function fetchShiftNotes() {
+            if (!currentUser) return;
+
+            // Check org setup
+            const controls = document.getElementById('shiftNotesGroupControls');
+            const postArea = document.getElementById('shiftNotesPostArea');
+
+            if (!currentUserData || !currentUserData.orgId) {
+                // Not in an org
+                controls.innerHTML = `
+                    <button onclick="document.getElementById('createGroupModal').classList.remove('hidden')" class="btn btn-outline btn-sm"><i data-lucide="plus" class="w-4 h-4"></i> Create Group</button>
+                    <button onclick="document.getElementById('joinGroupModal').classList.remove('hidden')" class="btn btn-outline btn-sm"><i data-lucide="log-in" class="w-4 h-4"></i> Join Group</button>
+                `;
+                postArea.classList.add('hidden');
+                document.getElementById('shiftNotesContainer').innerHTML = `
+                    <div class="text-center py-16 bg-slate-50 dark:bg-slate-900 rounded-3xl border-2 border-dashed border-slate-200 dark:border-slate-800">
+                        <i data-lucide="users" class="w-12 h-12 text-slate-400 mx-auto mb-4"></i>
+                        <h3 class="text-xl font-bold mb-2">Join or Create a Group</h3>
+                        <p class="text-slate-500">You must be in a Management Group to post and view shift notes.</p>
+                    </div>
+                `;
+                lucide.createIcons();
+                return;
+            }
+
+            // User is in an org
+            postArea.classList.remove('hidden');
+
+            // If they are the owner, show the request panel logic
+            db.collection('shift_groups').doc(currentUserData.orgId).get().then(doc => {
+                if(doc.exists && doc.data().ownerId === currentUser.uid) {
+                    controls.innerHTML = `
+                        <div class="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700">
+                            <span class="text-xs font-bold text-slate-500 uppercase">Group ID:</span>
+                            <span class="text-sm font-mono font-bold">${currentUserData.orgId}</span>
+                            <button onclick="navigator.clipboard.writeText('${currentUserData.orgId}'); alert('Group ID Copied!')" class="text-sky-500 hover:text-sky-600"><i data-lucide="copy" class="w-3.5 h-3.5"></i></button>
+                        </div>
+                    `;
+                    fetchGroupRequests(currentUserData.orgId);
+                } else {
+                    controls.innerHTML = `
+                        <div class="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700">
+                            <span class="text-xs font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1"><i data-lucide="shield-check" class="w-3.5 h-3.5"></i> Connected to Group</span>
+                        </div>
+                    `;
+                    document.getElementById('groupRequestsPanel').classList.add('hidden');
+                }
+                lucide.createIcons();
+            });
+
+            const container = document.getElementById('shiftNotesContainer');
+            container.innerHTML = '<div class="text-center py-8"><i data-lucide="loader-2" class="w-8 h-8 animate-spin mx-auto text-sky-500 mb-4"></i><p class="text-slate-500">Loading notes...</p></div>';
+            lucide.createIcons();
+
+            db.collection('shift_notes')
+                .where('status', '==', 'Active')
+                .where('orgId', '==', currentUserData.orgId)
+                .get() // orderBy timestamp desc requires composite index if where filters are used
+                .then(snap => {
+                    container.innerHTML = '';
+                    if (snap.empty) {
+                        container.innerHTML = `
+                            <div class="text-center py-16 bg-slate-50 dark:bg-slate-900 rounded-3xl border-2 border-dashed border-slate-200 dark:border-slate-800">
+                                <i data-lucide="check-circle-2" class="w-12 h-12 text-emerald-400 mx-auto mb-4"></i>
+                                <h3 class="text-xl font-bold mb-2">All Clear!</h3>
+                                <p class="text-slate-500">There are no active shift notes for your group.</p>
+                            </div>
+                        `;
+                        lucide.createIcons();
+                        return;
+                    }
+
+                    // Sort manually since composite index might not exist
+                    let docs = [];
+                    snap.forEach(doc => docs.push({id: doc.id, data: doc.data()}));
+                    docs.sort((a,b) => b.data.timestamp - a.data.timestamp);
+
+                    docs.forEach(docObj => {
+                        const data = docObj.data;
+                        const docId = docObj.id;
+                        const isUrgent = data.priority === 'Urgent';
+                        const noteDiv = document.createElement('div');
+
+                        let borderClass = isUrgent ? "border-red-200 dark:border-red-900/50" : "border-slate-100 dark:border-slate-800";
+                        let bgClass = isUrgent ? "bg-red-50 dark:bg-red-950/20" : "bg-white dark:bg-slate-900";
+                        let priorityBadge = isUrgent ?
+                            `<span class="bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300 text-xs font-black uppercase tracking-widest px-3 py-1 rounded-full flex items-center gap-1"><i data-lucide="alert-triangle" class="w-3 h-3"></i> Urgent</span>` :
+                            `<span class="bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full">Normal</span>`;
+
+                        noteDiv.className = `p-6 rounded-2xl border ${borderClass} ${bgClass} shadow-sm relative group transition-all duration-200 hover:shadow-md`;
+
+                        let dateStr = "Just now";
+                        if (data.timestamp) {
+                            dateStr = data.timestamp.toDate().toLocaleString();
+                        }
+
+                        noteDiv.innerHTML = `
+                            <div class="flex justify-between items-start mb-4">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-sky-400 to-indigo-500 flex items-center justify-center text-white font-bold text-lg shadow-sm">
+                                        ${data.authorName.charAt(0).toUpperCase()}
+                                    </div>
+                                    <div>
+                                        <p class="font-bold text-sm">${data.authorName}</p>
+                                        <p class="text-xs text-slate-500 font-mono">${dateStr}</p>
+                                    </div>
+                                </div>
+                                ${priorityBadge}
+                            </div>
+                            <p class="text-slate-700 dark:text-slate-300 font-medium mb-6 whitespace-pre-wrap pl-1 shift-note-text"></p>
+                            <div class="flex justify-end border-t border-slate-100 dark:border-slate-800 pt-4 mt-2">
+                                <button onclick="resolveShiftNote('${docId}')" class="text-sm font-bold text-slate-400 hover:text-emerald-500 flex items-center gap-2 transition-colors">
+                                    <i data-lucide="check-circle" class="w-4 h-4"></i> Mark Resolved
+                                </button>
+                            </div>
+                        `;
+                        noteDiv.querySelector('.shift-note-text').textContent = data.content;
+                        container.appendChild(noteDiv);
+                    });
+                    lucide.createIcons();
+                })
+                .catch(err => {
+                    console.error("Error fetching notes:", err);
+                    container.innerHTML = `<p class="text-red-500 text-center py-8">Failed to load shift notes. Please check your connection.</p>`;
+                });
+        }
+
+        async function submitShiftNote() {
+            if (!currentUser || !currentUserData || !currentUserData.orgId) {
+                alert("You must be logged in and part of a group to post a shift note.");
+                return;
+            }
+            const content = document.getElementById('shiftNoteContent').value.trim();
+            const priority = document.getElementById('shiftNotePriority').value;
+
+            if (!content) return alert("Please enter note content.");
+
+            try {
+                const res = await fetch("https://us-central1-dts-hub-website.cloudfunctions.net/manageShiftNotes", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        action: "create",
+                        payload: {
+                            authorId: currentUser.uid,
+                            authorName: currentUser.email.split('@')[0],
+                            content: content,
+                            priority: priority,
+                            orgId: currentUserData.orgId
+                        }
+                    })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    document.getElementById('shiftNoteContent').value = "";
+                    fetchShiftNotes();
+                } else {
+                    alert("Error posting note: " + (data.error || "Unknown error"));
+                }
+            } catch (err) { alert("Failed to post note."); }
+        }
+
+        async function resolveShiftNote(noteId) {
+            if (!currentUser) return;
+            if (!confirm("Mark this note as resolved?")) return;
+            try {
+                const res = await fetch("https://us-central1-dts-hub-website.cloudfunctions.net/manageShiftNotes", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        action: "resolve",
+                        payload: { noteId: noteId, resolvedBy: currentUser.email.split('@')[0] }
+                    })
+                });
+                const data = await res.json();
+                if (data.success) fetchShiftNotes();
+                else alert("Error resolving note: " + (data.error || "Unknown error"));
+            } catch (err) { alert("Failed to resolve note."); }
+        }
+
+        async function createShiftGroup() {
+            if (!currentUser) return;
+            const name = document.getElementById('newGroupName').value.trim();
+            const pass = document.getElementById('newGroupPassword').value.trim();
+            if(!name || !pass) return alert("All fields required");
+
+            try {
+                const res = await fetch("https://us-central1-dts-hub-website.cloudfunctions.net/manageShiftGroups", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        action: "create",
+                        payload: {
+                            ownerId: currentUser.uid,
+                            ownerName: currentUser.email.split('@')[0],
+                            groupName: name,
+                            password: pass
+                        }
+                    })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    alert(`Group Created! Share your Group ID: ${data.groupId} and password with other managers.`);
+                    document.getElementById('createGroupModal').classList.add('hidden');
+                    // Force refresh user data
+                    window.location.reload();
+                } else alert("Error: " + data.error);
+            } catch(e) { alert("Failed to create group."); }
+        }
+
+        async function requestJoinShiftGroup() {
+            if (!currentUser) return;
+            const groupId = document.getElementById('joinGroupId').value.trim();
+            const pass = document.getElementById('joinGroupPassword').value.trim();
+            if(!groupId || !pass) return alert("All fields required");
+
+            try {
+                const res = await fetch("https://us-central1-dts-hub-website.cloudfunctions.net/manageShiftGroups", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        action: "request_join",
+                        payload: {
+                            userId: currentUser.uid,
+                            userName: currentUser.email.split('@')[0],
+                            groupId: groupId,
+                            password: pass
+                        }
+                    })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    alert("Join request sent! The group owner must approve it before you gain access.");
+                    document.getElementById('joinGroupModal').classList.add('hidden');
+                } else alert("Error: " + data.error);
+            } catch(e) { alert("Failed to request join."); }
+        }
+
+        function fetchGroupRequests(groupId) {
+            db.collection('shift_group_requests')
+                .where('groupId', '==', groupId)
+                .where('status', '==', 'Pending')
+                .onSnapshot(snap => {
+                    const panel = document.getElementById('groupRequestsPanel');
+                    const container = document.getElementById('groupRequestsContainer');
+                    if(snap.empty) {
+                        panel.classList.add('hidden');
+                        return;
+                    }
+                    panel.classList.remove('hidden');
+                    container.innerHTML = '';
+                    snap.forEach(doc => {
+                        const data = doc.data();
+                        const div = document.createElement('div');
+                        div.className = "flex justify-between items-center bg-white dark:bg-slate-900 p-3 rounded-xl border border-amber-100 dark:border-amber-900/30";
+                        div.innerHTML = `
+                            <div>
+                                <p class="font-bold text-sm">${data.userName}</p>
+                                <p class="text-xs text-slate-500">Wants to join your group</p>
+                            </div>
+                            <button onclick="approveGroupRequest('${doc.id}')" class="btn btn-primary btn-sm px-4">Approve</button>
+                        `;
+                        container.appendChild(div);
+                    });
+                });
+        }
+
+        async function approveGroupRequest(requestId) {
+            try {
+                const res = await fetch("https://us-central1-dts-hub-website.cloudfunctions.net/manageShiftGroups", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        action: "approve_join",
+                        payload: { ownerId: currentUser.uid, requestId: requestId }
+                    })
+                });
+                const data = await res.json();
+                if (data.success) alert("Approved!");
+                else alert("Error: " + data.error);
+            } catch(e) { alert("Failed to approve."); }
         }
 
         window.onload = () => {
