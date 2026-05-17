@@ -431,6 +431,9 @@
             <a href="#" onclick="navTo('shiftNotes')"
                 class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="clipboard-list"></i>
                 Shift Notes</a>
+            <a href="#" onclick="navTo('maintenance')"
+                class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="wrench"></i>
+                Maintenance</a>
             <a href="#" onclick="navTo('performance')"
                 class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="bar-chart-3"></i>
                 Performance</a>
@@ -927,6 +930,50 @@
                 </div>
                 <div id="shiftNotesContainer" class="space-y-6">
                     <!-- Notes populated via JS -->
+                </div>
+            </div>
+        </div>
+
+        <div id="view-maintenance" class="view-section px-6 py-12 hidden">
+            <div class="max-w-4xl mx-auto">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+                    <h1 class="text-4xl font-black">Maintenance Tracker</h1>
+                    <button onclick="document.getElementById('reportMaintenanceModal').classList.toggle('hidden')" class="btn btn-primary flex items-center gap-2 px-6">
+                        <i data-lucide="plus-circle" class="w-5 h-5"></i> Report Issue
+                    </button>
+                </div>
+
+                <div id="reportMaintenanceModal" class="hidden bg-white dark:bg-slate-900 rounded-3xl p-6 md:p-8 shadow-sm border border-slate-100 dark:border-slate-800 mb-12">
+                    <h2 class="text-xl font-bold mb-4">Report New Issue</h2>
+                    <div class="space-y-4">
+                        <input type="text" id="maintenanceTitle" placeholder="Equipment or Issue Name" class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
+                        <textarea id="maintenanceDesc" placeholder="Describe the problem..." rows="3" class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500 resize-none"></textarea>
+
+                        <div class="flex flex-col md:flex-row gap-4">
+                            <select id="maintenancePriority" class="flex-1 bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
+                                <option value="Low">Low Priority</option>
+                                <option value="Medium">Medium Priority</option>
+                                <option value="High">High Priority</option>
+                                <option value="Critical">Critical Issue</option>
+                            </select>
+                        </div>
+
+                        <div class="flex justify-end gap-3 pt-2">
+                            <button onclick="document.getElementById('reportMaintenanceModal').classList.add('hidden')" class="btn btn-outline px-6 py-2">Cancel</button>
+                            <button onclick="submitMaintenanceTicket()" class="btn btn-accent px-6 py-2">Submit Ticket</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-black">Active Tickets</h2>
+                    <button onclick="fetchMaintenanceTickets()" class="text-sm font-bold text-sky-500 hover:text-sky-600 flex items-center gap-2">
+                        <i data-lucide="refresh-cw" class="w-4 h-4"></i> Refresh
+                    </button>
+                </div>
+
+                <div id="maintenanceContainer" class="space-y-4">
+                    <!-- Tickets populated via JS -->
                 </div>
             </div>
         </div>
@@ -1506,8 +1553,11 @@
         function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); }
 
         function navTo(viewId) {
-            if (!currentUser && (['history', 'presets', 'performance', 'request', 'profile'].includes(viewId))) {
+            if (!currentUser && (['history', 'presets', 'performance', 'request', 'profile', 'maintenance'].includes(viewId))) {
                 viewId = 'auth';
+            }
+            if (viewId === 'maintenance' && currentUser) {
+                fetchMaintenanceTickets();
             }
             document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
             document.getElementById('view-' + viewId).classList.add('active');
@@ -2225,6 +2275,176 @@
                 }
             } catch (err) {
                 alert("Payment system unreachable. Please try again later.");
+            }
+        }
+
+
+
+        function escapeHTML(str) {
+            if (!str && str !== 0) return "";
+            return String(str)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        async function submitMaintenanceTicket() {
+            if (!currentUser || !currentUserData || !currentUserData.orgId) {
+                alert("You must be part of an organization to report issues.");
+                return;
+            }
+
+            const title = document.getElementById('maintenanceTitle').value.trim();
+            const desc = document.getElementById('maintenanceDesc').value.trim();
+            const priority = document.getElementById('maintenancePriority').value;
+
+            if (!title) {
+                alert("Please provide a title or issue name.");
+                return;
+            }
+
+            const submitBtn = document.querySelector('#reportMaintenanceModal .btn-accent');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> Submitting...';
+            submitBtn.disabled = true;
+            lucide.createIcons();
+
+            try {
+                await db.collection('maintenance_logs').add({
+                    title: title,
+                    description: desc,
+                    priority: priority,
+                    status: 'Open',
+                    reportedByUid: currentUser.uid,
+                    reportedByName: currentUserData.name || currentUser.email,
+                    orgId: currentUserData.orgId,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                document.getElementById('maintenanceTitle').value = '';
+                document.getElementById('maintenanceDesc').value = '';
+                document.getElementById('maintenancePriority').value = 'Low';
+                document.getElementById('reportMaintenanceModal').classList.add('hidden');
+
+                alert("Maintenance ticket submitted successfully.");
+                fetchMaintenanceTickets();
+            } catch (error) {
+                console.error("Error submitting ticket:", error);
+                alert("Failed to submit ticket. " + error.message);
+            } finally {
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+                lucide.createIcons();
+            }
+        }
+
+        function fetchMaintenanceTickets() {
+            if (!currentUser || !currentUserData || !currentUserData.orgId) {
+                document.getElementById('maintenanceContainer').innerHTML = `
+                    <div class="text-center py-16 bg-slate-50 dark:bg-slate-900 rounded-3xl border-2 border-dashed border-slate-200 dark:border-slate-800">
+                        <i data-lucide="users" class="w-12 h-12 text-slate-400 mx-auto mb-4"></i>
+                        <h3 class="text-xl font-bold mb-2">Join or Create a Group</h3>
+                        <p class="text-slate-500">You must be in a Management Group to view and report maintenance issues.</p>
+                    </div>
+                `;
+                lucide.createIcons();
+                return;
+            }
+
+            const container = document.getElementById('maintenanceContainer');
+            container.innerHTML = '<div class="text-center py-8"><i data-lucide="loader-2" class="w-8 h-8 animate-spin mx-auto text-sky-500 mb-4"></i><p class="text-slate-500">Loading tickets...</p></div>';
+            lucide.createIcons();
+
+            if (window.maintenanceUnsubscribe) {
+                window.maintenanceUnsubscribe();
+            }
+
+            window.maintenanceUnsubscribe = db.collection('maintenance_logs')
+                .where('orgId', '==', currentUserData.orgId)
+                .onSnapshot(snap => {
+                    container.innerHTML = '';
+                    if (snap.empty) {
+                        container.innerHTML = `
+                            <div class="text-center py-16 bg-slate-50 dark:bg-slate-900 rounded-3xl border-2 border-dashed border-slate-200 dark:border-slate-800">
+                                <i data-lucide="check-circle-2" class="w-12 h-12 text-emerald-400 mx-auto mb-4"></i>
+                                <h3 class="text-xl font-bold mb-2">All Clear!</h3>
+                                <p class="text-slate-500">There are no open maintenance issues.</p>
+                            </div>
+                        `;
+                        lucide.createIcons();
+                        return;
+                    }
+
+                    let tickets = [];
+                    snap.forEach(doc => tickets.push({ id: doc.id, ...doc.data() }));
+
+                    // Sort locally since composite index is likely missing
+                    tickets.sort((a, b) => {
+                        const aTime = a.createdAt ? a.createdAt.toMillis() : 0;
+                        const bTime = b.createdAt ? b.createdAt.toMillis() : 0;
+                        return bTime - aTime;
+                    });
+
+                    let html = '';
+                    tickets.forEach(ticket => {
+                        const statusColors = {
+                            'Open': 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400 border-amber-200 dark:border-amber-800',
+                            'In Progress': 'bg-sky-100 text-sky-800 dark:bg-sky-900/30 dark:text-sky-400 border-sky-200 dark:border-sky-800',
+                            'Resolved': 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800'
+                        };
+                        const prioColors = {
+                            'Low': 'bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-300',
+                            'Medium': 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
+                            'High': 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400',
+                            'Critical': 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400 animate-pulse'
+                        };
+
+                        const dateStr = ticket.createdAt ? new Date(ticket.createdAt.toMillis()).toLocaleString() : 'Just now';
+
+                        html += `
+                            <div class="card p-6 border-l-4 ${ticket.priority === 'Critical' ? 'border-l-red-500' : ticket.priority === 'High' ? 'border-l-orange-500' : 'border-l-sky-500'}">
+                                <div class="flex flex-col md:flex-row justify-between gap-4 mb-4">
+                                    <div>
+                                        <h3 class="text-lg font-bold">${escapeHTML(ticket.title)}</h3>
+                                        <p class="text-sm text-slate-500">Reported by ${escapeHTML(ticket.reportedByName)} • ${dateStr}</p>
+                                    </div>
+                                    <div class="flex gap-2 items-start">
+                                        <span class="px-3 py-1 rounded-full text-xs font-bold ${prioColors[ticket.priority] || prioColors['Low']}">${ticket.priority}</span>
+                                        <select class="px-3 py-1 rounded-full text-xs font-bold border appearance-none cursor-pointer focus:outline-none ${statusColors[ticket.status] || statusColors['Open']}"
+                                            onchange="updateTicketStatus('${ticket.id}', this.value)">
+                                            <option value="Open" ${ticket.status === 'Open' ? 'selected' : ''}>Open</option>
+                                            <option value="In Progress" ${ticket.status === 'In Progress' ? 'selected' : ''}>In Progress</option>
+                                            <option value="Resolved" ${ticket.status === 'Resolved' ? 'selected' : ''}>Resolved</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <p class="text-slate-700 dark:text-slate-300 whitespace-pre-wrap">${escapeHTML(ticket.description)}</p>
+                            </div>
+                        `;
+                    });
+                    container.innerHTML = html;
+                }, err => {
+                    console.error("Error fetching tickets:", err);
+                    container.innerHTML = `<div class="text-red-500 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl text-center">Failed to load tickets: ${err.message}</div>`;
+                });
+        }
+
+        async function updateTicketStatus(ticketId, newStatus) {
+            try {
+                await db.collection('maintenance_logs').doc(ticketId).update({
+                    status: newStatus,
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                // Optimistic UI update already handled by changing the select value
+                // but refreshing guarantees sync
+                fetchMaintenanceTickets();
+            } catch (error) {
+                console.error("Error updating ticket:", error);
+                alert("Failed to update status. " + error.message);
+                fetchMaintenanceTickets(); // revert
             }
         }
 

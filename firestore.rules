@@ -117,5 +117,24 @@ service cloud.firestore {
       );
       allow write: if false; // Only cloud functions can write requests
     }
+
+    // MAINTENANCE LOGS
+    match /maintenance_logs/{logId} {
+      allow read: if request.auth != null && (
+          resource.data.reportedByUid == request.auth.uid ||
+          (resource.data.orgId != null && resource.data.orgId == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.orgId) ||
+          isAdmin()
+      );
+      allow create: if request.auth != null
+                    && request.resource.data.reportedByUid == request.auth.uid
+                    && request.resource.data.orgId == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.orgId;
+      allow update: if request.auth != null && (
+          resource.data.reportedByUid == request.auth.uid ||
+          (resource.data.orgId != null && resource.data.orgId == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.orgId) ||
+          isAdmin()
+      ) && request.resource.data.orgId == resource.data.orgId;
+      allow delete: if request.auth != null && (resource.data.reportedByUid == request.auth.uid || isAdmin());
+    }
+
   }
 }
