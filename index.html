@@ -1238,6 +1238,7 @@
         if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
         const auth = firebase.auth();
         const db = firebase.firestore();
+        const cloudFunctions = firebase.functions();
 
         db.enablePersistence().catch(err => console.error("Offline sync error:", err));
 
@@ -1279,6 +1280,14 @@
                         renderHistory();
                         updateStorageBar();
                         fetchFeatureRequests();
+
+                        // Populate shift notes if that view is already active or we just logged in
+                        if (document.getElementById('view-shiftNotes').classList.contains('active')) {
+                            fetchShiftNotes();
+                        } else {
+                            // Ensure the group controls render even if we haven't opened the tab yet
+                            checkAndRenderOrgControls();
+                        }
 
                         if (!initialDraftLoaded) {
                             syncDraftFromServer();
@@ -2293,10 +2302,9 @@
                 .replace(/'/g, "&#039;");
         }
 
-        async function fetchShiftNotes() {
-            if (!currentUser) return;
+        function checkAndRenderOrgControls() {
+            if (!currentUser) return false;
 
-            // Check org setup
             const controls = document.getElementById('shiftNotesGroupControls');
             const postArea = document.getElementById('shiftNotesPostArea');
 
@@ -2307,15 +2315,8 @@
                     <button onclick="document.getElementById('joinGroupModal').classList.remove('hidden')" class="btn btn-outline btn-sm"><i data-lucide="log-in" class="w-4 h-4"></i> Join Group</button>
                 `;
                 postArea.classList.add('hidden');
-                document.getElementById('shiftNotesContainer').innerHTML = `
-                    <div class="text-center py-16 bg-slate-50 dark:bg-slate-900 rounded-3xl border-2 border-dashed border-slate-200 dark:border-slate-800">
-                        <i data-lucide="users" class="w-12 h-12 text-slate-400 mx-auto mb-4"></i>
-                        <h3 class="text-xl font-bold mb-2">Join or Create a Group</h3>
-                        <p class="text-slate-500">You must be in a Management Group to post and view shift notes.</p>
-                    </div>
-                `;
                 lucide.createIcons();
-                return;
+                return false;
             }
 
             // User is in an org
@@ -2342,8 +2343,27 @@
                 }
                 lucide.createIcons();
             });
+            return true;
+        }
 
+        async function fetchShiftNotes() {
+            if (!currentUser) return;
+
+            const hasOrg = checkAndRenderOrgControls();
             const container = document.getElementById('shiftNotesContainer');
+
+            if (!hasOrg) {
+                container.innerHTML = `
+                    <div class="text-center py-16 bg-slate-50 dark:bg-slate-900 rounded-3xl border-2 border-dashed border-slate-200 dark:border-slate-800">
+                        <i data-lucide="users" class="w-12 h-12 text-slate-400 mx-auto mb-4"></i>
+                        <h3 class="text-xl font-bold mb-2">Join or Create a Group</h3>
+                        <p class="text-slate-500">You must be in a Management Group to post and view shift notes.</p>
+                    </div>
+                `;
+                lucide.createIcons();
+                return;
+            }
+
             container.innerHTML = '<div class="text-center py-8"><i data-lucide="loader-2" class="w-8 h-8 animate-spin mx-auto text-sky-500 mb-4"></i><p class="text-slate-500">Loading notes...</p></div>';
             lucide.createIcons();
 
