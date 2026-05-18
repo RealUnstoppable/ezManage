@@ -534,7 +534,7 @@
                             class="text-xs font-black uppercase tracking-widest text-slate-400">Password</label>
                         <input type="password" id="authPass" placeholder="••••••••" required>
                     </div>
-                    <button type="submit" id="authBtn" class="btn btn-accent w-full py-4 mt-4">Sign In</button>
+                    <button type="submit" id="authBtn" class="btn btn-accent w-full py-4 mt-4 disabled:opacity-70 disabled:cursor-not-allowed">Sign In</button>
                 </form>
 
                 <div class="relative my-8">
@@ -1453,17 +1453,27 @@
             const email = document.getElementById('authEmail').value;
             const pass = document.getElementById('authPass').value;
             const btn = document.getElementById('authBtn');
+
+            const originalHTML = btn.innerHTML;
+            btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> ${originalHTML}`;
+            lucide.createIcons();
             btn.disabled = true;
 
             if (isRegisterMode) {
                 auth.createUserWithEmailAndPassword(email, pass)
                     .then(() => navTo('setup'))
                     .catch(err => alert(err.message))
-                    .finally(() => btn.disabled = false);
+                    .finally(() => {
+                        btn.innerHTML = originalHTML;
+                        btn.disabled = false;
+                    });
             } else {
                 auth.signInWithEmailAndPassword(email, pass)
                     .catch(err => alert(err.message))
-                    .finally(() => btn.disabled = false);
+                    .finally(() => {
+                        btn.innerHTML = originalHTML;
+                        btn.disabled = false;
+                    });
             }
         }
 
