@@ -99,16 +99,20 @@ exports.stripeWebhook = functions.https.onRequest(async (req, res) => {
 
     if (uid && uid !== "unknown") {
       // Updates the frontend to unlock pro features immediately
-      await admin.firestore().collection("users").doc(uid).set({
-        plan: planName,
-        subscription: {
-          status: "active",
-          customerId: session.customer,
-          subscriptionId: session.subscription,
-        },
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-      }, {merge: true});
-      console.log(`✅ Successfully upgraded user ${uid} to ${planName}`);
+      try {
+        await admin.firestore().collection("users").doc(uid).set({
+          plan: planName,
+          subscription: {
+            status: "active",
+            customerId: session.customer,
+            subscriptionId: session.subscription,
+          },
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        }, {merge: true});
+        console.log(`✅ Successfully upgraded user ${uid} to ${planName}`);
+      } catch (error) {
+        console.error("Error updating user subscription status:", error);
+      }
     }
   }
 
