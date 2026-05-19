@@ -1,3 +1,4 @@
+const { getDayOfWeek, parseNum } = require("./utils");
 const {onSchedule} = require("firebase-functions/v2/scheduler");
 const admin = require("firebase-admin");
 const { parseNum, getDayOfWeek } = require("./utils");

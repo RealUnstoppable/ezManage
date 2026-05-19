@@ -141,6 +141,13 @@ async function handleUpdateQuantity(productId, quantity) {
         console.error("Error updating item quantity:", error);
         cart = originalCart;
         renderCart();
+        try {
+            await saveCart();
+        } catch (e) {
+            cart = prevCart;
+            renderCart();
+            console.error("Rollback handleUpdateQuantity:", e);
+        }
     }
 }
 
