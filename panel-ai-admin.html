@@ -388,9 +388,13 @@
 
         function escapeHTML(str) {
             if (!str) return "";
-            const p = document.createElement("p");
-            p.textContent = str;
-            return p.innerHTML;
+            // ⚡ Bolt Optimization: Use regex-based replacement instead of document.createElement for faster escaping and lower memory overhead
+            return String(str)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
         }
 
         // ⚡ Bolt Optimization: Batch DOM insertions to prevent O(n²) layout thrashing
