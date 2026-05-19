@@ -396,6 +396,8 @@
         document.getElementById('userCount').textContent = `${users.length} users`;
         const tbody = document.getElementById('userTableBody');
 
+        // ⚡ Bolt Performance Optimization:
+        // Replaced document.createElement('p') sanitization with regex to eliminate GC overhead in loops.
         function escapeHTML(str) {
             if (!str) return "";
             // ⚡ Bolt Optimization: Use regex-based replacement instead of document.createElement for faster escaping and lower memory overhead
