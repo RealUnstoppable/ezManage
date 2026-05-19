@@ -7,3 +7,6 @@
 ## 2025-02-28 - [Dashboard N+1 Fetch Bottleneck]
 **Learning:** In dashboards loading multiple independent data sources (like Firebase collections), sequential `await` calls compound latency (N+1 delay).
 **Action:** Always fetch independent datasets concurrently using `Promise.allSettled()` to restrict total load time to the duration of the slowest query, preserving isolated error handling per resource.
+## 2025-02-28 - [DOM N² Reflow Optimization]
+**Learning:** Accumulating HTML strings with `.map().join('')` instead of directly modifying `innerHTML` inside a loop prevents expensive layout thrashing and unnecessary O(n²) repaints.
+**Action:** Always batch DOM insertions by gathering string templates first and performing a single `innerHTML` assignment at the end of the loop structure.
