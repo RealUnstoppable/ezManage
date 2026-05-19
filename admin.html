@@ -328,13 +328,13 @@
 <body style="display: none;">
   <div class="mobile-header">
     <h2 style="margin:0; color: var(--accent-blue);">Admin</h2>
-    <button class="hamburger-btn" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
+    <button class="hamburger-btn" aria-label="Toggle Menu" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
   </div>
 
   <div class="admin-layout">
     <aside class="sidebar" id="sidebar">
       <div class="mobile-header" style="justify-content: flex-end;">
-        <button class="hamburger-btn" onclick="document.getElementById('sidebar').classList.remove('open')">✕</button>
+        <button class="hamburger-btn" aria-label="Close Menu" onclick="document.getElementById('sidebar').classList.remove('open')">✕</button>
       </div>
       <div class="sidebar-header">
         <h2>Admin Panel</h2>
@@ -526,8 +526,6 @@
 
   <script type="module">
     import { auth, db } from '/js/auth.js';
-    import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
-    import { doc, getDoc, collection, getDocs, Timestamp, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
 
     let performanceChart;
 
@@ -548,8 +546,8 @@
     });
 
     function escapeHTML(str) {
-      if (typeof str !== 'string') return str;
-      return str
+      if (!str && str !== 0) return "";
+      return String(str)
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;")
@@ -565,8 +563,20 @@
 
     async function loadAdminData() {
       try {
-        // ⚡ Bolt Performance Optimization: Fetch all independent collections concurrently
-        const [usersResult, cartsResult, ordersResult, subscribersResult, bookingsResult, quotesResult, featureRequestsResult, statsResult] = await Promise.allSettled([
+        // ⚡ Bolt Performance Optimization:
+        // Execute independent Firestore collection fetches concurrently using Promise.allSettled()
+        // instead of sequential await calls. This resolves the N+1 query latency bottleneck
+        // and significantly reduces dashboard load times while maintaining isolated error handling.
+        const [
+          usersResult,
+          cartsResult,
+          ordersResult,
+          subscribersResult,
+          bookingsResult,
+          quotesResult,
+          featureRequestsResult,
+          statsResult
+        ] = await Promise.allSettled([
           getDocs(collection(db, "users")),
           getDocs(collection(db, "carts")),
           getDocs(collection(db, "orders")),
@@ -577,12 +587,48 @@
           getDoc(doc(db, "site_stats", "downloads"))
         ]);
 
-        const users = usersResult.status === "fulfilled" ? usersResult.value.docs.map(d => ({ id: d.id, ...d.data() })) : (console.error("Error fetching users:", usersResult.reason), []);
-        const carts = cartsResult.status === "fulfilled" ? cartsResult.value.docs.map(d => ({ id: d.id, ...d.data() })) : (console.error("Error fetching carts:", cartsResult.reason), []);
-        const orders = ordersResult.status === "fulfilled" ? ordersResult.value.docs.map(d => d.data()) : (console.error("Error fetching orders:", ordersResult.reason), []);
-        const subscribers = subscribersResult.status === "fulfilled" ? subscribersResult.value.docs.map(d => d.data()) : (console.error("Error fetching newsletter:", subscribersResult.reason), []);
-        const bookings = bookingsResult.status === "fulfilled" ? bookingsResult.value.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => new Date(b.appointmentDate) - new Date(a.appointmentDate)) : (console.error("Error fetching bookings:", bookingsResult.reason), []);
-        const quotes = quotesResult.status === "fulfilled" ? quotesResult.value.docs.map(d => ({ id: d.id, ...d.data() })) : (console.error("Error fetching quotes:", quotesResult.reason), []);
+        let users = [];
+        if (usersResult.status === 'fulfilled') {
+          users = usersResult.value.docs.map(d => ({ id: d.id, ...d.data() }));
+        } else {
+          console.error("Error fetching users:", usersResult.reason);
+        }
+
+        let carts = [];
+        if (cartsResult.status === 'fulfilled') {
+          carts = cartsResult.value.docs.map(d => ({ id: d.id, ...d.data() }));
+        } else {
+          console.error("Error fetching carts:", cartsResult.reason);
+        }
+
+        let orders = [];
+        if (ordersResult.status === 'fulfilled') {
+          orders = ordersResult.value.docs.map(d => d.data());
+        } else {
+          console.error("Error fetching orders:", ordersResult.reason);
+        }
+
+        let subscribers = [];
+        if (subscribersResult.status === 'fulfilled') {
+          subscribers = subscribersResult.value.docs.map(d => d.data());
+        } else {
+          console.error("Error fetching newsletter:", subscribersResult.reason);
+        }
+
+        let bookings = [];
+        if (bookingsResult.status === 'fulfilled') {
+          bookings = bookingsResult.value.docs.map(d => ({ id: d.id, ...d.data() }));
+          bookings.sort((a, b) => new Date(b.appointmentDate) - new Date(a.appointmentDate));
+        } else {
+          console.error("Error fetching bookings:", bookingsResult.reason);
+        }
+
+        let quotes = [];
+        if (quotesResult.status === 'fulfilled') {
+          quotes = quotesResult.value.docs.map(d => ({ id: d.id, ...d.data() }));
+        } else {
+          console.error("Error fetching quotes:", quotesResult.reason);
+        }
 
         // Core Calculations
         const totalRevenue = orders.reduce((sum, o) => sum + (o.amount || 0), 0);
@@ -597,8 +643,8 @@
         renderBookingsTable(bookings);
         renderQuotesTable(quotes);
 
-        // Fetch Feature Requests
-        if (featureRequestsResult.status === "fulfilled") {
+        // Fetch Feature Requests (Handle specific error output from original code)
+        if (featureRequestsResult.status === 'fulfilled') {
           const requests = featureRequestsResult.value.docs.map(d => ({ id: d.id, ...d.data() }));
           renderFeatureRequestsTable(requests);
         } else {
@@ -607,9 +653,12 @@
         }
 
         // Download Stats
-        if (statsResult.status === "fulfilled" && statsResult.value.exists()) {
+        if (statsResult.status === 'fulfilled' && statsResult.value.exists()) {
           document.getElementById('download-count-infosheet').textContent = statsResult.value.data().infoSheet || 0;
         } else {
+          if (statsResult.status === 'rejected') {
+            console.error("Error loading stats:", statsResult.reason);
+          }
           document.getElementById('download-count-infosheet').textContent = "N/A";
         }
 
@@ -793,8 +842,20 @@
         if (!userId) return;
         const shouldBeBanned = e.target.classList.contains('btn-ban');
         if (confirm(`Are you sure you want to ${shouldBeBanned ? 'ban' : 'unban'} this user?`)) {
-          await updateDoc(doc(db, "users", userId), { isBanned: shouldBeBanned });
-          loadAdminData();
+          try {
+            await updateDoc(doc(db, "users", userId), { isBanned: shouldBeBanned });
+
+            // Localized UI update
+            const row = e.target.closest('tr');
+            const statusCell = row.cells[4];
+            statusCell.innerHTML = shouldBeBanned ? `<span class="status-badge banned">Banned</span>` : `<span class="status-badge active">Active</span>`;
+
+            e.target.textContent = shouldBeBanned ? 'Unban' : 'Ban';
+            e.target.classList.toggle('btn-ban');
+            e.target.classList.toggle('btn-unban');
+          } catch (err) {
+            console.error('Error updating ban status:', err);
+          }
         }
       });
 
@@ -803,8 +864,19 @@
         const reqId = e.target.dataset.id;
         if (!reqId || !e.target.classList.contains('mark-complete-btn')) return;
         if (confirm(`Mark this feature request as complete?`)) {
-          await updateDoc(doc(db, "feature_requests", reqId), { status: 'completed' });
-          loadAdminData();
+          try {
+            await updateDoc(doc(db, "feature_requests", reqId), { status: 'completed' });
+
+            // Localized UI update
+            const row = e.target.closest('tr');
+            const statusCell = row.cells[4];
+            statusCell.innerHTML = `<span style="color:var(--accent-green);">Completed</span>`;
+
+            const actionCell = row.cells[5];
+            actionCell.innerHTML = `<button class="btn-sm" style="background-color:var(--border-color); cursor:not-allowed;" disabled>Done</button>`;
+          } catch (err) {
+            console.error('Error completing feature request:', err);
+          }
         }
       });
 
@@ -814,12 +886,27 @@
         if (!btn) return;
         const action = btn.dataset.action;
         const id = btn.dataset.id;
-        if (action === 'cancel' && confirm("Cancel this booking?")) {
-          await updateDoc(doc(db, "bookings", id), { status: 'cancelled' });
-        } else if (action === 'complete') {
-          await updateDoc(doc(db, "bookings", id), { status: 'completed' });
+        try {
+          if (action === 'cancel' && confirm("Cancel this booking?")) {
+            await updateDoc(doc(db, "bookings", id), { status: 'cancelled' });
+            // Localized UI Update
+            const row = btn.closest('tr');
+            if (row && row.cells[4]) {
+              row.cells[4].innerHTML = `<span class="status-badge cancelled">Cancelled</span>`;
+              row.cells[5].innerHTML = ''; // Clear actions
+            }
+          } else if (action === 'complete') {
+            await updateDoc(doc(db, "bookings", id), { status: 'completed' });
+            // Localized UI Update
+            const row = btn.closest('tr');
+            if (row && row.cells[4]) {
+               row.cells[4].innerHTML = `<span class="status-badge complete">Completed</span>`;
+               row.cells[5].innerHTML = ''; // Clear actions
+            }
+          }
+        } catch (err) {
+          console.error('Error updating booking status:', err);
         }
-        loadAdminData();
       });
 
       // Quotes Action Buttons
@@ -828,12 +915,16 @@
         if (!btn) return;
         const action = btn.dataset.action;
         const id = btn.dataset.id;
-        if (action === 'responded') {
-          await updateDoc(doc(db, "quotes", id), { status: 'responded' });
-        } else if (action === 'delete' && confirm("Delete this quote request?")) {
-          await deleteDoc(doc(db, "quotes", id));
+        try {
+          if (action === 'responded') {
+            await updateDoc(doc(db, "quotes", id), { status: 'responded' });
+          } else if (action === 'delete' && confirm("Delete this quote request?")) {
+            await deleteDoc(doc(db, "quotes", id));
+          }
+          loadAdminData();
+        } catch (err) {
+          console.error('Error processing quote action:', err);
         }
-        loadAdminData();
       });
 
       // Navigation
