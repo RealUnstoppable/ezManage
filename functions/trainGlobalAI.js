@@ -5,6 +5,16 @@ const { parseNum, getDayOfWeek } = require("./utils");
 
 exports.trainGlobalAI = onSchedule("every 24 hours", async (event) => {
   console.log("Starting Global AI Training...");
+  try {
+    const snapshot = await admin.firestore().collection("users")
+        .where("cloudSyncEnabled", "==", true)
+        .where("aiTrainingEnabled", "==", true)
+        .get();
+
+    if (snapshot.empty) {
+      console.log("No users opted into AI training.");
+      return null;
+    }
 
   try {
     const snapshot = await admin.firestore().collection("users")
