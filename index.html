@@ -10,7 +10,7 @@
     <link rel="icon" type="image/jpeg" href="ManagerPro.jpg">
     <link rel="apple-touch-icon" href="ManagerPro.jpg">
 
-    <meta name="apple-mobile-web-app-capable" content="yes">
+
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="ezManage">
 
@@ -248,11 +248,11 @@
 
         #sidebar {
             transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            transform: translateX(-100%);
+            transform: translateX(-100%) !important;
         }
 
         #sidebar.open {
-            transform: translateX(0);
+            transform: translateX(0) !important;
         }
 
         @media print {
@@ -1378,7 +1378,7 @@
         const db = firebase.firestore();
         const cloudFunctions = firebase.functions();
 
-        db.enablePersistence({ synchronizeTabs: true }).catch(err => console.error("Offline sync error:", err));
+        db.enablePersistence().catch(err => console.error("Offline sync error:", err));
 
         let currentUser = null;
         function escapeHTML(str) {

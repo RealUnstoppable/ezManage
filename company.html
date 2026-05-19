@@ -113,6 +113,21 @@
             from { opacity: 0; transform: translateY(5px); }
             to { opacity: 1; transform: translateY(0); }
         }
+
+        /* Autofill Styling */
+        input:-webkit-autofill,
+        input:-webkit-autofill:hover,
+        input:-webkit-autofill:focus,
+        input:-webkit-autofill:active {
+            -webkit-box-shadow: 0 0 0 30px white inset !important;
+        }
+        .dark-mode input:-webkit-autofill,
+        .dark-mode input:-webkit-autofill:hover,
+        .dark-mode input:-webkit-autofill:focus,
+        .dark-mode input:-webkit-autofill:active {
+            -webkit-box-shadow: 0 0 0 30px #1e293b inset !important;
+            -webkit-text-fill-color: white !important;
+        }
     </style>
 </head>
 
@@ -150,14 +165,14 @@
                     <h2 class="text-3xl font-black mb-2">Corporate Login</h2>
                     <p class="text-slate-500">Manage your stores, managers, and insights from one central dashboard.</p>
                 </div>
-                <div class="card space-y-4 p-8">
-                    <input type="email" id="loginEmail" placeholder="Corporate Email" class="w-full bg-slate-50 dark:bg-slate-800 p-4 rounded-xl border-none focus:ring-2 focus:ring-indigo-500">
-                    <input type="password" id="loginPass" placeholder="Password" class="w-full bg-slate-50 dark:bg-slate-800 p-4 rounded-xl border-none focus:ring-2 focus:ring-indigo-500">
-                    <button onclick="handleLogin()" class="btn btn-primary w-full py-4 text-lg">Sign In</button>
+                <form onsubmit="handleLogin(event)" class="card space-y-4 p-8">
+                    <input type="email" id="loginEmail" required placeholder="Corporate Email" class="w-full bg-slate-50 dark:bg-slate-800 p-4 rounded-xl border-none focus:ring-2 focus:ring-indigo-500">
+                    <input type="password" id="loginPass" required placeholder="Password" class="w-full bg-slate-50 dark:bg-slate-800 p-4 rounded-xl border-none focus:ring-2 focus:ring-indigo-500">
+                    <button type="submit" class="btn btn-primary w-full py-4 text-lg">Sign In</button>
                     <div class="text-center pt-4">
                         <button onclick="navTo('register')" class="text-sm font-bold text-indigo-500 hover:text-indigo-600">Need a corporate account? Create Organization</button>
                     </div>
-                </div>
+                </form>
             </div>
         </div>
 
@@ -168,15 +183,15 @@
                     <h2 class="text-3xl font-black mb-2">Create Organization</h2>
                     <p class="text-slate-500">Set up your corporate workspace.</p>
                 </div>
-                <div class="card space-y-4 p-8">
-                    <input type="text" id="regOrgName" placeholder="Organization/Company Name" class="w-full bg-slate-50 dark:bg-slate-800 p-4 rounded-xl border-none focus:ring-2 focus:ring-indigo-500">
-                    <input type="email" id="regEmail" placeholder="Admin Email" class="w-full bg-slate-50 dark:bg-slate-800 p-4 rounded-xl border-none focus:ring-2 focus:ring-indigo-500">
-                    <input type="password" id="regPass" placeholder="Password (Min 6 chars)" class="w-full bg-slate-50 dark:bg-slate-800 p-4 rounded-xl border-none focus:ring-2 focus:ring-indigo-500">
-                    <button onclick="handleRegister()" class="btn btn-primary w-full py-4 text-lg">Create Workspace</button>
+                <form onsubmit="handleRegister(event)" class="card space-y-4 p-8">
+                    <input type="text" id="regOrgName" required placeholder="Organization/Company Name" class="w-full bg-slate-50 dark:bg-slate-800 p-4 rounded-xl border-none focus:ring-2 focus:ring-indigo-500">
+                    <input type="email" id="regEmail" required placeholder="Admin Email" class="w-full bg-slate-50 dark:bg-slate-800 p-4 rounded-xl border-none focus:ring-2 focus:ring-indigo-500">
+                    <input type="password" id="regPass" required placeholder="Password (Min 6 chars)" class="w-full bg-slate-50 dark:bg-slate-800 p-4 rounded-xl border-none focus:ring-2 focus:ring-indigo-500">
+                    <button type="submit" class="btn btn-primary w-full py-4 text-lg">Create Workspace</button>
                     <div class="text-center pt-4">
                         <button onclick="navTo('login')" class="text-sm font-bold text-slate-500 hover:text-slate-700">Back to Login</button>
                     </div>
-                </div>
+                </form>
             </div>
         </div>
 
@@ -323,7 +338,7 @@
         function toggleTheme() {
             document.documentElement.classList.toggle('dark-mode');
             const isDark = document.documentElement.classList.contains('dark-mode');
-            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+            localStorage.setItem('userTheme', isDark ? 'dark' : 'light');
             document.getElementById('themeIcon').setAttribute('data-lucide', isDark ? 'sun' : 'moon');
             lucide.createIcons();
             if(globalChartInstance) {
@@ -334,7 +349,7 @@
             }
         }
 
-        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        if (localStorage.getItem('userTheme') === 'dark' || (!localStorage.getItem('userTheme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
             document.documentElement.classList.add('dark-mode');
         }
         document.getElementById('themeIcon').setAttribute('data-lucide', document.documentElement.classList.contains('dark-mode') ? 'sun' : 'moon');
@@ -376,7 +391,8 @@
         });
 
         // --- Login & Registration ---
-        async function handleLogin() {
+        async function handleLogin(e) {
+            if (e) e.preventDefault();
             const email = document.getElementById('loginEmail').value;
             const pass = document.getElementById('loginPass').value;
             if(!email || !pass) return alert("Required fields missing");
@@ -385,7 +401,8 @@
             } catch(e) { alert("Login failed: " + e.message); }
         }
 
-        async function handleRegister() {
+        async function handleRegister(e) {
+            if (e) e.preventDefault();
             const orgName = document.getElementById('regOrgName').value;
             const email = document.getElementById('regEmail').value;
             const pass = document.getElementById('regPass').value;
@@ -421,8 +438,8 @@
                 // Find the group this user owns
                 const groupSnap = await db.collection('shift_groups').where('ownerId', '==', user.uid).limit(1).get();
                 if (groupSnap.empty) {
-                    alert("This account does not own any organizations. Please use the ezManage app, or create a new organization.");
-                    auth.signOut();
+                    alert("This account does not own any organizations. Redirecting to the main app.");
+                    window.location.replace('index.html');
                     return;
                 }
                 

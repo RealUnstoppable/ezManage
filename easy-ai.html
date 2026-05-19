@@ -34,12 +34,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-storage-compat.js"></script>
 
     <script src="https://unpkg.com/brain.js@2.0.0-beta.23/dist/browser.js"></script>
-    <script type="module">
-        import { parseNum, getDayOfWeek } from '/js/utils.js';
-        window.parseNum = parseNum;
-        window.getDayOfWeek = getDayOfWeek;
-    </script>
-    <script src="js/utils.js"></script>
+
 
     <style>
         :root {
@@ -297,12 +292,26 @@
         </div>
     </main>
 
-    <script type="module">
-        import { parseNum, getDayOfWeek } from "./js/utils.js";
-        window.parseNum = parseNum;
-        window.getDayOfWeek = getDayOfWeek;
-    </script>
+
     <script>
+        function parseNum(val) {
+            if (!val) return 0;
+            const parsed = parseFloat(val.toString().replace(/[^0-9.]/g, ""));
+            return isNaN(parsed) ? 0 : parsed;
+        }
+
+        function getDayOfWeek(dateString) {
+            if (!dateString) return -1;
+            let d;
+            if (dateString.includes("-")) {
+                const [yyyy, mm, dd] = dateString.split("-");
+                d = new Date(parseInt(yyyy), parseInt(mm) - 1, parseInt(dd));
+            } else {
+                d = new Date(dateString);
+            }
+            if (isNaN(d.getTime())) return -1;
+            return d.getDay();
+        }
         lucide.createIcons();
 
         function escapeHTML(str) {
@@ -429,7 +438,7 @@
                         }
                     } catch (e) {
                         console.log("No global model found or failed to load.", e);
-                        if (e.code === 'storage/unauthorized' || e.message.includes('400') || e.message.includes('403')) {
+                        if (e.code !== 'storage/object-not-found') {
                             updateStatus('Storage Uninitialized', 'red');
                             document.getElementById('resultsPlaceholder').innerHTML = `
                                 <div class="bg-red-50 dark:bg-red-900/20 p-4 rounded-xl text-left border border-red-100 dark:border-red-900/50 mb-4">
