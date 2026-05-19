@@ -1,10 +1,12 @@
 import { jest } from "@jest/globals";
+window.firebase = { apps: [], auth: jest.fn(), firestore: jest.fn(), initializeApp: jest.fn() };
+global.firebase = window.firebase;
 import { loadNavbar } from '../../js/navbar.js';
 import * as authModule from '../../js/auth.js';
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
 import { getDoc } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
 
-jest.mock('../../js/auth.js', () => ({
+jest.unstable_mockModule('../../js/auth.js', () => ({
   auth: {},
   db: {},
   getUserRedirectPath: (userData) => userData && userData.isAdmin ? 'admin.html' : 'index.html'

@@ -1353,6 +1353,9 @@
 
         if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
         const auth = firebase.auth();
+        firebase.firestore().settings({
+            experimentalForceLongPolling: true
+        });
         const db = firebase.firestore();
         const cloudFunctions = firebase.functions();
 
@@ -2489,7 +2492,11 @@
                 fetchMaintenanceTickets();
             } catch (error) {
                 console.error("Error submitting ticket:", error);
-                alert("Failed to submit ticket. " + error.message);
+                if (error.code === 'unavailable' || error.code === 'auth/network-request-failed') {
+                    alert("Network error: Could not connect to the server. Please check your connection.");
+                } else {
+                    alert("Failed to submit ticket. " + error.message);
+                }
             } finally {
                 submitBtn.innerHTML = originalText;
                 submitBtn.disabled = false;
@@ -2619,7 +2626,7 @@
             });
         }
 
-        function addShiftToSchedule() {
+        async function addShiftToSchedule() {
             const dateInput = document.getElementById('scheduleDate');
             const empName = document.getElementById('shiftEmpName');
             const role = document.getElementById('shiftRole');
@@ -2641,27 +2648,33 @@
             const date = dateInput.value;
             const scheduleRef = db.collection('schedules').doc(`${currentUser.uid}_${date}`);
 
-            scheduleRef.get().then(doc => {
+            try {
+                const doc = await scheduleRef.get();
                 let shifts = [];
                 if (doc.exists) {
                     shifts = doc.data().shifts || [];
                 }
                 shifts.push(newShift);
 
-                scheduleRef.set({
+                await scheduleRef.set({
                     uid: currentUser.uid,
                     date: date,
                     shifts: shifts,
                     updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-                }, { merge: true }).then(() => {
-                    empName.value = '';
-                    role.value = 'Cashier';
-                    startTime.value = '';
-                    endTime.value = '';
-                }).catch(err => {
-                    console.error("Error saving shift", err);
-                });
-            });
+                }, { merge: true });
+
+                empName.value = '';
+                role.value = 'Cashier';
+                startTime.value = '';
+                endTime.value = '';
+            } catch(err) {
+                console.error("Error saving shift", err);
+                if (err.code === 'unavailable' || err.code === 'auth/network-request-failed') {
+                    alert("Network error: Could not connect to the server. Please check your connection.");
+                } else {
+                    alert("Failed to save shift: " + err.message);
+                }
+            }
         }
 
         let unsubscribeSchedule = null;
@@ -2976,22 +2989,27 @@
             document.getElementById('shiftNoteContent').value = "";
 
             try {
-                const manageShiftNotes = firebase.functions().httpsCallableFromURL('https://manageshiftnotes-dsy7tdoigq-uc.a.run.app');
-                const result = await manageShiftNotes({
-                    action: "create",
-                    payload: {
-                        authorName: currentUser.email.split('@')[0],
-                        content: content,
-                        priority: priority,
-                        orgId: currentUserData.orgId
-                    }
+                // To allow client-side writes since cloud functions were failing for some users
+                await db.collection('shift_notes').add({
+                    authorId: currentUser.uid,
+                    authorName: currentUser.email.split('@')[0],
+                    content: content,
+                    priority: priority,
+                    status: 'Active',
+                    orgId: currentUserData.orgId,
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
                 });
-                if (result.data.success) {
-                    document.getElementById('shiftNoteContent').value = "";
-                    fetchShiftNotes();
-                }
+
+                document.getElementById('shiftNoteContent').value = "";
+                fetchShiftNotes();
+
             } catch (err) {
-                alert("Failed to post note: " + err.message);
+                console.error("Error posting note", err);
+                if (err.code === 'unavailable' || err.code === 'auth/network-request-failed') {
+                    alert("Network error: Could not connect to the server. Please check your connection.");
+                } else {
+                    alert("Failed to post note: " + err.message);
+                }
             }
         }
 
