@@ -39,6 +39,14 @@ export const productMap = products.reduce((acc, product) => {
     return acc;
 }, {});
 
+export function calculateCartTotal(cartData, prodMap) {
+    return Object.entries(cartData).reduce((sum, [productId, quantity]) => {
+        const product = prodMap[productId];
+        if (!product) return sum;
+        return sum + (product.price * quantity);
+    }, 0);
+}
+
 let cart = {};
 let currentUser = null;
 
@@ -100,35 +108,38 @@ function renderCart() {
 
 function updateCartSummary() {
     const itemCount = Object.values(cart).reduce((sum, quantity) => sum + quantity, 0);
-    const totalPrice = Object.entries(cart).reduce((sum, [productId, quantity]) => {
-
-        const product = productMap[productId];
-        return sum + (product.price * quantity);
-    }, 0);
+    const totalPrice = calculateCartTotal(cart, productMap);
 
     cartItemCountEl.textContent = itemCount;
     cartTotalPriceEl.textContent = `$${totalPrice.toFixed(2)}`;
 }
 
 async function handleAddToCart(productId) {
-    const prevCart = { ...cart };
-    cart[productId] = (cart[productId] || 0) + 1;
-    renderCart();
+    const originalCart = { ...cart };
     try {
-        await saveCart();
-    } catch (e) {
-        cart = prevCart;
+        cart[productId] = (cart[productId] || 0) + 1;
         renderCart();
-        console.error("Rollback handleAddToCart:", e);
+        await saveCart();
+    } catch (error) {
+        console.error("Error adding item to cart:", error);
+        cart = originalCart;
+        renderCart();
     }
 }
 
 async function handleUpdateQuantity(productId, quantity) {
-    const prevCart = { ...cart };
-    if (quantity <= 0) {
-        await handleRemoveFromCart(productId);
-    } else {
-        cart[productId] = parseInt(quantity, 10);
+    const originalCart = { ...cart };
+    try {
+        if (quantity <= 0) {
+            await handleRemoveFromCart(productId);
+        } else {
+            cart[productId] = parseInt(quantity, 10);
+            renderCart();
+            await saveCart();
+        }
+    } catch (error) {
+        console.error("Error updating item quantity:", error);
+        cart = originalCart;
         renderCart();
         try {
             await saveCart();
@@ -141,30 +152,27 @@ async function handleUpdateQuantity(productId, quantity) {
 }
 
 async function handleRemoveFromCart(productId) {
-    const prevCart = { ...cart };
-    delete cart[productId];
-    renderCart();
+    const originalCart = { ...cart };
     try {
-        await saveCart();
-    } catch (e) {
-        cart = prevCart;
+        delete cart[productId];
         renderCart();
-        console.error("Rollback handleRemoveFromCart:", e);
+        await saveCart();
+    } catch (error) {
+        console.error("Error removing item from cart:", error);
+        cart = originalCart;
+        renderCart();
     }
 }
 
 async function saveCart() {
-    updateCartSummary();
     if (currentUser) {
         try {
             const userCartRef = doc(db, 'carts', currentUser.uid);
             await setDoc(userCartRef, { items: cart });
         } catch (error) {
-            console.error("Error saving cart:", error);
-            throw error;
+            console.error("Error saving cart to Firestore:", error);
         }
     } else {
-
         localStorage.setItem('localCart', JSON.stringify(cart));
     }
 }
@@ -229,19 +237,23 @@ document.addEventListener('DOMContentLoaded', () => {
         const localCart = localCartData ? JSON.parse(localCartData) : {};
 
         if (user) {
+            try {
+                const userCartRef = doc(db, 'carts', user.uid);
+                const docSnap = await getDoc(userCartRef);
+                const firestoreCart = docSnap.exists() ? docSnap.data().items : {};
 
-            const userCartRef = doc(db, 'carts', user.uid);
-            const docSnap = await getDoc(userCartRef);
-            const firestoreCart = docSnap.exists() ? docSnap.data().items : {};
+                const mergedCart = { ...firestoreCart };
+                for (const [productId, quantity] of Object.entries(localCart)) {
+                    mergedCart[productId] = (mergedCart[productId] || 0) + quantity;
+                }
 
-            const mergedCart = { ...firestoreCart };
-            for (const [productId, quantity] of Object.entries(localCart)) {
-                mergedCart[productId] = (mergedCart[productId] || 0) + quantity;
+                cart = mergedCart;
+                await saveCart();
+                localStorage.removeItem('localCart');
+            } catch (error) {
+                console.error("Error loading cart:", error);
+                cart = localCart;
             }
-
-            cart = mergedCart;
-            await saveCart();
-            localStorage.removeItem('localCart');
         } else {
 
             cart = localCart;

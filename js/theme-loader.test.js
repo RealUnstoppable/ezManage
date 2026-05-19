@@ -1,10 +1,25 @@
 import { jest } from '@jest/globals';
 
+class DatasetMock {
+    constructor() { this._data = {}; }
+    get theme() { return this._data.theme; }
+    set theme(val) { this._data.theme = val; }
+    get accent() { return this._data.accent; }
+    set accent(val) { this._data.accent = val; }
+}
+
 global.document = {
     body: {
-        dataset: {}
+        setAttribute: jest.fn(),
+        classList: { toggle: jest.fn(), add: jest.fn() }
     }
 };
+Object.defineProperty(global.document.body, 'dataset', {
+    value: new DatasetMock(),
+    writable: true,
+    configurable: true
+});
+
 global.localStorage = {
     store: {},
     getItem(key) { return this.store[key] || null; },
@@ -15,6 +30,14 @@ global.window = {
     localStorage: global.localStorage,
     updateTheme: null
 };
+
+global.window.firebase = global.window.firebase || {
+    apps: [],
+    initializeApp: jest.fn(),
+    auth: jest.fn(() => ({ onAuthStateChanged: jest.fn() })),
+    firestore: jest.fn(() => ({ collection: jest.fn() }))
+};
+global.firebase = global.window.firebase;
 
 const mockAuth = { currentUser: null };
 jest.unstable_mockModule('./auth.js', () => ({
@@ -29,7 +52,7 @@ const { applyTheme } = await import('./theme-loader.js');
 
 describe('applyTheme', () => {
     beforeEach(() => {
-        document.body.dataset = {};
+        document.body.dataset = new DatasetMock();
         localStorage.clear();
         mockAuth.currentUser = null;
     });

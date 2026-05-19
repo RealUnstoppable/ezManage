@@ -1,3 +1,9 @@
+function parseNum(val) {
+  if (!val) return 0;
+  const parsed = parseFloat(val.toString().replace(/[^0-9.]/g, ""));
+  return isNaN(parsed) ? 0 : parsed;
+}
+
 function getDayOfWeek(dateString) {
   if (!dateString) return -1;
   let d;
@@ -11,10 +17,4 @@ function getDayOfWeek(dateString) {
   return d.getDay();
 }
 
-function parseNum(val) {
-  if (!val) return 0;
-  const parsed = parseFloat(val.toString().replace(/[^0-9.]/g, ""));
-  return isNaN(parsed) ? 0 : parsed;
-}
-
-module.exports = { getDayOfWeek, parseNum };
+module.exports = { parseNum, getDayOfWeek };
