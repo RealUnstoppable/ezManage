@@ -19,3 +19,8 @@
 **Vulnerability:** The `/users/{userId}` `allow create` rule in `firestore.rules` prevented injection of `isBanned` and `membershipLevel` keys but failed to prevent injection of `plan` and `subscription` keys. This allowed an unauthenticated attacker creating a new user document to elevate their privileges to a paid tier immediately.
 **Learning:** Security controls on document creation must mirror the strictness of document updates. When using `request.resource.data.keys().hasAny()`, it is critical to perform an exhaustive review of all sensitive fields present in the schema to ensure no privileged attributes can be injected via mass assignment.
 **Prevention:** Ensure that the forbidden key lists in `hasAny()` for `create` rules are synchronized with the `hasAny()` lists for `update` rules, comprehensively covering all fields related to roles, billing, and system flags.
+
+## 2026-05-05 - Cross-Site Scripting (XSS) in Index Dashboard
+**Vulnerability:** XSS via unescaped user input (authorName, userName) interpolated directly into `innerHTML` in `index.html`.
+**Learning:** Even if `admin.html` is secured using `escapeHTML`, similar vulnerabilities might exist in other views processing the same data types. For example, `index.html` failed to escape `data.authorName` for Shift Notes, leading to potential XSS.
+**Prevention:** Implement `escapeHTML` uniformly across all views and consistently sanitize all user-controlled data before inserting it into the DOM via `innerHTML` or string interpolation. Ensure variables wrapped in HTML literals are carefully scrutinized.
