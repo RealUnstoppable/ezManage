@@ -1,6 +1,7 @@
 import { auth, db } from './auth.js';
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
 import { doc, getDoc, setDoc, updateDoc, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
+import { showToast } from './utils.js';
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -377,17 +378,6 @@ document.addEventListener('DOMContentLoaded', () => {
         return `${min}:${sec < 10 ? '0' : ''}${sec}`;
     }
 
-    function showToast(message) {
-        const toast = document.createElement('div');
-        toast.className = 'toast-notification';
-        toast.textContent = message;
-        document.body.appendChild(toast);
-        setTimeout(() => {
-            toast.classList.add('fade-out');
-            setTimeout(() => toast.remove(), 300);
-        }, 3000);
-    }
-
     async function toggleFavorite(songId) {
         if (!currentUser) {
             showToast("Please sign in to save favorites.");
@@ -416,9 +406,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 renderSongTable(userFavorites);
             }
         } catch (e) {
+            console.error("Error toggling favorite:", e);
             if (e.code === 'not-found') {
-                await setDoc(userRef, { musicFavorites: [songId] }, { merge: true });
-                userFavorites.push(song);
+                try {
+                    await setDoc(userRef, { musicFavorites: [songId] }, { merge: true });
+                    userFavorites.push(song);
+                } catch (innerError) {
+                    console.error("Error setting initial favorite document:", innerError);
+                }
+            } else {
+                console.error("Error toggling favorite:", e);
             }
         }
     }

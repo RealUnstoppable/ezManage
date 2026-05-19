@@ -115,30 +115,53 @@ function updateCartSummary() {
 }
 
 async function handleAddToCart(productId) {
-    cart[productId] = (cart[productId] || 0) + 1;
-    renderCart();
-    await saveCart();
-}
-
-async function handleAddToCart(productId) {
-    cart[productId] = (cart[productId] || 0) + 1;
-    await updateCartState();
+    const originalCart = { ...cart };
+    try {
+        cart[productId] = (cart[productId] || 0) + 1;
+        renderCart();
+        await saveCart();
+    } catch (error) {
+        console.error("Error adding item to cart:", error);
+        cart = originalCart;
+        renderCart();
+    }
 }
 
 async function handleUpdateQuantity(productId, quantity) {
-    if (quantity <= 0) {
-        await handleRemoveFromCart(productId);
-    } else {
-        cart[productId] = parseInt(quantity, 10);
+    const originalCart = { ...cart };
+    try {
+        if (quantity <= 0) {
+            await handleRemoveFromCart(productId);
+        } else {
+            cart[productId] = parseInt(quantity, 10);
+            renderCart();
+            await saveCart();
+        }
+    } catch (error) {
+        console.error("Error updating item quantity:", error);
+        cart = originalCart;
         renderCart();
-        await saveCart();
+        try {
+            await saveCart();
+        } catch (e) {
+            cart = prevCart;
+            renderCart();
+            console.error("Rollback handleUpdateQuantity:", e);
+        }
     }
 }
 
 async function handleRemoveFromCart(productId) {
-    delete cart[productId];
-    renderCart();
-    await saveCart();
+    const originalCart = { ...cart };
+    try {
+        delete cart[productId];
+        renderCart();
+        await saveCart();
+    } catch (error) {
+        console.error("Error removing item from cart:", error);
+        cart = originalCart;
+        renderCart();
+    }
 }
 
 async function saveCart() {
