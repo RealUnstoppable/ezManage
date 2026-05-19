@@ -395,7 +395,7 @@
                 const cred = await auth.createUserWithEmailAndPassword(email, pass);
                 
                 // For a Corporate Workspace, we create a shift_group and make them the owner
-                const manageShiftGroups = firebase.functions().httpsCallableFromURL('https://manageshiftgroups-dsy7tdoigq-uc.a.run.app');
+                const manageShiftGroups = firebase.functions().httpsCallable('manageShiftGroups');
                 await manageShiftGroups({
                     action: "create",
                     payload: {
@@ -541,7 +541,7 @@
 
         async function approveRequest(requestId) {
             try {
-                const manageShiftGroups = firebase.functions().httpsCallableFromURL('https://manageshiftgroups-dsy7tdoigq-uc.a.run.app');
+                const manageShiftGroups = firebase.functions().httpsCallable('manageShiftGroups');
                 await manageShiftGroups({
                     action: "approve_join",
                     payload: { requestId: requestId }

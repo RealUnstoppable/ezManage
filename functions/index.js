@@ -1,5 +1,6 @@
 const functions = require("firebase-functions");
-const { onRequest, onCall, HttpsError } = require("firebase-functions/v2/https");
+const { onRequest } = require("firebase-functions/v2/https");
+const HttpsError = functions.https.HttpsError;
 const admin = require("firebase-admin");
 const cors = require("cors")({ origin: true });
 
@@ -170,10 +171,7 @@ exports.cancelSubscription = onRequest({ invoker: "public" }, (req, res) => {
  * Manage Shift Notes API
  * Handles creation, updating, and resolution of shift notes.
  */
-exports.manageShiftNotes = onCall({ cors: true, invoker: "public" }, async (request) => {
-  const data = request.data;
-  const context = request;
-
+exports.manageShiftNotes = functions.https.onCall(async (data, context) => {
   if (!context.auth) {
     throw new HttpsError(
         "unauthenticated", "User must be logged in.");
@@ -267,10 +265,7 @@ exports.manageShiftNotes = onCall({ cors: true, invoker: "public" }, async (requ
  * Manage Shift Groups API
  * Handles creating groups, joining groups, and approving joins.
  */
-exports.manageShiftGroups = onCall({ cors: true, invoker: "public" }, async (request) => {
-  const data = request.data;
-  const context = request;
-
+exports.manageShiftGroups = functions.https.onCall(async (data, context) => {
   if (!context.auth) {
     throw new HttpsError(
         "unauthenticated", "User must be logged in.");
