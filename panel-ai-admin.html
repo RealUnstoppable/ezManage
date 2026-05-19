@@ -416,8 +416,8 @@
             const avgD   = shifts.length ? Math.round(shifts.reduce((s,h)=>s+(h.durationMins||0),0)/shifts.length) : 0;
             const plan   = escapeHTML(u.plan || 'Free');
             const planPill = (plan.toLowerCase().includes('pro') || plan.toLowerCase().includes('business'))
-                ? `<span class="pill pill-pro">${plan}</span>`
-                : `<span class="pill pill-free">${plan}</span>`;
+                ? `<span class="pill pill-pro">${escapeHTML(plan)}</span>`
+                : `<span class="pill pill-free">${escapeHTML(plan)}</span>`;
             const cloudPill = u.cloudSyncEnabled ? `<span class="pill pill-active">On</span>` : `<span class="pill pill-off">Off</span>`;
             const aiPill    = (u.aiTrainingEnabled !== false && u.cloudSyncEnabled) ? `<span class="pill pill-active">On</span>` : `<span class="pill pill-off">Off</span>`;
             return `
