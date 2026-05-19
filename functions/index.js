@@ -73,7 +73,7 @@ exports.createCheckoutSession = functions.https.onRequest((req, res) => {
 
       res.status(200).json({url: session.url});
     } catch (err) {
-      console.error("Checkout Error:", err);
+      console.error("Manager Troubleshooting: Checkout Error for uid: " + uid, err);
       res.status(500).json({error: err.message});
     }
   });
@@ -131,7 +131,7 @@ exports.stripeWebhook = functions.https.onRequest(async (req, res) => {
         });
         console.log(`❌ Reverted user ${doc.id} back to Free plan.`);
       } catch (err) {
-        console.error(`Error reverting user ${doc.id} back to Free plan:`, err);
+        console.error(`Manager Troubleshooting: Error reverting user ${doc.id} back to Free plan:`, err);
       }
     }
   }
@@ -155,7 +155,7 @@ exports.cancelSubscription = functions.https.onRequest((req, res) => {
       );
       res.status(200).json({success: true});
     } catch (err) {
-      console.error("Cancel Error:", err);
+      console.error("Manager Troubleshooting: Cancel Error for customerId: " + customerId, err);
       res.status(500).json({error: err.message});
     }
   });

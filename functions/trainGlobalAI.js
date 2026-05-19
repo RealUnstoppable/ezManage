@@ -30,34 +30,7 @@ exports.trainGlobalAI = onSchedule("every 24 hours", async (event) => {
     return null;
   }
 
-  /**
-   * Get day of week.
-   * @param {string} dateString
-   * @return {number}
-   */
-  function getDayOfWeek(dateString) {
-    if (!dateString) return -1;
-    let d;
-    if (dateString.includes("-")) {
-      const [yyyy, mm, dd] = dateString.split("-");
-      d = new Date(parseInt(yyyy), parseInt(mm) - 1, parseInt(dd));
-    } else {
-      d = new Date(dateString);
-    }
-    if (isNaN(d.getTime())) return -1;
-    return d.getDay();
-  }
-
-  /**
-   * Parse number.
-   * @param {any} val
-   * @return {number}
-   */
-  function parseNum(val) {
-    if (!val) return 0;
-    const parsed = parseFloat(val.toString().replace(/[^0-9.]/g, ""));
-    return isNaN(parsed) ? 0 : parsed;
-  }
+  const { parseNum, getDayOfWeek } = require("./utils.js");
 
   // 1. Find Max Values
   allHistory.forEach((shift) => {

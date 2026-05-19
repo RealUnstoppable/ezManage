@@ -3,6 +3,10 @@
 
 <head>
   <script type="module" src="/js/theme-loader.js"></script>
+  <script type="module">
+    import { escapeHTML } from '/js/utils.js';
+    window.escapeHTML = escapeHTML;
+  </script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin Dashboard | DTS HUB & Unstoppable</title>
@@ -547,16 +551,6 @@
       }
     });
 
-    function escapeHTML(str) {
-      if (typeof str !== 'string') return str;
-      return str
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
-    }
-
     function initializeAdminPage(adminUser) {
       document.getElementById('user-email-sidebar').textContent = adminUser.email;
       loadAdminData();
@@ -844,19 +838,27 @@
         if (!userId) return;
         const shouldBeBanned = e.target.classList.contains('btn-ban');
         if (confirm(`Are you sure you want to ${shouldBeBanned ? 'ban' : 'unban'} this user?`)) {
+          const row = e.target.closest('tr');
+          const statusCell = row.cells[4];
+          const originalStatusHTML = statusCell.innerHTML;
+          const originalBtnText = e.target.textContent;
+
+          // Optimistic UI update
+          statusCell.innerHTML = shouldBeBanned ? `<span class="status-badge banned">Banned</span>` : `<span class="status-badge active">Active</span>`;
+          e.target.textContent = shouldBeBanned ? 'Unban' : 'Ban';
+          e.target.classList.toggle('btn-ban');
+          e.target.classList.toggle('btn-unban');
+
           try {
             await updateDoc(doc(db, "users", userId), { isBanned: shouldBeBanned });
-
-            // Localized UI update
-            const row = e.target.closest('tr');
-            const statusCell = row.cells[4];
-            statusCell.innerHTML = shouldBeBanned ? `<span class="status-badge banned">Banned</span>` : `<span class="status-badge active">Active</span>`;
-
-            e.target.textContent = shouldBeBanned ? 'Unban' : 'Ban';
+          } catch (err) {
+            // Revert UI on failure
+            statusCell.innerHTML = originalStatusHTML;
+            e.target.textContent = originalBtnText;
             e.target.classList.toggle('btn-ban');
             e.target.classList.toggle('btn-unban');
-          } catch (err) {
-            console.error('Error updating ban status:', err);
+            console.error(`Manager Troubleshooting: Action Failed for User Ban Toggle (ID: ${userId}) - `, err);
+            alert('Action failed, please try again.');
           }
         }
       });
@@ -866,18 +868,24 @@
         const reqId = e.target.dataset.id;
         if (!reqId || !e.target.classList.contains('mark-complete-btn')) return;
         if (confirm(`Mark this feature request as complete?`)) {
+          const row = e.target.closest('tr');
+          const statusCell = row.cells[4];
+          const actionCell = row.cells[5];
+          const originalStatusHTML = statusCell.innerHTML;
+          const originalActionHTML = actionCell.innerHTML;
+
+          // Optimistic UI update
+          statusCell.innerHTML = `<span style="color:var(--accent-green);">Completed</span>`;
+          actionCell.innerHTML = `<button class="btn-sm" style="background-color:var(--border-color); cursor:not-allowed;" disabled>Done</button>`;
+
           try {
             await updateDoc(doc(db, "feature_requests", reqId), { status: 'completed' });
-
-            // Localized UI update
-            const row = e.target.closest('tr');
-            const statusCell = row.cells[4];
-            statusCell.innerHTML = `<span style="color:var(--accent-green);">Completed</span>`;
-
-            const actionCell = row.cells[5];
-            actionCell.innerHTML = `<button class="btn-sm" style="background-color:var(--border-color); cursor:not-allowed;" disabled>Done</button>`;
           } catch (err) {
-            console.error('Error completing feature request:', err);
+            // Revert UI on failure
+            statusCell.innerHTML = originalStatusHTML;
+            actionCell.innerHTML = originalActionHTML;
+            console.error(`Manager Troubleshooting: Action Failed for Feature Request Complete (ID: ${reqId}) - `, err);
+            alert('Action failed, please try again.');
           }
         }
       });
@@ -888,26 +896,35 @@
         if (!btn) return;
         const action = btn.dataset.action;
         const id = btn.dataset.id;
+        const row = btn.closest('tr');
+
+        let originalStatusHTML, originalActionHTML;
+        if (row && row.cells[4]) {
+            originalStatusHTML = row.cells[4].innerHTML;
+            originalActionHTML = row.cells[5].innerHTML;
+        }
+
         try {
           if (action === 'cancel' && confirm("Cancel this booking?")) {
-            await updateDoc(doc(db, "bookings", id), { status: 'cancelled' });
-            // Localized UI Update
-            const row = btn.closest('tr');
             if (row && row.cells[4]) {
               row.cells[4].innerHTML = `<span class="status-badge cancelled">Cancelled</span>`;
               row.cells[5].innerHTML = ''; // Clear actions
             }
+            await updateDoc(doc(db, "bookings", id), { status: 'cancelled' });
           } else if (action === 'complete') {
-            await updateDoc(doc(db, "bookings", id), { status: 'completed' });
-            // Localized UI Update
-            const row = btn.closest('tr');
             if (row && row.cells[4]) {
                row.cells[4].innerHTML = `<span class="status-badge complete">Completed</span>`;
                row.cells[5].innerHTML = ''; // Clear actions
             }
+            await updateDoc(doc(db, "bookings", id), { status: 'completed' });
           }
         } catch (err) {
-          console.error('Error updating booking status:', err);
+          if (row && row.cells[4]) {
+              row.cells[4].innerHTML = originalStatusHTML;
+              row.cells[5].innerHTML = originalActionHTML;
+          }
+          console.error(`Manager Troubleshooting: Action Failed for Bookings Action (${action}) on ID: ${id} - `, err);
+          alert('Action failed, please try again.');
         }
       });
 
@@ -917,15 +934,30 @@
         if (!btn) return;
         const action = btn.dataset.action;
         const id = btn.dataset.id;
+        const row = btn.closest('tr');
+
         try {
           if (action === 'responded') {
-            await updateDoc(doc(db, "quotes", id), { status: 'responded' });
+            const statusCell = row.cells[2];
+            const originalStatusHTML = statusCell.innerHTML;
+            statusCell.innerHTML = `<span class="status-badge active">responded</span>`;
+
+            await updateDoc(doc(db, "quotes", id), { status: 'responded' }).catch(err => {
+                statusCell.innerHTML = originalStatusHTML;
+                throw err;
+            });
+            // Update row action buttons internally without reload
+            row.cells[3].innerHTML = `<button class="btn-sm btn-danger action-btn" data-type="quote" data-action="delete" data-id="${escapeHTML(id)}">Delete</button>`;
           } else if (action === 'delete' && confirm("Delete this quote request?")) {
-            await deleteDoc(doc(db, "quotes", id));
+            row.style.display = 'none'; // Optimistically hide
+            await deleteDoc(doc(db, "quotes", id)).catch(err => {
+                row.style.display = ''; // Show again if failed
+                throw err;
+            });
           }
-          loadAdminData();
         } catch (err) {
-          console.error('Error processing quote action:', err);
+          console.error(`Manager Troubleshooting: Action Failed for Quotes Action (${action}) on ID: ${id} - `, err);
+          alert('Action failed, please try again.');
         }
       });
 

@@ -111,7 +111,7 @@ if (document.getElementById('auth-form')) {
                 sessionStorage.setItem('newUser', 'true');
                 window.location.replace('account.html');
             } catch (error) {
-                console.error("Sign up error:", error);
+                console.error("Manager Troubleshooting: Sign up error for email:", email, error);
                 showMessage(getFirebaseErrorMessage(error));
                 submitBtn.disabled = false;
             }
@@ -129,7 +129,7 @@ if (document.getElementById('auth-form')) {
                     submitBtn.disabled = false;
                 }
             } catch (error) {
-                console.error("Sign in error:", error);
+                console.error("Manager Troubleshooting: Sign in error for email:", email, error);
                 showMessage(getFirebaseErrorMessage(error));
                 submitBtn.disabled = false;
             }
