@@ -32,6 +32,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-storage-compat.js"></script>
 
     <script src="https://unpkg.com/brain.js@2.0.0-beta.23/dist/browser.js"></script>
+    <script src="js/utils.js"></script>
 
     <style>
         :root {
@@ -385,22 +386,7 @@
             runPrediction(net);
         }
 
-        function getDayOfWeek(dateString) {
-            let d;
-            if (dateString.includes('-')) {
-                d = new Date(dateString + 'T12:00:00Z');
-            } else {
-                d = new Date(dateString);
-            }
-            if (isNaN(d.getTime())) return -1;
-            return d.getDay();
-        }
 
-        function parseNum(val) {
-            if (!val) return 0;
-            const parsed = parseFloat(val.toString().replace(/[^0-9.]/g, ''));
-            return isNaN(parsed) ? 0 : parsed;
-        }
 
         function processDataForNN(history) {
             updateStatus('Training Model...', 'sky');
@@ -510,6 +496,10 @@
             `;
 
             const list = document.getElementById('predictionsList');
+            // ⚡ Bolt Optimization: Batch DOM insertions using a DocumentFragment
+            // This prevents layout thrashing by avoiding multiple reflows/repaints during loop iterations.
+            const fragment = document.createDocumentFragment();
+            let addedCount = 0;
 
             Array.from(uniqueItems).sort().forEach(name => {
 
@@ -549,18 +539,15 @@
                     </div>
                 `;
 
-                div.querySelector('.import-btn').onclick = (e) => {
-                    const btn = e.target;
-                    importPrediction(btn.dataset.name, parseInt(btn.dataset.bl), parseInt(btn.dataset.cl), parseInt(btn.dataset.fr));
-                };
-
-                list.appendChild(div);
+                fragment.appendChild(div);
+                addedCount++;
             });
 
-            if (list.children.length === 0) {
+            if (addedCount === 0) {
                 list.innerHTML = `<p class="text-center py-8 text-slate-500">The AI could not confidently predict any stock levels above 0. Try logging more data!</p>`;
                 document.getElementById('importAllBtn').classList.add('hidden');
             } else {
+                list.appendChild(fragment);
                 document.getElementById('importAllBtn').classList.remove('hidden');
             }
         }

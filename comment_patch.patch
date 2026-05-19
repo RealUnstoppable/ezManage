@@ -1,0 +1,22 @@
+--- easy-ai.html
++++ easy-ai.html
+@@ -500,6 +500,8 @@
+             `;
+
+             const list = document.getElementById('predictionsList');
++            // ⚡ Bolt Optimization: Batch DOM insertions using a DocumentFragment
++            // This prevents layout thrashing by avoiding multiple reflows/repaints during loop iterations.
+             const fragment = document.createDocumentFragment();
+             let addedCount = 0;
+
+--- panel-ai-admin.html
++++ panel-ai-admin.html
+@@ -333,6 +333,8 @@
+             { label:'Avg Shift Duration',  value: avgMins+'m',      color:'accent-amber',  icon:'clock' },
+         ];
+         const grid = document.getElementById('kpiGrid');
++        // ⚡ Bolt Optimization: Replace O(N^2) innerHTML += in loops with batched string map/join
++        // This reduces browser parsing overhead and costly layout recalculations.
+         grid.innerHTML = kpis.map(k => `
+             <div class="card" style="display:flex;flex-direction:column;gap:6px;">
+                 <div class="card-title">${k.label}</div>
