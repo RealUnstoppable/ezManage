@@ -199,6 +199,11 @@
     </main>
 </div>
 
+<script type="module">
+    import { parseNum, getDayOfWeek } from "./js/utils.js";
+    window.parseNum = parseNum;
+    window.getDayOfWeek = getDayOfWeek;
+</script>
 <script>
     const firebaseConfig = {
         apiKey: "AIzaSyBgrI9HwJPSc5b4pu2Egsv4DE7shNwptSw",
@@ -261,12 +266,6 @@
         if (!ts) return '—';
         const d = ts.toDate ? ts.toDate() : new Date(ts);
         return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-    }
-
-    function parseNum(val) {
-        if (!val) return 0;
-        const n = parseFloat(val.toString().replace(/[^0-9.]/g, ''));
-        return isNaN(n) ? 0 : n;
     }
 
     /* ---------- LOAD ---------- */

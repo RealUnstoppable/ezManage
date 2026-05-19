@@ -231,8 +231,12 @@
         </div>
     </main>
 
+    <script type="module">
+        import { parseNum, getDayOfWeek } from "./js/utils.js";
+        window.parseNum = parseNum;
+        window.getDayOfWeek = getDayOfWeek;
+    </script>
     <script>
-
         lucide.createIcons();
 
         function escapeHTML(str) {
