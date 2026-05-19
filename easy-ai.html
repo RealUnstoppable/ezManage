@@ -32,6 +32,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-storage-compat.js"></script>
 
     <script src="https://unpkg.com/brain.js@2.0.0-beta.23/dist/browser.js"></script>
+    <script src="js/utils.js"></script>
 
     <style>
         :root {
@@ -123,7 +124,6 @@
             <div class="flex items-center space-x-3 cursor-pointer" onclick="window.location.href='index.html'">
                 <div class="relative group">
                     <img src="ManagerPro.jpg"
-                         onerror="this.src='https://ui-avatars.com/api/?name=ez+M&background=87ceeb&color=fff'"
                          alt="ezManage Logo"
                          class="w-10 h-10 rounded-xl shadow-sm border border-white transform transition-transform group-hover:rotate-6">
                 </div>
@@ -134,7 +134,7 @@
                     <div id="statusIndicator" class="w-2 h-2 rounded-full bg-slate-300"></div>
                     <span class="text-[10px] font-black uppercase tracking-widest text-slate-500">Initializing</span>
                 </div>
-                <button onclick="toggleSidebar()" class="text-slate-400 hover:text-sky-500 transition-colors">
+                <button onclick="toggleSidebar()" class="text-slate-400 hover:text-sky-500 transition-colors" aria-label="Open sidebar menu">
                     <i data-lucide="menu" class="w-6 h-6"></i>
                 </button>
             </div>
@@ -235,6 +235,16 @@
 
         lucide.createIcons();
 
+        function escapeHTML(str) {
+            if (typeof str !== 'string') return str;
+            return str
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
         const savedTheme = localStorage.getItem('managerProTheme');
         if (savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
             document.body.classList.add('dark-mode');
@@ -308,7 +318,7 @@
 
         function updateStatus(text, color) {
             const ind = document.getElementById('statusIndicator');
-            ind.innerHTML = `<span class="w-2 h-2 rounded-full bg-${color}-500 ${color === 'amber' || color === 'sky' ? 'animate-pulse' : ''} shadow-[0_0_8px_rgba(var(--tw-colors-${color}-500),0.8)]"></span> ${text}`;
+            ind.innerHTML = `<span class="w-2 h-2 rounded-full bg-${color}-500 ${color === 'amber' || color === 'sky' ? 'animate-pulse' : ''} shadow-[0_0_8px_rgba(var(--tw-colors-${color}-500),0.8)]"></span> ${escapeHTML(text)}`;
         }
 
         function checkAIRestrictions(data) {
@@ -383,22 +393,7 @@
             runPrediction(net);
         }
 
-        function getDayOfWeek(dateString) {
-            let d;
-            if (dateString.includes('-')) {
-                d = new Date(dateString + 'T12:00:00Z');
-            } else {
-                d = new Date(dateString);
-            }
-            if (isNaN(d.getTime())) return -1;
-            return d.getDay();
-        }
 
-        function parseNum(val) {
-            if (!val) return 0;
-            const parsed = parseFloat(val.toString().replace(/[^0-9.]/g, ''));
-            return isNaN(parsed) ? 0 : parsed;
-        }
 
         function processDataForNN(history) {
             updateStatus('Training Model...', 'sky');
@@ -508,6 +503,10 @@
             `;
 
             const list = document.getElementById('predictionsList');
+            // ⚡ Bolt Optimization: Batch DOM insertions using a DocumentFragment
+            // This prevents layout thrashing by avoiding multiple reflows/repaints during loop iterations.
+            const fragment = document.createDocumentFragment();
+            let addedCount = 0;
 
             Array.from(uniqueItems).sort().forEach(name => {
 
@@ -539,17 +538,23 @@
                     </div>
 
                     <div class="col-span-2 md:col-span-1 flex justify-end">
-                        <button onclick="importPrediction('${name}', ${bl}, ${cl}, ${fr})" class="btn btn-sm btn-accent w-full md:w-auto">Import</button>
+                        <button class="btn btn-sm btn-accent w-full md:w-auto import-btn"
+                                data-name="${escapeHTML(name)}"
+                                data-bl="${bl}"
+                                data-cl="${cl}"
+                                data-fr="${fr}">Import</button>
                     </div>
                 `;
 
-                list.appendChild(div);
+                fragment.appendChild(div);
+                addedCount++;
             });
 
-            if (list.children.length === 0) {
+            if (addedCount === 0) {
                 list.innerHTML = `<p class="text-center py-8 text-slate-500">The AI could not confidently predict any stock levels above 0. Try logging more data!</p>`;
                 document.getElementById('importAllBtn').classList.add('hidden');
             } else {
+                list.appendChild(fragment);
                 document.getElementById('importAllBtn').classList.remove('hidden');
             }
         }
