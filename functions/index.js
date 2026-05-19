@@ -1,6 +1,7 @@
 const functions = require("firebase-functions");
+const { onRequest, onCall, HttpsError } = require("firebase-functions/v2/https");
 const admin = require("firebase-admin");
-const cors = require("cors")({origin: true});
+const cors = require("cors")({ origin: true });
 
 admin.initializeApp();
 
@@ -12,7 +13,7 @@ const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET ||
 const stripe = require("stripe")(stripeKey);
 
 // 🔹 Create Checkout Session
-exports.createCheckoutSession = functions.https.onRequest((req, res) => {
+exports.createCheckoutSession = onRequest({ invoker: "public" }, (req, res) => {
   cors(req, res, async () => {
     if (req.method !== "POST") {
       return res.status(405).send("Method Not Allowed");
@@ -80,7 +81,7 @@ exports.createCheckoutSession = functions.https.onRequest((req, res) => {
 });
 
 // 🔐 STRIPE WEBHOOK (SECURE)
-exports.stripeWebhook = functions.https.onRequest(async (req, res) => {
+exports.stripeWebhook = onRequest({ invoker: "public" }, async (req, res) => {
   const sig = req.headers["stripe-signature"];
   let event;
 
@@ -140,7 +141,7 @@ exports.stripeWebhook = functions.https.onRequest(async (req, res) => {
 });
 
 // 🔻 Cancel Subscription Manually
-exports.cancelSubscription = functions.https.onRequest((req, res) => {
+exports.cancelSubscription = onRequest({ invoker: "public" }, (req, res) => {
   cors(req, res, async () => {
     if (req.method !== "POST") {
       return res.status(405).send("Method Not Allowed");
@@ -165,9 +166,12 @@ exports.cancelSubscription = functions.https.onRequest((req, res) => {
  * Manage Shift Notes API
  * Handles creation, updating, and resolution of shift notes.
  */
-exports.manageShiftNotes = functions.https.onCall(async (data, context) => {
+exports.manageShiftNotes = onCall({ invoker: "public" }, async (request) => {
+  const data = request.data;
+  const context = request;
+
   if (!context.auth) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
         "unauthenticated", "User must be logged in.");
   }
 
@@ -175,7 +179,7 @@ exports.manageShiftNotes = functions.https.onCall(async (data, context) => {
   const uid = context.auth.uid;
 
   if (!action || !payload) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
         "invalid-argument", "Missing action or payload");
   }
 
@@ -184,7 +188,7 @@ exports.manageShiftNotes = functions.https.onCall(async (data, context) => {
     // instead of trusting the client payload to prevent IDOR
     const userDoc = await admin.firestore().collection("users").doc(uid).get();
     if (!userDoc.exists) {
-      throw new functions.https.HttpsError("not-found", "User not found");
+      throw new HttpsError("not-found", "User not found");
     }
     const actualOrgId = userDoc.data().orgId || null;
 
@@ -192,7 +196,7 @@ exports.manageShiftNotes = functions.https.onCall(async (data, context) => {
       const {authorName, content, priority} = payload;
 
       if (!content) {
-        throw new functions.https.HttpsError(
+        throw new HttpsError(
             "invalid-argument", "Missing note content");
       }
 
@@ -221,7 +225,7 @@ exports.manageShiftNotes = functions.https.onCall(async (data, context) => {
       const {noteId, resolvedBy} = payload;
 
       if (!noteId || !resolvedBy) {
-        throw new functions.https.HttpsError(
+        throw new HttpsError(
             "invalid-argument", "Missing required fields");
       }
 
@@ -230,11 +234,11 @@ exports.manageShiftNotes = functions.https.onCall(async (data, context) => {
       const noteDoc = await noteRef.get();
 
       if (!noteDoc.exists) {
-        throw new functions.https.HttpsError("not-found", "Note not found");
+        throw new HttpsError("not-found", "Note not found");
       }
 
       if (noteDoc.data().orgId !== actualOrgId) {
-        throw new functions.https.HttpsError(
+        throw new HttpsError(
             "permission-denied", "Unauthorized to resolve this note");
       }
 
@@ -247,11 +251,11 @@ exports.manageShiftNotes = functions.https.onCall(async (data, context) => {
       return {success: true};
     }
 
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
         "invalid-argument", "Invalid action");
   } catch (error) {
     console.error("Shift Note Error:", error);
-    throw new functions.https.HttpsError("internal", error.message);
+    throw new HttpsError("internal", error.message);
   }
 });
 
@@ -259,9 +263,12 @@ exports.manageShiftNotes = functions.https.onCall(async (data, context) => {
  * Manage Shift Groups API
  * Handles creating groups, joining groups, and approving joins.
  */
-exports.manageShiftGroups = functions.https.onCall(async (data, context) => {
+exports.manageShiftGroups = onCall({ invoker: "public" }, async (request) => {
+  const data = request.data;
+  const context = request;
+
   if (!context.auth) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
         "unauthenticated", "User must be logged in.");
   }
 
@@ -269,7 +276,7 @@ exports.manageShiftGroups = functions.https.onCall(async (data, context) => {
   const uid = context.auth.uid;
 
   if (!action || !payload) {
-    throw new functions.https.HttpsError(
+    throw new HttpsError(
         "invalid-argument", "Missing action or payload");
   }
 
@@ -279,7 +286,7 @@ exports.manageShiftGroups = functions.https.onCall(async (data, context) => {
       const {ownerName, groupName, password} = payload;
 
       if (!groupName || !password) {
-        throw new functions.https.HttpsError(
+        throw new HttpsError(
             "invalid-argument", "Missing required fields");
       }
 
@@ -308,7 +315,7 @@ exports.manageShiftGroups = functions.https.onCall(async (data, context) => {
       const {userName, groupId, password} = payload;
 
       if (!groupId || !password) {
-        throw new functions.https.HttpsError(
+        throw new HttpsError(
             "invalid-argument", "Missing required fields");
       }
 
@@ -316,11 +323,11 @@ exports.manageShiftGroups = functions.https.onCall(async (data, context) => {
           .collection("shift_groups").doc(groupId).get();
 
       if (!groupDoc.exists) {
-        throw new functions.https.HttpsError("not-found", "Group not found");
+        throw new HttpsError("not-found", "Group not found");
       }
 
       if (groupDoc.data().password !== password) {
-        throw new functions.https.HttpsError(
+        throw new HttpsError(
             "permission-denied", "Invalid password");
       }
 
@@ -341,7 +348,7 @@ exports.manageShiftGroups = functions.https.onCall(async (data, context) => {
       const {requestId} = payload;
 
       if (!requestId) {
-        throw new functions.https.HttpsError(
+        throw new HttpsError(
             "invalid-argument", "Missing required fields");
       }
 
@@ -350,7 +357,7 @@ exports.manageShiftGroups = functions.https.onCall(async (data, context) => {
       const requestDoc = await requestDocRef.get();
 
       if (!requestDoc.exists) {
-        throw new functions.https.HttpsError("not-found", "Request not found");
+        throw new HttpsError("not-found", "Request not found");
       }
 
       const {groupId, userId} = requestDoc.data();
@@ -360,7 +367,7 @@ exports.manageShiftGroups = functions.https.onCall(async (data, context) => {
           .collection("shift_groups").doc(groupId).get();
 
       if (!groupDoc.exists || groupDoc.data().ownerId !== uid) {
-        throw new functions.https.HttpsError(
+        throw new HttpsError(
             "permission-denied", "Unauthorized");
       }
 
@@ -378,13 +385,13 @@ exports.manageShiftGroups = functions.https.onCall(async (data, context) => {
       return {success: true};
     }
 
-    throw new functions.https.HttpsError("invalid-argument", "Invalid action");
+    throw new HttpsError("invalid-argument", "Invalid action");
   } catch (error) {
     console.error("Shift Groups Error:", error);
-    if (error instanceof functions.https.HttpsError) {
+    if (error instanceof HttpsError) {
       throw error;
     }
-    throw new functions.https.HttpsError("internal", error.message);
+    throw new HttpsError("internal", error.message);
   }
 });
 
