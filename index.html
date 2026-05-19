@@ -633,9 +633,9 @@
                     </div>
                     <div class="flex items-center gap-3">
                         <button onclick="document.getElementById('jsonImportInput').click()"
-                            class="btn btn-outline btn-sm" title="Import JSON"><i data-lucide="upload"
+                            class="btn btn-outline btn-sm" title="Import JSON" aria-label="Import JSON"><i data-lucide="upload"
                                 class="w-4"></i></button>
-                        <button onclick="exportDataJSON()" class="btn btn-outline btn-sm" title="Export JSON"><i
+                        <button onclick="exportDataJSON()" class="btn btn-outline btn-sm" title="Export JSON" aria-label="Export JSON"><i
                                 data-lucide="download" class="w-4"></i></button>
                         <input type="file" id="jsonImportInput" accept=".json" class="hidden"
                             onchange="importDataJSON(event)">
@@ -2367,7 +2367,7 @@
                         <div class="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700">
                             <span class="text-xs font-bold text-slate-500 uppercase">Group ID:</span>
                             <span class="text-sm font-mono font-bold">${currentUserData.orgId}</span>
-                            <button onclick="navigator.clipboard.writeText('${currentUserData.orgId}'); alert('Group ID Copied!')" class="text-sky-500 hover:text-sky-600"><i data-lucide="copy" class="w-3.5 h-3.5"></i></button>
+                            <button aria-label="Copy Group ID" onclick="navigator.clipboard.writeText('${currentUserData.orgId}'); alert('Group ID Copied!')" class="text-sky-500 hover:text-sky-600"><i data-lucide="copy" class="w-3.5 h-3.5"></i></button>
                         </div>
                     `;
                     fetchGroupRequests(currentUserData.orgId);
