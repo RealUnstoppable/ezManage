@@ -392,6 +392,7 @@
             <div class="hidden md:flex space-x-10 text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">
                 <a href="#" onclick="navTo('welcome')" class="hover:text-sky-600 transition-colors">Home</a>
                 <a href="#" onclick="navTo('tracker')" class="hover:text-sky-600 transition-colors">App</a>
+                <a href="#" onclick="navTo('schedule')" class="hover:text-sky-600 transition-colors">Schedule</a>
                 <a href="easy-ai.html" class="hover:text-sky-600 transition-colors text-sky-500">AI Predictor</a>
                 <a href="#" onclick="navTo('pricing')" class="hover:text-sky-600 transition-colors">Pricing</a>
             </div>
@@ -421,6 +422,9 @@
             <a href="#" onclick="navTo('tracker')"
                 class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="edit-3"></i> Active
                 Tracker</a>
+            <a href="#" onclick="navTo('schedule')"
+                class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="calendar"></i>
+                Schedule</a>
             <a href="easy-ai.html" class="flex items-center gap-4 font-bold text-lg text-sky-500 hover:text-sky-600"><i
                     data-lucide="brain"></i> AI Predictor</a>
             <a href="#" onclick="navTo('presets')"
@@ -838,6 +842,53 @@
                         </button>
                     </div>
                 </form>
+            </div>
+        </div>
+
+        <div id="view-schedule" class="view-section px-6 py-12">
+            <div class="max-w-4xl mx-auto">
+                <h1 class="text-4xl font-black mb-8">Employee Schedule</h1>
+
+                <div class="card mb-8">
+                    <h3 class="text-xl font-black mb-4">Add Shift</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-bold mb-1">Date</label>
+                            <input type="date" id="scheduleDate" class="w-full" onchange="fetchSchedules(this.value)">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-bold mb-1">Employee Name</label>
+                            <input type="text" id="shiftEmpName" class="w-full" placeholder="John Doe">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-bold mb-1">Role</label>
+                            <select id="shiftRole" class="w-full">
+                                <option value="Cashier">Cashier</option>
+                                <option value="Cook">Cook</option>
+                                <option value="Manager">Manager</option>
+                                <option value="Driver">Driver</option>
+                            </select>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="block text-sm font-bold mb-1">Start Time</label>
+                                <input type="time" id="shiftStart" class="w-full">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-bold mb-1">End Time</label>
+                                <input type="time" id="shiftEnd" class="w-full">
+                            </div>
+                        </div>
+                    </div>
+                    <button type="button" onclick="addShiftToSchedule()" class="btn btn-accent w-full mt-6">Add Shift</button>
+                </div>
+
+                <div class="card">
+                    <h3 class="text-xl font-black mb-4">Scheduled Shifts</h3>
+                    <div id="scheduleList" class="space-y-4">
+                        <p class="text-sm text-slate-500">Select a date to view shifts.</p>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -2528,6 +2579,118 @@
                 document.getElementById('featureReqText').value = "";
             });
         }
+
+        function addShiftToSchedule() {
+            const dateInput = document.getElementById('scheduleDate');
+            const empName = document.getElementById('shiftEmpName');
+            const role = document.getElementById('shiftRole');
+            const startTime = document.getElementById('shiftStart');
+            const endTime = document.getElementById('shiftEnd');
+
+            if (!dateInput.value || !empName.value || !role.value || !startTime.value || !endTime.value) {
+                alert("Please fill in all shift details.");
+                return;
+            }
+
+            const newShift = {
+                employeeName: empName.value,
+                role: role.value,
+                startTime: startTime.value,
+                endTime: endTime.value
+            };
+
+            const date = dateInput.value;
+            const scheduleRef = db.collection('schedules').doc(`${currentUser.uid}_${date}`);
+
+            scheduleRef.get().then(doc => {
+                let shifts = [];
+                if (doc.exists) {
+                    shifts = doc.data().shifts || [];
+                }
+                shifts.push(newShift);
+
+                scheduleRef.set({
+                    uid: currentUser.uid,
+                    date: date,
+                    shifts: shifts,
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                }, { merge: true }).then(() => {
+                    empName.value = '';
+                    role.value = 'Cashier';
+                    startTime.value = '';
+                    endTime.value = '';
+                }).catch(err => {
+                    console.error("Error saving shift", err);
+                });
+            });
+        }
+
+        let unsubscribeSchedule = null;
+
+        function fetchSchedules(date) {
+            if (!currentUser) return;
+            if (unsubscribeSchedule) unsubscribeSchedule();
+
+            const listContainer = document.getElementById('scheduleList');
+            if (listContainer) listContainer.innerHTML = '<p class="text-sm text-slate-500">Loading schedule...</p>';
+
+            unsubscribeSchedule = db.collection('schedules')
+                .doc(`${currentUser.uid}_${date}`)
+                .onSnapshot(doc => {
+                    if (listContainer) {
+                        listContainer.innerHTML = '';
+                        if (!doc.exists) {
+                            listContainer.innerHTML = "<p class='text-sm text-slate-500'>No shifts scheduled for this date.</p>";
+                            return;
+                        }
+
+                        const data = doc.data();
+                        const shifts = data.shifts || [];
+
+                        if (shifts.length === 0) {
+                            listContainer.innerHTML = "<p class='text-sm text-slate-500'>No shifts scheduled for this date.</p>";
+                            return;
+                        }
+
+                        shifts.forEach((shift, index) => {
+                            const div = document.createElement('div');
+                            div.className = "flex justify-between items-center p-4 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800";
+                            div.innerHTML = `
+                                <div>
+                                    <h4 class="font-bold text-lg">${shift.employeeName}</h4>
+                                    <p class="text-sm text-slate-500">${shift.role}</p>
+                                </div>
+                                <div class="text-right">
+                                    <p class="font-mono bg-slate-50 dark:bg-slate-800 px-3 py-1 rounded-lg border border-slate-100 dark:border-slate-700">${shift.startTime} - ${shift.endTime}</p>
+                                    <button onclick="removeShift(${index})" class="text-red-500 text-xs mt-2 hover:underline">Remove</button>
+                                </div>
+                            `;
+                            listContainer.appendChild(div);
+                        });
+                    }
+                }, error => {
+                     console.error("Error fetching schedules: ", error);
+                     if (listContainer) listContainer.innerHTML = "<p class='text-sm text-red-500'>Error loading schedule.</p>";
+                });
+        }
+
+        function removeShift(index) {
+           const dateInput = document.getElementById('scheduleDate');
+           if(!dateInput || !dateInput.value) return;
+
+           const date = dateInput.value;
+           const scheduleRef = db.collection('schedules').doc(`${currentUser.uid}_${date}`);
+
+           scheduleRef.get().then(doc => {
+               if (doc.exists) {
+                   const data = doc.data();
+                   let shifts = data.shifts || [];
+                   shifts.splice(index, 1);
+                   scheduleRef.update({ shifts: shifts });
+               }
+           });
+        }
+
 
         function fetchFeatureRequests() {
             if (!currentUser) return;
