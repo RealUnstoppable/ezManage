@@ -430,7 +430,8 @@
                 class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="clock"></i>
                 History</a>
             <a href="#" onclick="navTo('shiftNotes')"
-                class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="clipboard-list"></i>
+                class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i
+                    data-lucide="clipboard-list"></i>
                 Shift Notes</a>
             <a href="#" onclick="navTo('performance')"
                 class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="bar-chart-3"></i>
@@ -869,60 +870,77 @@
             <div class="max-w-4xl mx-auto">
                 <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
                     <h1 class="text-4xl font-black">Shift Notes</h1>
-                    
+
                     <div id="shiftNotesGroupControls" class="flex flex-wrap items-center gap-3 w-full md:w-auto">
                         <!-- Populated by JS based on user's orgId status -->
                     </div>
                 </div>
-                
-                <div id="createGroupModal" class="hidden bg-white dark:bg-slate-900 rounded-3xl p-6 md:p-8 shadow-sm border border-slate-100 dark:border-slate-800 mb-12">
+
+                <div id="createGroupModal"
+                    class="hidden bg-white dark:bg-slate-900 rounded-3xl p-6 md:p-8 shadow-sm border border-slate-100 dark:border-slate-800 mb-12">
                     <h2 class="text-xl font-bold mb-4">Create a Management Group</h2>
-                    <p class="text-sm text-slate-500 mb-6">Create a group to share shift notes with other managers securely.</p>
+                    <p class="text-sm text-slate-500 mb-6">Create a group to share shift notes with other managers
+                        securely.</p>
                     <div class="space-y-4">
-                        <input type="text" id="newGroupName" placeholder="Group Name (e.g. Store #1234)" class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
-                        <input type="password" id="newGroupPassword" placeholder="Group Password" class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
+                        <input type="text" id="newGroupName" placeholder="Group Name (e.g. Store #1234)"
+                            class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
+                        <input type="password" id="newGroupPassword" placeholder="Group Password"
+                            class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
                         <div class="flex justify-end gap-3 pt-2">
-                            <button onclick="document.getElementById('createGroupModal').classList.add('hidden')" class="btn btn-outline px-6 py-2">Cancel</button>
+                            <button onclick="document.getElementById('createGroupModal').classList.add('hidden')"
+                                class="btn btn-outline px-6 py-2">Cancel</button>
                             <button onclick="createShiftGroup()" class="btn btn-primary px-6 py-2">Create Group</button>
                         </div>
                     </div>
                 </div>
 
-                <div id="joinGroupModal" class="hidden bg-white dark:bg-slate-900 rounded-3xl p-6 md:p-8 shadow-sm border border-slate-100 dark:border-slate-800 mb-12">
+                <div id="joinGroupModal"
+                    class="hidden bg-white dark:bg-slate-900 rounded-3xl p-6 md:p-8 shadow-sm border border-slate-100 dark:border-slate-800 mb-12">
                     <h2 class="text-xl font-bold mb-4">Join a Management Group</h2>
                     <p class="text-sm text-slate-500 mb-6">Ask your store owner/GM for the Group ID and Password.</p>
                     <div class="space-y-4">
-                        <input type="text" id="joinGroupId" placeholder="Group ID" class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
-                        <input type="password" id="joinGroupPassword" placeholder="Group Password" class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
+                        <input type="text" id="joinGroupId" placeholder="Group ID"
+                            class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
+                        <input type="password" id="joinGroupPassword" placeholder="Group Password"
+                            class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
                         <div class="flex justify-end gap-3 pt-2">
-                            <button onclick="document.getElementById('joinGroupModal').classList.add('hidden')" class="btn btn-outline px-6 py-2">Cancel</button>
-                            <button onclick="requestJoinShiftGroup()" class="btn btn-primary px-6 py-2">Request Access</button>
+                            <button onclick="document.getElementById('joinGroupModal').classList.add('hidden')"
+                                class="btn btn-outline px-6 py-2">Cancel</button>
+                            <button onclick="requestJoinShiftGroup()" class="btn btn-primary px-6 py-2">Request
+                                Access</button>
                         </div>
                     </div>
                 </div>
-                
-                <div id="groupRequestsPanel" class="hidden bg-amber-50 dark:bg-amber-950/20 rounded-3xl p-6 shadow-sm border border-amber-200 dark:border-amber-900/50 mb-12">
-                    <h2 class="text-lg font-bold mb-4 flex items-center gap-2"><i data-lucide="user-plus" class="text-amber-500"></i> Pending Join Requests</h2>
+
+                <div id="groupRequestsPanel"
+                    class="hidden bg-amber-50 dark:bg-amber-950/20 rounded-3xl p-6 shadow-sm border border-amber-200 dark:border-amber-900/50 mb-12">
+                    <h2 class="text-lg font-bold mb-4 flex items-center gap-2"><i data-lucide="user-plus"
+                            class="text-amber-500"></i> Pending Join Requests</h2>
                     <div id="groupRequestsContainer" class="space-y-3">
                         <!-- Populated via JS if user is group owner -->
                     </div>
                 </div>
 
-                <div id="shiftNotesPostArea" class="bg-white dark:bg-slate-900 rounded-3xl p-6 md:p-8 shadow-sm border border-slate-100 dark:border-slate-800 mb-12 hidden">
+                <div id="shiftNotesPostArea"
+                    class="bg-white dark:bg-slate-900 rounded-3xl p-6 md:p-8 shadow-sm border border-slate-100 dark:border-slate-800 mb-12 hidden">
                     <h2 class="text-xl font-bold mb-4">Post a Note</h2>
-                    <textarea id="shiftNoteContent" rows="3" class="w-full bg-slate-50 dark:bg-slate-800 p-4 rounded-xl border-none focus:ring-2 focus:ring-sky-500 mb-4 resize-none" placeholder="Leave a note, warning, or handover instruction..."></textarea>
+                    <textarea id="shiftNoteContent" rows="3"
+                        class="w-full bg-slate-50 dark:bg-slate-800 p-4 rounded-xl border-none focus:ring-2 focus:ring-sky-500 mb-4 resize-none"
+                        placeholder="Leave a note, warning, or handover instruction..."></textarea>
                     <div class="flex justify-between items-center">
-                        <select id="shiftNotePriority" class="bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500 font-medium">
+                        <select id="shiftNotePriority"
+                            class="bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500 font-medium">
                             <option value="Normal">Normal Priority</option>
                             <option value="Urgent">🚨 Urgent Issue</option>
                         </select>
                         <button onclick="submitShiftNote()" class="btn btn-primary px-8 py-3">Post Note</button>
                     </div>
                 </div>
-                
+
                 <div class="flex justify-between items-center mb-6">
                     <h2 class="text-2xl font-black">Active Notes</h2>
-                    <button onclick="fetchShiftNotes()" class="text-sm font-bold text-sky-500 hover:text-sky-600 flex items-center gap-2">
+                    <button onclick="fetchShiftNotes()"
+                        class="text-sm font-bold text-sky-500 hover:text-sky-600 flex items-center gap-2">
                         <i data-lucide="refresh-cw" class="w-4 h-4"></i> Refresh
                     </button>
                 </div>
@@ -1280,7 +1298,7 @@
                         renderHistory();
                         updateStorageBar();
                         fetchFeatureRequests();
-                        
+
                         // Populate shift notes if that view is already active or we just logged in
                         if (document.getElementById('view-shiftNotes').classList.contains('active')) {
                             fetchShiftNotes();
@@ -1524,7 +1542,7 @@
             document.getElementById('sidebar').classList.remove('open');
             window.scrollTo({ top: 0, behavior: 'smooth' });
             lucide.createIcons();
-            
+
             if (viewId === 'shiftNotes') {
                 fetchShiftNotes();
             }
@@ -2291,7 +2309,7 @@
                     });
                 });
         }
-        
+
         function escapeHTML(str) {
             if (str === null || str === undefined) return '';
             return String(str)
@@ -2304,10 +2322,10 @@
 
         function checkAndRenderOrgControls() {
             if (!currentUser) return false;
-            
+
             const controls = document.getElementById('shiftNotesGroupControls');
             const postArea = document.getElementById('shiftNotesPostArea');
-            
+
             if (!currentUserData || !currentUserData.orgId) {
                 // Not in an org
                 controls.innerHTML = `
@@ -2318,13 +2336,13 @@
                 lucide.createIcons();
                 return false;
             }
-            
+
             // User is in an org
             postArea.classList.remove('hidden');
-            
+
             // If they are the owner, show the request panel logic
             db.collection('shift_groups').doc(currentUserData.orgId).get().then(doc => {
-                if(doc.exists && doc.data().ownerId === currentUser.uid) {
+                if (doc.exists && doc.data().ownerId === currentUser.uid) {
                     controls.innerHTML = `
                         <div class="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700">
                             <span class="text-xs font-bold text-slate-500 uppercase">Group ID:</span>
@@ -2348,10 +2366,10 @@
 
         async function fetchShiftNotes() {
             if (!currentUser) return;
-            
+
             const hasOrg = checkAndRenderOrgControls();
             const container = document.getElementById('shiftNotesContainer');
-            
+
             if (!hasOrg) {
                 container.innerHTML = `
                     <div class="text-center py-16 bg-slate-50 dark:bg-slate-900 rounded-3xl border-2 border-dashed border-slate-200 dark:border-slate-800">
@@ -2387,28 +2405,28 @@
 
                     // Sort manually since composite index might not exist
                     let docs = [];
-                    snap.forEach(doc => docs.push({id: doc.id, data: doc.data()}));
-                    docs.sort((a,b) => b.data.timestamp - a.data.timestamp);
+                    snap.forEach(doc => docs.push({ id: doc.id, data: doc.data() }));
+                    docs.sort((a, b) => b.data.timestamp - a.data.timestamp);
 
                     docs.forEach(docObj => {
                         const data = docObj.data;
                         const docId = docObj.id;
                         const isUrgent = data.priority === 'Urgent';
                         const noteDiv = document.createElement('div');
-                        
+
                         let borderClass = isUrgent ? "border-red-200 dark:border-red-900/50" : "border-slate-100 dark:border-slate-800";
                         let bgClass = isUrgent ? "bg-red-50 dark:bg-red-950/20" : "bg-white dark:bg-slate-900";
-                        let priorityBadge = isUrgent ? 
-                            `<span class="bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300 text-xs font-black uppercase tracking-widest px-3 py-1 rounded-full flex items-center gap-1"><i data-lucide="alert-triangle" class="w-3 h-3"></i> Urgent</span>` : 
+                        let priorityBadge = isUrgent ?
+                            `<span class="bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300 text-xs font-black uppercase tracking-widest px-3 py-1 rounded-full flex items-center gap-1"><i data-lucide="alert-triangle" class="w-3 h-3"></i> Urgent</span>` :
                             `<span class="bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full">Normal</span>`;
 
                         noteDiv.className = `p-6 rounded-2xl border ${borderClass} ${bgClass} shadow-sm relative group transition-all duration-200 hover:shadow-md`;
-                        
+
                         let dateStr = "Just now";
                         if (data.timestamp) {
                             dateStr = data.timestamp.toDate().toLocaleString();
                         }
-                        
+
                         noteDiv.innerHTML = `
                             <div class="flex justify-between items-start mb-4">
                                 <div class="flex items-center gap-3">
@@ -2484,13 +2502,13 @@
                 alert("Failed to resolve note: " + err.message);
             }
         }
-        
+
         async function createShiftGroup() {
             if (!currentUser) return;
             const name = document.getElementById('newGroupName').value.trim();
             const pass = document.getElementById('newGroupPassword').value.trim();
-            if(!name || !pass) return alert("All fields required");
-            
+            if (!name || !pass) return alert("All fields required");
+
             try {
                 const manageShiftGroups = firebase.functions().httpsCallableFromURL('https://manageshiftgroups-dsy7tdoigq-uc.a.run.app');
                 const result = await manageShiftGroups({
@@ -2507,17 +2525,17 @@
                     // Force refresh user data
                     window.location.reload();
                 }
-            } catch(e) {
+            } catch (e) {
                 alert("Failed to create group: " + e.message);
             }
         }
-        
+
         async function requestJoinShiftGroup() {
             if (!currentUser) return;
             const groupId = document.getElementById('joinGroupId').value.trim();
             const pass = document.getElementById('joinGroupPassword').value.trim();
-            if(!groupId || !pass) return alert("All fields required");
-            
+            if (!groupId || !pass) return alert("All fields required");
+
             try {
                 const manageShiftGroups = firebase.functions().httpsCallableFromURL('https://manageshiftgroups-dsy7tdoigq-uc.a.run.app');
                 const result = await manageShiftGroups({
@@ -2532,11 +2550,11 @@
                     alert("Join request sent! The group owner must approve it before you gain access.");
                     document.getElementById('joinGroupModal').classList.add('hidden');
                 }
-            } catch(e) {
+            } catch (e) {
                 alert("Failed to request join: " + e.message);
             }
         }
-        
+
         function fetchGroupRequests(groupId) {
             db.collection('shift_group_requests')
                 .where('groupId', '==', groupId)
@@ -2544,7 +2562,7 @@
                 .onSnapshot(snap => {
                     const panel = document.getElementById('groupRequestsPanel');
                     const container = document.getElementById('groupRequestsContainer');
-                    if(snap.empty) {
+                    if (snap.empty) {
                         panel.classList.add('hidden');
                         return;
                     }
@@ -2565,7 +2583,7 @@
                     });
                 });
         }
-        
+
         async function approveGroupRequest(requestId) {
             try {
                 const manageShiftGroups = firebase.functions().httpsCallableFromURL('https://manageshiftgroups-dsy7tdoigq-uc.a.run.app');
@@ -2574,7 +2592,7 @@
                     payload: { requestId: requestId }
                 });
                 if (result.data.success) alert("Approved!");
-            } catch(e) {
+            } catch (e) {
                 alert("Failed to approve: " + e.message);
             }
         }
