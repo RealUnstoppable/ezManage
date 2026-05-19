@@ -526,8 +526,6 @@
 
   <script type="module">
     import { auth, db } from '/js/auth.js';
-    import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
-    import { doc, getDoc, collection, getDocs, Timestamp, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
 
     let performanceChart;
 
@@ -548,8 +546,8 @@
     });
 
     function escapeHTML(str) {
-      if (typeof str !== 'string') return str;
-      return str
+      if (!str && str !== 0) return "";
+      return String(str)
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;")

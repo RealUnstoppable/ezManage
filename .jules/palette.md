@@ -10,6 +10,6 @@
 **Learning:** Using generic textual changes like "Wait..." on submission buttons often feels disjointed. Adding a combination of `disabled` Tailwind utility classes (`disabled:opacity-70 disabled:cursor-not-allowed`) alongside an animated icon (like Lucide's `loader-2` with `animate-spin`) provides superior visual feedback. It prevents duplicate form submissions and clarifies system state immediately.
 **Action:** Always implement explicit loading and disabled states for asynchronous actions like form submissions, keeping original button text preserved for post-request restoration.
 
-## 2024-05-24 - Playwright visual verification of hidden elements
-**Learning:** When using Playwright to verify UI components like the Shift Tracker in `index.html`, elements may initially be hidden by `display: none` on the `<body>` (used to prevent FOUC during auth checks) or within hidden tabs.
-**Action:** Use `page.evaluate("document.body.style.display = 'block'; window.navTo('tracker');")` to bypass auth and render the target UI. Use `.wait_for(state="attached")` instead of `state="visible"` for elements that are in the DOM but may be scrolled out of view or temporarily obscured, then scroll them into view using `scrollIntoView()` before taking a screenshot.
+## 2024-05-24 - Lucide Icon Injection & Async Loading States
+**Learning:** When injecting `<i data-lucide="...">` icons dynamically into the DOM (such as appending a `loader-2` spinner during an async form submission), the icons will not render until `lucide.createIcons()` is explicitly called.
+**Action:** Always call `lucide.createIcons()` immediately after any `innerHTML` assignment or DOM manipulation that introduces new Lucide icons to ensure visual parity.
