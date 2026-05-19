@@ -99,21 +99,25 @@ exports.stripeWebhook = functions.https.onRequest(async (req, res) => {
 
     if (uid && uid !== "unknown") {
       // Updates the frontend to unlock pro features immediately
-      await admin.firestore().collection("users").doc(uid).set({
-        plan: planName,
-        subscription: {
-          status: "active",
-          customerId: session.customer,
-          subscriptionId: session.subscription,
-        },
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-      }, {merge: true});
-      console.log(`✅ Successfully upgraded user ${uid} to ${planName}`);
+      try {
+        await admin.firestore().collection("users").doc(uid).set({
+          plan: planName,
+          subscription: {
+            status: "active",
+            customerId: session.customer,
+            subscriptionId: session.subscription,
+          },
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        }, {merge: true});
+        console.log(`✅ Successfully upgraded user ${uid} to ${planName}`);
+      } catch (error) {
+        console.error("Error updating user subscription status:", error);
+      }
     }
   }
 
   if (event.type === "customer.subscription.deleted" ||
-      event.type === "customer.subscription.canceled") {
+    event.type === "customer.subscription.canceled") {
     const sub = event.data.object;
 
     const snapshot = await admin.firestore()
@@ -159,4 +163,232 @@ exports.cancelSubscription = functions.https.onRequest((req, res) => {
     }
   });
 });
+
+/**
+ * Manage Shift Notes API
+ * Handles creation, updating, and resolution of shift notes.
+ */
+exports.manageShiftNotes = functions.https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError(
+        "unauthenticated", "User must be logged in.");
+  }
+
+  const {action, payload} = data;
+  const uid = context.auth.uid;
+
+  if (!action || !payload) {
+    throw new functions.https.HttpsError(
+        "invalid-argument", "Missing action or payload");
+  }
+
+  try {
+    // 🛡️ Securely fetch the user's actual orgId from the database
+    // instead of trusting the client payload to prevent IDOR
+    const userDoc = await admin.firestore().collection("users").doc(uid).get();
+    if (!userDoc.exists) {
+      throw new functions.https.HttpsError("not-found", "User not found");
+    }
+    const actualOrgId = userDoc.data().orgId || null;
+
+    if (action === "create") {
+      const {authorName, content, priority} = payload;
+
+      if (!content) {
+        throw new functions.https.HttpsError(
+            "invalid-argument", "Missing note content");
+      }
+
+      const validPriorities = ["Normal", "Urgent"];
+      const notePriority = validPriorities.includes(priority) ?
+        priority : "Normal";
+
+      const newNote = {
+        authorId: uid,
+        authorName: authorName || "Anonymous",
+        content,
+        priority: notePriority,
+        status: "Active",
+        orgId: actualOrgId,
+        timestamp: admin.firestore.FieldValue.serverTimestamp(),
+      };
+
+      const docRef = await admin.firestore()
+          .collection("shift_notes")
+          .add(newNote);
+
+      return {success: true, id: docRef.id};
+    }
+
+    if (action === "resolve") {
+      const {noteId, resolvedBy} = payload;
+
+      if (!noteId || !resolvedBy) {
+        throw new functions.https.HttpsError(
+            "invalid-argument", "Missing required fields");
+      }
+
+      // 🛡️ Verify the user resolving the note is in the same organization
+      const noteRef = admin.firestore().collection("shift_notes").doc(noteId);
+      const noteDoc = await noteRef.get();
+
+      if (!noteDoc.exists) {
+        throw new functions.https.HttpsError("not-found", "Note not found");
+      }
+
+      if (noteDoc.data().orgId !== actualOrgId) {
+        throw new functions.https.HttpsError(
+            "permission-denied", "Unauthorized to resolve this note");
+      }
+
+      await noteRef.update({
+        status: "Resolved",
+        resolvedBy,
+        resolvedAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+
+      return {success: true};
+    }
+
+    throw new functions.https.HttpsError(
+        "invalid-argument", "Invalid action");
+  } catch (error) {
+    console.error("Shift Note Error:", error);
+    throw new functions.https.HttpsError("internal", error.message);
+  }
+});
+
+/**
+ * Manage Shift Groups API
+ * Handles creating groups, joining groups, and approving joins.
+ */
+exports.manageShiftGroups = functions.https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError(
+        "unauthenticated", "User must be logged in.");
+  }
+
+  const {action, payload} = data;
+  const uid = context.auth.uid;
+
+  if (!action || !payload) {
+    throw new functions.https.HttpsError(
+        "invalid-argument", "Missing action or payload");
+  }
+
+  try {
+    // Create a new group
+    if (action === "create") {
+      const {ownerName, groupName, password} = payload;
+
+      if (!groupName || !password) {
+        throw new functions.https.HttpsError(
+            "invalid-argument", "Missing required fields");
+      }
+
+      const newGroup = {
+        ownerId: uid,
+        ownerName: ownerName || "Anonymous",
+        groupName,
+        password, // Basic password for joining (in a real app, hash this)
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      };
+
+      const docRef = await admin.firestore()
+          .collection("shift_groups")
+          .add(newGroup);
+
+      // Automatically set the owner's orgId to the new group ID
+      await admin.firestore().collection("users").doc(uid).update({
+        orgId: docRef.id,
+      });
+
+      return {success: true, groupId: docRef.id};
+    }
+
+    // Request to join a group
+    if (action === "request_join") {
+      const {userName, groupId, password} = payload;
+
+      if (!groupId || !password) {
+        throw new functions.https.HttpsError(
+            "invalid-argument", "Missing required fields");
+      }
+
+      const groupDoc = await admin.firestore()
+          .collection("shift_groups").doc(groupId).get();
+
+      if (!groupDoc.exists) {
+        throw new functions.https.HttpsError("not-found", "Group not found");
+      }
+
+      if (groupDoc.data().password !== password) {
+        throw new functions.https.HttpsError(
+            "permission-denied", "Invalid password");
+      }
+
+      // Create a join request
+      await admin.firestore().collection("shift_group_requests").add({
+        groupId,
+        userId: uid,
+        userName: userName || "Anonymous",
+        status: "Pending",
+        timestamp: admin.firestore.FieldValue.serverTimestamp(),
+      });
+
+      return {success: true};
+    }
+
+    // Approve a join request
+    if (action === "approve_join") {
+      const {requestId} = payload;
+
+      if (!requestId) {
+        throw new functions.https.HttpsError(
+            "invalid-argument", "Missing required fields");
+      }
+
+      const requestDocRef = admin.firestore()
+          .collection("shift_group_requests").doc(requestId);
+      const requestDoc = await requestDocRef.get();
+
+      if (!requestDoc.exists) {
+        throw new functions.https.HttpsError("not-found", "Request not found");
+      }
+
+      const {groupId, userId} = requestDoc.data();
+
+      // Verify the user approving is the owner
+      const groupDoc = await admin.firestore()
+          .collection("shift_groups").doc(groupId).get();
+
+      if (!groupDoc.exists || groupDoc.data().ownerId !== uid) {
+        throw new functions.https.HttpsError(
+            "permission-denied", "Unauthorized");
+      }
+
+      // Update the requesting user's orgId
+      await admin.firestore().collection("users").doc(userId).update({
+        orgId: groupId,
+      });
+
+      // Update request status
+      await requestDocRef.update({
+        status: "Approved",
+        approvedAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+
+      return {success: true};
+    }
+
+    throw new functions.https.HttpsError("invalid-argument", "Invalid action");
+  } catch (error) {
+    console.error("Shift Groups Error:", error);
+    if (error instanceof functions.https.HttpsError) {
+      throw error;
+    }
+    throw new functions.https.HttpsError("internal", error.message);
+  }
+});
+
 exports.trainGlobalAI = require("./trainGlobalAI").trainGlobalAI;
