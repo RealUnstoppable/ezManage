@@ -486,6 +486,10 @@
             `;
 
             const list = document.getElementById('predictionsList');
+            // ⚡ Bolt Optimization: Batch DOM insertions using a DocumentFragment
+            // This prevents layout thrashing by avoiding multiple reflows/repaints during loop iterations.
+            const fragment = document.createDocumentFragment();
+            let addedCount = 0;
 
             Array.from(uniqueItems).sort().forEach(name => {
 
@@ -521,13 +525,15 @@
                     </div>
                 `;
 
-                list.appendChild(div);
+                fragment.appendChild(div);
+                addedCount++;
             });
 
-            if (list.children.length === 0) {
+            if (addedCount === 0) {
                 list.innerHTML = `<p class="text-center py-8 text-slate-500">The AI could not confidently predict any stock levels above 0. Try logging more data!</p>`;
                 document.getElementById('importAllBtn').classList.add('hidden');
             } else {
+                list.appendChild(fragment);
                 document.getElementById('importAllBtn').classList.remove('hidden');
             }
         }
