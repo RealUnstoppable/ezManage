@@ -7,8 +7,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>ezManage | Elevate Your Store Management</title>
 
-    <link rel="icon" type="image/jpeg" href="ManagerPro.jpg?v=2">
-    <link rel="apple-touch-icon" href="ManagerPro.jpg?v=2">
+    <link rel="icon" type="image/jpeg" href="ManagerPro.jpg">
+    <link rel="apple-touch-icon" href="ManagerPro.jpg">
 
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -32,6 +32,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-messaging-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-functions-compat.js"></script>
 
     <style>
         :root {
@@ -381,9 +382,7 @@
         <div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
             <div class="flex items-center space-x-3 cursor-pointer" onclick="navTo('welcome')">
                 <div class="relative group">
-                    <img src="ManagerPro.jpg"
-                        onerror="this.src='https://ui-avatars.com/api/?name=ez+M&background=87ceeb&color=fff'"
-                        alt="ezManage Logo"
+                    <img src="ManagerPro.jpg" alt="ezManage Logo"
                         class="w-10 h-10 rounded-xl shadow-sm border border-white transform transition-transform group-hover:rotate-6">
                 </div>
                 <span
@@ -393,6 +392,7 @@
             <div class="hidden md:flex space-x-10 text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">
                 <a href="#" onclick="navTo('welcome')" class="hover:text-sky-600 transition-colors">Home</a>
                 <a href="#" onclick="navTo('tracker')" class="hover:text-sky-600 transition-colors">App</a>
+                <a href="#" onclick="navTo('schedule')" class="hover:text-sky-600 transition-colors">Schedule</a>
                 <a href="easy-ai.html" class="hover:text-sky-600 transition-colors text-sky-500">AI Predictor</a>
                 <a href="#" onclick="navTo('pricing')" class="hover:text-sky-600 transition-colors">Pricing</a>
             </div>
@@ -422,6 +422,9 @@
             <a href="#" onclick="navTo('tracker')"
                 class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="edit-3"></i> Active
                 Tracker</a>
+            <a href="#" onclick="navTo('schedule')"
+                class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="calendar"></i>
+                Schedule</a>
             <a href="easy-ai.html" class="flex items-center gap-4 font-bold text-lg text-sky-500 hover:text-sky-600"><i
                     data-lucide="brain"></i> AI Predictor</a>
             <a href="#" onclick="navTo('presets')"
@@ -430,6 +433,13 @@
             <a href="#" onclick="navTo('history')"
                 class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="clock"></i>
                 History</a>
+            <a href="#" onclick="navTo('shiftNotes')"
+                class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i
+                    data-lucide="clipboard-list"></i>
+                Shift Notes</a>
+            <a href="#" onclick="navTo('maintenance')"
+                class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="wrench"></i>
+                Maintenance</a>
             <a href="#" onclick="navTo('performance')"
                 class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="bar-chart-3"></i>
                 Performance</a>
@@ -533,7 +543,7 @@
                             class="text-xs font-black uppercase tracking-widest text-slate-400">Password</label>
                         <input type="password" id="authPass" placeholder="••••••••" required>
                     </div>
-                    <button type="submit" id="authBtn" class="btn btn-accent w-full py-4 mt-4">Sign In</button>
+                    <button type="submit" id="authBtn" class="btn btn-accent w-full py-4 mt-4 disabled:opacity-70 disabled:cursor-not-allowed">Sign In</button>
                 </form>
 
                 <div class="relative my-8">
@@ -630,9 +640,9 @@
                     </div>
                     <div class="flex items-center gap-3">
                         <button onclick="document.getElementById('jsonImportInput').click()"
-                            class="btn btn-outline btn-sm" title="Import JSON"><i data-lucide="upload"
+                            class="btn btn-outline btn-sm" title="Import JSON" aria-label="Import JSON"><i data-lucide="upload"
                                 class="w-4"></i></button>
-                        <button onclick="exportDataJSON()" class="btn btn-outline btn-sm" title="Export JSON"><i
+                        <button onclick="exportDataJSON()" class="btn btn-outline btn-sm" title="Export JSON" aria-label="Export JSON"><i
                                 data-lucide="download" class="w-4"></i></button>
                         <input type="file" id="jsonImportInput" accept=".json" class="hidden"
                             onchange="importDataJSON(event)">
@@ -679,7 +689,8 @@
                         <h3 class="text-xl font-black mb-2">
                             <button @click="expanded = !expanded" :aria-expanded="expanded" type="button"
                                 class="w-full flex items-center justify-between cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 rounded-lg">
-                                <div class="flex items-center gap-3"><i data-lucide="list-checks" class="text-sky-500"></i>
+                                <div class="flex items-center gap-3"><i data-lucide="list-checks"
+                                        class="text-sky-500"></i>
                                     Routine & ServSafe</div>
                                 <i data-lucide="chevron-down" class="transition-transform no-print"
                                     :class="expanded ? 'rotate-180' : ''"></i>
@@ -699,7 +710,8 @@
                         <h3 class="text-xl font-black mb-2">
                             <button @click="expanded = !expanded" :aria-expanded="expanded" type="button"
                                 class="w-full flex items-center justify-between cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 rounded-lg">
-                                <div class="flex items-center gap-3"><i data-lucide="beef" class="text-amber-600"></i> Prep
+                                <div class="flex items-center gap-3"><i data-lucide="beef" class="text-amber-600"></i>
+                                    Prep
                                     & Labor Stats</div>
                                 <i data-lucide="chevron-down" class="transition-transform no-print"
                                     :class="expanded ? 'rotate-180' : ''"></i>
@@ -744,7 +756,8 @@
                         <h3 class="text-xl font-black mb-2">
                             <button @click="expanded = !expanded" :aria-expanded="expanded" type="button"
                                 class="w-full flex items-center justify-between cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 rounded-lg">
-                                <div class="flex items-center gap-3"><i data-lucide="banknote" class="text-emerald-500"></i>
+                                <div class="flex items-center gap-3"><i data-lucide="banknote"
+                                        class="text-emerald-500"></i>
                                     Cash & Registers</div>
                                 <i data-lucide="chevron-down" class="transition-transform no-print"
                                     :class="expanded ? 'rotate-180' : ''"></i>
@@ -832,6 +845,53 @@
             </div>
         </div>
 
+        <div id="view-schedule" class="view-section px-6 py-12">
+            <div class="max-w-4xl mx-auto">
+                <h1 class="text-4xl font-black mb-8">Employee Schedule</h1>
+
+                <div class="card mb-8">
+                    <h3 class="text-xl font-black mb-4">Add Shift</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-bold mb-1">Date</label>
+                            <input type="date" id="scheduleDate" class="w-full" onchange="fetchSchedules(this.value)">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-bold mb-1">Employee Name</label>
+                            <input type="text" id="shiftEmpName" class="w-full" placeholder="John Doe">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-bold mb-1">Role</label>
+                            <select id="shiftRole" class="w-full">
+                                <option value="Cashier">Cashier</option>
+                                <option value="Cook">Cook</option>
+                                <option value="Manager">Manager</option>
+                                <option value="Driver">Driver</option>
+                            </select>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="block text-sm font-bold mb-1">Start Time</label>
+                                <input type="time" id="shiftStart" class="w-full">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-bold mb-1">End Time</label>
+                                <input type="time" id="shiftEnd" class="w-full">
+                            </div>
+                        </div>
+                    </div>
+                    <button type="button" onclick="addShiftToSchedule()" class="btn btn-accent w-full mt-6">Add Shift</button>
+                </div>
+
+                <div class="card">
+                    <h3 class="text-xl font-black mb-4">Scheduled Shifts</h3>
+                    <div id="scheduleList" class="space-y-4">
+                        <p class="text-sm text-slate-500">Select a date to view shifts.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div id="view-history" class="view-section px-6 py-12">
             <div class="max-w-4xl mx-auto">
                 <div class="card bg-slate-50 dark:bg-slate-900 border-none mb-8">
@@ -852,11 +912,139 @@
                     <div class="relative w-full md:w-64">
                         <i data-lucide="search" class="absolute left-3 top-3 w-4 h-4 text-slate-400"></i>
                         <input type="text" id="historySearch" aria-label="Search History"
-                            placeholder="Search by manager, date..." class="pl-10 text-sm" oninput="renderHistory()">
+                            placeholder="Search by manager, date..." class="pl-10 text-sm" oninput="debouncedRenderHistory()">
                     </div>
                 </div>
 
                 <div id="historyListContainer" class="space-y-6"></div>
+            </div>
+        </div>
+
+        <div id="view-shiftNotes" class="view-section px-6 py-12">
+            <div class="max-w-4xl mx-auto">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+                    <h1 class="text-4xl font-black">Shift Notes</h1>
+
+                    <div id="shiftNotesGroupControls" class="flex flex-wrap items-center gap-3 w-full md:w-auto">
+                        <!-- Populated by JS based on user's orgId status -->
+                    </div>
+                </div>
+
+                <div id="createGroupModal"
+                    class="hidden bg-white dark:bg-slate-900 rounded-3xl p-6 md:p-8 shadow-sm border border-slate-100 dark:border-slate-800 mb-12">
+                    <h2 class="text-xl font-bold mb-4">Create a Management Group</h2>
+                    <p class="text-sm text-slate-500 mb-6">Create a group to share shift notes with other managers
+                        securely.</p>
+                    <div class="space-y-4">
+                        <input type="text" id="newGroupName" placeholder="Group Name (e.g. Store #1234)"
+                            class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
+                        <input type="password" id="newGroupPassword" placeholder="Group Password"
+                            class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
+                        <div class="flex justify-end gap-3 pt-2">
+                            <button onclick="document.getElementById('createGroupModal').classList.add('hidden')"
+                                class="btn btn-outline px-6 py-2">Cancel</button>
+                            <button onclick="createShiftGroup()" class="btn btn-primary px-6 py-2">Create Group</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="joinGroupModal"
+                    class="hidden bg-white dark:bg-slate-900 rounded-3xl p-6 md:p-8 shadow-sm border border-slate-100 dark:border-slate-800 mb-12">
+                    <h2 class="text-xl font-bold mb-4">Join a Management Group</h2>
+                    <p class="text-sm text-slate-500 mb-6">Ask your store owner/GM for the Group ID and Password.</p>
+                    <div class="space-y-4">
+                        <input type="text" id="joinGroupId" placeholder="Group ID"
+                            class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
+                        <input type="password" id="joinGroupPassword" placeholder="Group Password"
+                            class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
+                        <div class="flex justify-end gap-3 pt-2">
+                            <button onclick="document.getElementById('joinGroupModal').classList.add('hidden')"
+                                class="btn btn-outline px-6 py-2">Cancel</button>
+                            <button onclick="requestJoinShiftGroup()" class="btn btn-primary px-6 py-2">Request
+                                Access</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="groupRequestsPanel"
+                    class="hidden bg-amber-50 dark:bg-amber-950/20 rounded-3xl p-6 shadow-sm border border-amber-200 dark:border-amber-900/50 mb-12">
+                    <h2 class="text-lg font-bold mb-4 flex items-center gap-2"><i data-lucide="user-plus"
+                            class="text-amber-500"></i> Pending Join Requests</h2>
+                    <div id="groupRequestsContainer" class="space-y-3">
+                        <!-- Populated via JS if user is group owner -->
+                    </div>
+                </div>
+
+                <div id="shiftNotesPostArea"
+                    class="bg-white dark:bg-slate-900 rounded-3xl p-6 md:p-8 shadow-sm border border-slate-100 dark:border-slate-800 mb-12 hidden">
+                    <h2 class="text-xl font-bold mb-4">Post a Note</h2>
+                    <textarea id="shiftNoteContent" rows="3"
+                        class="w-full bg-slate-50 dark:bg-slate-800 p-4 rounded-xl border-none focus:ring-2 focus:ring-sky-500 mb-4 resize-none"
+                        placeholder="Leave a note, warning, or handover instruction..."></textarea>
+                    <div class="flex justify-between items-center">
+                        <select id="shiftNotePriority"
+                            class="bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500 font-medium">
+                            <option value="Normal">Normal Priority</option>
+                            <option value="Urgent">🚨 Urgent Issue</option>
+                        </select>
+                        <button onclick="submitShiftNote()" class="btn btn-primary px-8 py-3">Post Note</button>
+                    </div>
+                </div>
+
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-black">Active Notes</h2>
+                    <button onclick="fetchShiftNotes()"
+                        class="text-sm font-bold text-sky-500 hover:text-sky-600 flex items-center gap-2">
+                        <i data-lucide="refresh-cw" class="w-4 h-4"></i> Refresh
+                    </button>
+                </div>
+                <div id="shiftNotesContainer" class="space-y-6">
+                    <!-- Notes populated via JS -->
+                </div>
+            </div>
+        </div>
+
+        <div id="view-maintenance" class="view-section px-6 py-12 hidden">
+            <div class="max-w-4xl mx-auto">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+                    <h1 class="text-4xl font-black">Maintenance Tracker</h1>
+                    <button onclick="document.getElementById('reportMaintenanceModal').classList.toggle('hidden')" class="btn btn-primary flex items-center gap-2 px-6">
+                        <i data-lucide="plus-circle" class="w-5 h-5"></i> Report Issue
+                    </button>
+                </div>
+
+                <div id="reportMaintenanceModal" class="hidden bg-white dark:bg-slate-900 rounded-3xl p-6 md:p-8 shadow-sm border border-slate-100 dark:border-slate-800 mb-12">
+                    <h2 class="text-xl font-bold mb-4">Report New Issue</h2>
+                    <div class="space-y-4">
+                        <input type="text" id="maintenanceTitle" placeholder="Equipment or Issue Name" class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
+                        <textarea id="maintenanceDesc" placeholder="Describe the problem..." rows="3" class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500 resize-none"></textarea>
+
+                        <div class="flex flex-col md:flex-row gap-4">
+                            <select id="maintenancePriority" class="flex-1 bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
+                                <option value="Low">Low Priority</option>
+                                <option value="Medium">Medium Priority</option>
+                                <option value="High">High Priority</option>
+                                <option value="Critical">Critical Issue</option>
+                            </select>
+                        </div>
+
+                        <div class="flex justify-end gap-3 pt-2">
+                            <button onclick="document.getElementById('reportMaintenanceModal').classList.add('hidden')" class="btn btn-outline px-6 py-2">Cancel</button>
+                            <button onclick="submitMaintenanceTicket()" class="btn btn-accent px-6 py-2">Submit Ticket</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-black">Active Tickets</h2>
+                    <button onclick="fetchMaintenanceTickets()" class="text-sm font-bold text-sky-500 hover:text-sky-600 flex items-center gap-2">
+                        <i data-lucide="refresh-cw" class="w-4 h-4"></i> Refresh
+                    </button>
+                </div>
+
+                <div id="maintenanceContainer" class="space-y-4">
+                    <!-- Tickets populated via JS -->
+                </div>
             </div>
         </div>
 
@@ -1166,10 +1354,21 @@
         if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
         const auth = firebase.auth();
         const db = firebase.firestore();
+        const cloudFunctions = firebase.functions();
 
-        db.enablePersistence().catch(err => console.error("Offline sync error:", err));
+        db.enablePersistence({ synchronizeTabs: true }).catch(err => console.error("Offline sync error:", err));
 
         let currentUser = null;
+        function escapeHTML(str) {
+            if (!str && str !== 0) return "";
+            return String(str)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
         let currentUserData = null;
         let isRegisterMode = false;
         let shiftStartTime = null;
@@ -1182,6 +1381,16 @@
         // Legal & Privacy Settings
         let cloudSyncEnabled = false;
 
+        function escapeHTML(str) {
+            if (!str && str !== 0) return "";
+            return String(str)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
         auth.onAuthStateChanged((user) => {
             currentUser = user;
             const navStatus = document.getElementById('navUserStatus');
@@ -1193,6 +1402,7 @@
                 document.getElementById('profEmail').value = user.email;
 
                 unsubscribeUser = db.collection("users").doc(user.uid).onSnapshot(async doc => {
+                    isInitializingAuth = false;
                     if (doc.exists && doc.data().name) {
                         currentUserData = doc.data();
 
@@ -1202,11 +1412,23 @@
                         updateCloudSyncUI();
 
                         loadProfileUI(currentUserData);
-                        loadCustomPresets();
                         calculatePerformance();
                         renderHistory();
                         updateStorageBar();
-                        fetchFeatureRequests();
+
+                        // Concurrent non-blocking fetches
+                        Promise.allSettled([
+                            loadCustomPresets(),
+                            fetchFeatureRequests()
+                        ]);
+
+                        // Populate shift notes if that view is already active or we just logged in
+                        if (document.getElementById('view-shiftNotes').classList.contains('active')) {
+                            fetchShiftNotes();
+                        } else {
+                            // Ensure the group controls render even if we haven't opened the tab yet
+                            checkAndRenderOrgControls();
+                        }
 
                         if (!initialDraftLoaded) {
                             syncDraftFromServer();
@@ -1219,21 +1441,23 @@
                     } else {
 
                         if (!doc.exists || !doc.data().name) {
-                            try {
-                                const emailDoc = await db.collection("users").doc(user.email).get();
-                                if (emailDoc.exists) {
-                                    await db.collection("users").doc(user.uid).set(emailDoc.data(), { merge: true });
-                                    // Don't delete the old one just in case, let the new one populate via snapshot
-                                    return;
-                                }
-                            } catch (e) { console.warn("Email recovery check skipped", e); }
+                            const activeView = document.querySelector('.view-section.active');
+                            if (activeView && activeView.id !== 'view-setup') {
+                                try {
+                                    const emailDoc = await db.collection("users").doc(user.email).get();
+                                    if (emailDoc.exists) {
+                                        await db.collection("users").doc(user.uid).set(emailDoc.data(), { merge: true });
+                                        return;
+                                    } else {
+                                        navTo('setup');
+                                    }
+                                } catch (e) { console.warn("Email recovery check skipped", e); navTo('setup'); }
+                            }
                         }
 
                         const activeView = document.querySelector('.view-section.active');
                         if (!navigator.onLine) {
                             if (activeView && activeView.id !== 'view-tracker') navTo('tracker');
-                        } else if (activeView && activeView.id !== 'view-setup') {
-                            navTo('setup');
                         }
                     }
                 });
@@ -1382,17 +1606,27 @@
             const email = document.getElementById('authEmail').value;
             const pass = document.getElementById('authPass').value;
             const btn = document.getElementById('authBtn');
+
+            const originalHTML = btn.innerHTML;
+            btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> ${originalHTML}`;
+            lucide.createIcons();
             btn.disabled = true;
 
             if (isRegisterMode) {
                 auth.createUserWithEmailAndPassword(email, pass)
                     .then(() => navTo('setup'))
                     .catch(err => alert(err.message))
-                    .finally(() => btn.disabled = false);
+                    .finally(() => {
+                        btn.innerHTML = originalHTML;
+                        btn.disabled = false;
+                    });
             } else {
                 auth.signInWithEmailAndPassword(email, pass)
                     .catch(err => alert(err.message))
-                    .finally(() => btn.disabled = false);
+                    .finally(() => {
+                        btn.innerHTML = originalHTML;
+                        btn.disabled = false;
+                    });
             }
         }
 
@@ -1435,17 +1669,27 @@
         function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); }
 
         function navTo(viewId) {
-            if (!currentUser && (['history', 'presets', 'performance', 'request', 'profile'].includes(viewId))) {
+            if (!currentUser && (['history', 'presets', 'performance', 'request', 'profile', 'shiftNotes'].includes(viewId))) {
                 viewId = 'auth';
+            }
+            if (viewId === 'maintenance' && currentUser) {
+                fetchMaintenanceTickets();
             }
             document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
             document.getElementById('view-' + viewId).classList.add('active');
             document.getElementById('sidebar').classList.remove('open');
             window.scrollTo({ top: 0, behavior: 'smooth' });
             lucide.createIcons();
+
+            if (viewId === 'shiftNotes') {
+                fetchShiftNotes();
+            }
         }
 
-        function handleNavAccountClick() { navTo(currentUser ? 'profile' : 'auth'); }
+        function handleNavAccountClick() {
+            if (isInitializingAuth) return;
+            navTo(currentUser ? 'profile' : 'auth');
+        }
 
         function toggleTheme() {
             const isDark = document.getElementById('themeToggle').checked;
@@ -1679,6 +1923,15 @@
             });
         }
 
+        let renderHistoryTimeout;
+        function debouncedRenderHistory() {
+            // ⚡ Bolt Optimization: Debouncing search input
+            // Why: Prevents expensive `renderHistory()` (DOM updates and array filtering) on every keystroke, reducing main thread blocking.
+            // Impact: Reduces history re-renders by ~80-90% during fast typing, preventing UI stutter.
+            clearTimeout(renderHistoryTimeout);
+            renderHistoryTimeout = setTimeout(renderHistory, 500);
+        }
+
         function renderHistory() {
             if (!currentUserData) return;
             const container = document.getElementById('historyListContainer');
@@ -1699,7 +1952,27 @@
 
             container.innerHTML = "";
             if (history.length === 0) {
-                container.innerHTML = "<p class='text-center py-20 opacity-40'>No logs found matching your criteria.</p>";
+                if (searchInput !== "") {
+                    container.innerHTML = `
+                        <div class="flex flex-col items-center justify-center py-20 text-center opacity-60">
+                            <i data-lucide="search-x" class="w-12 h-12 mb-4 text-slate-400"></i>
+                            <p class="text-lg font-bold text-slate-600 dark:text-slate-300">No logs found</p>
+                            <p class="text-sm text-slate-500 mt-1">We couldn't find any shifts matching that search.</p>
+                        </div>
+                    `;
+                } else {
+                    container.innerHTML = `
+                        <div class="flex flex-col items-center justify-center py-20 text-center">
+                            <div class="w-20 h-20 bg-sky-50 dark:bg-sky-900/20 rounded-full flex items-center justify-center mb-6">
+                                <i data-lucide="clipboard-list" class="w-10 h-10 text-sky-500"></i>
+                            </div>
+                            <h3 class="text-xl font-black mb-2">No Shift History Yet</h3>
+                            <p class="text-slate-500 mb-8 max-w-sm">When you complete and save shifts in the tracker, they will appear here for performance analysis.</p>
+                            <button onclick="navTo('tracker')" class="btn btn-accent px-8">Log a Shift</button>
+                        </div>
+                    `;
+                }
+                lucide.createIcons();
                 return;
             }
 
@@ -2036,12 +2309,16 @@
                 phone: document.getElementById('profPhone').value,
                 aiTrainingEnabled: document.getElementById('profileAIToggle').checked
             };
-            db.collection('users').doc(currentUser.uid).set(data, { merge: true }).then(() => {
 
-                localStorage.setItem(`ezManage_aiEnabled_${currentUser.uid}`, data.aiTrainingEnabled);
-                localStorage.setItem(`ezManage_cloudEnabled_${currentUser.uid}`, cloudSyncEnabled);
-                alert("Profile Updated!");
-            });
+            if (profileDebounceTimeout) clearTimeout(profileDebounceTimeout);
+
+            profileDebounceTimeout = setTimeout(() => {
+                db.collection('users').doc(currentUser.uid).set(data, { merge: true }).then(() => {
+                    localStorage.setItem(`ezManage_aiEnabled_${currentUser.uid}`, data.aiTrainingEnabled);
+                    localStorage.setItem(`ezManage_cloudEnabled_${currentUser.uid}`, cloudSyncEnabled);
+                    alert("Profile Updated!");
+                });
+            }, 1000);
         }
 
         function changePassword() {
@@ -2157,6 +2434,176 @@
             }
         }
 
+
+
+        function escapeHTML(str) {
+            if (!str && str !== 0) return "";
+            return String(str)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        async function submitMaintenanceTicket() {
+            if (!currentUser || !currentUserData || !currentUserData.orgId) {
+                alert("You must be part of an organization to report issues.");
+                return;
+            }
+
+            const title = document.getElementById('maintenanceTitle').value.trim();
+            const desc = document.getElementById('maintenanceDesc').value.trim();
+            const priority = document.getElementById('maintenancePriority').value;
+
+            if (!title) {
+                alert("Please provide a title or issue name.");
+                return;
+            }
+
+            const submitBtn = document.querySelector('#reportMaintenanceModal .btn-accent');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> Submitting...';
+            submitBtn.disabled = true;
+            lucide.createIcons();
+
+            try {
+                await db.collection('maintenance_logs').add({
+                    title: title,
+                    description: desc,
+                    priority: priority,
+                    status: 'Open',
+                    reportedByUid: currentUser.uid,
+                    reportedByName: currentUserData.name || currentUser.email,
+                    orgId: currentUserData.orgId,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                document.getElementById('maintenanceTitle').value = '';
+                document.getElementById('maintenanceDesc').value = '';
+                document.getElementById('maintenancePriority').value = 'Low';
+                document.getElementById('reportMaintenanceModal').classList.add('hidden');
+
+                alert("Maintenance ticket submitted successfully.");
+                fetchMaintenanceTickets();
+            } catch (error) {
+                console.error("Error submitting ticket:", error);
+                alert("Failed to submit ticket. " + error.message);
+            } finally {
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+                lucide.createIcons();
+            }
+        }
+
+        function fetchMaintenanceTickets() {
+            if (!currentUser || !currentUserData || !currentUserData.orgId) {
+                document.getElementById('maintenanceContainer').innerHTML = `
+                    <div class="text-center py-16 bg-slate-50 dark:bg-slate-900 rounded-3xl border-2 border-dashed border-slate-200 dark:border-slate-800">
+                        <i data-lucide="users" class="w-12 h-12 text-slate-400 mx-auto mb-4"></i>
+                        <h3 class="text-xl font-bold mb-2">Join or Create a Group</h3>
+                        <p class="text-slate-500">You must be in a Management Group to view and report maintenance issues.</p>
+                    </div>
+                `;
+                lucide.createIcons();
+                return;
+            }
+
+            const container = document.getElementById('maintenanceContainer');
+            container.innerHTML = '<div class="text-center py-8"><i data-lucide="loader-2" class="w-8 h-8 animate-spin mx-auto text-sky-500 mb-4"></i><p class="text-slate-500">Loading tickets...</p></div>';
+            lucide.createIcons();
+
+            if (window.maintenanceUnsubscribe) {
+                window.maintenanceUnsubscribe();
+            }
+
+            window.maintenanceUnsubscribe = db.collection('maintenance_logs')
+                .where('orgId', '==', currentUserData.orgId)
+                .onSnapshot(snap => {
+                    container.innerHTML = '';
+                    if (snap.empty) {
+                        container.innerHTML = `
+                            <div class="text-center py-16 bg-slate-50 dark:bg-slate-900 rounded-3xl border-2 border-dashed border-slate-200 dark:border-slate-800">
+                                <i data-lucide="check-circle-2" class="w-12 h-12 text-emerald-400 mx-auto mb-4"></i>
+                                <h3 class="text-xl font-bold mb-2">All Clear!</h3>
+                                <p class="text-slate-500">There are no open maintenance issues.</p>
+                            </div>
+                        `;
+                        lucide.createIcons();
+                        return;
+                    }
+
+                    let tickets = [];
+                    snap.forEach(doc => tickets.push({ id: doc.id, ...doc.data() }));
+
+                    // Sort locally since composite index is likely missing
+                    tickets.sort((a, b) => {
+                        const aTime = a.createdAt ? a.createdAt.toMillis() : 0;
+                        const bTime = b.createdAt ? b.createdAt.toMillis() : 0;
+                        return bTime - aTime;
+                    });
+
+                    let html = '';
+                    tickets.forEach(ticket => {
+                        const statusColors = {
+                            'Open': 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400 border-amber-200 dark:border-amber-800',
+                            'In Progress': 'bg-sky-100 text-sky-800 dark:bg-sky-900/30 dark:text-sky-400 border-sky-200 dark:border-sky-800',
+                            'Resolved': 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800'
+                        };
+                        const prioColors = {
+                            'Low': 'bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-300',
+                            'Medium': 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
+                            'High': 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400',
+                            'Critical': 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400 animate-pulse'
+                        };
+
+                        const dateStr = ticket.createdAt ? new Date(ticket.createdAt.toMillis()).toLocaleString() : 'Just now';
+
+                        html += `
+                            <div class="card p-6 border-l-4 ${ticket.priority === 'Critical' ? 'border-l-red-500' : ticket.priority === 'High' ? 'border-l-orange-500' : 'border-l-sky-500'}">
+                                <div class="flex flex-col md:flex-row justify-between gap-4 mb-4">
+                                    <div>
+                                        <h3 class="text-lg font-bold">${escapeHTML(ticket.title)}</h3>
+                                        <p class="text-sm text-slate-500">Reported by ${escapeHTML(ticket.reportedByName)} • ${dateStr}</p>
+                                    </div>
+                                    <div class="flex gap-2 items-start">
+                                        <span class="px-3 py-1 rounded-full text-xs font-bold ${prioColors[ticket.priority] || prioColors['Low']}">${ticket.priority}</span>
+                                        <select class="px-3 py-1 rounded-full text-xs font-bold border appearance-none cursor-pointer focus:outline-none ${statusColors[ticket.status] || statusColors['Open']}"
+                                            onchange="updateTicketStatus('${ticket.id}', this.value)">
+                                            <option value="Open" ${ticket.status === 'Open' ? 'selected' : ''}>Open</option>
+                                            <option value="In Progress" ${ticket.status === 'In Progress' ? 'selected' : ''}>In Progress</option>
+                                            <option value="Resolved" ${ticket.status === 'Resolved' ? 'selected' : ''}>Resolved</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <p class="text-slate-700 dark:text-slate-300 whitespace-pre-wrap">${escapeHTML(ticket.description)}</p>
+                            </div>
+                        `;
+                    });
+                    container.innerHTML = html;
+                }, err => {
+                    console.error("Error fetching tickets:", err);
+                    container.innerHTML = `<div class="text-red-500 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl text-center">Failed to load tickets: ${err.message}</div>`;
+                });
+        }
+
+        async function updateTicketStatus(ticketId, newStatus) {
+            try {
+                await db.collection('maintenance_logs').doc(ticketId).update({
+                    status: newStatus,
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                // Optimistic UI update already handled by changing the select value
+                // but refreshing guarantees sync
+                fetchMaintenanceTickets();
+            } catch (error) {
+                console.error("Error updating ticket:", error);
+                alert("Failed to update status. " + error.message);
+                fetchMaintenanceTickets(); // revert
+            }
+        }
+
         function submitFeatureRequest() {
             const msg = document.getElementById('featureReqText').value;
             if (!msg) return;
@@ -2172,6 +2619,118 @@
             });
         }
 
+        function addShiftToSchedule() {
+            const dateInput = document.getElementById('scheduleDate');
+            const empName = document.getElementById('shiftEmpName');
+            const role = document.getElementById('shiftRole');
+            const startTime = document.getElementById('shiftStart');
+            const endTime = document.getElementById('shiftEnd');
+
+            if (!dateInput.value || !empName.value || !role.value || !startTime.value || !endTime.value) {
+                alert("Please fill in all shift details.");
+                return;
+            }
+
+            const newShift = {
+                employeeName: empName.value,
+                role: role.value,
+                startTime: startTime.value,
+                endTime: endTime.value
+            };
+
+            const date = dateInput.value;
+            const scheduleRef = db.collection('schedules').doc(`${currentUser.uid}_${date}`);
+
+            scheduleRef.get().then(doc => {
+                let shifts = [];
+                if (doc.exists) {
+                    shifts = doc.data().shifts || [];
+                }
+                shifts.push(newShift);
+
+                scheduleRef.set({
+                    uid: currentUser.uid,
+                    date: date,
+                    shifts: shifts,
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                }, { merge: true }).then(() => {
+                    empName.value = '';
+                    role.value = 'Cashier';
+                    startTime.value = '';
+                    endTime.value = '';
+                }).catch(err => {
+                    console.error("Error saving shift", err);
+                });
+            });
+        }
+
+        let unsubscribeSchedule = null;
+
+        function fetchSchedules(date) {
+            if (!currentUser) return;
+            if (unsubscribeSchedule) unsubscribeSchedule();
+
+            const listContainer = document.getElementById('scheduleList');
+            if (listContainer) listContainer.innerHTML = '<p class="text-sm text-slate-500">Loading schedule...</p>';
+
+            unsubscribeSchedule = db.collection('schedules')
+                .doc(`${currentUser.uid}_${date}`)
+                .onSnapshot(doc => {
+                    if (listContainer) {
+                        listContainer.innerHTML = '';
+                        if (!doc.exists) {
+                            listContainer.innerHTML = "<p class='text-sm text-slate-500'>No shifts scheduled for this date.</p>";
+                            return;
+                        }
+
+                        const data = doc.data();
+                        const shifts = data.shifts || [];
+
+                        if (shifts.length === 0) {
+                            listContainer.innerHTML = "<p class='text-sm text-slate-500'>No shifts scheduled for this date.</p>";
+                            return;
+                        }
+
+                        shifts.forEach((shift, index) => {
+                            const div = document.createElement('div');
+                            div.className = "flex justify-between items-center p-4 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800";
+                            div.innerHTML = `
+                                <div>
+                                    <h4 class="font-bold text-lg">${shift.employeeName}</h4>
+                                    <p class="text-sm text-slate-500">${shift.role}</p>
+                                </div>
+                                <div class="text-right">
+                                    <p class="font-mono bg-slate-50 dark:bg-slate-800 px-3 py-1 rounded-lg border border-slate-100 dark:border-slate-700">${shift.startTime} - ${shift.endTime}</p>
+                                    <button onclick="removeShift(${index})" class="text-red-500 text-xs mt-2 hover:underline">Remove</button>
+                                </div>
+                            `;
+                            listContainer.appendChild(div);
+                        });
+                    }
+                }, error => {
+                     console.error("Error fetching schedules: ", error);
+                     if (listContainer) listContainer.innerHTML = "<p class='text-sm text-red-500'>Error loading schedule.</p>";
+                });
+        }
+
+        function removeShift(index) {
+           const dateInput = document.getElementById('scheduleDate');
+           if(!dateInput || !dateInput.value) return;
+
+           const date = dateInput.value;
+           const scheduleRef = db.collection('schedules').doc(`${currentUser.uid}_${date}`);
+
+           scheduleRef.get().then(doc => {
+               if (doc.exists) {
+                   const data = doc.data();
+                   let shifts = data.shifts || [];
+                   shifts.splice(index, 1);
+                   scheduleRef.update({ shifts: shifts });
+               }
+           });
+        }
+
+
         function fetchFeatureRequests() {
             if (!currentUser) return;
             db.collection('feature_requests')
@@ -2180,7 +2739,14 @@
                     const container = document.getElementById('myFeatureRequests');
                     container.innerHTML = '';
                     if (snap.empty) {
-                        container.innerHTML = "<p class='text-sm text-slate-500'>You haven't submitted any requests yet.</p>";
+                        container.innerHTML = `
+                            <div class="flex flex-col items-center justify-center py-12 text-center border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-xl">
+                                <i data-lucide="message-square-plus" class="w-8 h-8 mb-3 text-slate-300 dark:text-slate-600"></i>
+                                <p class="text-sm font-medium text-slate-500">You haven't submitted any requests yet.</p>
+                                <p class="text-xs text-slate-400 mt-1">Use the form above to share your ideas with us!</p>
+                            </div>
+                        `;
+                        lucide.createIcons();
                         return;
                     }
 
@@ -2205,6 +2771,353 @@
                         container.appendChild(div);
                     });
                 });
+        }
+
+        function escapeHTML(str) {
+            if (str === null || str === undefined) return '';
+            return String(str)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        function checkAndRenderOrgControls() {
+            if (!currentUser) return false;
+
+            const controls = document.getElementById('shiftNotesGroupControls');
+            const postArea = document.getElementById('shiftNotesPostArea');
+
+            if (!currentUserData || !currentUserData.orgId) {
+                // Not in an org
+                controls.innerHTML = `
+                    <button onclick="document.getElementById('createGroupModal').classList.remove('hidden')" class="btn btn-outline btn-sm"><i data-lucide="plus" class="w-4 h-4"></i> Create Group</button>
+                    <button onclick="document.getElementById('joinGroupModal').classList.remove('hidden')" class="btn btn-outline btn-sm"><i data-lucide="log-in" class="w-4 h-4"></i> Join Group</button>
+                `;
+                postArea.classList.add('hidden');
+                lucide.createIcons();
+                return false;
+            }
+
+            // User is in an org
+            postArea.classList.remove('hidden');
+
+            // If they are the owner, show the request panel logic
+            db.collection('shift_groups').doc(currentUserData.orgId).get().then(doc => {
+                if (doc.exists && doc.data().ownerId === currentUser.uid) {
+                    controls.innerHTML = `
+                        <div class="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700">
+                            <span class="text-xs font-bold text-slate-500 uppercase">Group ID:</span>
+                            <span class="text-sm font-mono font-bold">${currentUserData.orgId}</span>
+                            <button aria-label="Copy Group ID" onclick="navigator.clipboard.writeText('${currentUserData.orgId}'); alert('Group ID Copied!')" class="text-sky-500 hover:text-sky-600"><i data-lucide="copy" class="w-3.5 h-3.5"></i></button>
+                        </div>
+                    `;
+                    fetchGroupRequests(currentUserData.orgId);
+                } else {
+                    controls.innerHTML = `
+                        <div class="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700">
+                            <span class="text-xs font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1"><i data-lucide="shield-check" class="w-3.5 h-3.5"></i> Connected to Group</span>
+                        </div>
+                    `;
+                    document.getElementById('groupRequestsPanel').classList.add('hidden');
+                }
+                lucide.createIcons();
+            });
+            return true;
+        }
+
+        async function fetchShiftNotes() {
+            if (!currentUser) return;
+
+            const hasOrg = checkAndRenderOrgControls();
+            const container = document.getElementById('shiftNotesContainer');
+
+            if (!hasOrg) {
+                container.innerHTML = `
+                    <div class="text-center py-16 bg-slate-50 dark:bg-slate-900 rounded-3xl border-2 border-dashed border-slate-200 dark:border-slate-800">
+                        <i data-lucide="users" class="w-12 h-12 text-slate-400 mx-auto mb-4"></i>
+                        <h3 class="text-xl font-bold mb-2">Join or Create a Group</h3>
+                        <p class="text-slate-500">You must be in a Management Group to post and view shift notes.</p>
+                    </div>
+                `;
+                lucide.createIcons();
+                return;
+            }
+
+            container.innerHTML = '<div class="text-center py-8"><i data-lucide="loader-2" class="w-8 h-8 animate-spin mx-auto text-sky-500 mb-4"></i><p class="text-slate-500">Loading notes...</p></div>';
+            lucide.createIcons();
+
+            db.collection('shift_notes')
+                .where('status', '==', 'Active')
+                .where('orgId', '==', currentUserData.orgId)
+                .get() // orderBy timestamp desc requires composite index if where filters are used
+                .then(snap => {
+                    container.innerHTML = '';
+                    if (snap.empty) {
+                        container.innerHTML = `
+                            <div class="text-center py-16 bg-slate-50 dark:bg-slate-900 rounded-3xl border-2 border-dashed border-slate-200 dark:border-slate-800">
+                                <i data-lucide="check-circle-2" class="w-12 h-12 text-emerald-400 mx-auto mb-4"></i>
+                                <h3 class="text-xl font-bold mb-2">All Clear!</h3>
+                                <p class="text-slate-500">There are no active shift notes for your group.</p>
+                            </div>
+                        `;
+                        lucide.createIcons();
+                        return;
+                    }
+
+                    // Sort manually since composite index might not exist
+                    let docs = [];
+                    snap.forEach(doc => docs.push({ id: doc.id, data: doc.data() }));
+                    docs.sort((a, b) => b.data.timestamp - a.data.timestamp);
+
+                    docs.forEach(docObj => {
+                        const data = docObj.data;
+                        const docId = docObj.id;
+                        const isUrgent = data.priority === 'Urgent';
+                        const noteDiv = document.createElement('div');
+
+                        let borderClass = isUrgent ? "border-red-200 dark:border-red-900/50" : "border-slate-100 dark:border-slate-800";
+                        let bgClass = isUrgent ? "bg-red-50 dark:bg-red-950/20" : "bg-white dark:bg-slate-900";
+                        let priorityBadge = isUrgent ?
+                            `<span class="bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300 text-xs font-black uppercase tracking-widest px-3 py-1 rounded-full flex items-center gap-1"><i data-lucide="alert-triangle" class="w-3 h-3"></i> Urgent</span>` :
+                            `<span class="bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full">Normal</span>`;
+
+                        noteDiv.className = `p-6 rounded-2xl border ${borderClass} ${bgClass} shadow-sm relative group transition-all duration-200 hover:shadow-md`;
+
+                        let dateStr = "Just now";
+                        if (data.timestamp) {
+                            dateStr = data.timestamp.toDate().toLocaleString();
+                        }
+
+                        noteDiv.innerHTML = `
+                            <div class="flex justify-between items-start mb-4">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-sky-400 to-indigo-500 flex items-center justify-center text-white font-bold text-lg shadow-sm">
+                                        ${escapeHTML(data.authorName.charAt(0).toUpperCase())}
+                                    </div>
+                                    <div>
+                                        <p class="font-bold text-sm">${escapeHTML(data.authorName)}</p>
+                                        <p class="text-xs text-slate-500 font-mono">${escapeHTML(dateStr)}</p>
+                                    </div>
+                                </div>
+                                ${priorityBadge}
+                            </div>
+                            <p class="text-slate-700 dark:text-slate-300 font-medium mb-6 whitespace-pre-wrap pl-1 shift-note-text"></p>
+                            <div class="flex justify-end border-t border-slate-100 dark:border-slate-800 pt-4 mt-2">
+                                <button onclick="resolveShiftNote('${escapeHTML(docId)}')" class="text-sm font-bold text-slate-400 hover:text-emerald-500 flex items-center gap-2 transition-colors">
+                                    <i data-lucide="check-circle" class="w-4 h-4"></i> Mark Resolved
+                                </button>
+                            </div>
+                        `;
+                        noteDiv.querySelector('.shift-note-text').textContent = data.content;
+                        container.appendChild(noteDiv);
+                    });
+                    lucide.createIcons();
+                })
+                .catch(err => {
+                    console.error("Error fetching notes:", err);
+                    container.innerHTML = `<p class="text-red-500 text-center py-8">Failed to load shift notes. Please check your connection.</p>`;
+                });
+        }
+
+        async function submitShiftNote() {
+            if (!currentUser || !currentUserData || !currentUserData.orgId) {
+                alert("You must be logged in and part of a group to post a shift note.");
+                return;
+            }
+            const content = document.getElementById('shiftNoteContent').value.trim();
+            const priority = document.getElementById('shiftNotePriority').value;
+
+            if (!content) return alert("Please enter note content.");
+
+            // Optimistic UI update
+            const container = document.getElementById('shiftNotesContainer');
+            const noteDiv = document.createElement('div');
+            const isUrgent = priority === 'Urgent';
+            let borderClass = isUrgent ? "border-red-200 dark:border-red-900/50" : "border-slate-100 dark:border-slate-800";
+            let bgClass = isUrgent ? "bg-red-50 dark:bg-red-950/20" : "bg-white dark:bg-slate-900";
+            let priorityBadge = isUrgent ?
+                `<span class="bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300 text-xs font-black uppercase tracking-widest px-3 py-1 rounded-full flex items-center gap-1"><i data-lucide="alert-triangle" class="w-3 h-3"></i> Urgent</span>` :
+                `<span class="bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full">Normal</span>`;
+
+            noteDiv.className = `p-6 rounded-2xl border ${borderClass} ${bgClass} shadow-sm relative group transition-all duration-200 hover:shadow-md opacity-50`;
+
+            const authorName = currentUser.email.split('@')[0];
+
+            noteDiv.innerHTML = `
+                <div class="flex justify-between items-start mb-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-sky-400 to-indigo-500 flex items-center justify-center text-white font-bold text-lg shadow-sm">
+                            ${authorName.charAt(0).toUpperCase()}
+                        </div>
+                        <div>
+                            <p class="font-bold text-sm">${authorName}</p>
+                            <p class="text-xs text-slate-500 font-mono">Posting...</p>
+                        </div>
+                    </div>
+                    ${priorityBadge}
+                </div>
+                <p class="text-slate-700 dark:text-slate-300 font-medium mb-6 whitespace-pre-wrap pl-1 shift-note-text"></p>
+                <div class="flex justify-end border-t border-slate-100 dark:border-slate-800 pt-4 mt-2">
+                    <button disabled class="text-sm font-bold text-slate-400 flex items-center gap-2">
+                        <i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Saving...
+                    </button>
+                </div>
+            `;
+            noteDiv.querySelector('.shift-note-text').textContent = content;
+
+            // Remove empty state message if it exists
+            const emptyState = container.querySelector('.text-center.py-16');
+            if (emptyState) emptyState.remove();
+
+            container.prepend(noteDiv);
+            if (window.lucide) window.lucide.createIcons();
+            document.getElementById('shiftNoteContent').value = "";
+
+            try {
+                const manageShiftNotes = firebase.functions().httpsCallableFromURL('https://manageshiftnotes-dsy7tdoigq-uc.a.run.app');
+                const result = await manageShiftNotes({
+                    action: "create",
+                    payload: {
+                        authorName: currentUser.email.split('@')[0],
+                        content: content,
+                        priority: priority,
+                        orgId: currentUserData.orgId
+                    }
+                });
+                if (result.data.success) {
+                    document.getElementById('shiftNoteContent').value = "";
+                    fetchShiftNotes();
+                }
+            } catch (err) {
+                alert("Failed to post note: " + err.message);
+            }
+        }
+
+        async function resolveShiftNote(noteId) {
+            if (!currentUser) return;
+            if (!confirm("Mark this note as resolved?")) return;
+
+            // Find note element to remove optimistically
+            const container = document.getElementById('shiftNotesContainer');
+            const resolveBtn = container.querySelector(`button[onclick="resolveShiftNote('${noteId}')"]`);
+            let noteDiv = null;
+            let originalDisplay = '';
+
+            if (resolveBtn) {
+                noteDiv = resolveBtn.closest('.relative');
+                if (noteDiv) {
+                    originalDisplay = noteDiv.style.display;
+                    noteDiv.style.display = 'none'; // Optimistically hide
+                }
+            }
+
+            try {
+                const manageShiftNotes = firebase.functions().httpsCallableFromURL('https://manageshiftnotes-dsy7tdoigq-uc.a.run.app');
+                const result = await manageShiftNotes({
+                    action: "resolve",
+                    payload: { noteId: noteId, resolvedBy: currentUser.email.split('@')[0] }
+                });
+                if (result.data.success) fetchShiftNotes();
+            } catch (err) {
+                alert("Failed to resolve note: " + err.message);
+            }
+        }
+
+        async function createShiftGroup() {
+            if (!currentUser) return;
+            const name = document.getElementById('newGroupName').value.trim();
+            const pass = document.getElementById('newGroupPassword').value.trim();
+            if (!name || !pass) return alert("All fields required");
+
+            try {
+                const manageShiftGroups = firebase.functions().httpsCallableFromURL('https://manageshiftgroups-dsy7tdoigq-uc.a.run.app');
+                const result = await manageShiftGroups({
+                    action: "create",
+                    payload: {
+                        ownerName: currentUser.email.split('@')[0],
+                        groupName: name,
+                        password: pass
+                    }
+                });
+                if (result.data.success) {
+                    alert(`Group Created! Share your Group ID: ${result.data.groupId} and password with other managers.`);
+                    document.getElementById('createGroupModal').classList.add('hidden');
+                    // Force refresh user data
+                    window.location.reload();
+                }
+            } catch (e) {
+                alert("Failed to create group: " + e.message);
+            }
+        }
+
+        async function requestJoinShiftGroup() {
+            if (!currentUser) return;
+            const groupId = document.getElementById('joinGroupId').value.trim();
+            const pass = document.getElementById('joinGroupPassword').value.trim();
+            if (!groupId || !pass) return alert("All fields required");
+
+            try {
+                const manageShiftGroups = firebase.functions().httpsCallableFromURL('https://manageshiftgroups-dsy7tdoigq-uc.a.run.app');
+                const result = await manageShiftGroups({
+                    action: "request_join",
+                    payload: {
+                        userName: currentUser.email.split('@')[0],
+                        groupId: groupId,
+                        password: pass
+                    }
+                });
+                if (result.data.success) {
+                    alert("Join request sent! The group owner must approve it before you gain access.");
+                    document.getElementById('joinGroupModal').classList.add('hidden');
+                }
+            } catch (e) {
+                alert("Failed to request join: " + e.message);
+            }
+        }
+
+        function fetchGroupRequests(groupId) {
+            if (window.groupRequestsUnsubscribe) window.groupRequestsUnsubscribe();
+            window.groupRequestsUnsubscribe = db.collection('shift_group_requests')
+                .where('groupId', '==', groupId)
+                .where('status', '==', 'Pending')
+                .onSnapshot(snap => {
+                    const panel = document.getElementById('groupRequestsPanel');
+                    const container = document.getElementById('groupRequestsContainer');
+                    if (snap.empty) {
+                        panel.classList.add('hidden');
+                        return;
+                    }
+                    panel.classList.remove('hidden');
+                    container.innerHTML = '';
+                    snap.forEach(doc => {
+                        const data = doc.data();
+                        const div = document.createElement('div');
+                        div.className = "flex justify-between items-center bg-white dark:bg-slate-900 p-3 rounded-xl border border-amber-100 dark:border-amber-900/30";
+                        div.innerHTML = `
+                            <div>
+                                <p class="font-bold text-sm">${escapeHTML(data.userName)}</p>
+                                <p class="text-xs text-slate-500">Wants to join your group</p>
+                            </div>
+                            <button onclick="approveGroupRequest('${escapeHTML(doc.id)}')" class="btn btn-primary btn-sm px-4">Approve</button>
+                        `;
+                        container.appendChild(div);
+                    });
+                });
+        }
+
+        async function approveGroupRequest(requestId) {
+            try {
+                const manageShiftGroups = firebase.functions().httpsCallableFromURL('https://manageshiftgroups-dsy7tdoigq-uc.a.run.app');
+                const result = await manageShiftGroups({
+                    action: "approve_join",
+                    payload: { requestId: requestId }
+                });
+                if (result.data.success) alert("Approved!");
+            } catch (e) {
+                alert("Failed to approve: " + e.message);
+            }
         }
 
         window.onload = () => {

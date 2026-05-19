@@ -1,53 +1,37 @@
+const { getDayOfWeek, parseNum } = require("./utils");
 const {onSchedule} = require("firebase-functions/v2/scheduler");
 const admin = require("firebase-admin");
+const { parseNum, getDayOfWeek } = require("./utils");
 
 exports.trainGlobalAI = onSchedule("every 24 hours", async (event) => {
   console.log("Starting Global AI Training...");
+  try {
+    const snapshot = await admin.firestore().collection("users")
+        .where("cloudSyncEnabled", "==", true)
+        .where("aiTrainingEnabled", "==", true)
+        .get();
 
-  const snapshot = await admin.firestore().collection("users")
-      .where("cloudSyncEnabled", "==", true)
-      .where("aiTrainingEnabled", "==", true)
-      .get();
-
-  if (snapshot.empty) {
-    console.log("No users opted into AI training.");
-    return null;
-  }
-
-  const uniqueItems = new Set();
-  const maxValues = {};
-  const allHistory = [];
-
-  snapshot.forEach((doc) => {
-    const data = doc.data();
-    if (data.shiftHistory) {
-      allHistory.push(...data.shiftHistory);
+    if (snapshot.empty) {
+      console.log("No users opted into AI training.");
+      return null;
     }
-  });
 
-  if (allHistory.length < 3) {
-    console.log("Not enough global data to train.");
-    return null;
-  }
+  try {
+    const snapshot = await admin.firestore().collection("users")
+        .where("cloudSyncEnabled", "==", true)
+        .where("aiTrainingEnabled", "==", true)
+        .get();
 
-  function getDayOfWeek(dateString) {
-    if (!dateString) return -1;
-    let d;
-    if (dateString.includes("-")) {
-      const [yyyy, mm, dd] = dateString.split("-");
-      d = new Date(parseInt(yyyy), parseInt(mm) - 1, parseInt(dd));
-    } else {
-      d = new Date(dateString);
+    if (snapshot.empty) {
+      console.log("No users opted into AI training.");
+      return null;
     }
-    if (isNaN(d.getTime())) return -1;
-    return d.getDay();
-  }
 
-  function parseNum(val) {
-    if (!val) return 0;
-    const parsed = parseFloat(val.toString().replace(/[^0-9.]/g, ""));
-    return isNaN(parsed) ? 0 : parsed;
-  }
+    const uniqueItems = new Set();
+    const maxValues = {};
+    const allHistory = [];
+
+
 
   // 1. Find Max Values
   allHistory.forEach((shift) => {

@@ -4,3 +4,12 @@
 ## 2024-05-24 - [Bento Card Mousemove Optimization]
 **Learning:** High-frequency mouse events like `mousemove` that trigger DOM measurements (`getBoundingClientRect`) and style updates (`transform`) cause significant layout thrashing. Wrapping this logic in `requestAnimationFrame` effectively throttles execution to sync with the display refresh rate.
 **Action:** Consistently use `requestAnimationFrame` when updating styles continuously based on high-frequency DOM events (like mouse or scroll events) to ensure smooth animations.
+## 2025-02-28 - [Dashboard N+1 Fetch Bottleneck]
+**Learning:** In dashboards loading multiple independent data sources (like Firebase collections), sequential `await` calls compound latency (N+1 delay).
+**Action:** Always fetch independent datasets concurrently using `Promise.allSettled()` to restrict total load time to the duration of the slowest query, preserving isolated error handling per resource.
+## 2026-05-13 - [Search Input Debouncing]
+**Learning:** High-frequency input events (like `oninput`) that trigger expensive DOM manipulations (like rendering history lists) cause the main UI thread to block, leading to typing jank.
+**Action:** Use a debounce function with `setTimeout` to delay the execution of the render function until the user stops typing, ensuring smooth UI performance.
+## 2025-02-18 - Optimistic UI State Management
+**Learning:** Sequential full-list fetch and render operations after local write actions block the main thread and create perceived UI lag for the user. When using Firebase, `.get()` calls to collections can be expensive.
+**Action:** Implemented Optimistic UI rendering. Immediately constructed and prepended visual elements into the DOM during `submitShiftNote` and removed them manually inside `catch` blocks if the network request fails, fully bypassing the need for a redundant `fetchShiftNotes()` re-render cycle.
