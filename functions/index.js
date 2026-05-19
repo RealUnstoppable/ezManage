@@ -170,7 +170,7 @@ exports.cancelSubscription = onRequest({ invoker: "public" }, (req, res) => {
  * Manage Shift Notes API
  * Handles creation, updating, and resolution of shift notes.
  */
-exports.manageShiftNotes = onCall({ invoker: "public" }, async (request) => {
+exports.manageShiftNotes = onCall({ cors: true, invoker: "public" }, async (request) => {
   const data = request.data;
   const context = request;
 
@@ -267,7 +267,7 @@ exports.manageShiftNotes = onCall({ invoker: "public" }, async (request) => {
  * Manage Shift Groups API
  * Handles creating groups, joining groups, and approving joins.
  */
-exports.manageShiftGroups = onCall({ invoker: "public" }, async (request) => {
+exports.manageShiftGroups = onCall({ cors: true, invoker: "public" }, async (request) => {
   const data = request.data;
   const context = request;
 
