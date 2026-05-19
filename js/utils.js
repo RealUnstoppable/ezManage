@@ -1,20 +1,27 @@
-function parseNum(val) {
-    if (!val) return 0;
-    const n = parseFloat(val.toString().replace(/[^0-9.]/g, ''));
-    return isNaN(n) ? 0 : n;
+export function showToast(message) {
+    const toast = document.createElement('div');
+    toast.className = 'toast-notification';
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    setTimeout(() => {
+        toast.classList.add('fade-out');
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
 }
 
-function getDayOfWeek(dateString) {
-    if (!dateString) return -1;
-    let d;
-    if (dateString.includes("-")) {
-        const [yyyy, mm, dd] = dateString.split("-");
-        d = new Date(parseInt(yyyy), parseInt(mm) - 1, parseInt(dd));
-    } else {
-        d = new Date(dateString);
+export function getFirebaseErrorMessage(error) {
+    switch (error.code) {
+        case 'auth/invalid-email':
+            return 'Please enter a valid email address.';
+        case 'auth/user-not-found':
+        case 'auth/wrong-password':
+        case 'auth/invalid-credential':
+            return 'Invalid email or password.';
+        case 'auth/email-already-in-use':
+            return 'An account with this email already exists.';
+        case 'auth/weak-password':
+            return 'Password should be at least 6 characters.';
+        default:
+            return 'An unexpected error occurred. Please try again.';
     }
-    return isNaN(d.getTime()) ? -1 : d.getDay();
 }
-
-window.parseNum = parseNum;
-window.getDayOfWeek = getDayOfWeek;
