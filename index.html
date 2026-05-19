@@ -32,6 +32,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-messaging-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-functions-compat.js"></script>
 
     <style>
         :root {
@@ -429,7 +430,8 @@
                 class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="clock"></i>
                 History</a>
             <a href="#" onclick="navTo('shiftNotes')"
-                class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="clipboard-list"></i>
+                class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i
+                    data-lucide="clipboard-list"></i>
                 Shift Notes</a>
             <a href="#" onclick="navTo('maintenance')"
                 class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="wrench"></i>
@@ -537,7 +539,7 @@
                             class="text-xs font-black uppercase tracking-widest text-slate-400">Password</label>
                         <input type="password" id="authPass" placeholder="••••••••" required>
                     </div>
-                    <button type="submit" id="authBtn" class="btn btn-accent w-full py-4 mt-4">Sign In</button>
+                    <button type="submit" id="authBtn" class="btn btn-accent w-full py-4 mt-4 disabled:opacity-70 disabled:cursor-not-allowed">Sign In</button>
                 </form>
 
                 <div class="relative my-8">
@@ -634,9 +636,9 @@
                     </div>
                     <div class="flex items-center gap-3">
                         <button onclick="document.getElementById('jsonImportInput').click()"
-                            class="btn btn-outline btn-sm" title="Import JSON"><i data-lucide="upload"
+                            class="btn btn-outline btn-sm" title="Import JSON" aria-label="Import JSON"><i data-lucide="upload"
                                 class="w-4"></i></button>
-                        <button onclick="exportDataJSON()" class="btn btn-outline btn-sm" title="Export JSON"><i
+                        <button onclick="exportDataJSON()" class="btn btn-outline btn-sm" title="Export JSON" aria-label="Export JSON"><i
                                 data-lucide="download" class="w-4"></i></button>
                         <input type="file" id="jsonImportInput" accept=".json" class="hidden"
                             onchange="importDataJSON(event)">
@@ -877,44 +879,60 @@
                     </div>
                 </div>
 
-                <div id="createGroupModal" class="hidden bg-white dark:bg-slate-900 rounded-3xl p-6 md:p-8 shadow-sm border border-slate-100 dark:border-slate-800 mb-12">
+                <div id="createGroupModal"
+                    class="hidden bg-white dark:bg-slate-900 rounded-3xl p-6 md:p-8 shadow-sm border border-slate-100 dark:border-slate-800 mb-12">
                     <h2 class="text-xl font-bold mb-4">Create a Management Group</h2>
-                    <p class="text-sm text-slate-500 mb-6">Create a group to share shift notes with other managers securely.</p>
+                    <p class="text-sm text-slate-500 mb-6">Create a group to share shift notes with other managers
+                        securely.</p>
                     <div class="space-y-4">
-                        <input type="text" id="newGroupName" placeholder="Group Name (e.g. Store #1234)" class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
-                        <input type="password" id="newGroupPassword" placeholder="Group Password" class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
+                        <input type="text" id="newGroupName" placeholder="Group Name (e.g. Store #1234)"
+                            class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
+                        <input type="password" id="newGroupPassword" placeholder="Group Password"
+                            class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
                         <div class="flex justify-end gap-3 pt-2">
-                            <button onclick="document.getElementById('createGroupModal').classList.add('hidden')" class="btn btn-outline px-6 py-2">Cancel</button>
+                            <button onclick="document.getElementById('createGroupModal').classList.add('hidden')"
+                                class="btn btn-outline px-6 py-2">Cancel</button>
                             <button onclick="createShiftGroup()" class="btn btn-primary px-6 py-2">Create Group</button>
                         </div>
                     </div>
                 </div>
 
-                <div id="joinGroupModal" class="hidden bg-white dark:bg-slate-900 rounded-3xl p-6 md:p-8 shadow-sm border border-slate-100 dark:border-slate-800 mb-12">
+                <div id="joinGroupModal"
+                    class="hidden bg-white dark:bg-slate-900 rounded-3xl p-6 md:p-8 shadow-sm border border-slate-100 dark:border-slate-800 mb-12">
                     <h2 class="text-xl font-bold mb-4">Join a Management Group</h2>
                     <p class="text-sm text-slate-500 mb-6">Ask your store owner/GM for the Group ID and Password.</p>
                     <div class="space-y-4">
-                        <input type="text" id="joinGroupId" placeholder="Group ID" class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
-                        <input type="password" id="joinGroupPassword" placeholder="Group Password" class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
+                        <input type="text" id="joinGroupId" placeholder="Group ID"
+                            class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
+                        <input type="password" id="joinGroupPassword" placeholder="Group Password"
+                            class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
                         <div class="flex justify-end gap-3 pt-2">
-                            <button onclick="document.getElementById('joinGroupModal').classList.add('hidden')" class="btn btn-outline px-6 py-2">Cancel</button>
-                            <button onclick="requestJoinShiftGroup()" class="btn btn-primary px-6 py-2">Request Access</button>
+                            <button onclick="document.getElementById('joinGroupModal').classList.add('hidden')"
+                                class="btn btn-outline px-6 py-2">Cancel</button>
+                            <button onclick="requestJoinShiftGroup()" class="btn btn-primary px-6 py-2">Request
+                                Access</button>
                         </div>
                     </div>
                 </div>
 
-                <div id="groupRequestsPanel" class="hidden bg-amber-50 dark:bg-amber-950/20 rounded-3xl p-6 shadow-sm border border-amber-200 dark:border-amber-900/50 mb-12">
-                    <h2 class="text-lg font-bold mb-4 flex items-center gap-2"><i data-lucide="user-plus" class="text-amber-500"></i> Pending Join Requests</h2>
+                <div id="groupRequestsPanel"
+                    class="hidden bg-amber-50 dark:bg-amber-950/20 rounded-3xl p-6 shadow-sm border border-amber-200 dark:border-amber-900/50 mb-12">
+                    <h2 class="text-lg font-bold mb-4 flex items-center gap-2"><i data-lucide="user-plus"
+                            class="text-amber-500"></i> Pending Join Requests</h2>
                     <div id="groupRequestsContainer" class="space-y-3">
                         <!-- Populated via JS if user is group owner -->
                     </div>
                 </div>
 
-                <div id="shiftNotesPostArea" class="bg-white dark:bg-slate-900 rounded-3xl p-6 md:p-8 shadow-sm border border-slate-100 dark:border-slate-800 mb-12 hidden">
+                <div id="shiftNotesPostArea"
+                    class="bg-white dark:bg-slate-900 rounded-3xl p-6 md:p-8 shadow-sm border border-slate-100 dark:border-slate-800 mb-12 hidden">
                     <h2 class="text-xl font-bold mb-4">Post a Note</h2>
-                    <textarea id="shiftNoteContent" rows="3" class="w-full bg-slate-50 dark:bg-slate-800 p-4 rounded-xl border-none focus:ring-2 focus:ring-sky-500 mb-4 resize-none" placeholder="Leave a note, warning, or handover instruction..."></textarea>
+                    <textarea id="shiftNoteContent" rows="3"
+                        class="w-full bg-slate-50 dark:bg-slate-800 p-4 rounded-xl border-none focus:ring-2 focus:ring-sky-500 mb-4 resize-none"
+                        placeholder="Leave a note, warning, or handover instruction..."></textarea>
                     <div class="flex justify-between items-center">
-                        <select id="shiftNotePriority" class="bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500 font-medium">
+                        <select id="shiftNotePriority"
+                            class="bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500 font-medium">
                             <option value="Normal">Normal Priority</option>
                             <option value="Urgent">🚨 Urgent Issue</option>
                         </select>
@@ -924,7 +942,8 @@
 
                 <div class="flex justify-between items-center mb-6">
                     <h2 class="text-2xl font-black">Active Notes</h2>
-                    <button onclick="fetchShiftNotes()" class="text-sm font-bold text-sky-500 hover:text-sky-600 flex items-center gap-2">
+                    <button onclick="fetchShiftNotes()"
+                        class="text-sm font-bold text-sky-500 hover:text-sky-600 flex items-center gap-2">
                         <i data-lucide="refresh-cw" class="w-4 h-4"></i> Refresh
                     </button>
                 </div>
@@ -1284,8 +1303,9 @@
         if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
         const auth = firebase.auth();
         const db = firebase.firestore();
+        const cloudFunctions = firebase.functions();
 
-        db.enablePersistence().catch(err => console.error("Offline sync error:", err));
+        db.enablePersistence({ synchronizeTabs: true }).catch(err => console.error("Offline sync error:", err));
 
         let currentUser = null;
         let currentUserData = null;
@@ -1299,6 +1319,16 @@
 
         // Legal & Privacy Settings
         let cloudSyncEnabled = false;
+
+        function escapeHTML(str) {
+            if (!str && str !== 0) return "";
+            return String(str)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
 
         auth.onAuthStateChanged((user) => {
             currentUser = user;
@@ -1325,6 +1355,14 @@
                         renderHistory();
                         updateStorageBar();
                         fetchFeatureRequests();
+
+                        // Populate shift notes if that view is already active or we just logged in
+                        if (document.getElementById('view-shiftNotes').classList.contains('active')) {
+                            fetchShiftNotes();
+                        } else {
+                            // Ensure the group controls render even if we haven't opened the tab yet
+                            checkAndRenderOrgControls();
+                        }
 
                         if (!initialDraftLoaded) {
                             syncDraftFromServer();
@@ -1500,17 +1538,27 @@
             const email = document.getElementById('authEmail').value;
             const pass = document.getElementById('authPass').value;
             const btn = document.getElementById('authBtn');
+
+            const originalHTML = btn.innerHTML;
+            btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> ${originalHTML}`;
+            lucide.createIcons();
             btn.disabled = true;
 
             if (isRegisterMode) {
                 auth.createUserWithEmailAndPassword(email, pass)
                     .then(() => navTo('setup'))
                     .catch(err => alert(err.message))
-                    .finally(() => btn.disabled = false);
+                    .finally(() => {
+                        btn.innerHTML = originalHTML;
+                        btn.disabled = false;
+                    });
             } else {
                 auth.signInWithEmailAndPassword(email, pass)
                     .catch(err => alert(err.message))
-                    .finally(() => btn.disabled = false);
+                    .finally(() => {
+                        btn.innerHTML = originalHTML;
+                        btn.disabled = false;
+                    });
             }
         }
 
@@ -1553,7 +1601,7 @@
         function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); }
 
         function navTo(viewId) {
-            if (!currentUser && (['history', 'presets', 'performance', 'request', 'profile', 'maintenance'].includes(viewId))) {
+            if (!currentUser && (['history', 'presets', 'performance', 'request', 'profile', 'shiftNotes'].includes(viewId))) {
                 viewId = 'auth';
             }
             if (viewId === 'maintenance' && currentUser) {
@@ -1564,6 +1612,10 @@
             document.getElementById('sidebar').classList.remove('open');
             window.scrollTo({ top: 0, behavior: 'smooth' });
             lucide.createIcons();
+
+            if (viewId === 'shiftNotes') {
+                fetchShiftNotes();
+            }
         }
 
         function handleNavAccountClick() { navTo(currentUser ? 'profile' : 'auth'); }
@@ -2498,10 +2550,19 @@
                 });
         }
 
-        async function fetchShiftNotes() {
-            if (!currentUser) return;
+        function escapeHTML(str) {
+            if (str === null || str === undefined) return '';
+            return String(str)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
 
-            // Check org setup
+        function checkAndRenderOrgControls() {
+            if (!currentUser) return false;
+
             const controls = document.getElementById('shiftNotesGroupControls');
             const postArea = document.getElementById('shiftNotesPostArea');
 
@@ -2512,15 +2573,8 @@
                     <button onclick="document.getElementById('joinGroupModal').classList.remove('hidden')" class="btn btn-outline btn-sm"><i data-lucide="log-in" class="w-4 h-4"></i> Join Group</button>
                 `;
                 postArea.classList.add('hidden');
-                document.getElementById('shiftNotesContainer').innerHTML = `
-                    <div class="text-center py-16 bg-slate-50 dark:bg-slate-900 rounded-3xl border-2 border-dashed border-slate-200 dark:border-slate-800">
-                        <i data-lucide="users" class="w-12 h-12 text-slate-400 mx-auto mb-4"></i>
-                        <h3 class="text-xl font-bold mb-2">Join or Create a Group</h3>
-                        <p class="text-slate-500">You must be in a Management Group to post and view shift notes.</p>
-                    </div>
-                `;
                 lucide.createIcons();
-                return;
+                return false;
             }
 
             // User is in an org
@@ -2528,12 +2582,12 @@
 
             // If they are the owner, show the request panel logic
             db.collection('shift_groups').doc(currentUserData.orgId).get().then(doc => {
-                if(doc.exists && doc.data().ownerId === currentUser.uid) {
+                if (doc.exists && doc.data().ownerId === currentUser.uid) {
                     controls.innerHTML = `
                         <div class="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700">
                             <span class="text-xs font-bold text-slate-500 uppercase">Group ID:</span>
                             <span class="text-sm font-mono font-bold">${currentUserData.orgId}</span>
-                            <button onclick="navigator.clipboard.writeText('${currentUserData.orgId}'); alert('Group ID Copied!')" class="text-sky-500 hover:text-sky-600"><i data-lucide="copy" class="w-3.5 h-3.5"></i></button>
+                            <button aria-label="Copy Group ID" onclick="navigator.clipboard.writeText('${currentUserData.orgId}'); alert('Group ID Copied!')" class="text-sky-500 hover:text-sky-600"><i data-lucide="copy" class="w-3.5 h-3.5"></i></button>
                         </div>
                     `;
                     fetchGroupRequests(currentUserData.orgId);
@@ -2547,8 +2601,27 @@
                 }
                 lucide.createIcons();
             });
+            return true;
+        }
 
+        async function fetchShiftNotes() {
+            if (!currentUser) return;
+
+            const hasOrg = checkAndRenderOrgControls();
             const container = document.getElementById('shiftNotesContainer');
+
+            if (!hasOrg) {
+                container.innerHTML = `
+                    <div class="text-center py-16 bg-slate-50 dark:bg-slate-900 rounded-3xl border-2 border-dashed border-slate-200 dark:border-slate-800">
+                        <i data-lucide="users" class="w-12 h-12 text-slate-400 mx-auto mb-4"></i>
+                        <h3 class="text-xl font-bold mb-2">Join or Create a Group</h3>
+                        <p class="text-slate-500">You must be in a Management Group to post and view shift notes.</p>
+                    </div>
+                `;
+                lucide.createIcons();
+                return;
+            }
+
             container.innerHTML = '<div class="text-center py-8"><i data-lucide="loader-2" class="w-8 h-8 animate-spin mx-auto text-sky-500 mb-4"></i><p class="text-slate-500">Loading notes...</p></div>';
             lucide.createIcons();
 
@@ -2572,8 +2645,8 @@
 
                     // Sort manually since composite index might not exist
                     let docs = [];
-                    snap.forEach(doc => docs.push({id: doc.id, data: doc.data()}));
-                    docs.sort((a,b) => b.data.timestamp - a.data.timestamp);
+                    snap.forEach(doc => docs.push({ id: doc.id, data: doc.data() }));
+                    docs.sort((a, b) => b.data.timestamp - a.data.timestamp);
 
                     docs.forEach(docObj => {
                         const data = docObj.data;
@@ -2598,18 +2671,18 @@
                             <div class="flex justify-between items-start mb-4">
                                 <div class="flex items-center gap-3">
                                     <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-sky-400 to-indigo-500 flex items-center justify-center text-white font-bold text-lg shadow-sm">
-                                        ${data.authorName.charAt(0).toUpperCase()}
+                                        ${escapeHTML(data.authorName.charAt(0).toUpperCase())}
                                     </div>
                                     <div>
-                                        <p class="font-bold text-sm">${data.authorName}</p>
-                                        <p class="text-xs text-slate-500 font-mono">${dateStr}</p>
+                                        <p class="font-bold text-sm">${escapeHTML(data.authorName)}</p>
+                                        <p class="text-xs text-slate-500 font-mono">${escapeHTML(dateStr)}</p>
                                     </div>
                                 </div>
                                 ${priorityBadge}
                             </div>
                             <p class="text-slate-700 dark:text-slate-300 font-medium mb-6 whitespace-pre-wrap pl-1 shift-note-text"></p>
                             <div class="flex justify-end border-t border-slate-100 dark:border-slate-800 pt-4 mt-2">
-                                <button onclick="resolveShiftNote('${docId}')" class="text-sm font-bold text-slate-400 hover:text-emerald-500 flex items-center gap-2 transition-colors">
+                                <button onclick="resolveShiftNote('${escapeHTML(docId)}')" class="text-sm font-bold text-slate-400 hover:text-emerald-500 flex items-center gap-2 transition-colors">
                                     <i data-lucide="check-circle" class="w-4 h-4"></i> Mark Resolved
                                 </button>
                             </div>
@@ -2635,115 +2708,161 @@
 
             if (!content) return alert("Please enter note content.");
 
+            // Optimistic UI update
+            const container = document.getElementById('shiftNotesContainer');
+            const noteDiv = document.createElement('div');
+            const isUrgent = priority === 'Urgent';
+            let borderClass = isUrgent ? "border-red-200 dark:border-red-900/50" : "border-slate-100 dark:border-slate-800";
+            let bgClass = isUrgent ? "bg-red-50 dark:bg-red-950/20" : "bg-white dark:bg-slate-900";
+            let priorityBadge = isUrgent ?
+                `<span class="bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300 text-xs font-black uppercase tracking-widest px-3 py-1 rounded-full flex items-center gap-1"><i data-lucide="alert-triangle" class="w-3 h-3"></i> Urgent</span>` :
+                `<span class="bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full">Normal</span>`;
+
+            noteDiv.className = `p-6 rounded-2xl border ${borderClass} ${bgClass} shadow-sm relative group transition-all duration-200 hover:shadow-md opacity-50`;
+
+            const authorName = currentUser.email.split('@')[0];
+
+            noteDiv.innerHTML = `
+                <div class="flex justify-between items-start mb-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-sky-400 to-indigo-500 flex items-center justify-center text-white font-bold text-lg shadow-sm">
+                            ${authorName.charAt(0).toUpperCase()}
+                        </div>
+                        <div>
+                            <p class="font-bold text-sm">${authorName}</p>
+                            <p class="text-xs text-slate-500 font-mono">Posting...</p>
+                        </div>
+                    </div>
+                    ${priorityBadge}
+                </div>
+                <p class="text-slate-700 dark:text-slate-300 font-medium mb-6 whitespace-pre-wrap pl-1 shift-note-text"></p>
+                <div class="flex justify-end border-t border-slate-100 dark:border-slate-800 pt-4 mt-2">
+                    <button disabled class="text-sm font-bold text-slate-400 flex items-center gap-2">
+                        <i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Saving...
+                    </button>
+                </div>
+            `;
+            noteDiv.querySelector('.shift-note-text').textContent = content;
+
+            // Remove empty state message if it exists
+            const emptyState = container.querySelector('.text-center.py-16');
+            if (emptyState) emptyState.remove();
+
+            container.prepend(noteDiv);
+            if (window.lucide) window.lucide.createIcons();
+            document.getElementById('shiftNoteContent').value = "";
+
             try {
-                const res = await fetch("https://us-central1-dts-hub-website.cloudfunctions.net/manageShiftNotes", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        action: "create",
-                        payload: {
-                            authorId: currentUser.uid,
-                            authorName: currentUser.email.split('@')[0],
-                            content: content,
-                            priority: priority,
-                            orgId: currentUserData.orgId
-                        }
-                    })
+                const manageShiftNotes = firebase.functions().httpsCallableFromURL('https://manageshiftnotes-dsy7tdoigq-uc.a.run.app');
+                const result = await manageShiftNotes({
+                    action: "create",
+                    payload: {
+                        authorName: currentUser.email.split('@')[0],
+                        content: content,
+                        priority: priority,
+                        orgId: currentUserData.orgId
+                    }
                 });
-                const data = await res.json();
-                if (data.success) {
+                if (result.data.success) {
                     document.getElementById('shiftNoteContent').value = "";
                     fetchShiftNotes();
-                } else {
-                    alert("Error posting note: " + (data.error || "Unknown error"));
                 }
-            } catch (err) { alert("Failed to post note."); }
+            } catch (err) {
+                alert("Failed to post note: " + err.message);
+            }
         }
 
         async function resolveShiftNote(noteId) {
             if (!currentUser) return;
             if (!confirm("Mark this note as resolved?")) return;
+
+            // Find note element to remove optimistically
+            const container = document.getElementById('shiftNotesContainer');
+            const resolveBtn = container.querySelector(`button[onclick="resolveShiftNote('${noteId}')"]`);
+            let noteDiv = null;
+            let originalDisplay = '';
+
+            if (resolveBtn) {
+                noteDiv = resolveBtn.closest('.relative');
+                if (noteDiv) {
+                    originalDisplay = noteDiv.style.display;
+                    noteDiv.style.display = 'none'; // Optimistically hide
+                }
+            }
+
             try {
-                const res = await fetch("https://us-central1-dts-hub-website.cloudfunctions.net/manageShiftNotes", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        action: "resolve",
-                        payload: { noteId: noteId, resolvedBy: currentUser.email.split('@')[0] }
-                    })
+                const manageShiftNotes = firebase.functions().httpsCallableFromURL('https://manageshiftnotes-dsy7tdoigq-uc.a.run.app');
+                const result = await manageShiftNotes({
+                    action: "resolve",
+                    payload: { noteId: noteId, resolvedBy: currentUser.email.split('@')[0] }
                 });
-                const data = await res.json();
-                if (data.success) fetchShiftNotes();
-                else alert("Error resolving note: " + (data.error || "Unknown error"));
-            } catch (err) { alert("Failed to resolve note."); }
+                if (result.data.success) fetchShiftNotes();
+            } catch (err) {
+                alert("Failed to resolve note: " + err.message);
+            }
         }
 
         async function createShiftGroup() {
             if (!currentUser) return;
             const name = document.getElementById('newGroupName').value.trim();
             const pass = document.getElementById('newGroupPassword').value.trim();
-            if(!name || !pass) return alert("All fields required");
+            if (!name || !pass) return alert("All fields required");
 
             try {
-                const res = await fetch("https://us-central1-dts-hub-website.cloudfunctions.net/manageShiftGroups", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        action: "create",
-                        payload: {
-                            ownerId: currentUser.uid,
-                            ownerName: currentUser.email.split('@')[0],
-                            groupName: name,
-                            password: pass
-                        }
-                    })
+                const manageShiftGroups = firebase.functions().httpsCallableFromURL('https://manageshiftgroups-dsy7tdoigq-uc.a.run.app');
+                const result = await manageShiftGroups({
+                    action: "create",
+                    payload: {
+                        ownerName: currentUser.email.split('@')[0],
+                        groupName: name,
+                        password: pass
+                    }
                 });
-                const data = await res.json();
-                if (data.success) {
-                    alert(`Group Created! Share your Group ID: ${data.groupId} and password with other managers.`);
+                if (result.data.success) {
+                    alert(`Group Created! Share your Group ID: ${result.data.groupId} and password with other managers.`);
                     document.getElementById('createGroupModal').classList.add('hidden');
                     // Force refresh user data
                     window.location.reload();
-                } else alert("Error: " + data.error);
-            } catch(e) { alert("Failed to create group."); }
+                }
+            } catch (e) {
+                alert("Failed to create group: " + e.message);
+            }
         }
 
         async function requestJoinShiftGroup() {
             if (!currentUser) return;
             const groupId = document.getElementById('joinGroupId').value.trim();
             const pass = document.getElementById('joinGroupPassword').value.trim();
-            if(!groupId || !pass) return alert("All fields required");
+            if (!groupId || !pass) return alert("All fields required");
 
             try {
-                const res = await fetch("https://us-central1-dts-hub-website.cloudfunctions.net/manageShiftGroups", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        action: "request_join",
-                        payload: {
-                            userId: currentUser.uid,
-                            userName: currentUser.email.split('@')[0],
-                            groupId: groupId,
-                            password: pass
-                        }
-                    })
+                const manageShiftGroups = firebase.functions().httpsCallableFromURL('https://manageshiftgroups-dsy7tdoigq-uc.a.run.app');
+                const result = await manageShiftGroups({
+                    action: "request_join",
+                    payload: {
+                        userName: currentUser.email.split('@')[0],
+                        groupId: groupId,
+                        password: pass
+                    }
                 });
-                const data = await res.json();
-                if (data.success) {
+                if (result.data.success) {
                     alert("Join request sent! The group owner must approve it before you gain access.");
                     document.getElementById('joinGroupModal').classList.add('hidden');
-                } else alert("Error: " + data.error);
-            } catch(e) { alert("Failed to request join."); }
+                }
+            } catch (e) {
+                alert("Failed to request join: " + e.message);
+            }
         }
 
         function fetchGroupRequests(groupId) {
-            db.collection('shift_group_requests')
+            if (window.groupRequestsUnsubscribe) window.groupRequestsUnsubscribe();
+            window.groupRequestsUnsubscribe = db.collection('shift_group_requests')
                 .where('groupId', '==', groupId)
                 .where('status', '==', 'Pending')
                 .onSnapshot(snap => {
                     const panel = document.getElementById('groupRequestsPanel');
                     const container = document.getElementById('groupRequestsContainer');
-                    if(snap.empty) {
+                    if (snap.empty) {
                         panel.classList.add('hidden');
                         return;
                     }
@@ -2755,10 +2874,10 @@
                         div.className = "flex justify-between items-center bg-white dark:bg-slate-900 p-3 rounded-xl border border-amber-100 dark:border-amber-900/30";
                         div.innerHTML = `
                             <div>
-                                <p class="font-bold text-sm">${data.userName}</p>
+                                <p class="font-bold text-sm">${escapeHTML(data.userName)}</p>
                                 <p class="text-xs text-slate-500">Wants to join your group</p>
                             </div>
-                            <button onclick="approveGroupRequest('${doc.id}')" class="btn btn-primary btn-sm px-4">Approve</button>
+                            <button onclick="approveGroupRequest('${escapeHTML(doc.id)}')" class="btn btn-primary btn-sm px-4">Approve</button>
                         `;
                         container.appendChild(div);
                     });
@@ -2767,18 +2886,15 @@
 
         async function approveGroupRequest(requestId) {
             try {
-                const res = await fetch("https://us-central1-dts-hub-website.cloudfunctions.net/manageShiftGroups", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        action: "approve_join",
-                        payload: { ownerId: currentUser.uid, requestId: requestId }
-                    })
+                const manageShiftGroups = firebase.functions().httpsCallableFromURL('https://manageshiftgroups-dsy7tdoigq-uc.a.run.app');
+                const result = await manageShiftGroups({
+                    action: "approve_join",
+                    payload: { requestId: requestId }
                 });
-                const data = await res.json();
-                if (data.success) alert("Approved!");
-                else alert("Error: " + data.error);
-            } catch(e) { alert("Failed to approve."); }
+                if (result.data.success) alert("Approved!");
+            } catch (e) {
+                alert("Failed to approve: " + e.message);
+            }
         }
 
         window.onload = () => {
