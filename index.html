@@ -2415,6 +2415,50 @@
 
             if (!content) return alert("Please enter note content.");
 
+            // Optimistic UI update
+            const container = document.getElementById('shiftNotesContainer');
+            const noteDiv = document.createElement('div');
+            const isUrgent = priority === 'Urgent';
+            let borderClass = isUrgent ? "border-red-200 dark:border-red-900/50" : "border-slate-100 dark:border-slate-800";
+            let bgClass = isUrgent ? "bg-red-50 dark:bg-red-950/20" : "bg-white dark:bg-slate-900";
+            let priorityBadge = isUrgent ?
+                `<span class="bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300 text-xs font-black uppercase tracking-widest px-3 py-1 rounded-full flex items-center gap-1"><i data-lucide="alert-triangle" class="w-3 h-3"></i> Urgent</span>` :
+                `<span class="bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full">Normal</span>`;
+
+            noteDiv.className = `p-6 rounded-2xl border ${borderClass} ${bgClass} shadow-sm relative group transition-all duration-200 hover:shadow-md opacity-50`;
+
+            const authorName = currentUser.email.split('@')[0];
+
+            noteDiv.innerHTML = `
+                <div class="flex justify-between items-start mb-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-sky-400 to-indigo-500 flex items-center justify-center text-white font-bold text-lg shadow-sm">
+                            ${authorName.charAt(0).toUpperCase()}
+                        </div>
+                        <div>
+                            <p class="font-bold text-sm">${authorName}</p>
+                            <p class="text-xs text-slate-500 font-mono">Posting...</p>
+                        </div>
+                    </div>
+                    ${priorityBadge}
+                </div>
+                <p class="text-slate-700 dark:text-slate-300 font-medium mb-6 whitespace-pre-wrap pl-1 shift-note-text"></p>
+                <div class="flex justify-end border-t border-slate-100 dark:border-slate-800 pt-4 mt-2">
+                    <button disabled class="text-sm font-bold text-slate-400 flex items-center gap-2">
+                        <i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Saving...
+                    </button>
+                </div>
+            `;
+            noteDiv.querySelector('.shift-note-text').textContent = content;
+
+            // Remove empty state message if it exists
+            const emptyState = container.querySelector('.text-center.py-16');
+            if (emptyState) emptyState.remove();
+
+            container.prepend(noteDiv);
+            if (window.lucide) window.lucide.createIcons();
+            document.getElementById('shiftNoteContent').value = "";
+
             try {
                 const res = await fetch("https://us-central1-dts-hub-website.cloudfunctions.net/manageShiftNotes", {
                     method: "POST",
@@ -2423,7 +2467,7 @@
                         action: "create",
                         payload: {
                             authorId: currentUser.uid,
-                            authorName: currentUser.email.split('@')[0],
+                            authorName: authorName,
                             content: content,
                             priority: priority,
                             orgId: currentUserData.orgId
@@ -2432,17 +2476,44 @@
                 });
                 const data = await res.json();
                 if (data.success) {
-                    document.getElementById('shiftNoteContent').value = "";
-                    fetchShiftNotes();
+                    noteDiv.classList.remove('opacity-50');
+                    noteDiv.querySelector('.font-mono').textContent = 'Just now';
+                    const actionContainer = noteDiv.querySelector('.flex.justify-end');
+                    actionContainer.innerHTML = `<button onclick="resolveShiftNote('${data.id}')" class="text-sm font-bold text-slate-400 hover:text-emerald-500 flex items-center gap-2 transition-colors">
+                        <i data-lucide="check-circle" class="w-4 h-4"></i> Mark Resolved
+                    </button>`;
+                    if (window.lucide) window.lucide.createIcons();
                 } else {
+                    noteDiv.remove();
                     alert("Error posting note: " + (data.error || "Unknown error"));
+                    if (container.children.length === 0) fetchShiftNotes();
                 }
-            } catch (err) { alert("Failed to post note."); }
+            } catch (err) {
+                noteDiv.remove();
+                console.error("Error posting note:", err);
+                alert("Failed to post note.");
+                if (container.children.length === 0) fetchShiftNotes();
+            }
         }
 
         async function resolveShiftNote(noteId) {
             if (!currentUser) return;
             if (!confirm("Mark this note as resolved?")) return;
+
+            // Find note element to remove optimistically
+            const container = document.getElementById('shiftNotesContainer');
+            const resolveBtn = container.querySelector(`button[onclick="resolveShiftNote('${noteId}')"]`);
+            let noteDiv = null;
+            let originalDisplay = '';
+
+            if (resolveBtn) {
+                noteDiv = resolveBtn.closest('.relative');
+                if (noteDiv) {
+                    originalDisplay = noteDiv.style.display;
+                    noteDiv.style.display = 'none'; // Optimistically hide
+                }
+            }
+
             try {
                 const res = await fetch("https://us-central1-dts-hub-website.cloudfunctions.net/manageShiftNotes", {
                     method: "POST",
@@ -2453,9 +2524,29 @@
                     })
                 });
                 const data = await res.json();
-                if (data.success) fetchShiftNotes();
-                else alert("Error resolving note: " + (data.error || "Unknown error"));
-            } catch (err) { alert("Failed to resolve note."); }
+                if (data.success) {
+                    if (noteDiv) noteDiv.remove();
+
+                    // Show empty state if no notes left
+                    if (container.children.length === 0) {
+                        container.innerHTML = `
+                            <div class="text-center py-16 bg-slate-50 dark:bg-slate-900 rounded-3xl border-2 border-dashed border-slate-200 dark:border-slate-800">
+                                <i data-lucide="check-circle-2" class="w-12 h-12 text-emerald-400 mx-auto mb-4"></i>
+                                <h3 class="text-xl font-bold mb-2">All Clear!</h3>
+                                <p class="text-slate-500">There are no active shift notes for your group.</p>
+                            </div>
+                        `;
+                        if (window.lucide) window.lucide.createIcons();
+                    }
+                } else {
+                    if (noteDiv) noteDiv.style.display = originalDisplay; // Revert
+                    alert("Error resolving note: " + (data.error || "Unknown error"));
+                }
+            } catch (err) {
+                if (noteDiv) noteDiv.style.display = originalDisplay; // Revert
+                console.error("Error resolving note:", err);
+                alert("Failed to resolve note.");
+            }
         }
 
         async function createShiftGroup() {
@@ -2485,7 +2576,7 @@
                     // Force refresh user data
                     window.location.reload();
                 } else alert("Error: " + data.error);
-            } catch(e) { alert("Failed to create group."); }
+            } catch (e) { console.error("Error creating group:", e); alert("Failed to create group."); }
         }
 
         async function requestJoinShiftGroup() {
@@ -2513,11 +2604,12 @@
                     alert("Join request sent! The group owner must approve it before you gain access.");
                     document.getElementById('joinGroupModal').classList.add('hidden');
                 } else alert("Error: " + data.error);
-            } catch(e) { alert("Failed to request join."); }
+            } catch (e) { console.error("Error requesting join:", e); alert("Failed to request join."); }
         }
 
         function fetchGroupRequests(groupId) {
-            db.collection('shift_group_requests')
+            if (window.groupRequestsUnsubscribe) window.groupRequestsUnsubscribe();
+            window.groupRequestsUnsubscribe = db.collection('shift_group_requests')
                 .where('groupId', '==', groupId)
                 .where('status', '==', 'Pending')
                 .onSnapshot(snap => {
@@ -2558,7 +2650,7 @@
                 const data = await res.json();
                 if (data.success) alert("Approved!");
                 else alert("Error: " + data.error);
-            } catch(e) { alert("Failed to approve."); }
+            } catch (e) { console.error("Error approving request:", e); alert("Failed to approve."); }
         }
 
         window.onload = () => {
