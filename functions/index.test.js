@@ -10,6 +10,10 @@ jest.mock("firebase-admin", () => {
     where: jest.fn().mockReturnThis(),
     get: jest.fn(),
     update: jest.fn(),
+    batch: jest.fn().mockReturnValue({
+      update: jest.fn(),
+      commit: jest.fn().mockResolvedValue(),
+    }),
   };
   return {
     initializeApp: jest.fn(),
@@ -348,8 +352,9 @@ describe("stripeWebhook", () => {
 
     mockStripeMock.webhooks.constructEvent.mockReturnValue(mockEvent);
 
-    const mockUpdate = jest.fn();
     const mockDocs = {
+      empty: false,
+      size: 2,
       docs: [
         {id: "user_1", ref: {update: mockUpdate}},
         {id: "user_2", ref: {update: mockUpdate}},
@@ -358,18 +363,18 @@ describe("stripeWebhook", () => {
 
     const firestoreMock = admin.firestore();
     firestoreMock.get.mockResolvedValue(mockDocs);
+    const mockBatch = firestoreMock.batch();
 
     await stripeWebhook(req, res);
 
     expect(res.json).toHaveBeenCalledWith({received: true});
 
     expect(firestoreMock.where).toHaveBeenCalledWith("subscription.customerId", "==", "cus_123");
-    expect(mockUpdate).toHaveBeenCalledTimes(2);
-    expect(mockUpdate).toHaveBeenCalledWith({
-      "plan": "Free",
-      "subscription.status": "canceled",
-      "updatedAt": admin.firestore.FieldValue.serverTimestamp(),
-    });
+    expect(firestoreMock.batch).toHaveBeenCalled();
+    expect(mockBatch.update).toHaveBeenCalledTimes(2);
+    expect(mockBatch.update).toHaveBeenCalledWith("ref_1", expect.any(Object));
+    expect(mockBatch.update).toHaveBeenCalledWith("ref_2", expect.any(Object));
+    expect(mockBatch.commit).toHaveBeenCalled();
   });
 
   it("should process customer.subscription.canceled", async () => {
@@ -384,8 +389,9 @@ describe("stripeWebhook", () => {
 
     mockStripeMock.webhooks.constructEvent.mockReturnValue(mockEvent);
 
-    const mockUpdate = jest.fn();
     const mockDocs = {
+      empty: false,
+      size: 1,
       docs: [
         {id: "user_3", ref: {update: mockUpdate}},
       ],
@@ -393,18 +399,19 @@ describe("stripeWebhook", () => {
 
     const firestoreMock = admin.firestore();
     firestoreMock.get.mockResolvedValue(mockDocs);
+    const mockBatch = firestoreMock.batch();
 
     await stripeWebhook(req, res);
 
     expect(res.json).toHaveBeenCalledWith({received: true});
 
     expect(firestoreMock.where).toHaveBeenCalledWith("subscription.customerId", "==", "cus_456");
-    expect(mockUpdate).toHaveBeenCalledTimes(1);
-    expect(mockUpdate).toHaveBeenCalledWith({
+    expect(mockBatch.update).toHaveBeenCalledWith("ref_3", {
       "plan": "Free",
       "subscription.status": "canceled",
       "updatedAt": admin.firestore.FieldValue.serverTimestamp(),
     });
+    expect(mockBatch.commit).toHaveBeenCalled();
   });
 
   it("should ignore unhandled event types", async () => {
