@@ -121,18 +121,17 @@ exports.stripeWebhook = functions.https.onRequest(async (req, res) => {
         .where("subscription.customerId", "==", sub.customer)
         .get();
 
-    for (const doc of snapshot.docs) {
-      // Revert the user back to the free plan
-      try {
-        await doc.ref.update({
+    if (!snapshot.empty) {
+      const batch = admin.firestore().batch();
+      snapshot.docs.forEach((doc) => {
+        batch.update(doc.ref, {
           "plan": "Free",
           "subscription.status": "canceled",
           "updatedAt": admin.firestore.FieldValue.serverTimestamp(),
         });
-        console.log(`❌ Reverted user ${doc.id} back to Free plan.`);
-      } catch (err) {
-        console.error(`Error reverting user ${doc.id} back to Free plan:`, err);
-      }
+      });
+      await batch.commit();
+      console.log(`❌ Reverted ${snapshot.size} user(s) back to Free plan.`);
     }
   }
 
