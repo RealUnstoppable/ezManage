@@ -1240,7 +1240,7 @@
         const db = firebase.firestore();
         const cloudFunctions = firebase.functions();
 
-        db.enablePersistence().catch(err => console.error("Offline sync error:", err));
+        db.enablePersistence({ synchronizeTabs: true }).catch(err => console.error("Offline sync error:", err));
 
         let currentUser = null;
         let currentUserData = null;
@@ -2451,7 +2451,7 @@
             if (!content) return alert("Please enter note content.");
 
             try {
-                const manageShiftNotes = firebase.functions().httpsCallable('manageShiftNotes');
+                const manageShiftNotes = firebase.functions().httpsCallableFromURL('https://manageshiftnotes-dsy7tdoigq-uc.a.run.app');
                 const result = await manageShiftNotes({
                     action: "create",
                     payload: {
@@ -2474,7 +2474,7 @@
             if (!currentUser) return;
             if (!confirm("Mark this note as resolved?")) return;
             try {
-                const manageShiftNotes = firebase.functions().httpsCallable('manageShiftNotes');
+                const manageShiftNotes = firebase.functions().httpsCallableFromURL('https://manageshiftnotes-dsy7tdoigq-uc.a.run.app');
                 const result = await manageShiftNotes({
                     action: "resolve",
                     payload: { noteId: noteId, resolvedBy: currentUser.email.split('@')[0] }
@@ -2492,7 +2492,7 @@
             if(!name || !pass) return alert("All fields required");
             
             try {
-                const manageShiftGroups = firebase.functions().httpsCallable('manageShiftGroups');
+                const manageShiftGroups = firebase.functions().httpsCallableFromURL('https://manageshiftgroups-dsy7tdoigq-uc.a.run.app');
                 const result = await manageShiftGroups({
                     action: "create",
                     payload: {
@@ -2519,7 +2519,7 @@
             if(!groupId || !pass) return alert("All fields required");
             
             try {
-                const manageShiftGroups = firebase.functions().httpsCallable('manageShiftGroups');
+                const manageShiftGroups = firebase.functions().httpsCallableFromURL('https://manageshiftgroups-dsy7tdoigq-uc.a.run.app');
                 const result = await manageShiftGroups({
                     action: "request_join",
                     payload: {
@@ -2568,7 +2568,7 @@
         
         async function approveGroupRequest(requestId) {
             try {
-                const manageShiftGroups = firebase.functions().httpsCallable('manageShiftGroups');
+                const manageShiftGroups = firebase.functions().httpsCallableFromURL('https://manageshiftgroups-dsy7tdoigq-uc.a.run.app');
                 const result = await manageShiftGroups({
                     action: "approve_join",
                     payload: { requestId: requestId }
