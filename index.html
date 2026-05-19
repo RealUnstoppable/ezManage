@@ -23,6 +23,7 @@
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
 
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
@@ -543,7 +544,9 @@
                             class="text-xs font-black uppercase tracking-widest text-slate-400">Password</label>
                         <input type="password" id="authPass" placeholder="••••••••" required>
                     </div>
-                    <button type="submit" id="authBtn" class="btn btn-accent w-full py-4 mt-4 disabled:opacity-70 disabled:cursor-not-allowed">Sign In</button>
+                    <button type="submit" id="authBtn"
+                        class="btn btn-accent w-full py-4 mt-4 disabled:opacity-70 disabled:cursor-not-allowed">Sign
+                        In</button>
                 </form>
 
                 <div class="relative my-8">
@@ -640,10 +643,10 @@
                     </div>
                     <div class="flex items-center gap-3">
                         <button onclick="document.getElementById('jsonImportInput').click()"
-                            class="btn btn-outline btn-sm" title="Import JSON" aria-label="Import JSON"><i data-lucide="upload"
-                                class="w-4"></i></button>
-                        <button onclick="exportDataJSON()" class="btn btn-outline btn-sm" title="Export JSON" aria-label="Export JSON"><i
-                                data-lucide="download" class="w-4"></i></button>
+                            class="btn btn-outline btn-sm" title="Import JSON" aria-label="Import JSON"><i
+                                data-lucide="upload" class="w-4"></i></button>
+                        <button onclick="exportDataJSON()" class="btn btn-outline btn-sm" title="Export JSON"
+                            aria-label="Export JSON"><i data-lucide="download" class="w-4"></i></button>
                         <input type="file" id="jsonImportInput" accept=".json" class="hidden"
                             onchange="importDataJSON(event)">
                         <button onclick="navTo('presets')" class="btn btn-outline btn-sm"><i data-lucide="layout"
@@ -880,7 +883,8 @@
                             </div>
                         </div>
                     </div>
-                    <button type="button" onclick="addShiftToSchedule()" class="btn btn-accent w-full mt-6">Add Shift</button>
+                    <button type="button" onclick="addShiftToSchedule()" class="btn btn-accent w-full mt-6">Add
+                        Shift</button>
                 </div>
 
                 <div class="card">
@@ -912,7 +916,8 @@
                     <div class="relative w-full md:w-64">
                         <i data-lucide="search" class="absolute left-3 top-3 w-4 h-4 text-slate-400"></i>
                         <input type="text" id="historySearch" aria-label="Search History"
-                            placeholder="Search by manager, date..." class="pl-10 text-sm" oninput="debouncedRenderHistory()">
+                            placeholder="Search by manager, date..." class="pl-10 text-sm"
+                            oninput="debouncedRenderHistory()">
                     </div>
                 </div>
 
@@ -1008,19 +1013,24 @@
             <div class="max-w-4xl mx-auto">
                 <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
                     <h1 class="text-4xl font-black">Maintenance Tracker</h1>
-                    <button onclick="document.getElementById('reportMaintenanceModal').classList.toggle('hidden')" class="btn btn-primary flex items-center gap-2 px-6">
+                    <button onclick="document.getElementById('reportMaintenanceModal').classList.toggle('hidden')"
+                        class="btn btn-primary flex items-center gap-2 px-6">
                         <i data-lucide="plus-circle" class="w-5 h-5"></i> Report Issue
                     </button>
                 </div>
 
-                <div id="reportMaintenanceModal" class="hidden bg-white dark:bg-slate-900 rounded-3xl p-6 md:p-8 shadow-sm border border-slate-100 dark:border-slate-800 mb-12">
+                <div id="reportMaintenanceModal"
+                    class="hidden bg-white dark:bg-slate-900 rounded-3xl p-6 md:p-8 shadow-sm border border-slate-100 dark:border-slate-800 mb-12">
                     <h2 class="text-xl font-bold mb-4">Report New Issue</h2>
                     <div class="space-y-4">
-                        <input type="text" id="maintenanceTitle" placeholder="Equipment or Issue Name" class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
-                        <textarea id="maintenanceDesc" placeholder="Describe the problem..." rows="3" class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500 resize-none"></textarea>
+                        <input type="text" id="maintenanceTitle" placeholder="Equipment or Issue Name"
+                            class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
+                        <textarea id="maintenanceDesc" placeholder="Describe the problem..." rows="3"
+                            class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500 resize-none"></textarea>
 
                         <div class="flex flex-col md:flex-row gap-4">
-                            <select id="maintenancePriority" class="flex-1 bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
+                            <select id="maintenancePriority"
+                                class="flex-1 bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
                                 <option value="Low">Low Priority</option>
                                 <option value="Medium">Medium Priority</option>
                                 <option value="High">High Priority</option>
@@ -1029,15 +1039,18 @@
                         </div>
 
                         <div class="flex justify-end gap-3 pt-2">
-                            <button onclick="document.getElementById('reportMaintenanceModal').classList.add('hidden')" class="btn btn-outline px-6 py-2">Cancel</button>
-                            <button onclick="submitMaintenanceTicket()" class="btn btn-accent px-6 py-2">Submit Ticket</button>
+                            <button onclick="document.getElementById('reportMaintenanceModal').classList.add('hidden')"
+                                class="btn btn-outline px-6 py-2">Cancel</button>
+                            <button onclick="submitMaintenanceTicket()" class="btn btn-accent px-6 py-2">Submit
+                                Ticket</button>
                         </div>
                     </div>
                 </div>
 
                 <div class="flex justify-between items-center mb-6">
                     <h2 class="text-2xl font-black">Active Tickets</h2>
-                    <button onclick="fetchMaintenanceTickets()" class="text-sm font-bold text-sky-500 hover:text-sky-600 flex items-center gap-2">
+                    <button onclick="fetchMaintenanceTickets()"
+                        class="text-sm font-bold text-sky-500 hover:text-sky-600 flex items-center gap-2">
                         <i data-lucide="refresh-cw" class="w-4 h-4"></i> Refresh
                     </button>
                 </div>
@@ -1108,6 +1121,10 @@
                         <div class="text-4xl font-black text-emerald-500 mb-2" id="statRoutines">0%</div>
                         <div class="text-[10px] font-black uppercase tracking-widest text-slate-400">Routine Score</div>
                     </div>
+                </div>
+
+                <div class="card bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 mb-12">
+                    <canvas id="performanceChart" height="100"></canvas>
                 </div>
 
                 <div class="card bg-slate-50 dark:bg-slate-900 border-none">
@@ -1814,7 +1831,8 @@
             div.querySelector('.inv-backline').value = bl;
             div.querySelector('.inv-cooler').value = cl;
             div.querySelector('.inv-freezer').value = fr;
-            document.getElementById('inventoryContainer').appendChild(div);
+            const container = document.getElementById('inventoryContainer');
+            container.insertBefore(div, container.firstChild);
             lucide.createIcons();
             if (initialDraftLoaded) triggerDraftSync();
         }
@@ -1980,29 +1998,49 @@
             history.forEach(data => {
                 let groupKey = "Unknown Date";
                 if (data.dateSaved) {
-                    const parts = data.dateSaved.split('-');
-                    groupKey = parts.length >= 2 ? `${parts[0]}-${parts[1]}` : data.dateSaved;
+                    groupKey = data.dateSaved;
                 }
                 if (!grouped[groupKey]) grouped[groupKey] = [];
                 grouped[groupKey].push(data);
             });
 
             Object.keys(grouped).sort().reverse().forEach(key => {
-                const groupHeader = document.createElement('h3');
-                groupHeader.className = "text-xs font-black uppercase tracking-widest text-sky-500 mb-2 mt-6 border-b border-slate-200 dark:border-slate-800 pb-1";
-                groupHeader.innerText = `Period: ${key}`;
-                container.appendChild(groupHeader);
-
+                const groupContainer = document.createElement('div');
+                groupContainer.className = "mb-4 bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden";
+                
+                const groupHeader = document.createElement('div');
+                groupHeader.className = "px-6 py-4 flex justify-between items-center cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors";
+                groupHeader.innerHTML = `
+                    <div class="font-black text-lg text-slate-800 dark:text-slate-200"><i data-lucide="calendar" class="inline-block w-5 h-5 mr-2 text-sky-500"></i>${key}</div>
+                    <div class="flex items-center gap-3">
+                        <span class="text-xs font-bold bg-sky-100 text-sky-700 px-2 py-1 rounded-md">${grouped[key].length} shifts</span>
+                        <i data-lucide="chevron-down" class="w-5 h-5 text-slate-400 transition-transform duration-200"></i>
+                    </div>
+                `;
+                
+                const groupContent = document.createElement('div');
+                groupContent.className = "hidden px-6 pb-4 pt-2 border-t border-slate-100 dark:border-slate-800 space-y-3";
+                
+                groupHeader.onclick = () => {
+                    groupContent.classList.toggle('hidden');
+                    const icon = groupHeader.querySelector('[data-lucide="chevron-down"]');
+                    if (groupContent.classList.contains('hidden')) {
+                        icon.style.transform = 'rotate(0deg)';
+                    } else {
+                        icon.style.transform = 'rotate(180deg)';
+                    }
+                };
+                
                 grouped[key].forEach(data => {
                     const div = document.createElement('div');
-                    div.className = "card flex justify-between items-center hover:border-sky-200 dark:hover:border-sky-800 transition-colors group mb-3";
+                    div.className = "flex justify-between items-center p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl hover:bg-sky-50 dark:hover:bg-sky-900/20 transition-colors group";
                     div.innerHTML = `
                         <div>
-                            <div class="font-black text-lg history-date"></div>
-                            <div class="text-xs font-bold uppercase tracking-widest text-slate-400 history-details"></div>
+                            <div class="font-black text-md text-slate-700 dark:text-slate-300">Manager: ${data.manager || 'N/A'}</div>
+                            <div class="text-[10px] font-bold uppercase tracking-widest text-slate-400 mt-1">Duration: ${data.durationMins || 0}m • Saved at ${data.timeSaved || 'N/A'}</div>
                         </div>
                         <div class="flex gap-2">
-                            <button class="btn btn-outline btn-sm opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity history-load">
+                            <button class="btn btn-outline btn-sm bg-white dark:bg-slate-900 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity history-load">
                                 <i data-lucide="download"></i> Load
                             </button>
                             <button class="text-red-400 p-2 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity history-delete" title="Delete" aria-label="Delete history record">
@@ -2010,12 +2048,14 @@
                             </button>
                         </div>
                     `;
-                    div.querySelector('.history-date').textContent = data.dateSaved;
-                    div.querySelector('.history-details').textContent = `Manager: ${data.manager || 'N/A'} • Duration: ${data.durationMins || 0}m`;
-                    div.querySelector('.history-load').onclick = () => loadHistoryShift(data.id);
-                    div.querySelector('.history-delete').onclick = () => deleteHistoryShift(data.id);
-                    container.appendChild(div);
+                    div.querySelector('.history-load').onclick = (e) => { e.stopPropagation(); loadHistoryShift(data.id); };
+                    div.querySelector('.history-delete').onclick = (e) => { e.stopPropagation(); deleteHistoryShift(data.id); };
+                    groupContent.appendChild(div);
                 });
+                
+                groupContainer.appendChild(groupHeader);
+                groupContainer.appendChild(groupContent);
+                container.appendChild(groupContainer);
             });
             lucide.createIcons();
         }
@@ -2108,6 +2148,62 @@
             const tips = document.getElementById('performanceTips');
             if (score < 70) tips.innerText = "Focus: Your routine score is low. Try completing ServSafe temps and lobby checks immediately after the rush.";
             else if (history.length > 5) tips.innerText = "Great consistency! Your logs are detailed and synced. Consider sharing your custom templates with your team.";
+
+            renderPerformanceChart(history);
+        }
+
+        let perfChartInstance = null;
+        function renderPerformanceChart(history) {
+            const ctx = document.getElementById('performanceChart');
+            if (!ctx) return;
+            
+            const sorted = [...history].reverse();
+            const labels = sorted.map(h => (h.dateSaved || 'Unknown').split('-').slice(-2).join('/'));
+            const durations = sorted.map(h => h.durationMins || 0);
+            const routineScores = sorted.map(h => {
+                let total = 0, checked = 0;
+                (h.routines || []).forEach(r => { total++; if (r.checked) checked++; });
+                return total === 0 ? 0 : Math.round((checked / total) * 100);
+            });
+
+            if (perfChartInstance) perfChartInstance.destroy();
+
+            perfChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Log Time (mins)',
+                            data: durations,
+                            borderColor: '#38bdf8',
+                            backgroundColor: 'rgba(56, 189, 248, 0.1)',
+                            tension: 0.4,
+                            fill: true,
+                            yAxisID: 'y'
+                        },
+                        {
+                            label: 'Routine Score (%)',
+                            data: routineScores,
+                            borderColor: '#10b981',
+                            borderDash: [5, 5],
+                            tension: 0.4,
+                            yAxisID: 'y1'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    interaction: { mode: 'index', intersect: false },
+                    plugins: {
+                        legend: { position: 'top' }
+                    },
+                    scales: {
+                        y: { type: 'linear', display: true, position: 'left', title: { display: true, text: 'Mins' } },
+                        y1: { type: 'linear', display: true, position: 'right', title: { display: true, text: 'Score %' }, min: 0, max: 100, grid: { drawOnChartArea: false } }
+                    }
+                }
+            });
         }
 
         const presets = {
@@ -2708,26 +2804,26 @@
                         });
                     }
                 }, error => {
-                     console.error("Error fetching schedules: ", error);
-                     if (listContainer) listContainer.innerHTML = "<p class='text-sm text-red-500'>Error loading schedule.</p>";
+                    console.error("Error fetching schedules: ", error);
+                    if (listContainer) listContainer.innerHTML = "<p class='text-sm text-red-500'>Error loading schedule.</p>";
                 });
         }
 
         function removeShift(index) {
-           const dateInput = document.getElementById('scheduleDate');
-           if(!dateInput || !dateInput.value) return;
+            const dateInput = document.getElementById('scheduleDate');
+            if (!dateInput || !dateInput.value) return;
 
-           const date = dateInput.value;
-           const scheduleRef = db.collection('schedules').doc(`${currentUser.uid}_${date}`);
+            const date = dateInput.value;
+            const scheduleRef = db.collection('schedules').doc(`${currentUser.uid}_${date}`);
 
-           scheduleRef.get().then(doc => {
-               if (doc.exists) {
-                   const data = doc.data();
-                   let shifts = data.shifts || [];
-                   shifts.splice(index, 1);
-                   scheduleRef.update({ shifts: shifts });
-               }
-           });
+            scheduleRef.get().then(doc => {
+                if (doc.exists) {
+                    const data = doc.data();
+                    let shifts = data.shifts || [];
+                    shifts.splice(index, 1);
+                    scheduleRef.update({ shifts: shifts });
+                }
+            });
         }
 
 

@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <link rel="manifest" href="manifest.json">
     <meta charset="UTF-8">
@@ -24,7 +25,8 @@
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
 
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
@@ -65,7 +67,11 @@
             --input-bg: #111111;
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
 
         body {
             font-family: 'Inter', sans-serif;
@@ -75,13 +81,16 @@
             -webkit-font-smoothing: antialiased;
         }
 
-        [x-cloak] { display: none !important; }
+        [x-cloak] {
+            display: none !important;
+        }
 
         .glass-nav {
             background: rgba(255, 255, 255, 0.7);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
         }
+
         .dark-mode .glass-nav {
             background: rgba(0, 0, 0, 0.7);
         }
@@ -108,55 +117,85 @@
             gap: 0.5rem;
         }
 
-        .btn-accent { background: var(--accent); color: white; border: 2px solid var(--accent); }
-        .btn-accent:hover { background: var(--accent-hover); border-color: var(--accent-hover); transform: translateY(-1px); }
-        .btn-outline { background: transparent; border: 2px solid var(--border); color: var(--text-main); }
-        .btn-outline:hover { border-color: var(--text-main); }
+        .btn-accent {
+            background: var(--accent);
+            color: white;
+            border: 2px solid var(--accent);
+        }
 
-        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+        .btn-accent:hover {
+            background: var(--accent-hover);
+            border-color: var(--accent-hover);
+            transform: translateY(-1px);
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 2px solid var(--border);
+            color: var(--text-main);
+        }
+
+        .btn-outline:hover {
+            border-color: var(--text-main);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 10px;
+        }
 
         #sidebar {
             transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             transform: translateX(-100%);
         }
-        #sidebar.open { transform: translateX(0); }
+
+        #sidebar.open {
+            transform: translateX(0);
+        }
     </style>
 </head>
+
 <body x-data="{ mobileMenu: false }">
 
     <nav class="fixed w-full z-50 glass-nav border-b border-slate-200/50 top-0 no-print">
         <div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
             <div class="flex items-center space-x-3 cursor-pointer" onclick="window.location.href='index.html'">
                 <div class="relative group">
-                    <img src="ManagerPro.jpg"
-                         alt="ezManage Logo"
-                         class="w-10 h-10 rounded-xl shadow-sm border border-white transform transition-transform group-hover:rotate-6">
+                    <img src="ManagerPro.jpg" alt="ezManage Logo"
+                        class="w-10 h-10 rounded-xl shadow-sm border border-white transform transition-transform group-hover:rotate-6">
                 </div>
-                <span class="text-xl font-black tracking-tighter text-slate-900 dark:text-white uppercase">ezManage <span class="text-sky-500">AI</span></span>
+                <span class="text-xl font-black tracking-tighter text-slate-900 dark:text-white uppercase">ezManage
+                    <span class="text-sky-500">AI</span></span>
             </div>
             <div class="flex items-center space-x-6">
                 <div class="hidden md:flex items-center gap-2 px-3 py-1 bg-slate-100 dark:bg-slate-800 rounded-full">
                     <div id="statusIndicator" class="w-2 h-2 rounded-full bg-slate-300"></div>
                     <span class="text-[10px] font-black uppercase tracking-widest text-slate-500">Initializing</span>
                 </div>
-                <button onclick="toggleSidebar()" class="text-slate-400 hover:text-sky-500 transition-colors" aria-label="Open sidebar menu">
+                <button onclick="toggleSidebar()" class="text-slate-400 hover:text-sky-500 transition-colors"
+                    aria-label="Open sidebar menu">
                     <i data-lucide="menu" class="w-6 h-6"></i>
                 </button>
             </div>
         </div>
     </nav>
 
-    <div id="aiRestrictionModal" class="fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-md hidden flex items-center justify-center p-6">
-        <div class="bg-white dark:bg-slate-900 p-8 md:p-12 rounded-3xl max-w-lg w-full shadow-2xl border border-slate-200 dark:border-slate-800 text-center animate-fadeIn">
-            <div class="w-20 h-20 bg-amber-100 dark:bg-amber-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
+    <div id="aiRestrictionModal"
+        class="fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-md hidden flex items-center justify-center p-6">
+        <div
+            class="bg-white dark:bg-slate-900 p-8 md:p-12 rounded-3xl max-w-lg w-full shadow-2xl border border-slate-200 dark:border-slate-800 text-center animate-fadeIn">
+            <div
+                class="w-20 h-20 bg-amber-100 dark:bg-amber-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
                 <i data-lucide="shield-alert" class="w-10 h-10 text-amber-500"></i>
             </div>
             <h2 class="text-3xl font-black text-slate-900 dark:text-white mb-4 tracking-tight">AI Training Disabled</h2>
             <p class="text-slate-500 dark:text-slate-400 mb-8 leading-relaxed">
-                To access the AI Predictor, you must explicitly opt-in to <b>Enterprise Cloud Sync</b> and <b>Allow AI Training</b> in your profile settings. This ensures you maintain full control over your data.
+                To access the AI Predictor, you must explicitly opt-in to <b>Enterprise Cloud Sync</b> and <b>Allow AI
+                    Training</b> in your profile settings. This ensures you maintain full control over your data.
             </p>
             <div class="space-y-3">
-                <button onclick="navTo('profile')" class="btn w-full py-4 text-white font-bold rounded-xl" style="background: var(--accent);">
+                <button onclick="navTo('profile')" class="btn w-full py-4 text-white font-bold rounded-xl"
+                    style="background: var(--accent);">
                     Enable in Profile Settings
                 </button>
                 <button onclick="navTo('tracker')" class="btn btn-outline w-full py-4 rounded-xl">
@@ -166,26 +205,44 @@
         </div>
     </div>
 
-    <aside id="sidebar" class="fixed inset-y-0 left-0 w-80 bg-white dark:bg-slate-950 z-[60] shadow-2xl border-r border-slate-100 dark:border-slate-800 p-8 no-print">
+    <aside id="sidebar"
+        class="fixed inset-y-0 left-0 w-80 bg-white dark:bg-slate-950 z-[60] shadow-2xl border-r border-slate-100 dark:border-slate-800 p-8 no-print">
         <div class="flex justify-between items-center mb-12">
             <span class="font-black uppercase tracking-widest text-xs">Menu</span>
             <button onclick="toggleSidebar()" class="p-2" aria-label="Close menu"><i data-lucide="x"></i></button>
         </div>
 
         <nav class="space-y-6">
-            <a href="#" onclick="navTo('tracker')" class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="edit-3"></i> Active Tracker</a>
-            <a href="easy-ai.html" class="flex items-center gap-4 font-bold text-lg text-sky-500 hover:text-sky-600"><i data-lucide="brain"></i> AI Predictor</a>
-            <a href="#" onclick="navTo('presets')" class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="layout"></i> Templates</a>
-            <a href="#" onclick="navTo('history')" class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="clock"></i> History</a>
-            <a href="#" onclick="navTo('performance')" class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="bar-chart-3"></i> Performance</a>
+            <a href="#" onclick="navTo('tracker')"
+                class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="edit-3"></i> Active
+                Tracker</a>
+            <a href="easy-ai.html" class="flex items-center gap-4 font-bold text-lg text-sky-500 hover:text-sky-600"><i
+                    data-lucide="brain"></i> AI Predictor</a>
+            <a href="#" onclick="navTo('presets')"
+                class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="layout"></i>
+                Templates</a>
+            <a href="#" onclick="navTo('history')"
+                class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="clock"></i>
+                History</a>
+            <a href="#" onclick="navTo('performance')"
+                class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="bar-chart-3"></i>
+                Performance</a>
             <div class="h-px bg-slate-100 dark:bg-slate-800 my-8"></div>
-            <a href="#" onclick="handleNavAccountClick()" class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="user"></i> My Profile</a>
-            <a href="#" onclick="navTo('pricing')" class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="credit-card"></i> Pricing & Plans</a>
-            <a href="#" onclick="navTo('request')" class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="lightbulb"></i> Feature Request</a>
+            <a href="#" onclick="handleNavAccountClick()"
+                class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="user"></i> My
+                Profile</a>
+            <a href="#" onclick="navTo('pricing')"
+                class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="credit-card"></i>
+                Pricing & Plans</a>
+            <a href="#" onclick="navTo('request')"
+                class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="lightbulb"></i>
+                Feature Request</a>
         </nav>
 
         <div class="absolute bottom-8 left-8 right-8">
-            <button onclick="signOut()" class="w-full mt-4 text-xs font-black uppercase tracking-[0.2em] text-red-500 hover:text-red-600">Sign Out</button>
+            <button onclick="signOut()"
+                class="w-full mt-4 text-xs font-black uppercase tracking-[0.2em] text-red-500 hover:text-red-600">Sign
+                Out</button>
         </div>
     </aside>
 
@@ -203,12 +260,14 @@
                 <div class="card text-center relative overflow-hidden">
                     <div class="absolute inset-0 bg-sky-50 dark:bg-sky-900/10 -z-10"></div>
                     <div class="text-4xl font-black text-sky-500 mb-2" id="statShiftsFound">0</div>
-                    <div class="text-[10px] font-black uppercase tracking-widest text-slate-400">Past Shifts Analyzed</div>
+                    <div class="text-[10px] font-black uppercase tracking-widest text-slate-400">Past Shifts Analyzed
+                    </div>
                 </div>
                 <div class="card text-center relative overflow-hidden">
                     <div class="absolute inset-0 bg-purple-50 dark:bg-purple-900/10 -z-10"></div>
                     <div class="text-4xl font-black text-purple-500 mb-2" id="statItemsTracked">0</div>
-                    <div class="text-[10px] font-black uppercase tracking-widest text-slate-400">Unique Items Tracked</div>
+                    <div class="text-[10px] font-black uppercase tracking-widest text-slate-400">Unique Items Tracked
+                    </div>
                 </div>
                 <div class="card text-center relative overflow-hidden md:col-span-1 col-span-full">
                     <div class="absolute inset-0 bg-emerald-50 dark:bg-emerald-900/10 -z-10"></div>
@@ -218,12 +277,14 @@
             </div>
 
             <div class="card p-0 overflow-hidden">
-                <div class="p-6 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 flex items-center justify-between">
+                <div
+                    class="p-6 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 flex items-center justify-between">
                     <div class="flex items-center gap-3">
                         <i data-lucide="brain" class="text-sky-500"></i>
                         <h3 class="text-xl font-black">AI Prediction Results</h3>
                     </div>
-                    <button id="importAllBtn" onclick="importAllPredictions()" class="btn btn-sm btn-accent hidden">Import All</button>
+                    <button id="importAllBtn" onclick="importAllPredictions()"
+                        class="btn btn-sm btn-accent hidden">Import All</button>
                 </div>
 
                 <div id="resultsContainer" class="p-6">
@@ -287,7 +348,7 @@
         let currentUserData = null;
         let latestPrediction = null;
 
-        (function() {
+        (function () {
             const tempUid = localStorage.getItem('ezManage_lastUid');
             if (tempUid) {
                 const localAI = localStorage.getItem(`ezManage_aiEnabled_${tempUid}`);
@@ -656,8 +717,8 @@
 
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('./sw.js')
-            .then(() => console.log("Service Worker Registered"))
-            .catch(err => console.error("Service Worker Registration Failed:", err));
+                .then(() => console.log("Service Worker Registered"))
+                .catch(err => console.error("Service Worker Registration Failed:", err));
         }
 
         window.addEventListener('offline', updateNetworkStatus);
@@ -675,4 +736,5 @@
         }
     </script>
 </body>
+
 </html>
