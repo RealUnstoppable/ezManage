@@ -1398,15 +1398,7 @@
         // Legal & Privacy Settings
         let cloudSyncEnabled = false;
 
-        function escapeHTML(str) {
-            if (!str && str !== 0) return "";
-            return String(str)
-                .replace(/&/g, "&amp;")
-                .replace(/</g, "&lt;")
-                .replace(/>/g, "&gt;")
-                .replace(/"/g, "&quot;")
-                .replace(/'/g, "&#039;");
-        }
+
 
         auth.onAuthStateChanged((user) => {
             currentUser = user;
@@ -2532,15 +2524,7 @@
 
 
 
-        function escapeHTML(str) {
-            if (!str && str !== 0) return "";
-            return String(str)
-                .replace(/&/g, "&amp;")
-                .replace(/</g, "&lt;")
-                .replace(/>/g, "&gt;")
-                .replace(/"/g, "&quot;")
-                .replace(/'/g, "&#039;");
-        }
+
 
         async function submitMaintenanceTicket() {
             if (!currentUser || !currentUserData || !currentUserData.orgId) {
@@ -2792,11 +2776,11 @@
                             div.className = "flex justify-between items-center p-4 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800";
                             div.innerHTML = `
                                 <div>
-                                    <h4 class="font-bold text-lg">${shift.employeeName}</h4>
-                                    <p class="text-sm text-slate-500">${shift.role}</p>
+                                    <h4 class="font-bold text-lg">${escapeHTML(shift.employeeName)}</h4>
+                                    <p class="text-sm text-slate-500">${escapeHTML(shift.role)}</p>
                                 </div>
                                 <div class="text-right">
-                                    <p class="font-mono bg-slate-50 dark:bg-slate-800 px-3 py-1 rounded-lg border border-slate-100 dark:border-slate-700">${shift.startTime} - ${shift.endTime}</p>
+                                    <p class="font-mono bg-slate-50 dark:bg-slate-800 px-3 py-1 rounded-lg border border-slate-100 dark:border-slate-700">${escapeHTML(shift.startTime)} - ${escapeHTML(shift.endTime)}</p>
                                     <button onclick="removeShift(${index})" class="text-red-500 text-xs mt-2 hover:underline">Remove</button>
                                 </div>
                             `;
@@ -2869,15 +2853,7 @@
                 });
         }
 
-        function escapeHTML(str) {
-            if (str === null || str === undefined) return '';
-            return String(str)
-                .replace(/&/g, "&amp;")
-                .replace(/</g, "&lt;")
-                .replace(/>/g, "&gt;")
-                .replace(/"/g, "&quot;")
-                .replace(/'/g, "&#039;");
-        }
+
 
         function checkAndRenderOrgControls() {
             if (!currentUser) return false;
@@ -3072,7 +3048,7 @@
             document.getElementById('shiftNoteContent').value = "";
 
             try {
-                const manageShiftNotes = firebase.functions().httpsCallableFromURL('https://manageshiftnotes-dsy7tdoigq-uc.a.run.app');
+                const manageShiftNotes = firebase.functions().httpsCallable('manageShiftNotes');
                 const result = await manageShiftNotes({
                     action: "create",
                     payload: {
@@ -3110,7 +3086,7 @@
             }
 
             try {
-                const manageShiftNotes = firebase.functions().httpsCallableFromURL('https://manageshiftnotes-dsy7tdoigq-uc.a.run.app');
+                const manageShiftNotes = firebase.functions().httpsCallable('manageShiftNotes');
                 const result = await manageShiftNotes({
                     action: "resolve",
                     payload: { noteId: noteId, resolvedBy: currentUser.email.split('@')[0] }
@@ -3128,7 +3104,7 @@
             if (!name || !pass) return alert("All fields required");
 
             try {
-                const manageShiftGroups = firebase.functions().httpsCallableFromURL('https://manageshiftgroups-dsy7tdoigq-uc.a.run.app');
+                const manageShiftGroups = firebase.functions().httpsCallable('manageShiftGroups');
                 const result = await manageShiftGroups({
                     action: "create",
                     payload: {
@@ -3155,7 +3131,7 @@
             if (!groupId || !pass) return alert("All fields required");
 
             try {
-                const manageShiftGroups = firebase.functions().httpsCallableFromURL('https://manageshiftgroups-dsy7tdoigq-uc.a.run.app');
+                const manageShiftGroups = firebase.functions().httpsCallable('manageShiftGroups');
                 const result = await manageShiftGroups({
                     action: "request_join",
                     payload: {
@@ -3205,7 +3181,7 @@
 
         async function approveGroupRequest(requestId) {
             try {
-                const manageShiftGroups = firebase.functions().httpsCallableFromURL('https://manageshiftgroups-dsy7tdoigq-uc.a.run.app');
+                const manageShiftGroups = firebase.functions().httpsCallable('manageShiftGroups');
                 const result = await manageShiftGroups({
                     action: "approve_join",
                     payload: { requestId: requestId }
