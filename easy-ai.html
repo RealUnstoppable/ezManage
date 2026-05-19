@@ -309,6 +309,13 @@
             }
         });
 
+        function escapeHTML(str) {
+            if (!str) return "";
+            const p = document.createElement("p");
+            p.textContent = str;
+            return p.innerHTML;
+        }
+
         function updateStatus(text, color) {
             const ind = document.getElementById('statusIndicator');
             ind.innerHTML = `<span class="w-2 h-2 rounded-full bg-${color}-500 ${color === 'amber' || color === 'sky' ? 'animate-pulse' : ''} shadow-[0_0_8px_rgba(var(--tw-colors-${color}-500),0.8)]"></span> ${escapeHTML(text)}`;
