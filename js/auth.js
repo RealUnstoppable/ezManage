@@ -14,19 +14,19 @@ const firebaseConfig = {
   measurementId: "G-ZN3YJPHVGX"
 };
 
-export const app = initializeApp(firebaseConfig);
-export const auth = getAuth(app);
-export const db = getFirestore(app);
-export { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
-export { doc, getDoc } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
+if (!window.firebase) { console.error("Firebase Compat SDK must be loaded before auth.js"); }
+if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
+
+export const auth = firebase.auth();
+export const db = firebase.firestore();
 
 export function getUserRedirectPath(userData) {
-    return userData && userData.isAdmin ? 'admin.html' : 'account.html';
+    return userData && userData.isAdmin ? 'admin.html' : 'index.html';
 }
 
 const ADMIN_EMAIL = null;
 
-onAuthStateChanged(auth, async (user) => {
+auth.onAuthStateChanged(async (user) => {
     const authLink = document.getElementById('auth-link');
     const membershipStatusContainer = document.getElementById('membership-status-container');
 
@@ -107,14 +107,14 @@ if (document.getElementById('auth-form')) {
                 return;
             }
             try {
-                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-                await setDoc(doc(db, "users", userCredential.user.uid), {
+                const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+                await db.collection("users").doc(userCredential.user.uid).set({
                     username: username || "User",
                     email,
-                    signupDate: serverTimestamp()
+                    signupDate: firebase.firestore.FieldValue.serverTimestamp()
                 });
                 sessionStorage.setItem('newUser', 'true');
-                window.location.replace('account.html');
+                window.location.replace('index.html');
             } catch (error) {
                 console.error("Sign up error:", error);
                 showMessage(getFirebaseErrorMessage(error));
@@ -122,14 +122,14 @@ if (document.getElementById('auth-form')) {
             }
         } else {
             try {
-                const userCredential = await signInWithEmailAndPassword(auth, email, password);
-                const userDoc = await getDoc(doc(db, "users", userCredential.user.uid));
+                const userCredential = await auth.signInWithEmailAndPassword(email, password);
+                const userDoc = await db.collection("users").doc(userCredential.user.uid).get();
 
-                if (userDoc.exists() && userDoc.data().isBanned !== true) {
+                if (userDoc.exists && userDoc.data().isBanned !== true) {
                     const destination = getUserRedirectPath(userDoc.data());
                     window.location.replace(destination);
                 } else {
-                    await signOut(auth);
+                    await auth.signOut();
                     showMessage("This account is suspended or does not exist.");
                     submitBtn.disabled = false;
                 }

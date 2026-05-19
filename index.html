@@ -1341,6 +1341,7 @@
                 document.getElementById('profEmail').value = user.email;
 
                 unsubscribeUser = db.collection("users").doc(user.uid).onSnapshot(async doc => {
+                    isInitializingAuth = false;
                     if (doc.exists && doc.data().name) {
                         currentUserData = doc.data();
 
@@ -1350,11 +1351,15 @@
                         updateCloudSyncUI();
 
                         loadProfileUI(currentUserData);
-                        loadCustomPresets();
                         calculatePerformance();
                         renderHistory();
                         updateStorageBar();
-                        fetchFeatureRequests();
+
+                        // Concurrent non-blocking fetches
+                        Promise.allSettled([
+                            loadCustomPresets(),
+                            fetchFeatureRequests()
+                        ]);
 
                         // Populate shift notes if that view is already active or we just logged in
                         if (document.getElementById('view-shiftNotes').classList.contains('active')) {
@@ -1375,21 +1380,23 @@
                     } else {
 
                         if (!doc.exists || !doc.data().name) {
-                            try {
-                                const emailDoc = await db.collection("users").doc(user.email).get();
-                                if (emailDoc.exists) {
-                                    await db.collection("users").doc(user.uid).set(emailDoc.data(), { merge: true });
-                                    // Don't delete the old one just in case, let the new one populate via snapshot
-                                    return;
-                                }
-                            } catch (e) { console.warn("Email recovery check skipped", e); }
+                            const activeView = document.querySelector('.view-section.active');
+                            if (activeView && activeView.id !== 'view-setup') {
+                                try {
+                                    const emailDoc = await db.collection("users").doc(user.email).get();
+                                    if (emailDoc.exists) {
+                                        await db.collection("users").doc(user.uid).set(emailDoc.data(), { merge: true });
+                                        return;
+                                    } else {
+                                        navTo('setup');
+                                    }
+                                } catch (e) { console.warn("Email recovery check skipped", e); navTo('setup'); }
+                            }
                         }
 
                         const activeView = document.querySelector('.view-section.active');
                         if (!navigator.onLine) {
                             if (activeView && activeView.id !== 'view-tracker') navTo('tracker');
-                        } else if (activeView && activeView.id !== 'view-setup') {
-                            navTo('setup');
                         }
                     }
                 });
@@ -1618,7 +1625,10 @@
             }
         }
 
-        function handleNavAccountClick() { navTo(currentUser ? 'profile' : 'auth'); }
+        function handleNavAccountClick() {
+            if (isInitializingAuth) return;
+            navTo(currentUser ? 'profile' : 'auth');
+        }
 
         function toggleTheme() {
             const isDark = document.getElementById('themeToggle').checked;
@@ -2209,12 +2219,16 @@
                 phone: document.getElementById('profPhone').value,
                 aiTrainingEnabled: document.getElementById('profileAIToggle').checked
             };
-            db.collection('users').doc(currentUser.uid).set(data, { merge: true }).then(() => {
 
-                localStorage.setItem(`ezManage_aiEnabled_${currentUser.uid}`, data.aiTrainingEnabled);
-                localStorage.setItem(`ezManage_cloudEnabled_${currentUser.uid}`, cloudSyncEnabled);
-                alert("Profile Updated!");
-            });
+            if (profileDebounceTimeout) clearTimeout(profileDebounceTimeout);
+
+            profileDebounceTimeout = setTimeout(() => {
+                db.collection('users').doc(currentUser.uid).set(data, { merge: true }).then(() => {
+                    localStorage.setItem(`ezManage_aiEnabled_${currentUser.uid}`, data.aiTrainingEnabled);
+                    localStorage.setItem(`ezManage_cloudEnabled_${currentUser.uid}`, cloudSyncEnabled);
+                    alert("Profile Updated!");
+                });
+            }, 1000);
         }
 
         function changePassword() {
