@@ -2,6 +2,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
 import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, sendEmailVerification } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
 import { getFirestore, doc, setDoc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
+import { getFirebaseErrorMessage } from './utils.js';
 
 const firebaseConfig = {
   apiKey: "AIzaSyBgrI9HwJPSc5b4pu2Egsv4DE7shNwptSw",
@@ -31,22 +32,26 @@ onAuthStateChanged(auth, async (user) => {
 
     if (user) {
 
-        const userDocRef = doc(db, "users", user.uid);
-        const userDoc = await getDoc(userDocRef);
+        try {
+            const userDocRef = doc(db, "users", user.uid);
+            const userDoc = await getDoc(userDocRef);
 
-        if (userDoc.exists()) {
-            const userData = userDoc.data();
-            const destination = getUserRedirectPath(userData);
+            if (userDoc.exists()) {
+                const userData = userDoc.data();
+                const destination = getUserRedirectPath(userData);
 
-            if (authLink) {
-                authLink.href = destination;
-                authLink.textContent = "My Account";
+                if (authLink) {
+                    authLink.href = destination;
+                    authLink.textContent = "My Account";
+                }
+
+                if (membershipStatusContainer) {
+                    const level = userData.membershipLevel || 'free';
+                    membershipStatusContainer.innerHTML = `<span class="membership-status ${level}">${level}</span>`;
+                }
             }
-
-            if (membershipStatusContainer) {
-                const level = userData.membershipLevel || 'free';
-                membershipStatusContainer.innerHTML = `<span class="membership-status ${level}">${level}</span>`;
-            }
+        } catch (error) {
+            console.error("Error fetching user document in auth state change:", error);
         }
     } else {
 
@@ -135,23 +140,6 @@ if (document.getElementById('auth-form')) {
             }
         }
     });
-
-    function getFirebaseErrorMessage(error) {
-        switch (error.code) {
-            case 'auth/invalid-email':
-                return 'Please enter a valid email address.';
-            case 'auth/user-not-found':
-            case 'auth/wrong-password':
-            case 'auth/invalid-credential':
-                return 'Invalid email or password.';
-            case 'auth/email-already-in-use':
-                return 'An account with this email already exists.';
-            case 'auth/weak-password':
-                return 'Password should be at least 6 characters.';
-            default:
-                return 'An unexpected error occurred. Please try again.';
-        }
-    }
 
     function showMessage(msg) { messageEl.textContent = msg; }
     updateFormView();

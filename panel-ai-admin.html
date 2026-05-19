@@ -333,7 +333,7 @@
             { label:'Avg Shift Duration',  value: avgMins+'m',      color:'accent-amber',  icon:'clock' },
         ];
         const grid = document.getElementById('kpiGrid');
-        // ⚡ Bolt Optimization: Replaced innerHTML += in loop with map().join('') to prevent O(n²) DOM thrashing
+        // ⚡ Bolt Optimization: Batch DOM insertions to prevent O(n²) layout thrashing
         grid.innerHTML = kpis.map(k => `
             <div class="card" style="display:flex;flex-direction:column;gap:6px;">
                 <div class="card-title">${k.label}</div>
@@ -367,16 +367,20 @@
         const topItems = Object.entries(itemCount).sort((a,b)=>b[1]-a[1]).slice(0, 12);
         const maxCount = topItems[0]?.[1] || 1;
         const wrap = document.getElementById('topItems');
-        // ⚡ Bolt Optimization: Replaced innerHTML += in loop with map().join('') to prevent O(n²) DOM thrashing
-        wrap.innerHTML = topItems.length > 0 ? topItems.map(([name, cnt]) => {
-            const pct = Math.round((cnt/maxCount)*100);
-            return `
-            <div class="item-bar">
-                <div class="item-bar-label" title="${name}">${name}</div>
-                <div class="item-bar-track"><div class="item-bar-fill" style="width:${pct}%"></div></div>
-                <div class="item-bar-val">${cnt}</div>
-            </div>`;
-        }).join('') : '<p style="color:var(--muted);font-size:0.85rem;">No inventory data yet.</p>';
+        if (topItems.length === 0) {
+            wrap.innerHTML = '<p style="color:var(--muted);font-size:0.85rem;">No inventory data yet.</p>';
+        } else {
+            // ⚡ Bolt Optimization: Batch DOM insertions to prevent O(n²) layout thrashing
+            wrap.innerHTML = topItems.map(([name, cnt]) => {
+                const pct = Math.round((cnt/maxCount)*100);
+                return `
+                <div class="item-bar">
+                    <div class="item-bar-label" title="${name}">${name}</div>
+                    <div class="item-bar-track"><div class="item-bar-fill" style="width:${pct}%"></div></div>
+                    <div class="item-bar-val">${cnt}</div>
+                </div>`;
+            }).join('');
+        }
 
         /* User table */
         document.getElementById('userCount').textContent = `${users.length} users`;
@@ -393,7 +397,7 @@
                 .replace(/'/g, "&#039;");
         }
 
-        // ⚡ Bolt Optimization: Replaced innerHTML += in loop with map().join('') to prevent O(n²) DOM thrashing
+        // ⚡ Bolt Optimization: Batch DOM insertions to prevent O(n²) layout thrashing
         tbody.innerHTML = users.sort((a,b) => (b.shiftHistory||[]).length - (a.shiftHistory||[]).length)
              .map(u => {
             const shifts = u.shiftHistory || [];
