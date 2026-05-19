@@ -32,6 +32,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-messaging-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-functions-compat.js"></script>
 
     <style>
         :root {
@@ -868,12 +869,12 @@
             <div class="max-w-4xl mx-auto">
                 <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
                     <h1 class="text-4xl font-black">Shift Notes</h1>
-
+                    
                     <div id="shiftNotesGroupControls" class="flex flex-wrap items-center gap-3 w-full md:w-auto">
                         <!-- Populated by JS based on user's orgId status -->
                     </div>
                 </div>
-
+                
                 <div id="createGroupModal" class="hidden bg-white dark:bg-slate-900 rounded-3xl p-6 md:p-8 shadow-sm border border-slate-100 dark:border-slate-800 mb-12">
                     <h2 class="text-xl font-bold mb-4">Create a Management Group</h2>
                     <p class="text-sm text-slate-500 mb-6">Create a group to share shift notes with other managers securely.</p>
@@ -899,7 +900,7 @@
                         </div>
                     </div>
                 </div>
-
+                
                 <div id="groupRequestsPanel" class="hidden bg-amber-50 dark:bg-amber-950/20 rounded-3xl p-6 shadow-sm border border-amber-200 dark:border-amber-900/50 mb-12">
                     <h2 class="text-lg font-bold mb-4 flex items-center gap-2"><i data-lucide="user-plus" class="text-amber-500"></i> Pending Join Requests</h2>
                     <div id="groupRequestsContainer" class="space-y-3">
@@ -918,7 +919,7 @@
                         <button onclick="submitShiftNote()" class="btn btn-primary px-8 py-3">Post Note</button>
                     </div>
                 </div>
-
+                
                 <div class="flex justify-between items-center mb-6">
                     <h2 class="text-2xl font-black">Active Notes</h2>
                     <button onclick="fetchShiftNotes()" class="text-sm font-bold text-sky-500 hover:text-sky-600 flex items-center gap-2">
@@ -1237,6 +1238,7 @@
         if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
         const auth = firebase.auth();
         const db = firebase.firestore();
+        const cloudFunctions = firebase.functions();
 
         db.enablePersistence().catch(err => console.error("Offline sync error:", err));
 
@@ -1278,6 +1280,14 @@
                         renderHistory();
                         updateStorageBar();
                         fetchFeatureRequests();
+                        
+                        // Populate shift notes if that view is already active or we just logged in
+                        if (document.getElementById('view-shiftNotes').classList.contains('active')) {
+                            fetchShiftNotes();
+                        } else {
+                            // Ensure the group controls render even if we haven't opened the tab yet
+                            checkAndRenderOrgControls();
+                        }
 
                         if (!initialDraftLoaded) {
                             syncDraftFromServer();
@@ -1506,7 +1516,7 @@
         function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); }
 
         function navTo(viewId) {
-            if (!currentUser && (['history', 'presets', 'performance', 'request', 'profile'].includes(viewId))) {
+            if (!currentUser && (['history', 'presets', 'performance', 'request', 'profile', 'shiftNotes'].includes(viewId))) {
                 viewId = 'auth';
             }
             document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
@@ -1514,6 +1524,10 @@
             document.getElementById('sidebar').classList.remove('open');
             window.scrollTo({ top: 0, behavior: 'smooth' });
             lucide.createIcons();
+            
+            if (viewId === 'shiftNotes') {
+                fetchShiftNotes();
+            }
         }
 
         function handleNavAccountClick() { navTo(currentUser ? 'profile' : 'auth'); }
@@ -2277,14 +2291,23 @@
                     });
                 });
         }
+        
+        function escapeHTML(str) {
+            if (str === null || str === undefined) return '';
+            return String(str)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
 
-        async function fetchShiftNotes() {
-            if (!currentUser) return;
-
-            // Check org setup
+        function checkAndRenderOrgControls() {
+            if (!currentUser) return false;
+            
             const controls = document.getElementById('shiftNotesGroupControls');
             const postArea = document.getElementById('shiftNotesPostArea');
-
+            
             if (!currentUserData || !currentUserData.orgId) {
                 // Not in an org
                 controls.innerHTML = `
@@ -2292,20 +2315,13 @@
                     <button onclick="document.getElementById('joinGroupModal').classList.remove('hidden')" class="btn btn-outline btn-sm"><i data-lucide="log-in" class="w-4 h-4"></i> Join Group</button>
                 `;
                 postArea.classList.add('hidden');
-                document.getElementById('shiftNotesContainer').innerHTML = `
-                    <div class="text-center py-16 bg-slate-50 dark:bg-slate-900 rounded-3xl border-2 border-dashed border-slate-200 dark:border-slate-800">
-                        <i data-lucide="users" class="w-12 h-12 text-slate-400 mx-auto mb-4"></i>
-                        <h3 class="text-xl font-bold mb-2">Join or Create a Group</h3>
-                        <p class="text-slate-500">You must be in a Management Group to post and view shift notes.</p>
-                    </div>
-                `;
                 lucide.createIcons();
-                return;
+                return false;
             }
-
+            
             // User is in an org
             postArea.classList.remove('hidden');
-
+            
             // If they are the owner, show the request panel logic
             db.collection('shift_groups').doc(currentUserData.orgId).get().then(doc => {
                 if(doc.exists && doc.data().ownerId === currentUser.uid) {
@@ -2327,8 +2343,27 @@
                 }
                 lucide.createIcons();
             });
+            return true;
+        }
 
+        async function fetchShiftNotes() {
+            if (!currentUser) return;
+            
+            const hasOrg = checkAndRenderOrgControls();
             const container = document.getElementById('shiftNotesContainer');
+            
+            if (!hasOrg) {
+                container.innerHTML = `
+                    <div class="text-center py-16 bg-slate-50 dark:bg-slate-900 rounded-3xl border-2 border-dashed border-slate-200 dark:border-slate-800">
+                        <i data-lucide="users" class="w-12 h-12 text-slate-400 mx-auto mb-4"></i>
+                        <h3 class="text-xl font-bold mb-2">Join or Create a Group</h3>
+                        <p class="text-slate-500">You must be in a Management Group to post and view shift notes.</p>
+                    </div>
+                `;
+                lucide.createIcons();
+                return;
+            }
+
             container.innerHTML = '<div class="text-center py-8"><i data-lucide="loader-2" class="w-8 h-8 animate-spin mx-auto text-sky-500 mb-4"></i><p class="text-slate-500">Loading notes...</p></div>';
             lucide.createIcons();
 
@@ -2360,36 +2395,36 @@
                         const docId = docObj.id;
                         const isUrgent = data.priority === 'Urgent';
                         const noteDiv = document.createElement('div');
-
+                        
                         let borderClass = isUrgent ? "border-red-200 dark:border-red-900/50" : "border-slate-100 dark:border-slate-800";
                         let bgClass = isUrgent ? "bg-red-50 dark:bg-red-950/20" : "bg-white dark:bg-slate-900";
-                        let priorityBadge = isUrgent ?
-                            `<span class="bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300 text-xs font-black uppercase tracking-widest px-3 py-1 rounded-full flex items-center gap-1"><i data-lucide="alert-triangle" class="w-3 h-3"></i> Urgent</span>` :
+                        let priorityBadge = isUrgent ? 
+                            `<span class="bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300 text-xs font-black uppercase tracking-widest px-3 py-1 rounded-full flex items-center gap-1"><i data-lucide="alert-triangle" class="w-3 h-3"></i> Urgent</span>` : 
                             `<span class="bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full">Normal</span>`;
 
                         noteDiv.className = `p-6 rounded-2xl border ${borderClass} ${bgClass} shadow-sm relative group transition-all duration-200 hover:shadow-md`;
-
+                        
                         let dateStr = "Just now";
                         if (data.timestamp) {
                             dateStr = data.timestamp.toDate().toLocaleString();
                         }
-
+                        
                         noteDiv.innerHTML = `
                             <div class="flex justify-between items-start mb-4">
                                 <div class="flex items-center gap-3">
                                     <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-sky-400 to-indigo-500 flex items-center justify-center text-white font-bold text-lg shadow-sm">
-                                        ${data.authorName.charAt(0).toUpperCase()}
+                                        ${escapeHTML(data.authorName.charAt(0).toUpperCase())}
                                     </div>
                                     <div>
-                                        <p class="font-bold text-sm">${data.authorName}</p>
-                                        <p class="text-xs text-slate-500 font-mono">${dateStr}</p>
+                                        <p class="font-bold text-sm">${escapeHTML(data.authorName)}</p>
+                                        <p class="text-xs text-slate-500 font-mono">${escapeHTML(dateStr)}</p>
                                     </div>
                                 </div>
                                 ${priorityBadge}
                             </div>
                             <p class="text-slate-700 dark:text-slate-300 font-medium mb-6 whitespace-pre-wrap pl-1 shift-note-text"></p>
                             <div class="flex justify-end border-t border-slate-100 dark:border-slate-800 pt-4 mt-2">
-                                <button onclick="resolveShiftNote('${docId}')" class="text-sm font-bold text-slate-400 hover:text-emerald-500 flex items-center gap-2 transition-colors">
+                                <button onclick="resolveShiftNote('${escapeHTML(docId)}')" class="text-sm font-bold text-slate-400 hover:text-emerald-500 flex items-center gap-2 transition-colors">
                                     <i data-lucide="check-circle" class="w-4 h-4"></i> Mark Resolved
                                 </button>
                             </div>
@@ -2416,106 +2451,92 @@
             if (!content) return alert("Please enter note content.");
 
             try {
-                const res = await fetch("https://us-central1-dts-hub-website.cloudfunctions.net/manageShiftNotes", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        action: "create",
-                        payload: {
-                            authorId: currentUser.uid,
-                            authorName: currentUser.email.split('@')[0],
-                            content: content,
-                            priority: priority,
-                            orgId: currentUserData.orgId
-                        }
-                    })
+                const manageShiftNotes = firebase.functions().httpsCallable('manageShiftNotes');
+                const result = await manageShiftNotes({
+                    action: "create",
+                    payload: {
+                        authorName: currentUser.email.split('@')[0],
+                        content: content,
+                        priority: priority,
+                        orgId: currentUserData.orgId
+                    }
                 });
-                const data = await res.json();
-                if (data.success) {
+                if (result.data.success) {
                     document.getElementById('shiftNoteContent').value = "";
                     fetchShiftNotes();
-                } else {
-                    alert("Error posting note: " + (data.error || "Unknown error"));
                 }
-            } catch (err) { alert("Failed to post note."); }
+            } catch (err) {
+                alert("Failed to post note: " + err.message);
+            }
         }
 
         async function resolveShiftNote(noteId) {
             if (!currentUser) return;
             if (!confirm("Mark this note as resolved?")) return;
             try {
-                const res = await fetch("https://us-central1-dts-hub-website.cloudfunctions.net/manageShiftNotes", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        action: "resolve",
-                        payload: { noteId: noteId, resolvedBy: currentUser.email.split('@')[0] }
-                    })
+                const manageShiftNotes = firebase.functions().httpsCallable('manageShiftNotes');
+                const result = await manageShiftNotes({
+                    action: "resolve",
+                    payload: { noteId: noteId, resolvedBy: currentUser.email.split('@')[0] }
                 });
-                const data = await res.json();
-                if (data.success) fetchShiftNotes();
-                else alert("Error resolving note: " + (data.error || "Unknown error"));
-            } catch (err) { alert("Failed to resolve note."); }
+                if (result.data.success) fetchShiftNotes();
+            } catch (err) {
+                alert("Failed to resolve note: " + err.message);
+            }
         }
-
+        
         async function createShiftGroup() {
             if (!currentUser) return;
             const name = document.getElementById('newGroupName').value.trim();
             const pass = document.getElementById('newGroupPassword').value.trim();
             if(!name || !pass) return alert("All fields required");
-
+            
             try {
-                const res = await fetch("https://us-central1-dts-hub-website.cloudfunctions.net/manageShiftGroups", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        action: "create",
-                        payload: {
-                            ownerId: currentUser.uid,
-                            ownerName: currentUser.email.split('@')[0],
-                            groupName: name,
-                            password: pass
-                        }
-                    })
+                const manageShiftGroups = firebase.functions().httpsCallable('manageShiftGroups');
+                const result = await manageShiftGroups({
+                    action: "create",
+                    payload: {
+                        ownerName: currentUser.email.split('@')[0],
+                        groupName: name,
+                        password: pass
+                    }
                 });
-                const data = await res.json();
-                if (data.success) {
-                    alert(`Group Created! Share your Group ID: ${data.groupId} and password with other managers.`);
+                if (result.data.success) {
+                    alert(`Group Created! Share your Group ID: ${result.data.groupId} and password with other managers.`);
                     document.getElementById('createGroupModal').classList.add('hidden');
                     // Force refresh user data
                     window.location.reload();
-                } else alert("Error: " + data.error);
-            } catch(e) { alert("Failed to create group."); }
+                }
+            } catch(e) {
+                alert("Failed to create group: " + e.message);
+            }
         }
-
+        
         async function requestJoinShiftGroup() {
             if (!currentUser) return;
             const groupId = document.getElementById('joinGroupId').value.trim();
             const pass = document.getElementById('joinGroupPassword').value.trim();
             if(!groupId || !pass) return alert("All fields required");
-
+            
             try {
-                const res = await fetch("https://us-central1-dts-hub-website.cloudfunctions.net/manageShiftGroups", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        action: "request_join",
-                        payload: {
-                            userId: currentUser.uid,
-                            userName: currentUser.email.split('@')[0],
-                            groupId: groupId,
-                            password: pass
-                        }
-                    })
+                const manageShiftGroups = firebase.functions().httpsCallable('manageShiftGroups');
+                const result = await manageShiftGroups({
+                    action: "request_join",
+                    payload: {
+                        userName: currentUser.email.split('@')[0],
+                        groupId: groupId,
+                        password: pass
+                    }
                 });
-                const data = await res.json();
-                if (data.success) {
+                if (result.data.success) {
                     alert("Join request sent! The group owner must approve it before you gain access.");
                     document.getElementById('joinGroupModal').classList.add('hidden');
-                } else alert("Error: " + data.error);
-            } catch(e) { alert("Failed to request join."); }
+                }
+            } catch(e) {
+                alert("Failed to request join: " + e.message);
+            }
         }
-
+        
         function fetchGroupRequests(groupId) {
             db.collection('shift_group_requests')
                 .where('groupId', '==', groupId)
@@ -2535,30 +2556,27 @@
                         div.className = "flex justify-between items-center bg-white dark:bg-slate-900 p-3 rounded-xl border border-amber-100 dark:border-amber-900/30";
                         div.innerHTML = `
                             <div>
-                                <p class="font-bold text-sm">${data.userName}</p>
+                                <p class="font-bold text-sm">${escapeHTML(data.userName)}</p>
                                 <p class="text-xs text-slate-500">Wants to join your group</p>
                             </div>
-                            <button onclick="approveGroupRequest('${doc.id}')" class="btn btn-primary btn-sm px-4">Approve</button>
+                            <button onclick="approveGroupRequest('${escapeHTML(doc.id)}')" class="btn btn-primary btn-sm px-4">Approve</button>
                         `;
                         container.appendChild(div);
                     });
                 });
         }
-
+        
         async function approveGroupRequest(requestId) {
             try {
-                const res = await fetch("https://us-central1-dts-hub-website.cloudfunctions.net/manageShiftGroups", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        action: "approve_join",
-                        payload: { ownerId: currentUser.uid, requestId: requestId }
-                    })
+                const manageShiftGroups = firebase.functions().httpsCallable('manageShiftGroups');
+                const result = await manageShiftGroups({
+                    action: "approve_join",
+                    payload: { requestId: requestId }
                 });
-                const data = await res.json();
-                if (data.success) alert("Approved!");
-                else alert("Error: " + data.error);
-            } catch(e) { alert("Failed to approve."); }
+                if (result.data.success) alert("Approved!");
+            } catch(e) {
+                alert("Failed to approve: " + e.message);
+            }
         }
 
         window.onload = () => {
