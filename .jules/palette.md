@@ -10,6 +10,6 @@
 **Learning:** Using generic textual changes like "Wait..." on submission buttons often feels disjointed. Adding a combination of `disabled` Tailwind utility classes (`disabled:opacity-70 disabled:cursor-not-allowed`) alongside an animated icon (like Lucide's `loader-2` with `animate-spin`) provides superior visual feedback. It prevents duplicate form submissions and clarifies system state immediately.
 **Action:** Always implement explicit loading and disabled states for asynchronous actions like form submissions, keeping original button text preserved for post-request restoration.
 
-## 2024-11-20 - Actionable Empty States
-**Learning:** Dead-end empty states (like plain text "No logs found") provide a poor user experience and can make users feel stuck. Replacing these with visually distinct empty states (using icons and helpful text) and actionable Call-To-Action (CTA) buttons significantly improves feature discoverability and user flow.
-**Action:** Always provide actionable guidance in empty states. Use clear icons, helpful placeholder text, and CTA buttons to guide users toward the next logical step instead of leaving them at a dead end.
+## 2024-05-24 - Lucide Icon Injection & Async Loading States
+**Learning:** When injecting `<i data-lucide="...">` icons dynamically into the DOM (such as appending a `loader-2` spinner during an async form submission), the icons will not render until `lucide.createIcons()` is explicitly called.
+**Action:** Always call `lucide.createIcons()` immediately after any `innerHTML` assignment or DOM manipulation that introduces new Lucide icons to ensure visual parity.
