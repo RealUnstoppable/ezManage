@@ -16,6 +16,11 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+    <script type="module">
+        import { parseNum, escapeHTML } from '/js/utils.js';
+        window.parseNum = parseNum;
+        window.escapeHTML = escapeHTML;
+    </script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         :root {
@@ -400,6 +405,8 @@
         document.getElementById('userCount').textContent = `${users.length} users`;
         const tbody = document.getElementById('userTableBody');
 
+        users.sort((a,b) => (b.shiftHistory||[]).length - (a.shiftHistory||[]).length)
+             .forEach(u => {
         // ⚡ Bolt Performance Optimization:
         // Replaced document.createElement('p') sanitization with regex to eliminate GC overhead in loops.
         function escapeHTML(str) {

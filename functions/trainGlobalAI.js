@@ -32,6 +32,12 @@ exports.trainGlobalAI = onSchedule("every 24 hours", async (event) => {
     const allHistory = [];
 
 
+  if (allHistory.length < 3) {
+    console.log("Not enough global data to train.");
+    return null;
+  }
+
+  const { parseNum, getDayOfWeek } = require("./utils.js");
 
   // 1. Find Max Values
   allHistory.forEach((shift) => {

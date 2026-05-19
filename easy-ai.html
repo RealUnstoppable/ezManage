@@ -32,6 +32,11 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-storage-compat.js"></script>
 
     <script src="https://unpkg.com/brain.js@2.0.0-beta.23/dist/browser.js"></script>
+    <script type="module">
+        import { parseNum, getDayOfWeek } from '/js/utils.js';
+        window.parseNum = parseNum;
+        window.getDayOfWeek = getDayOfWeek;
+    </script>
     <script src="js/utils.js"></script>
 
     <style>
