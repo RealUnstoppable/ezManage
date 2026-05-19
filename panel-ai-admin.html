@@ -199,6 +199,11 @@
     </main>
 </div>
 
+<script type="module">
+    import { parseNum, getDayOfWeek } from "./js/utils.js";
+    window.parseNum = parseNum;
+    window.getDayOfWeek = getDayOfWeek;
+</script>
 <script>
     const firebaseConfig = {
         apiKey: "AIzaSyBgrI9HwJPSc5b4pu2Egsv4DE7shNwptSw",
@@ -263,18 +268,13 @@
         return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
     }
 
-    function parseNum(val) {
-        if (!val) return 0;
-        const n = parseFloat(val.toString().replace(/[^0-9.]/g, ''));
-        return isNaN(n) ? 0 : n;
-    }
-
     /* ---------- LOAD ---------- */
     async function loadDashboard() {
-        const snap = await db.collection('users').get();
+        try {
+            const snap = await db.collection('users').get();
 
-        const users = [];
-        snap.forEach(doc => {
+            const users = [];
+            snap.forEach(doc => {
             const d = doc.data();
             d._uid = doc.id;
             users.push(d);
@@ -333,13 +333,12 @@
             { label:'Avg Shift Duration',  value: avgMins+'m',      color:'accent-amber',  icon:'clock' },
         ];
         const grid = document.getElementById('kpiGrid');
-        kpis.forEach(k => {
-            grid.innerHTML += `
+        // ⚡ Bolt Optimization: Batch DOM insertions to prevent O(n²) layout thrashing
+        grid.innerHTML = kpis.map(k => `
             <div class="card" style="display:flex;flex-direction:column;gap:6px;">
                 <div class="card-title">${k.label}</div>
                 <div class="card-value ${k.color}">${k.value}</div>
-            </div>`;
-        });
+            </div>`).join('');
 
         /* Day chart */
         mkChart('chartDays', 'bar',
@@ -364,43 +363,64 @@
                backgroundColor: planLabels.map((_,i)=>palettes[i % palettes.length]),
                borderWidth: 2, borderColor:'#0d0d14' }]);
 
+        function escapeHTML(str) {
+            if (!str && str !== 0) return "";
+            return String(str)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
         /* Top items bars */
         const topItems = Object.entries(itemCount).sort((a,b)=>b[1]-a[1]).slice(0, 12);
         const maxCount = topItems[0]?.[1] || 1;
         const wrap = document.getElementById('topItems');
-        topItems.forEach(([name, cnt]) => {
-            const pct = Math.round((cnt/maxCount)*100);
-            wrap.innerHTML += `
-            <div class="item-bar">
-                <div class="item-bar-label" title="${name}">${name}</div>
-                <div class="item-bar-track"><div class="item-bar-fill" style="width:${pct}%"></div></div>
-                <div class="item-bar-val">${cnt}</div>
-            </div>`;
-        });
-        if (topItems.length === 0) wrap.innerHTML = '<p style="color:var(--muted);font-size:0.85rem;">No inventory data yet.</p>';
+        if (topItems.length === 0) {
+            wrap.innerHTML = '<p style="color:var(--muted);font-size:0.85rem;">No inventory data yet.</p>';
+        } else {
+            // ⚡ Bolt Optimization: Batch DOM insertions to prevent O(n²) layout thrashing
+            wrap.innerHTML = topItems.map(([name, cnt]) => {
+                const pct = Math.round((cnt/maxCount)*100);
+                return `
+                <div class="item-bar">
+                    <div class="item-bar-label" title="${name}">${name}</div>
+                    <div class="item-bar-track"><div class="item-bar-fill" style="width:${pct}%"></div></div>
+                    <div class="item-bar-val">${cnt}</div>
+                </div>`;
+            }).join('');
+        }
 
         /* User table */
         document.getElementById('userCount').textContent = `${users.length} users`;
         const tbody = document.getElementById('userTableBody');
 
+        // ⚡ Bolt Performance Optimization:
+        // Replaced document.createElement('p') sanitization with regex to eliminate GC overhead in loops.
         function escapeHTML(str) {
             if (!str) return "";
-            const p = document.createElement("p");
-            p.textContent = str;
-            return p.innerHTML;
+            // ⚡ Bolt Optimization: Use regex-based replacement instead of document.createElement for faster escaping and lower memory overhead
+            return String(str)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
         }
 
-        users.sort((a,b) => (b.shiftHistory||[]).length - (a.shiftHistory||[]).length)
-             .forEach(u => {
+        // ⚡ Bolt Optimization: Batch DOM insertions to prevent O(n²) layout thrashing
+        tbody.innerHTML = users.sort((a,b) => (b.shiftHistory||[]).length - (a.shiftHistory||[]).length)
+             .map(u => {
             const shifts = u.shiftHistory || [];
             const avgD   = shifts.length ? Math.round(shifts.reduce((s,h)=>s+(h.durationMins||0),0)/shifts.length) : 0;
-            const plan   = u.plan || 'Free';
+            const plan   = escapeHTML(u.plan || 'Free');
             const planPill = (plan.toLowerCase().includes('pro') || plan.toLowerCase().includes('business'))
-                ? `<span class="pill pill-pro">${plan}</span>`
-                : `<span class="pill pill-free">${plan}</span>`;
+                ? `<span class="pill pill-pro">${escapeHTML(plan)}</span>`
+                : `<span class="pill pill-free">${escapeHTML(plan)}</span>`;
             const cloudPill = u.cloudSyncEnabled ? `<span class="pill pill-active">On</span>` : `<span class="pill pill-off">Off</span>`;
             const aiPill    = (u.aiTrainingEnabled !== false && u.cloudSyncEnabled) ? `<span class="pill pill-active">On</span>` : `<span class="pill pill-off">Off</span>`;
-            tbody.innerHTML += `
+            return `
             <tr>
                 <td style="font-weight:700;">${escapeHTML(u.name) || '—'}</td>
                 <td style="color:var(--muted); font-size:0.8rem;">${escapeHTML(u.email) || '—'}</td>
@@ -411,11 +431,15 @@
                 <td>${avgD ? avgD+'m' : '—'}</td>
                 <td style="color:var(--muted); font-size:0.8rem;">${fmt(u.signupDate)}</td>
             </tr>`;
-        });
+        }).join('');
 
         document.getElementById('loadingSpinner').style.display = 'none';
         document.getElementById('dashboard').style.display = 'block';
         lucide.createIcons();
+        } catch (error) {
+            console.error('Error loading dashboard:', error);
+            document.getElementById('loadingSpinner').innerHTML = '<p style="color:var(--danger);">Failed to load dashboard. Please try again.</p>';
+        }
     }
 </script>
 </body>
