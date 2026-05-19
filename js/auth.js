@@ -1,7 +1,9 @@
+import { getFirebaseErrorMessage } from './utils/errorUtils.js';
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
 import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, sendEmailVerification } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
 import { getFirestore, doc, setDoc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
+import { getFirebaseErrorMessage } from './utils.js';
 
 const firebaseConfig = {
   apiKey: "AIzaSyBgrI9HwJPSc5b4pu2Egsv4DE7shNwptSw",
@@ -13,40 +15,44 @@ const firebaseConfig = {
   measurementId: "G-ZN3YJPHVGX"
 };
 
-export const app = initializeApp(firebaseConfig);
-export const auth = getAuth(app);
-export const db = getFirestore(app);
-export { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
-export { doc, getDoc } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
+if (!window.firebase) { console.error("Firebase Compat SDK must be loaded before auth.js"); }
+if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
+
+export const auth = firebase.auth();
+export const db = firebase.firestore();
 
 export function getUserRedirectPath(userData) {
-    return userData && userData.isAdmin ? 'admin.html' : 'account.html';
+    return userData && userData.isAdmin ? 'admin.html' : 'index.html';
 }
 
 const ADMIN_EMAIL = null;
 
-onAuthStateChanged(auth, async (user) => {
+auth.onAuthStateChanged(async (user) => {
     const authLink = document.getElementById('auth-link');
     const membershipStatusContainer = document.getElementById('membership-status-container');
 
     if (user) {
 
-        const userDocRef = doc(db, "users", user.uid);
-        const userDoc = await getDoc(userDocRef);
+        try {
+            const userDocRef = doc(db, "users", user.uid);
+            const userDoc = await getDoc(userDocRef);
 
-        if (userDoc.exists()) {
-            const userData = userDoc.data();
-            const destination = getUserRedirectPath(userData);
+            if (userDoc.exists()) {
+                const userData = userDoc.data();
+                const destination = getUserRedirectPath(userData);
 
-            if (authLink) {
-                authLink.href = destination;
-                authLink.textContent = "My Account";
+                if (authLink) {
+                    authLink.href = destination;
+                    authLink.textContent = "My Account";
+                }
+
+                if (membershipStatusContainer) {
+                    const level = userData.membershipLevel || 'free';
+                    membershipStatusContainer.innerHTML = `<span class="membership-status ${level}">${level}</span>`;
+                }
             }
-
-            if (membershipStatusContainer) {
-                const level = userData.membershipLevel || 'free';
-                membershipStatusContainer.innerHTML = `<span class="membership-status ${level}">${level}</span>`;
-            }
+        } catch (error) {
+            console.error("Error fetching user document in auth state change:", error);
         }
     } else {
 
@@ -102,56 +108,39 @@ if (document.getElementById('auth-form')) {
                 return;
             }
             try {
-                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-                await setDoc(doc(db, "users", userCredential.user.uid), {
+                const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+                await db.collection("users").doc(userCredential.user.uid).set({
                     username: username || "User",
                     email,
-                    signupDate: serverTimestamp()
+                    signupDate: firebase.firestore.FieldValue.serverTimestamp()
                 });
                 sessionStorage.setItem('newUser', 'true');
-                window.location.replace('account.html');
+                window.location.replace('index.html');
             } catch (error) {
-                console.error("Sign up error:", error);
+                console.error("Manager Troubleshooting: Sign up error for email:", email, error);
                 showMessage(getFirebaseErrorMessage(error));
                 submitBtn.disabled = false;
             }
         } else {
             try {
-                const userCredential = await signInWithEmailAndPassword(auth, email, password);
-                const userDoc = await getDoc(doc(db, "users", userCredential.user.uid));
+                const userCredential = await auth.signInWithEmailAndPassword(email, password);
+                const userDoc = await db.collection("users").doc(userCredential.user.uid).get();
 
-                if (userDoc.exists() && userDoc.data().isBanned !== true) {
+                if (userDoc.exists && userDoc.data().isBanned !== true) {
                     const destination = getUserRedirectPath(userDoc.data());
                     window.location.replace(destination);
                 } else {
-                    await signOut(auth);
+                    await auth.signOut();
                     showMessage("This account is suspended or does not exist.");
                     submitBtn.disabled = false;
                 }
             } catch (error) {
-                console.error("Sign in error:", error);
+                console.error("Manager Troubleshooting: Sign in error for email:", email, error);
                 showMessage(getFirebaseErrorMessage(error));
                 submitBtn.disabled = false;
             }
         }
     });
-
-    function getFirebaseErrorMessage(error) {
-        switch (error.code) {
-            case 'auth/invalid-email':
-                return 'Please enter a valid email address.';
-            case 'auth/user-not-found':
-            case 'auth/wrong-password':
-            case 'auth/invalid-credential':
-                return 'Invalid email or password.';
-            case 'auth/email-already-in-use':
-                return 'An account with this email already exists.';
-            case 'auth/weak-password':
-                return 'Password should be at least 6 characters.';
-            default:
-                return 'An unexpected error occurred. Please try again.';
-        }
-    }
 
     function showMessage(msg) { messageEl.textContent = msg; }
     updateFormView();

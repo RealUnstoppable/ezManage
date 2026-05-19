@@ -74,7 +74,7 @@ exports.createCheckoutSession = onRequest({ invoker: "public" }, (req, res) => {
 
       res.status(200).json({url: session.url});
     } catch (err) {
-      console.error("Checkout Error:", err);
+      console.error("Manager Troubleshooting: Checkout Error for uid: " + uid, err);
       res.status(500).json({error: err.message});
     }
   });
@@ -100,16 +100,20 @@ exports.stripeWebhook = onRequest({ invoker: "public" }, async (req, res) => {
 
     if (uid && uid !== "unknown") {
       // Updates the frontend to unlock pro features immediately
-      await admin.firestore().collection("users").doc(uid).set({
-        plan: planName,
-        subscription: {
-          status: "active",
-          customerId: session.customer,
-          subscriptionId: session.subscription,
-        },
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-      }, {merge: true});
-      console.log(`✅ Successfully upgraded user ${uid} to ${planName}`);
+      try {
+        await admin.firestore().collection("users").doc(uid).set({
+          plan: planName,
+          subscription: {
+            status: "active",
+            customerId: session.customer,
+            subscriptionId: session.subscription,
+          },
+          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        }, {merge: true});
+        console.log(`✅ Successfully upgraded user ${uid} to ${planName}`);
+      } catch (error) {
+        console.error("Error updating user subscription status:", error);
+      }
     }
   }
 
@@ -132,7 +136,7 @@ exports.stripeWebhook = onRequest({ invoker: "public" }, async (req, res) => {
         });
         console.log(`❌ Reverted user ${doc.id} back to Free plan.`);
       } catch (err) {
-        console.error(`Error reverting user ${doc.id} back to Free plan:`, err);
+        console.error(`Manager Troubleshooting: Error reverting user ${doc.id} back to Free plan:`, err);
       }
     }
   }
@@ -156,7 +160,7 @@ exports.cancelSubscription = onRequest({ invoker: "public" }, (req, res) => {
       );
       res.status(200).json({success: true});
     } catch (err) {
-      console.error("Cancel Error:", err);
+      console.error("Manager Troubleshooting: Cancel Error for customerId: " + customerId, err);
       res.status(500).json({error: err.message});
     }
   });
