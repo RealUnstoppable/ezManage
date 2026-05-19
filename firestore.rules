@@ -90,5 +90,49 @@ service cloud.firestore {
       allow delete: if request.auth != null && (resource.data.uid == request.auth.uid || isAdmin());
       allow update: if isAdmin();
     }
+
+    // SHIFT NOTES
+    match /shift_notes/{noteId} {
+      allow read: if request.auth != null && (
+          resource.data.authorId == request.auth.uid || 
+          (resource.data.orgId != null && resource.data.orgId == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.orgId) ||
+          isAdmin()
+      );
+      allow write: if false; // All creation and resolution must happen via secure Cloud Functions
+    }
+
+    // SHIFT GROUPS
+    match /shift_groups/{groupId} {
+      allow read: if request.auth != null && (resource.data.ownerId == request.auth.uid || groupId == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.orgId);
+      allow write: if false; // Only cloud functions can write to groups directly to ensure security
+    }
+    
+    // SHIFT GROUP REQUESTS
+    match /shift_group_requests/{requestId} {
+      allow read: if request.auth != null && (
+          resource.data.userId == request.auth.uid || 
+          get(/databases/$(database)/documents/shift_groups/$(resource.data.groupId)).data.ownerId == request.auth.uid
+      );
+      allow write: if false; // Only cloud functions can write requests
+    }
+
+    // MAINTENANCE LOGS
+    match /maintenance_logs/{logId} {
+      allow read: if request.auth != null && (
+          resource.data.reportedByUid == request.auth.uid ||
+          (resource.data.orgId != null && resource.data.orgId == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.orgId) ||
+          isAdmin()
+      );
+      allow create: if request.auth != null
+                    && request.resource.data.reportedByUid == request.auth.uid
+                    && request.resource.data.orgId == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.orgId;
+      allow update: if request.auth != null && (
+          resource.data.reportedByUid == request.auth.uid ||
+          (resource.data.orgId != null && resource.data.orgId == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.orgId) ||
+          isAdmin()
+      ) && request.resource.data.orgId == resource.data.orgId;
+      allow delete: if request.auth != null && (resource.data.reportedByUid == request.auth.uid || isAdmin());
+    }
+
   }
 }
