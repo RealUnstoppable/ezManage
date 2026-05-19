@@ -271,10 +271,11 @@
 
     /* ---------- LOAD ---------- */
     async function loadDashboard() {
-        const snap = await db.collection('users').get();
+        try {
+            const snap = await db.collection('users').get();
 
-        const users = [];
-        snap.forEach(doc => {
+            const users = [];
+            snap.forEach(doc => {
             const d = doc.data();
             d._uid = doc.id;
             users.push(d);
@@ -436,6 +437,10 @@
         document.getElementById('loadingSpinner').style.display = 'none';
         document.getElementById('dashboard').style.display = 'block';
         lucide.createIcons();
+        } catch (error) {
+            console.error('Error loading dashboard:', error);
+            document.getElementById('loadingSpinner').innerHTML = '<p style="color:var(--danger);">Failed to load dashboard. Please try again.</p>';
+        }
     }
 </script>
 </body>
