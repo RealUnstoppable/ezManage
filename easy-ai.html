@@ -235,6 +235,16 @@
 
         lucide.createIcons();
 
+        function escapeHTML(str) {
+            if (typeof str !== 'string') return str;
+            return str
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
         const savedTheme = localStorage.getItem('managerProTheme');
         if (savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
             document.body.classList.add('dark-mode');
@@ -301,7 +311,7 @@
 
         function updateStatus(text, color) {
             const ind = document.getElementById('statusIndicator');
-            ind.innerHTML = `<span class="w-2 h-2 rounded-full bg-${color}-500 ${color === 'amber' || color === 'sky' ? 'animate-pulse' : ''} shadow-[0_0_8px_rgba(var(--tw-colors-${color}-500),0.8)]"></span> ${text}`;
+            ind.innerHTML = `<span class="w-2 h-2 rounded-full bg-${color}-500 ${color === 'amber' || color === 'sky' ? 'animate-pulse' : ''} shadow-[0_0_8px_rgba(var(--tw-colors-${color}-500),0.8)]"></span> ${escapeHTML(text)}`;
         }
 
         function checkAIRestrictions(data) {
@@ -503,7 +513,7 @@
                 div.className = "grid grid-cols-2 md:grid-cols-4 gap-3 p-4 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm items-center hover:border-sky-300 dark:hover:border-sky-700 transition-colors";
 
                 div.innerHTML = `
-                    <div class="col-span-2 md:col-span-1 font-bold text-slate-800 dark:text-slate-200">${name}</div>
+                    <div class="col-span-2 md:col-span-1 font-bold text-slate-800 dark:text-slate-200">${escapeHTML(name)}</div>
 
                     <div class="flex flex-col">
                         <span class="md:hidden text-[9px] font-black uppercase text-slate-400 mb-1">Backline</span>
@@ -521,7 +531,11 @@
                     </div>
 
                     <div class="col-span-2 md:col-span-1 flex justify-end">
-                        <button onclick="importPrediction('${name}', ${bl}, ${cl}, ${fr})" class="btn btn-sm btn-accent w-full md:w-auto">Import</button>
+                        <button class="btn btn-sm btn-accent w-full md:w-auto import-btn"
+                                data-name="${escapeHTML(name)}"
+                                data-bl="${bl}"
+                                data-cl="${cl}"
+                                data-fr="${fr}">Import</button>
                     </div>
                 `;
 
