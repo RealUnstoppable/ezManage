@@ -363,6 +363,16 @@
                backgroundColor: planLabels.map((_,i)=>palettes[i % palettes.length]),
                borderWidth: 2, borderColor:'#0d0d14' }]);
 
+        function escapeHTML(str) {
+            if (!str && str !== 0) return "";
+            return String(str)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
         /* Top items bars */
         const topItems = Object.entries(itemCount).sort((a,b)=>b[1]-a[1]).slice(0, 12);
         const maxCount = topItems[0]?.[1] || 1;
@@ -402,7 +412,7 @@
              .map(u => {
             const shifts = u.shiftHistory || [];
             const avgD   = shifts.length ? Math.round(shifts.reduce((s,h)=>s+(h.durationMins||0),0)/shifts.length) : 0;
-            const plan   = u.plan || 'Free';
+            const plan   = escapeHTML(u.plan || 'Free');
             const planPill = (plan.toLowerCase().includes('pro') || plan.toLowerCase().includes('business'))
                 ? `<span class="pill pill-pro">${plan}</span>`
                 : `<span class="pill pill-free">${plan}</span>`;
