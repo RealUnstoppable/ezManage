@@ -14,8 +14,26 @@
 **Vulnerability:** The `/site_stats/{docId}` and `/newsletterSubscribers/{email}` collections in `firestore.rules` allowed unauthenticated public writes (`allow write: if true;`). This enabled any visitor to modify or delete global site statistics and the entire newsletter subscriber list.
 **Learning:** `allow write` in Firestore includes `create`, `update`, and `delete`. Using `allow write: if true` for a public submission form (like a newsletter) inadvertently grants full deletion and modification rights to unauthenticated users.
 **Prevention:** Always use specific verbs (`create`, `update`, `delete`) instead of `write` when configuring rules for public-facing data. Restrict `delete` and broad `update` operations to administrators or the data owner.
+## 2026-05-05 - Insecure Access Controls on Unused Collections (IDOR)
+**Vulnerability:** The `/invites/{inviteId}` collection in `firestore.rules` allowed overly permissive access (`allow read, write: if request.auth != null;`), creating an Insecure Direct Object Reference (IDOR) vulnerability where any authenticated user could read or modify any invite.
+**Learning:** Even if a collection is not actively used in the current frontend codebase, overly permissive rules on backend data structures can expose the database to unauthorized scraping or data manipulation if the endpoints exist.
+**Prevention:** Always restrict access to data structures using the Principle of Least Privilege, enforcing strict bounds (like `isAdmin()`) when explicit document ownership mappings are unknown.
+
+## 2026-05-05 - Cross-Site Scripting (XSS) via Unsanitized Interpolation
+**Vulnerability:** In `easy-ai.html`, object keys (`name`) derived from dynamic predictions were interpolated directly into the DOM via `div.innerHTML = \`<div ...>${name}</div>\``.
+**Learning:** Even when data isn't directly sourced from user input (e.g., dynamically inferred object keys), interpolating variables directly into `innerHTML` without escaping can create XSS vectors if upstream dependencies or user configurations define those keys.
+**Prevention:** Always use a utility function (like `escapeHTML`) to sanitize dynamically generated variables before using them in `innerHTML`, or prefer using safer DOM manipulation methods like `.textContent`.
 
 ## 2026-05-04 - Mass Assignment Vulnerability in User Creation
 **Vulnerability:** The `/users/{userId}` `allow create` rule in `firestore.rules` prevented injection of `isBanned` and `membershipLevel` keys but failed to prevent injection of `plan` and `subscription` keys. This allowed an unauthenticated attacker creating a new user document to elevate their privileges to a paid tier immediately.
 **Learning:** Security controls on document creation must mirror the strictness of document updates. When using `request.resource.data.keys().hasAny()`, it is critical to perform an exhaustive review of all sensitive fields present in the schema to ensure no privileged attributes can be injected via mass assignment.
 **Prevention:** Ensure that the forbidden key lists in `hasAny()` for `create` rules are synchronized with the `hasAny()` lists for `update` rules, comprehensively covering all fields related to roles, billing, and system flags.
+
+## 2026-05-13 - DOM-based and Attribute-based XSS in easy-ai.html
+**Vulnerability:** DOM-based XSS via unescaped user input (status messages and inventory item names) interpolated into `innerHTML` sinks and `onclick` attribute literals in `easy-ai.html`.
+**Learning:** Escaping HTML entities is necessary for `innerHTML` but often insufficient for data interpolated into JavaScript execution contexts like `onclick` attributes. Malicious strings can break out of string literals even if some characters are escaped, or bypass filters if the context is not properly handled.
+**Prevention:** Use a robust `escapeHTML` function for all dynamic data inserted into `innerHTML`. For event handlers, avoid string-interpolated attribute literals; instead, use `data-*` attributes and attach event listeners programmatically using `element.onclick` or `addEventListener`, retrieving data via `dataset`.
+## 2026-05-19 - XSS Vulnerability in index.html shift notes and group requests
+**Vulnerability:** XSS vulnerability in `index.html` where `innerHTML` incorporates unescaped user inputs such as `data.authorName` and `data.userName` when rendering shift notes and group requests.
+**Learning:** Even though other HTML files like `admin.html` had a defined `escapeHTML` function and sanitized inputs appropriately, `index.html` was missing both the function definition and the actual sanitation, leading to a severe XSS vector whenever users retrieved externally-provided notes/requests. Also, when escaping a derived string like an initial (e.g. `charAt(0)`), ensure `escapeHTML` is applied around the final output or that the output is safe, though wrapping the derived string is cleaner (`escapeHTML(data.authorName.charAt(0))`).
+**Prevention:** Implement a standard `escapeHTML` utility across the entire frontend (or abstract it into a shared file) and religiously apply it to *all* user-supplied variables interpolated into template literals inside `.innerHTML` operations.
