@@ -347,6 +347,27 @@ exports.manageShiftGroups = onCall({ cors: true, invoker: "public" }, async (req
       return {success: true};
     }
 
+    // Retract a join request
+    if (action === "retract_join") {
+      const {requestId} = payload;
+      if (!requestId) {
+        throw new HttpsError("invalid-argument", "Missing requestId");
+      }
+      const requestDocRef = admin.firestore().collection("shift_group_requests").doc(requestId);
+      const requestDoc = await requestDocRef.get();
+      
+      if (!requestDoc.exists) {
+        throw new HttpsError("not-found", "Request not found");
+      }
+      
+      if (requestDoc.data().userId !== uid) {
+        throw new HttpsError("permission-denied", "You can only retract your own requests.");
+      }
+      
+      await requestDocRef.delete();
+      return {success: true};
+    }
+
     // Approve a join request
     if (action === "approve_join") {
       const {requestId} = payload;
