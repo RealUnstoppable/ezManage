@@ -430,6 +430,8 @@
             if(viewId === 'metrics') renderGlobalMetrics();
         }
 
+        let isRegistering = false;
+
         // --- Auth State ---
         auth.onAuthStateChanged(async (user) => {
             currentUser = user;
@@ -439,10 +441,12 @@
                         ${user.email.charAt(0).toUpperCase()}
                     </div>
                 `;
-                document.getElementById('view-login').classList.remove('active');
-                document.getElementById('view-register').classList.remove('active');
-                
-                await initializeCorporateWorkspace(user);
+                if (!isRegistering) {
+                    document.getElementById('view-login').classList.remove('active');
+                    document.getElementById('view-register').classList.remove('active');
+                    
+                    await initializeCorporateWorkspace(user);
+                }
             } else {
                 document.getElementById('authContainer').innerHTML = `<button onclick="navTo('login')" class="btn btn-outline btn-sm">Login</button>`;
                 document.getElementById('dashboard-shell').classList.add('hidden');
@@ -587,6 +591,7 @@
             const email = document.getElementById('regEmail').value;
             const pass = document.getElementById('regPass').value;
             
+            isRegistering = true;
             try {
                 const cred = await auth.createUserWithEmailAndPassword(email, pass);
                 
@@ -613,8 +618,15 @@
                 document.getElementById('onboardingSuccessState').classList.remove('hidden');
                 triggerConfetti();
 
-                // Will automatically redirect to dashboard due to auth.onAuthStateChanged
+                // Redirect to dashboard after celebration
+                setTimeout(() => {
+                    isRegistering = false;
+                    document.getElementById('view-register').classList.remove('active');
+                    initializeCorporateWorkspace(cred.user);
+                }, 2500);
+
             } catch(e) { 
+                isRegistering = false;
                 alert("Registration failed: " + e.message); 
                 // Go back to step 4
                 document.getElementById(`step-5`).classList.add('hidden');
@@ -631,8 +643,7 @@
                 // Find the group this user owns
                 const groupSnap = await db.collection('shift_groups').where('ownerId', '==', user.uid).limit(1).get();
                 if (groupSnap.empty) {
-                    alert("This account does not own any organizations. Redirecting to the main app.");
-                    window.location.replace('index.html');
+                    navTo('register');
                     return;
                 }
                 
