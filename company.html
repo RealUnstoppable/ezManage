@@ -937,6 +937,9 @@
             try {
                 const cred = await auth.createUserWithEmailAndPassword(email, pass);
 
+                // Ensure auth state is completely fresh before making the cloud function call
+                await cred.user.getIdToken(true);
+
                 // Initialize user doc FIRST so the Cloud Function can update it
                 await db.collection('users').doc(cred.user.uid).set({
                     email: email,
