@@ -15,6 +15,7 @@
     </script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -176,24 +177,79 @@
             </div>
         </div>
 
-        <!-- REGISTER VIEW -->
-        <div id="view-register" class="view-section px-4">
-            <div class="max-w-md mx-auto mt-20">
-                <div class="text-center mb-10">
-                    <h2 class="text-3xl font-black mb-2">Create Organization</h2>
-                    <p class="text-slate-500">Set up your corporate workspace.</p>
-                </div>
-                <form onsubmit="handleRegister(event)" class="card space-y-4 p-8">
-                    <input type="text" id="regOrgName" required placeholder="Organization/Company Name" class="w-full bg-slate-50 dark:bg-slate-800 p-4 rounded-xl border-none focus:ring-2 focus:ring-indigo-500">
-                    <input type="email" id="regEmail" required placeholder="Admin Email" class="w-full bg-slate-50 dark:bg-slate-800 p-4 rounded-xl border-none focus:ring-2 focus:ring-indigo-500">
-                    <input type="password" id="regPass" required placeholder="Password (Min 6 chars)" class="w-full bg-slate-50 dark:bg-slate-800 p-4 rounded-xl border-none focus:ring-2 focus:ring-indigo-500">
-                    <button type="submit" class="btn btn-primary w-full py-4 text-lg">Create Workspace</button>
-                    <div class="text-center pt-4">
-                        <button onclick="navTo('login')" class="text-sm font-bold text-slate-500 hover:text-slate-700">Back to Login</button>
+        <!-- REGISTER VIEW (ONBOARDING) -->
+        <div id="view-register" class="view-section px-4 h-[80vh] flex flex-col justify-center">
+            <div class="max-w-xl mx-auto w-full relative">
+                <!-- Progress Bar -->
+                <div id="onboardingProgressContainer" class="w-full bg-slate-200 dark:bg-slate-800 rounded-full h-3 mb-12 hidden shadow-inner">
+                    <div id="onboardingProgressBar" class="bg-indigo-500 h-3 rounded-full transition-all duration-500 ease-out relative overflow-hidden" style="width: 0%">
+                        <div class="absolute inset-0 bg-white/20" style="transform: skewX(-20deg); animation: shimmer 2s infinite;"></div>
                     </div>
-                </form>
+                </div>
+
+                <div id="onboardingSteps" class="relative overflow-hidden min-h-[400px]">
+                    <!-- Step 1: Welcome -->
+                    <div id="step-1" class="onboarding-step transition-all duration-500 ease-in-out transform w-full">
+                        <div class="text-center">
+                            <div class="w-24 h-24 bg-indigo-100 dark:bg-indigo-900/50 rounded-full flex items-center justify-center mx-auto mb-8 shadow-inner border border-indigo-200 dark:border-indigo-800">
+                                <i data-lucide="rocket" class="w-12 h-12 text-indigo-500"></i>
+                            </div>
+                            <h2 class="text-4xl md:text-5xl font-black mb-6">Let's build your workspace.</h2>
+                            <p class="text-lg text-slate-500 dark:text-slate-400 mb-10">We'll set up your corporate organization in just a few quick steps.</p>
+                            <button type="button" onclick="nextOnboardingStep(2)" class="btn btn-primary w-full py-5 text-xl rounded-2xl shadow-[0_8px_30px_rgba(99,102,241,0.3)] animate-[pulse_2s_infinite] hover:animate-none">Get Started</button>
+                            <button onclick="navTo('login')" class="mt-6 text-sm font-bold text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300">Already have an account? Login</button>
+                        </div>
+                    </div>
+
+                    <!-- Step 2: Org Name -->
+                    <div id="step-2" class="onboarding-step hidden opacity-0 translate-x-full transition-all duration-500 ease-in-out absolute top-0 w-full">
+                        <h2 class="text-3xl font-black mb-8 text-center">What should we call your workspace?</h2>
+                        <input type="text" id="regOrgName" required placeholder="e.g. Acme Corp" class="w-full bg-white dark:bg-slate-900 text-center text-3xl font-black p-6 rounded-2xl border-4 border-slate-100 dark:border-slate-800 focus:border-indigo-500 focus:ring-0 transition-colors shadow-sm mb-8 placeholder:text-slate-300 dark:placeholder:text-slate-700" onkeydown="handleEnterKey(event, 3)">
+                        <button type="button" onclick="nextOnboardingStep(3)" class="btn btn-primary w-full py-5 text-xl rounded-2xl shadow-lg border-b-4 border-indigo-700 active:border-b-0 active:mt-1">Continue</button>
+                    </div>
+
+                    <!-- Step 3: Admin Email -->
+                    <div id="step-3" class="onboarding-step hidden opacity-0 translate-x-full transition-all duration-500 ease-in-out absolute top-0 w-full">
+                        <h2 class="text-3xl font-black mb-8 text-center">What is your admin email?</h2>
+                        <input type="email" id="regEmail" required placeholder="admin@example.com" class="w-full bg-white dark:bg-slate-900 text-center text-3xl font-black p-6 rounded-2xl border-4 border-slate-100 dark:border-slate-800 focus:border-indigo-500 focus:ring-0 transition-colors shadow-sm mb-8 placeholder:text-slate-300 dark:placeholder:text-slate-700" onkeydown="handleEnterKey(event, 4)">
+                        <button type="button" onclick="nextOnboardingStep(4)" class="btn btn-primary w-full py-5 text-xl rounded-2xl shadow-lg border-b-4 border-indigo-700 active:border-b-0 active:mt-1">Continue</button>
+                    </div>
+
+                    <!-- Step 4: Password -->
+                    <div id="step-4" class="onboarding-step hidden opacity-0 translate-x-full transition-all duration-500 ease-in-out absolute top-0 w-full">
+                        <h2 class="text-3xl font-black mb-8 text-center">Secure your workspace.</h2>
+                        <input type="password" id="regPass" required placeholder="Password (Min 6 chars)" class="w-full bg-white dark:bg-slate-900 text-center text-3xl font-black p-6 rounded-2xl border-4 border-slate-100 dark:border-slate-800 focus:border-indigo-500 focus:ring-0 transition-colors shadow-sm mb-8 placeholder:text-slate-300 dark:placeholder:text-slate-700" onkeydown="handleEnterKey(event, 5)">
+                        <button type="button" onclick="nextOnboardingStep(5)" class="btn btn-primary w-full py-5 text-xl rounded-2xl shadow-lg border-b-4 border-indigo-700 active:border-b-0 active:mt-1" id="btnFinishOnboarding">Create Workspace</button>
+                    </div>
+
+                    <!-- Step 5: Creation/Celebration -->
+                    <div id="step-5" class="onboarding-step hidden opacity-0 translate-x-full transition-all duration-500 ease-in-out absolute top-0 w-full">
+                        <div class="text-center" id="onboardingLoadingState">
+                            <i data-lucide="loader-2" class="w-16 h-16 animate-spin text-indigo-500 mx-auto mb-8"></i>
+                            <h2 class="text-3xl font-black mb-4">Creating your organization...</h2>
+                            <p class="text-slate-500">Setting up your secure environment.</p>
+                        </div>
+                        <div class="text-center hidden" id="onboardingSuccessState">
+                            <div class="w-24 h-24 bg-emerald-100 dark:bg-emerald-900/50 rounded-full flex items-center justify-center mx-auto mb-8 shadow-inner border border-emerald-200 dark:border-emerald-800">
+                                <i data-lucide="check" class="w-12 h-12 text-emerald-500"></i>
+                            </div>
+                            <h2 class="text-4xl font-black mb-4 text-emerald-600 dark:text-emerald-400">Workspace Created!</h2>
+                            <p class="text-slate-500 mb-8">You are all set. Let's head to your dashboard.</p>
+                            <div class="animate-pulse flex items-center justify-center gap-2 text-indigo-500 font-bold">
+                                <span>Redirecting</span>
+                                <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
+        <style>
+            @keyframes shimmer {
+                0% { left: -100%; }
+                100% { left: 100%; }
+            }
+        </style>
 
         <!-- DASHBOARD SHELL (Requires Auth) -->
         <div id="dashboard-shell" class="hidden">
@@ -365,6 +421,10 @@
                 else el.classList.remove('bg-slate-100', 'dark:bg-slate-800', 'text-indigo-600', 'dark:text-indigo-400');
             });
             
+            if(viewId === 'register') {
+                resetOnboarding();
+            }
+
             if(viewId === 'overview') fetchGlobalData();
             if(viewId === 'managers') { fetchManagers(); fetchJoinRequests(); }
             if(viewId === 'metrics') renderGlobalMetrics();
@@ -401,12 +461,131 @@
             } catch(e) { alert("Login failed: " + e.message); }
         }
 
-        async function handleRegister(e) {
-            if (e) e.preventDefault();
+        // --- Onboarding Logic ---
+        let currentOnboardingStep = 1;
+        const totalSteps = 4; // Excluding step 1 and 5 for progress bar math
+
+        function handleEnterKey(event, nextStepId) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                nextOnboardingStep(nextStepId);
+            }
+        }
+
+        function resetOnboarding() {
+            currentOnboardingStep = 1;
+            document.querySelectorAll('.onboarding-step').forEach(el => {
+                el.classList.add('hidden', 'opacity-0', '-translate-x-full');
+                el.classList.remove('opacity-100', 'translate-x-0', 'absolute', 'top-0');
+            });
+            const step1 = document.getElementById('step-1');
+            step1.classList.remove('hidden', 'opacity-0', '-translate-x-full');
+            step1.classList.add('opacity-100', 'translate-x-0');
+            
+            document.getElementById('regOrgName').value = '';
+            document.getElementById('regEmail').value = '';
+            document.getElementById('regPass').value = '';
+            
+            document.getElementById('onboardingLoadingState').classList.remove('hidden');
+            document.getElementById('onboardingSuccessState').classList.add('hidden');
+            
+            updateProgressBar();
+        }
+
+        function updateProgressBar() {
+            const progressContainer = document.getElementById('onboardingProgressContainer');
+            const progressBar = document.getElementById('onboardingProgressBar');
+            
+            if (currentOnboardingStep === 1 || currentOnboardingStep === 5) {
+                progressContainer.classList.add('hidden');
+            } else {
+                progressContainer.classList.remove('hidden');
+                // Steps 2, 3, 4 are the functional ones. 
+                const progress = ((currentOnboardingStep - 1) / (totalSteps - 1)) * 100;
+                progressBar.style.width = `${progress}%`;
+            }
+        }
+
+        function nextOnboardingStep(nextStep) {
+            // Validation before proceeding
+            if (currentOnboardingStep === 2) {
+                const name = document.getElementById('regOrgName').value.trim();
+                if (!name) return alert("Please enter an organization name.");
+            }
+            if (currentOnboardingStep === 3) {
+                const email = document.getElementById('regEmail').value.trim();
+                if (!email || !email.includes('@')) return alert("Please enter a valid email.");
+            }
+            if (currentOnboardingStep === 4 && nextStep === 5) {
+                const pass = document.getElementById('regPass').value;
+                if (!pass || pass.length < 6) return alert("Password must be at least 6 characters.");
+                
+                // Trigger the actual registration process
+                executeRegistration();
+            }
+
+            // Hide current step by sliding out to the left
+            const currentEl = document.getElementById(`step-${currentOnboardingStep}`);
+            currentEl.classList.remove('translate-x-0', 'opacity-100');
+            currentEl.classList.add('-translate-x-full', 'opacity-0');
+            
+            setTimeout(() => {
+                currentEl.classList.add('hidden');
+                currentEl.classList.remove('absolute', 'top-0'); // Clean up positioning
+                
+                // Show next step sliding in from the right
+                const nextEl = document.getElementById(`step-${nextStep}`);
+                nextEl.classList.remove('hidden');
+                nextEl.classList.add('absolute', 'top-0', 'translate-x-full');
+                
+                // Trigger reflow
+                void nextEl.offsetWidth;
+                
+                nextEl.classList.remove('absolute', 'top-0', 'translate-x-full');
+                nextEl.classList.add('translate-x-0', 'opacity-100');
+                
+                // Focus input if any
+                const input = nextEl.querySelector('input');
+                if (input) input.focus();
+
+                currentOnboardingStep = nextStep;
+                updateProgressBar();
+
+            }, 300); // Wait for transition out
+        }
+
+        function triggerConfetti() {
+            if (typeof confetti === 'function') {
+                const duration = 3 * 1000;
+                const end = Date.now() + duration;
+
+                (function frame() {
+                    confetti({
+                        particleCount: 5,
+                        angle: 60,
+                        spread: 55,
+                        origin: { x: 0 },
+                        colors: ['#6366f1', '#8b5cf6', '#ec4899']
+                    });
+                    confetti({
+                        particleCount: 5,
+                        angle: 120,
+                        spread: 55,
+                        origin: { x: 1 },
+                        colors: ['#6366f1', '#8b5cf6', '#ec4899']
+                    });
+
+                    if (Date.now() < end) {
+                        requestAnimationFrame(frame);
+                    }
+                }());
+            }
+        }
+
+        async function executeRegistration() {
             const orgName = document.getElementById('regOrgName').value;
             const email = document.getElementById('regEmail').value;
             const pass = document.getElementById('regPass').value;
-            if(!orgName || !email || !pass) return alert("Required fields missing");
             
             try {
                 const cred = await auth.createUserWithEmailAndPassword(email, pass);
@@ -429,7 +608,21 @@
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 }, {merge: true});
                 
-            } catch(e) { alert("Registration failed: " + e.message); }
+                // Show celebration
+                document.getElementById('onboardingLoadingState').classList.add('hidden');
+                document.getElementById('onboardingSuccessState').classList.remove('hidden');
+                triggerConfetti();
+
+                // Will automatically redirect to dashboard due to auth.onAuthStateChanged
+            } catch(e) { 
+                alert("Registration failed: " + e.message); 
+                // Go back to step 4
+                document.getElementById(`step-5`).classList.add('hidden');
+                document.getElementById(`step-4`).classList.remove('hidden', '-translate-x-full', 'opacity-0', 'absolute', 'top-0');
+                document.getElementById(`step-4`).classList.add('translate-x-0', 'opacity-100');
+                currentOnboardingStep = 4;
+                updateProgressBar();
+            }
         }
 
         // --- Workspace Initialization ---
