@@ -617,9 +617,17 @@
             try {
                 const cred = await auth.createUserWithEmailAndPassword(email, pass);
                 
+                // Initialize user doc FIRST so the Cloud Function can update it
+                await db.collection('users').doc(cred.user.uid).set({
+                    email: email,
+                    role: "CorporateAdmin",
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    name: orgName + " Admin" // Helpful default
+                });
+                
                 // For a Corporate Workspace, we create a shift_group and make them the owner
                 const manageShiftGroups = firebase.functions().httpsCallable('manageShiftGroups');
-                await manageShiftGroups({
+                const result = await manageShiftGroups({
                     action: "create",
                     payload: {
                         ownerName: email.split('@')[0],
@@ -628,12 +636,12 @@
                     }
                 });
                 
-                // Initialize user doc
-                await db.collection('users').doc(cred.user.uid).set({
-                    email: email,
-                    role: "CorporateAdmin",
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                }, {merge: true});
+                // Update the user doc with the returned orgId just in case
+                if (result && result.data && result.data.groupId) {
+                    await db.collection('users').doc(cred.user.uid).set({
+                        orgId: result.data.groupId
+                    }, {merge: true});
+                }
                 
                 // Show celebration
                 document.getElementById('onboardingLoadingState').classList.add('hidden');
