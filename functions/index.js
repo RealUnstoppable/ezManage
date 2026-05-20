@@ -172,7 +172,13 @@ exports.cancelSubscription = onRequest({ invoker: "public" }, (req, res) => {
  * Handles creation, updating, and resolution of shift notes.
  */
 exports.manageShiftNotes = functions.https.onCall(async (data, context) => {
-  if (!context.auth) {
+  // Gracefully adapt between Gen 1 (data, context) and Gen 2 (request) parameters
+  if (data && typeof data === "object" && "rawRequest" in data && "auth" in data) {
+    context = data;
+    data = data.data;
+  }
+
+  if (!context || !context.auth) {
     throw new HttpsError(
         "unauthenticated", "User must be logged in.");
   }
@@ -266,7 +272,13 @@ exports.manageShiftNotes = functions.https.onCall(async (data, context) => {
  * Handles creating groups, joining groups, and approving joins.
  */
 exports.manageShiftGroups = functions.https.onCall(async (data, context) => {
-  if (!context.auth) {
+  // Gracefully adapt between Gen 1 (data, context) and Gen 2 (request) parameters
+  if (data && typeof data === "object" && "rawRequest" in data && "auth" in data) {
+    context = data;
+    data = data.data;
+  }
+
+  if (!context || !context.auth) {
     throw new HttpsError(
         "unauthenticated", "User must be logged in.");
   }
