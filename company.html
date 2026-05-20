@@ -482,9 +482,23 @@
             const email = document.getElementById('loginEmail').value;
             const pass = document.getElementById('loginPass').value;
             if(!email || !pass) return alert("Required fields missing");
+            
+            const btn = e.target.querySelector('button[type="submit"]');
+            const originalText = btn.innerText;
+            btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin inline-block"></i> Signing In...`;
+            btn.disabled = true;
+            lucide.createIcons();
+
             try {
-                await auth.signInWithEmailAndPassword(email, pass);
-            } catch(e) { alert("Login failed: " + e.message); }
+                const cred = await auth.signInWithEmailAndPassword(email, pass);
+                document.getElementById('view-login').classList.remove('active');
+                await initializeCorporateWorkspace(cred.user);
+            } catch(error) { 
+                alert("Login failed: " + error.message); 
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
         }
 
         // --- Onboarding Logic ---
