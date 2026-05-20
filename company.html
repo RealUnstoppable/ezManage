@@ -695,6 +695,27 @@
         let activeOrgPass = null;
         let globalChartInstance = null;
 
+        // --- Cloud Function Caller (bypasses callable SDK token-attachment bugs) ---
+        const FUNCTIONS_BASE = 'https://us-central1-dts-hub-website.cloudfunctions.net';
+        async function callFunction(name, data) {
+            const user = auth.currentUser;
+            if (!user) throw new Error('User must be logged in.');
+            const token = await user.getIdToken(true);
+            const res = await fetch(`${FUNCTIONS_BASE}/${name}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + token
+                },
+                body: JSON.stringify({ data })
+            });
+            const json = await res.json();
+            if (!res.ok || json.error) {
+                throw new Error((json.error && json.error.message) || `Function call failed (${res.status})`);
+            }
+            return json.result !== undefined ? { data: json.result } : { data: json };
+        }
+
         // --- Theme Management ---
         function toggleTheme() {
             document.documentElement.classList.toggle('dark-mode');
@@ -949,13 +970,12 @@
                 });
 
                 // For a Corporate Workspace, we create a shift_group and make them the owner
-                const manageShiftGroups = firebase.functions().httpsCallable('manageShiftGroups');
-                const result = await manageShiftGroups({
+                const result = await callFunction('manageShiftGroups', {
                     action: "create",
                     payload: {
                         ownerName: email.split('@')[0],
                         groupName: orgName,
-                        password: pass // Set group password to admin password for simplicity
+                        password: pass
                     }
                 });
 
@@ -1089,8 +1109,7 @@
                 // Generate a random password for the group
                 const generatedPassword = Math.random().toString(36).slice(-8);
 
-                const manageShiftGroups = firebase.functions().httpsCallable('manageShiftGroups');
-                const result = await manageShiftGroups({
+                const result = await callFunction('manageShiftGroups', {
                     action: "create",
                     payload: {
                         ownerName: activeUser.displayName || activeUser.email.split('@')[0],
@@ -1390,8 +1409,7 @@
 
         async function approveRequest(requestId) {
             try {
-                const manageShiftGroups = firebase.functions().httpsCallable('manageShiftGroups');
-                await manageShiftGroups({ action: "approve_join", payload: { requestId: requestId } });
+                await callFunction('manageShiftGroups', { action: "approve_join", payload: { requestId } });
             } catch (e) { alert("Failed: " + e.message); }
         }
 
