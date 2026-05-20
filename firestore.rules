@@ -51,6 +51,7 @@ service cloud.firestore {
     // INVITES (Corporate/Business linking)
     match /invites/{inviteId} {
       allow read, write: if isAdmin();
+      allow create: if request.auth != null && get(/databases/$(database)/documents/shift_groups/$(request.resource.data.groupId)).data.ownerId == request.auth.uid;
     }
 
     // SONG REQUESTS

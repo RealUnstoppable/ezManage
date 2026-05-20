@@ -241,6 +241,132 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- NEW: Step Workers -->
+                    <div id="step-workers" class="onboarding-step hidden opacity-0 translate-x-full transition-all duration-500 ease-in-out absolute top-0 w-full">
+                        <h2 class="text-3xl font-black mb-8 text-center">How large is your team?</h2>
+                        <select id="regWorkers" class="w-full bg-white dark:bg-slate-900 text-center text-3xl font-black p-6 rounded-2xl border-4 border-slate-100 dark:border-slate-800 focus:border-indigo-500 focus:ring-0 transition-colors shadow-sm mb-8">
+                            <option value="">Select Team Size</option>
+                            <option value="1-10">1-10 Employees</option>
+                            <option value="11-50">11-50 Employees</option>
+                            <option value="51-200">51-200 Employees</option>
+                            <option value="200+">200+ Employees</option>
+                        </select>
+                        <button type="button" onclick="advanceOnboarding()" class="btn btn-primary w-full py-5 text-xl rounded-2xl shadow-lg border-b-4 border-indigo-700 active:border-b-0 active:mt-1">Continue</button>
+                    </div>
+
+                    <!-- NEW: Step Plan -->
+                    <div id="step-plan" class="onboarding-step hidden opacity-0 translate-x-full transition-all duration-500 ease-in-out absolute top-0 w-full">
+                        <h2 class="text-3xl font-black mb-8 text-center">Select your plan.</h2>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                            <!-- Free -->
+                            <div onclick="selectPlan('Free')" id="plan-Free" class="plan-card border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20 cursor-pointer border-4 rounded-2xl p-6 text-center hover:border-indigo-300 transition-colors">
+                                <h3 class="font-black text-xl mb-2">Free</h3>
+                                <p class="text-3xl font-black text-indigo-500 mb-4">$0<span class="text-sm text-slate-500">/mo</span></p>
+                                <p class="text-xs text-slate-500 font-bold uppercase tracking-widest">Basic Features</p>
+                            </div>
+                            <!-- Business Individual -->
+                            <div onclick="selectPlan('Business Individual')" id="plan-Business Individual" class="plan-card border-slate-100 dark:border-slate-800 cursor-pointer bg-white dark:bg-slate-900 border-4 rounded-2xl p-6 text-center hover:border-indigo-300 transition-colors">
+                                <h3 class="font-black text-xl mb-2">Business Indv.</h3>
+                                <p class="text-3xl font-black text-indigo-500 mb-4">$29<span class="text-sm text-slate-500">/mo</span></p>
+                                <p class="text-xs text-slate-500 font-bold uppercase tracking-widest">Advanced Tools</p>
+                            </div>
+                            <!-- Business Pro -->
+                            <div onclick="selectPlan('Business Pro')" id="plan-Business Pro" class="plan-card relative border-slate-100 dark:border-slate-800 cursor-pointer bg-white dark:bg-slate-900 border-4 rounded-2xl p-6 text-center hover:border-indigo-300 transition-colors">
+                                <div class="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-indigo-500 text-white text-[10px] font-black uppercase px-3 py-1 rounded-full whitespace-nowrap">Most Popular</div>
+                                <h3 class="font-black text-xl mb-2">Business Pro</h3>
+                                <p class="text-3xl font-black text-indigo-500 mb-4">$99<span class="text-sm text-slate-500">/mo</span></p>
+                                <p class="text-xs text-slate-500 font-bold uppercase tracking-widest">Unlimited Everything</p>
+                            </div>
+                        </div>
+                        <button type="button" onclick="advanceOnboarding()" class="btn btn-primary w-full py-5 text-xl rounded-2xl shadow-lg border-b-4 border-indigo-700 active:border-b-0 active:mt-1">Continue</button>
+                    </div>
+
+                    <!-- NEW: Step Roles -->
+                    <div id="step-roles" class="onboarding-step hidden opacity-0 translate-x-full transition-all duration-500 ease-in-out absolute top-0 w-full">
+                        <h2 class="text-3xl font-black mb-4 text-center">Add your managers.</h2>
+                        <p class="text-center text-slate-500 mb-8 font-bold">You can always do this later in the dashboard.</p>
+                        
+                        <div class="bg-slate-50 dark:bg-slate-800 p-6 rounded-2xl mb-8 space-y-4">
+                            <div class="flex gap-4">
+                                <input type="email" id="roleEmail" placeholder="Manager Email" class="flex-1 w-full bg-white dark:bg-slate-900 p-3 rounded-xl border-none focus:ring-2 focus:ring-indigo-500 shadow-sm">
+                                <select id="rolePriority" class="w-1/3 bg-white dark:bg-slate-900 p-3 rounded-xl border-none focus:ring-2 focus:ring-indigo-500 shadow-sm">
+                                    <option value="Normal">Normal</option>
+                                    <option value="Urgent">Urgent</option>
+                                    <option value="Low">Low</option>
+                                </select>
+                                <button type="button" onclick="addOnboardingRole()" class="btn btn-outline bg-white dark:bg-slate-900"><i data-lucide="plus" class="w-5 h-5"></i></button>
+                            </div>
+                            <div id="onboardingRoleList" class="space-y-2 mt-4 max-h-[150px] overflow-y-auto custom-scrollbar pr-2 text-left">
+                                <!-- Roles added here -->
+                            </div>
+                        </div>
+
+                        <button type="button" onclick="advanceOnboarding()" class="btn btn-primary w-full py-5 text-xl rounded-2xl shadow-lg border-b-4 border-indigo-700 active:border-b-0 active:mt-1">Continue</button>
+                    </div>
+
+                    <!-- NEW: Step Config -->
+                    <div id="step-config" class="onboarding-step hidden opacity-0 translate-x-full transition-all duration-500 ease-in-out absolute top-0 w-full">
+                        <h2 class="text-3xl font-black mb-8 text-center">Final Settings.</h2>
+                        
+                        <div class="space-y-4 mb-8 text-left">
+                            <label class="flex items-center gap-4 bg-slate-50 dark:bg-slate-800 p-4 rounded-xl cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+                                <input type="checkbox" id="configAi" checked class="w-6 h-6 text-indigo-500 rounded focus:ring-0">
+                                <div>
+                                    <div class="font-black text-lg">Enable AI Features</div>
+                                    <div class="text-sm text-slate-500">Use ezManage AI to summarize shift notes and detect trends.</div>
+                                </div>
+                            </label>
+                            
+                            <label class="flex items-center gap-4 bg-slate-50 dark:bg-slate-800 p-4 rounded-xl cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+                                <input type="checkbox" id="configSync" checked class="w-6 h-6 text-indigo-500 rounded focus:ring-0">
+                                <div>
+                                    <div class="font-black text-lg">Cloud Sync</div>
+                                    <div class="text-sm text-slate-500">Automatically sync changes across all your devices in real-time.</div>
+                                </div>
+                            </label>
+
+                            <label class="flex items-center gap-4 bg-slate-50 dark:bg-slate-800 p-4 rounded-xl cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors border-2 border-transparent">
+                                <input type="checkbox" id="termsCheck" class="w-6 h-6 text-indigo-500 rounded focus:ring-0">
+                                <div>
+                                    <div class="font-black text-lg">Accept Terms</div>
+                                    <div class="text-sm text-slate-500">I agree to the Terms of Service and Privacy Policy.</div>
+                                </div>
+                            </label>
+                        </div>
+
+                        <button type="button" onclick="advanceOnboarding()" class="btn btn-primary w-full py-5 text-xl rounded-2xl shadow-lg border-b-4 border-indigo-700 active:border-b-0 active:mt-1">Complete Setup</button>
+                    </div>
+
+                    <!-- NEW: Step Loading -->
+                    <div id="step-loading" class="onboarding-step hidden opacity-0 translate-x-full transition-all duration-500 ease-in-out absolute top-0 w-full h-full flex flex-col items-center justify-center min-h-[400px]">
+                        <div class="text-center w-full">
+                            <div class="w-24 h-24 bg-yellow-100 dark:bg-yellow-900/50 rounded-full flex items-center justify-center mx-auto mb-8 shadow-inner border border-yellow-200 dark:border-yellow-800 animate-pulse">
+                                <i data-lucide="zap" class="w-12 h-12 text-yellow-500"></i>
+                            </div>
+                            <h2 class="text-3xl font-black mb-4">Get ready to ditch the clipboard.</h2>
+                            <p class="text-slate-500 mb-8 font-bold">Provisioning your organization...</p>
+                            
+                            <div class="w-full max-w-md mx-auto bg-slate-200 dark:bg-slate-800 rounded-full h-4 shadow-inner overflow-hidden relative">
+                                <div id="tutorialProgressBar" class="bg-indigo-500 h-4 rounded-full transition-all ease-linear" style="width: 0%; transition-duration: 200ms;">
+                                    <div class="absolute inset-0 bg-white/20" style="transform: skewX(-20deg); animation: shimmer 2s infinite;"></div>
+                                </div>
+                            </div>
+                            <div id="loadingStatusText" class="text-xs uppercase tracking-widest font-bold text-slate-400 mt-4">Initializing database...</div>
+                        </div>
+                    </div>
+
+                    <!-- NEW: Step Tutorial -->
+                    <div id="step-tutorial" class="onboarding-step hidden opacity-0 translate-x-full transition-all duration-500 ease-in-out absolute top-0 w-full min-h-[400px] flex flex-col justify-center">
+                        <div class="text-center">
+                            <div id="tutorialIcon" class="w-24 h-24 bg-sky-100 dark:bg-sky-900/50 rounded-full flex items-center justify-center mx-auto mb-8 shadow-inner border border-sky-200 dark:border-sky-800 transition-all duration-300 transform scale-90">
+                                <i data-lucide="layout-dashboard" class="w-12 h-12 text-sky-500"></i>
+                            </div>
+                            <h2 id="tutorialTitle" class="text-3xl font-black mb-4 transition-opacity duration-300">Welcome to your Bento Dashboard.</h2>
+                            <p id="tutorialText" class="text-lg text-slate-500 dark:text-slate-400 mb-10 transition-opacity duration-300 px-4">Everything you need to manage your business is now accessible in one beautiful, unified view.</p>
+                            <button type="button" onclick="finishTutorial()" class="btn btn-primary w-full py-5 text-xl rounded-2xl shadow-[0_8px_30px_rgba(99,102,241,0.3)] hover:scale-[1.02] transition-transform">Enter Dashboard</button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -502,25 +628,25 @@
         }
 
         // --- Onboarding Logic ---
-        let currentOnboardingStep = 1;
-        const totalSteps = 4; // Excluding step 1 and 5 for progress bar math
-
-        function handleEnterKey(event, nextStepId) {
-            if (event.key === 'Enter') {
-                event.preventDefault();
-                nextOnboardingStep(nextStepId);
-            }
-        }
+        let onboardingFlow = ['step-1', 'step-2', 'step-3', 'step-4', 'step-5'];
+        let currentStepIndex = 0;
 
         function resetOnboarding() {
-            currentOnboardingStep = 1;
+            if (currentUser) {
+                onboardingFlow = ['step-2', 'step-workers', 'step-plan', 'step-roles', 'step-config', 'step-loading', 'step-tutorial'];
+            } else {
+                onboardingFlow = ['step-1', 'step-2', 'step-3', 'step-4', 'step-5'];
+            }
+            currentStepIndex = 0;
+            
             document.querySelectorAll('.onboarding-step').forEach(el => {
-                el.classList.add('hidden', 'opacity-0', '-translate-x-full');
-                el.classList.remove('opacity-100', 'translate-x-0', 'absolute', 'top-0');
+                el.classList.add('hidden', 'opacity-0', '-translate-x-full', 'absolute', 'top-0');
+                el.classList.remove('opacity-100', 'translate-x-0');
             });
-            const step1 = document.getElementById('step-1');
-            step1.classList.remove('hidden', 'opacity-0', '-translate-x-full');
-            step1.classList.add('opacity-100', 'translate-x-0');
+            
+            const firstStep = document.getElementById(onboardingFlow[0]);
+            firstStep.classList.remove('hidden', 'opacity-0', '-translate-x-full', 'absolute', 'top-0');
+            firstStep.classList.add('opacity-100', 'translate-x-0');
             
             document.getElementById('regOrgName').value = '';
             document.getElementById('regEmail').value = '';
@@ -536,62 +662,85 @@
             const progressContainer = document.getElementById('onboardingProgressContainer');
             const progressBar = document.getElementById('onboardingProgressBar');
             
-            if (currentOnboardingStep === 1 || currentOnboardingStep === 5) {
+            const currentStepId = onboardingFlow[currentStepIndex];
+            if (['step-1', 'step-5', 'step-loading', 'step-tutorial'].includes(currentStepId)) {
                 progressContainer.classList.add('hidden');
             } else {
                 progressContainer.classList.remove('hidden');
-                // Steps 2, 3, 4 are the functional ones. 
-                const progress = ((currentOnboardingStep - 1) / (totalSteps - 1)) * 100;
+                const functionalSteps = onboardingFlow.filter(id => !['step-1', 'step-5', 'step-loading', 'step-tutorial'].includes(id));
+                const functionalIndex = functionalSteps.indexOf(currentStepId);
+                const progress = Math.max(0, Math.min(100, (functionalIndex / Math.max(1, functionalSteps.length - 1)) * 100));
                 progressBar.style.width = `${progress}%`;
             }
         }
 
-        function nextOnboardingStep(nextStep) {
-            // Validation before proceeding
-            if (currentOnboardingStep === 2) {
+        function advanceOnboarding() {
+            const currentStepId = onboardingFlow[currentStepIndex];
+            
+            // Validation
+            if (currentStepId === 'step-2') {
                 const name = document.getElementById('regOrgName').value.trim();
                 if (!name) return alert("Please enter an organization name.");
             }
-            if (currentOnboardingStep === 3) {
+            if (currentStepId === 'step-3') {
                 const email = document.getElementById('regEmail').value.trim();
                 if (!email || !email.includes('@')) return alert("Please enter a valid email.");
             }
-            if (currentOnboardingStep === 4 && nextStep === 5) {
+            if (currentStepId === 'step-4') {
                 const pass = document.getElementById('regPass').value;
                 if (!pass || pass.length < 6) return alert("Password must be at least 6 characters.");
-                
-                // Trigger the actual registration process
+                // Legacy flow registration
                 executeRegistration();
+                return;
+            }
+            if (currentStepId === 'step-workers') {
+                const workers = document.getElementById('regWorkers').value;
+                if (!workers) return alert("Please select a team size.");
+            }
+            if (currentStepId === 'step-plan') {
+                if (!selectedPlan) return alert("Please select a plan.");
+            }
+            if (currentStepId === 'step-config') {
+                const terms = document.getElementById('termsCheck').checked;
+                if (!terms) return alert("You must accept the terms of service.");
+                executeLoggedInRegistration();
+                return; 
             }
 
-            // Hide current step by sliding out to the left
-            const currentEl = document.getElementById(`step-${currentOnboardingStep}`);
+            if (currentStepIndex >= onboardingFlow.length - 1) return;
+
+            const nextStepId = onboardingFlow[currentStepIndex + 1];
+            transitionSteps(currentStepId, nextStepId);
+            currentStepIndex++;
+            updateProgressBar();
+        }
+
+        // Maintain backward compatibility for hardcoded onclicks
+        function nextOnboardingStep(stepNumber) {
+            advanceOnboarding();
+        }
+
+        function transitionSteps(currentStepId, nextStepId) {
+            const currentEl = document.getElementById(currentStepId);
             currentEl.classList.remove('translate-x-0', 'opacity-100');
             currentEl.classList.add('-translate-x-full', 'opacity-0');
             
             setTimeout(() => {
                 currentEl.classList.add('hidden');
-                currentEl.classList.remove('absolute', 'top-0'); // Clean up positioning
+                currentEl.classList.remove('absolute', 'top-0');
                 
-                // Show next step sliding in from the right
-                const nextEl = document.getElementById(`step-${nextStep}`);
+                const nextEl = document.getElementById(nextStepId);
                 nextEl.classList.remove('hidden');
                 nextEl.classList.add('absolute', 'top-0', 'translate-x-full');
                 
-                // Trigger reflow
-                void nextEl.offsetWidth;
+                void nextEl.offsetWidth; 
                 
                 nextEl.classList.remove('absolute', 'top-0', 'translate-x-full');
                 nextEl.classList.add('translate-x-0', 'opacity-100');
                 
-                // Focus input if any
                 const input = nextEl.querySelector('input');
                 if (input) input.focus();
-
-                currentOnboardingStep = nextStep;
-                updateProgressBar();
-
-            }, 300); // Wait for transition out
+            }, 300);
         }
 
         function triggerConfetti() {
@@ -676,10 +825,158 @@
                 document.getElementById(`step-5`).classList.add('hidden');
                 document.getElementById(`step-4`).classList.remove('hidden', '-translate-x-full', 'opacity-0', 'absolute', 'top-0');
                 document.getElementById(`step-4`).classList.add('translate-x-0', 'opacity-100');
-                currentOnboardingStep = 4;
+                currentStepIndex = onboardingFlow.indexOf('step-4');
                 updateProgressBar();
             }
         }
+
+        // --- Logged-In Flow Additions ---
+        let selectedPlan = 'Free';
+        function selectPlan(planName) {
+            selectedPlan = planName;
+            document.querySelectorAll('.plan-card').forEach(card => {
+                card.classList.remove('border-indigo-500', 'bg-indigo-50', 'dark:bg-indigo-900/20');
+                card.classList.add('border-slate-100', 'dark:border-slate-800', 'bg-white', 'dark:bg-slate-900');
+                if (card.id === `plan-${planName}`) {
+                    card.classList.remove('border-slate-100', 'dark:border-slate-800', 'bg-white', 'dark:bg-slate-900');
+                    card.classList.add('border-indigo-500', 'bg-indigo-50', 'dark:bg-indigo-900/20');
+                }
+            });
+        }
+        
+        let onboardingRoles = [];
+        function addOnboardingRole() {
+            const email = document.getElementById('roleEmail').value.trim();
+            const priority = document.getElementById('rolePriority').value;
+            if (!email || !email.includes('@')) return alert("Enter valid email");
+            
+            onboardingRoles.push({ email, priority });
+            document.getElementById('roleEmail').value = '';
+            
+            renderOnboardingRoles();
+        }
+
+        function renderOnboardingRoles() {
+            const container = document.getElementById('onboardingRoleList');
+            container.innerHTML = onboardingRoles.map((role, i) => `
+                <div class="flex justify-between items-center bg-white dark:bg-slate-900 p-3 rounded-lg shadow-sm border border-slate-100 dark:border-slate-800">
+                    <span class="font-bold text-sm">${role.email}</span>
+                    <div class="flex items-center gap-3">
+                        <span class="text-xs uppercase tracking-widest font-black text-slate-400">${role.priority}</span>
+                        <button onclick="removeOnboardingRole(${i})" class="text-red-400 hover:text-red-500"><i data-lucide="x" class="w-4 h-4"></i></button>
+                    </div>
+                </div>
+            `).join('');
+            lucide.createIcons();
+        }
+
+        function removeOnboardingRole(index) {
+            onboardingRoles.splice(index, 1);
+            renderOnboardingRoles();
+        }
+
+        async function executeLoggedInRegistration() {
+            if (isRegistering) return;
+            isRegistering = true;
+
+            const orgName = document.getElementById('regOrgName').value.trim();
+            const workers = document.getElementById('regWorkers').value;
+            const aiEnabled = document.getElementById('configAi').checked;
+            
+            // Go to loading screen
+            transitionSteps('step-config', 'step-loading');
+            
+            // Start simulated loading animation
+            const bar = document.getElementById('tutorialProgressBar');
+            const status = document.getElementById('loadingStatusText');
+            let progress = 0;
+            const sim = setInterval(() => {
+                progress += 2;
+                if (progress <= 95) bar.style.width = `${progress}%`;
+                if (progress === 30) status.innerText = "Creating shift groups...";
+                if (progress === 60) status.innerText = "Provisioning AI features...";
+                if (progress === 90) status.innerText = "Finalizing workspace...";
+            }, 100);
+
+            try {
+                // Generate a random password for the group
+                const generatedPassword = Math.random().toString(36).slice(-8);
+
+                const manageShiftGroups = firebase.functions().httpsCallable('manageShiftGroups');
+                const result = await manageShiftGroups({
+                    action: "create",
+                    payload: {
+                        ownerName: currentUser.displayName || currentUser.email.split('@')[0],
+                        groupName: orgName,
+                        password: generatedPassword
+                    }
+                });
+                
+                const groupId = result.data.groupId;
+
+                // Update user document with orgId, plan, and workers
+                await db.collection('users').doc(currentUser.uid).set({
+                    orgId: groupId,
+                    plan: selectedPlan,
+                    workersCount: workers,
+                    aiEnabled: aiEnabled
+                }, {merge: true});
+
+                // Invite roles if any
+                for (let role of onboardingRoles) {
+                    await db.collection('invites').add({
+                        groupId: groupId,
+                        email: role.email,
+                        priority: role.priority,
+                        status: 'Pending',
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                }
+
+                clearInterval(sim);
+                bar.style.width = '100%';
+                status.innerText = "Complete!";
+                
+                setTimeout(() => {
+                    transitionSteps('step-loading', 'step-tutorial');
+                    runTutorialAnimation();
+                }, 1000);
+
+            } catch (e) {
+                isRegistering = false;
+                clearInterval(sim);
+                alert("Failed to create workspace: " + e.message);
+                transitionSteps('step-loading', 'step-config');
+            }
+        }
+
+        function runTutorialAnimation() {
+            const icon = document.getElementById('tutorialIcon');
+            const title = document.getElementById('tutorialTitle');
+            const text = document.getElementById('tutorialText');
+            
+            setTimeout(() => {
+                icon.innerHTML = `<i data-lucide="bar-chart-2" class="w-12 h-12 text-emerald-500"></i>`;
+                icon.className = "w-24 h-24 bg-emerald-100 dark:bg-emerald-900/50 rounded-full flex items-center justify-center mx-auto mb-8 shadow-inner border border-emerald-200 dark:border-emerald-800 transition-all duration-500 transform scale-110";
+                title.innerText = "Real-time Metrics.";
+                text.innerText = "Instantly see labor saved, shift performance, and manager leaderboards all dynamically reacting to your timeline.";
+                lucide.createIcons();
+            }, 3000);
+
+            setTimeout(() => {
+                icon.innerHTML = `<i data-lucide="users" class="w-12 h-12 text-fuchsia-500"></i>`;
+                icon.className = "w-24 h-24 bg-fuchsia-100 dark:bg-fuchsia-900/50 rounded-full flex items-center justify-center mx-auto mb-8 shadow-inner border border-fuchsia-200 dark:border-fuchsia-800 transition-all duration-500 transform scale-100";
+                title.innerText = "Manager Directory.";
+                text.innerText = "Seamlessly invite and manage access for your shift managers directly from the grid.";
+                lucide.createIcons();
+            }, 6000);
+        }
+
+        function finishTutorial() {
+            document.getElementById('view-register').classList.remove('active');
+            initializeCorporateWorkspace(currentUser);
+        }
+
 
         // --- Workspace Initialization ---
         async function initializeCorporateWorkspace(user) {
