@@ -125,8 +125,7 @@ service cloud.firestore {
           isAdmin()
       );
       allow create: if request.auth != null
-                    && request.resource.data.reportedByUid == request.auth.uid
-                    && request.resource.data.orgId == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.orgId;
+                    && request.resource.data.reportedByUid == request.auth.uid;
       allow update: if request.auth != null && (
           resource.data.reportedByUid == request.auth.uid ||
           (resource.data.orgId != null && resource.data.orgId == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.orgId) ||
@@ -138,19 +137,16 @@ service cloud.firestore {
     // SCHEDULES
     match /schedules/{scheduleId} {
       allow read: if request.auth != null && (
-          resource.data.authorId == request.auth.uid ||
-          (resource.data.orgId != null && resource.data.orgId == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.orgId) ||
+          resource.data.uid == request.auth.uid ||
           isAdmin()
       );
       allow create: if request.auth != null
-                    && request.resource.data.authorId == request.auth.uid
-                    && request.resource.data.orgId == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.orgId;
+                    && request.resource.data.uid == request.auth.uid;
       allow update: if request.auth != null && (
-          resource.data.authorId == request.auth.uid ||
-          (resource.data.orgId != null && resource.data.orgId == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.orgId) ||
+          resource.data.uid == request.auth.uid ||
           isAdmin()
-      ) && request.resource.data.orgId == resource.data.orgId;
-      allow delete: if request.auth != null && (resource.data.authorId == request.auth.uid || isAdmin());
+      );
+      allow delete: if request.auth != null && (resource.data.uid == request.auth.uid || isAdmin());
     }
 
   }

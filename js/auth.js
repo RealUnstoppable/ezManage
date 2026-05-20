@@ -1,5 +1,3 @@
-import { getFirebaseErrorMessage } from './utils/errorUtils.js';
-
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
 import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, sendEmailVerification } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
 import { getFirestore, doc, setDoc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
@@ -21,6 +19,9 @@ if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
 export const auth = firebase.auth();
 export const db = firebase.firestore();
 
+// Fallback for network reliability to bypass CORS/network errors
+db.settings({ experimentalForceLongPolling: true });
+
 export function getUserRedirectPath(userData) {
     return userData && userData.isAdmin ? 'admin.html' : 'index.html';
 }
@@ -32,7 +33,6 @@ auth.onAuthStateChanged(async (user) => {
     const membershipStatusContainer = document.getElementById('membership-status-container');
 
     if (user) {
-
         try {
             const userDocRef = doc(db, "users", user.uid);
             const userDoc = await getDoc(userDocRef);
@@ -55,12 +55,10 @@ auth.onAuthStateChanged(async (user) => {
             console.error("Error fetching user document in auth state change:", error);
         }
     } else {
-
         if (authLink) {
             authLink.href = 'sign in beta.html';
             authLink.textContent = "Sign In / Sign Up";
         }
-
         if (membershipStatusContainer) {
             membershipStatusContainer.innerHTML = '';
         }
@@ -118,7 +116,11 @@ if (document.getElementById('auth-form')) {
                 window.location.replace('index.html');
             } catch (error) {
                 console.error("Manager Troubleshooting: Sign up error for email:", email, error);
-                showMessage(getFirebaseErrorMessage(error));
+                if (error.code === 'auth/network-request-failed' || error.code === 'unavailable') {
+                    showMessage("Network error: Please check your connection or whitelist our domain.");
+                } else {
+                    showMessage(getFirebaseErrorMessage(error));
+                }
                 submitBtn.disabled = false;
             }
         } else {
@@ -136,7 +138,11 @@ if (document.getElementById('auth-form')) {
                 }
             } catch (error) {
                 console.error("Manager Troubleshooting: Sign in error for email:", email, error);
-                showMessage(getFirebaseErrorMessage(error));
+                if (error.code === 'auth/network-request-failed' || error.code === 'unavailable') {
+                    showMessage("Network error: Please check your connection or whitelist our domain.");
+                } else {
+                    showMessage(getFirebaseErrorMessage(error));
+                }
                 submitBtn.disabled = false;
             }
         }
