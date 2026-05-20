@@ -701,6 +701,7 @@
             const user = auth.currentUser;
             if (!user) throw new Error('User must be logged in.');
             const token = await user.getIdToken(true);
+            console.log("DEBUG CLIENT: token type:", typeof token, "length:", token ? token.length : 0, "value starts with:", token ? token.substring(0, 15) : "null");
             const res = await fetch(`${FUNCTIONS_BASE}/${name}`, {
                 method: 'POST',
                 headers: {
