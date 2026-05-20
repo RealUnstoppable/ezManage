@@ -1053,8 +1053,9 @@
                 return;
             }
 
-            // Go to loading screen
+            // Go to loading screen and sync the step index
             transitionSteps('step-config', 'step-loading');
+            currentStepIndex = onboardingFlow.indexOf('step-loading');
 
             // Start simulated loading animation
             const bar = document.getElementById('tutorialProgressBar');
@@ -1076,6 +1077,14 @@
                 // Force-refresh the ID token and give the SDK 500ms to propagate it
                 await activeUser.getIdToken(true);
                 await new Promise(resolve => setTimeout(resolve, 500));
+
+                // Pre-create / ensure the user document exists so the Cloud Function
+                // can use .update() on it without throwing "No document to update".
+                await db.collection('users').doc(activeUser.uid).set({
+                    email: activeUser.email,
+                    role: 'CorporateAdmin',
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                }, { merge: true });
 
                 // Generate a random password for the group
                 const generatedPassword = Math.random().toString(36).slice(-8);
@@ -1120,15 +1129,19 @@
 
                 setTimeout(() => {
                     transitionSteps('step-loading', 'step-tutorial');
+                    currentStepIndex = onboardingFlow.indexOf('step-tutorial');
                     runTutorialAnimation();
                 }, 1000);
 
             } catch (e) {
+                // Reset state so the user can retry
                 isRegistering = false;
                 clearInterval(sim);
                 console.error("Workspace creation error:", e);
                 alert("Failed to create workspace: " + e.message);
                 transitionSteps('step-loading', 'step-config');
+                currentStepIndex = onboardingFlow.indexOf('step-config');
+                updateProgressBar();
             }
         }
 
@@ -1155,8 +1168,12 @@
         }
 
         function finishTutorial() {
+            // Use auth.currentUser to avoid relying on the potentially-stale module var.
+            // Also clear isRegistering so future auth state changes work normally.
+            isRegistering = false;
+            const userToInit = auth.currentUser || currentUser;
             document.getElementById('view-register').classList.remove('active');
-            initializeCorporateWorkspace(currentUser);
+            initializeCorporateWorkspace(userToInit);
         }
 
 
