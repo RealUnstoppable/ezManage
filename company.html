@@ -249,117 +249,139 @@
                 0% { left: -100%; }
                 100% { left: 100%; }
             }
+            .bento-grid {
+                opacity: 0;
+                animation: fadeInGrid 0.1s forwards;
+            }
+            .bento-item {
+                opacity: 0;
+                transform: translateY(20px) scale(0.95);
+                animation: bentoFadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            }
+            @keyframes bentoFadeIn {
+                0% { opacity: 0; transform: translateY(20px) scale(0.95); }
+                100% { opacity: 1; transform: translateY(0) scale(1); }
+            }
+            @keyframes fadeInGrid {
+                to { opacity: 1; }
+            }
+            .custom-scrollbar::-webkit-scrollbar {
+                width: 6px;
+            }
+            .custom-scrollbar::-webkit-scrollbar-track {
+                background: transparent;
+            }
+            .custom-scrollbar::-webkit-scrollbar-thumb {
+                background-color: #cbd5e1;
+                border-radius: 20px;
+            }
+            .dark-mode .custom-scrollbar::-webkit-scrollbar-thumb {
+                background-color: #334155;
+            }
         </style>
 
         <!-- DASHBOARD SHELL (Requires Auth) -->
-        <div id="dashboard-shell" class="hidden">
-            <div class="flex flex-col md:flex-row gap-8 px-4">
-                <!-- Sidebar Nav -->
-                <div class="w-full md:w-64 flex-shrink-0">
-                    <div class="card p-4 space-y-2 sticky top-24 overflow-y-auto max-h-[80vh]">
-                        <div class="mb-6 px-4 pt-2">
-                            <h3 class="font-black text-lg truncate" id="orgNameDisplay">Organization</h3>
-                            <span class="text-[10px] font-bold uppercase tracking-widest text-indigo-500" id="orgIdDisplay">Loading ID...</span>
-                        </div>
-                        <a href="#" onclick="navTo('overview')" class="nav-link flex items-center gap-3 p-3 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors font-bold text-slate-600 dark:text-slate-300">
-                            <i data-lucide="layout-dashboard"></i> Overview
-                        </a>
-                        <a href="#" onclick="navTo('managers')" class="nav-link flex items-center gap-3 p-3 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors font-bold text-slate-600 dark:text-slate-300">
-                            <i data-lucide="users"></i> Manage Staff
-                        </a>
-                        <a href="#" onclick="navTo('metrics')" class="nav-link flex items-center gap-3 p-3 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors font-bold text-slate-600 dark:text-slate-300">
-                            <i data-lucide="bar-chart-3"></i> Global Metrics
-                        </a>
-                        <div class="pt-4 mt-4 border-t border-slate-200 dark:border-slate-800">
-                            <button onclick="firebase.auth().signOut()" class="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 text-red-500 transition-colors font-bold">
-                                <i data-lucide="log-out"></i> Sign Out
-                            </button>
+        <div id="dashboard-shell" class="hidden max-w-7xl mx-auto w-full">
+            
+            <!-- Dashboard Header -->
+            <div class="mb-8 flex flex-col md:flex-row justify-between items-center px-4 gap-4 bento-item" style="animation-delay: 0.05s;">
+                <div>
+                    <h2 class="text-3xl font-black" id="orgNameDisplayBento">Organization Dashboard</h2>
+                    <p class="text-slate-500 font-bold uppercase tracking-widest text-xs" id="orgIdDisplayBento">Loading ID...</p>
+                </div>
+                <div class="flex items-center gap-4">
+                    <div class="bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2 flex items-center shadow-sm">
+                        <i data-lucide="calendar" class="w-4 h-4 text-indigo-500 mr-2"></i>
+                        <input type="date" id="dashboardDatePicker" class="bg-transparent font-bold focus:ring-0 focus:outline-none text-slate-700 dark:text-slate-300 border-none p-0" onchange="fetchDashboardData()">
+                    </div>
+                    <button onclick="firebase.auth().signOut()" class="btn btn-outline text-red-500 border-red-200 hover:bg-red-50 dark:border-red-900/30 dark:hover:bg-red-900/20"><i data-lucide="log-out" class="w-4 h-4"></i></button>
+                </div>
+            </div>
+
+            <!-- Bento Grid -->
+            <div id="view-overview" class="view-section active px-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 bento-grid">
+                    
+                    <!-- 1. Org Access Details (Small) -->
+                    <div class="card p-6 flex flex-col justify-between bento-item" style="animation-delay: 0.1s;">
+                        <div>
+                            <h3 class="font-black text-slate-400 text-xs uppercase tracking-widest mb-4 flex items-center"><i data-lucide="key" class="w-3 h-3 mr-1"></i> Workspace Access</h3>
+                            <div class="space-y-4">
+                                <div>
+                                    <div class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1">Group ID</div>
+                                    <div class="font-mono font-black text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30 p-2 rounded-lg" id="shareGroupId">...</div>
+                                </div>
+                                <div>
+                                    <div class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1">Password</div>
+                                    <div class="font-mono font-black text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30 p-2 rounded-lg" id="shareGroupPass">...</div>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                <!-- Main Content Area -->
-                <div class="flex-grow">
-                    
-                    <!-- Overview Tab -->
-                    <div id="view-overview" class="view-section active">
-                        <div class="flex justify-between items-center mb-6">
-                            <h2 class="text-3xl font-black">Overview</h2>
-                            <button onclick="fetchGlobalData()" class="btn btn-outline btn-sm"><i data-lucide="refresh-cw" class="w-4"></i> Refresh</button>
+                    <!-- 2. Labor Saved (Small) -->
+                    <div class="card p-6 bg-gradient-to-br from-indigo-500 to-purple-600 text-white border-none shadow-lg bento-item flex flex-col" style="animation-delay: 0.2s;">
+                        <h3 class="font-black text-indigo-100 text-xs uppercase tracking-widest mb-2 flex items-center"><i data-lucide="clock" class="w-3 h-3 mr-1"></i> Labor Saved Today</h3>
+                        <div class="flex-grow flex items-center justify-center flex-col">
+                            <div class="text-6xl font-black mb-1 drop-shadow-md" id="laborSavedCount">0h</div>
+                            <div class="text-indigo-200 font-bold text-sm bg-indigo-900/20 px-3 py-1 rounded-full">approx. time saved</div>
                         </div>
-                        
-                        <div class="grid md:grid-cols-3 gap-4 mb-8">
-                            <div class="card">
-                                <div class="text-slate-500 font-bold text-xs uppercase tracking-widest mb-1">Total Stores/Managers</div>
-                                <div class="text-3xl font-black text-indigo-500" id="statManagersCount">0</div>
-                            </div>
-                            <div class="card">
-                                <div class="text-slate-500 font-bold text-xs uppercase tracking-widest mb-1">Global Shift Notes</div>
-                                <div class="text-3xl font-black text-sky-500" id="statNotesCount">0</div>
-                            </div>
-                            <div class="card">
-                                <div class="text-slate-500 font-bold text-xs uppercase tracking-widest mb-1">Avg Global Score</div>
+                    </div>
+
+                    <!-- 3. Global Performance (Medium/Large - Col Span 2) -->
+                    <div class="card p-6 col-span-1 md:col-span-2 lg:col-span-2 bento-item flex flex-col" style="animation-delay: 0.3s;">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="font-black text-slate-400 text-xs uppercase tracking-widest flex items-center"><i data-lucide="trending-up" class="w-3 h-3 mr-1"></i> Performance Overview</h3>
+                            <div class="text-right">
                                 <div class="text-3xl font-black text-emerald-500" id="statAvgScore">0%</div>
+                                <div class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Avg Completion</div>
                             </div>
                         </div>
-
-                        <div class="card p-6 border-none bg-indigo-50 dark:bg-indigo-900/20 mb-8">
-                            <h3 class="text-lg font-black mb-2 text-indigo-900 dark:text-indigo-100"><i data-lucide="key" class="inline w-5 mr-2"></i>Organization Access Details</h3>
-                            <p class="text-sm text-indigo-700 dark:text-indigo-300 mb-4">Provide these details to your Store Managers so they can join your workspace from the ezManage app.</p>
-                            <div class="flex flex-col sm:flex-row gap-4">
-                                <div class="bg-white dark:bg-slate-900 p-3 rounded-xl flex-grow font-mono text-sm border border-indigo-100 dark:border-indigo-800">
-                                    <span class="text-slate-400">Group ID:</span> <strong id="shareGroupId">...</strong>
-                                </div>
-                                <div class="bg-white dark:bg-slate-900 p-3 rounded-xl flex-grow font-mono text-sm border border-indigo-100 dark:border-indigo-800">
-                                    <span class="text-slate-400">Password:</span> <strong id="shareGroupPass">...</strong>
-                                </div>
-                            </div>
+                        <div class="flex-grow w-full relative min-h-[120px]">
+                            <canvas id="globalPerformanceChart" class="absolute inset-0 w-full h-full"></canvas>
                         </div>
+                    </div>
 
-                        <h3 class="text-xl font-black mb-4">Recent Shift Notes (Global)</h3>
-                        <div id="globalNotesContainer" class="space-y-4">
+                    <!-- 4. Reports Submitted (Large - Row Span 2, Col Span 2) -->
+                    <div class="card p-6 col-span-1 md:col-span-2 lg:col-span-2 lg:row-span-2 flex flex-col bento-item" style="animation-delay: 0.4s;">
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="font-black text-slate-400 text-xs uppercase tracking-widest flex items-center"><i data-lucide="file-text" class="w-3 h-3 mr-1"></i> Submitted Reports</h3>
+                            <div class="text-xs font-bold bg-indigo-100 dark:bg-indigo-900/30 px-3 py-1 rounded-full text-indigo-600 dark:text-indigo-400" id="statNotesCount">0 notes</div>
+                        </div>
+                        <div id="globalNotesContainer" class="flex-grow overflow-y-auto space-y-3 max-h-[400px] lg:max-h-[500px] pr-2 custom-scrollbar">
                             <div class="text-center py-8 text-slate-400 font-bold">Loading notes...</div>
                         </div>
                     </div>
 
-                    <!-- Managers Tab -->
-                    <div id="view-managers" class="view-section">
-                        <h2 class="text-3xl font-black mb-6">Manage Staff</h2>
-                        
-                        <div id="pendingRequestsSection" class="mb-8 hidden">
-                            <h3 class="text-lg font-black text-amber-500 mb-4 flex items-center gap-2"><i data-lucide="user-plus"></i> Pending Join Requests</h3>
-                            <div id="pendingRequestsContainer" class="space-y-3"></div>
-                        </div>
-
-                        <h3 class="text-lg font-black mb-4">Active Managers</h3>
-                        <div class="card p-0 overflow-hidden">
-                            <div class="overflow-x-auto">
-                                <table class="w-full text-left text-sm">
-                                    <thead class="bg-slate-50 dark:bg-slate-800/50 text-xs uppercase font-black text-slate-500">
-                                        <tr>
-                                            <th class="px-6 py-4">Manager Name</th>
-                                            <th class="px-6 py-4">Email</th>
-                                            <th class="px-6 py-4">Status</th>
-                                            <th class="px-6 py-4 text-right">Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="managersTableBody" class="divide-y divide-slate-100 dark:divide-slate-800">
-                                        <tr><td colspan="4" class="px-6 py-8 text-center text-slate-400 font-bold">Loading managers...</td></tr>
-                                    </tbody>
-                                </table>
+                    <!-- 5. Active Managers / Directory (Medium - Col Span 2) -->
+                    <div class="card p-0 col-span-1 md:col-span-2 lg:col-span-2 flex flex-col overflow-hidden bento-item" style="animation-delay: 0.5s;">
+                        <div class="p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50/50 dark:bg-slate-900/50">
+                            <h3 class="font-black text-slate-400 text-xs uppercase tracking-widest flex items-center"><i data-lucide="users" class="w-3 h-3 mr-1"></i> Manager Directory</h3>
+                            <div class="flex gap-2">
+                                <button onclick="togglePendingRequests()" class="btn btn-outline btn-sm relative bg-white dark:bg-slate-800">
+                                    Requests <span id="pendingRequestsBadge" class="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] w-5 h-5 rounded-full flex items-center justify-center hidden shadow-sm">0</span>
+                                </button>
+                                <button onclick="showInviteModal()" class="btn btn-primary btn-sm"><i data-lucide="user-plus" class="w-4 h-4"></i> Invite</button>
                             </div>
+                        </div>
+                        <div id="pendingRequestsSection" class="hidden p-4 bg-amber-50 dark:bg-amber-900/10 border-b border-amber-100 dark:border-amber-900/30">
+                            <h4 class="text-xs font-black text-amber-600 dark:text-amber-500 uppercase tracking-widest mb-3">Pending Join Requests</h4>
+                            <div id="pendingRequestsContainer" class="space-y-2 max-h-[150px] overflow-y-auto custom-scrollbar pr-2"></div>
+                        </div>
+                        <div class="overflow-y-auto max-h-[250px] lg:max-h-[300px] custom-scrollbar">
+                            <table class="w-full text-left text-sm">
+                                <tbody id="managersTableBody" class="divide-y divide-slate-100 dark:divide-slate-800">
+                                    <tr><td colspan="4" class="px-6 py-8 text-center text-slate-400 font-bold">Loading managers...</td></tr>
+                                </tbody>
+                            </table>
                         </div>
                     </div>
 
-                    <!-- Metrics Tab -->
-                    <div id="view-metrics" class="view-section">
-                        <div class="flex justify-between items-center mb-6">
-                            <h2 class="text-3xl font-black">Global Metrics</h2>
-                        </div>
-                        
-                        <div class="card mb-8">
-                            <h3 class="font-bold mb-4 text-slate-500 uppercase tracking-widest text-xs">Global Routine Performance (All Stores)</h3>
-                            <canvas id="globalPerformanceChart" height="120"></canvas>
+                    <!-- 6. Schedule / Individual Performance (Medium - Col Span 2) -->
+                    <div class="card p-6 col-span-1 md:col-span-2 lg:col-span-4 bento-item" style="animation-delay: 0.6s;">
+                        <h3 class="font-black text-slate-400 text-xs uppercase tracking-widest mb-4 flex items-center"><i data-lucide="award" class="w-3 h-3 mr-1"></i> Individual Performance Leaderboard</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="individualPerformanceContainer">
+                             <div class="col-span-full text-center py-8 text-slate-400 font-bold">No performance data yet.</div>
                         </div>
                     </div>
 
@@ -425,9 +447,9 @@
                 resetOnboarding();
             }
 
-            if(viewId === 'overview') fetchGlobalData();
-            if(viewId === 'managers') { fetchManagers(); fetchJoinRequests(); }
-            if(viewId === 'metrics') renderGlobalMetrics();
+            if(viewId === 'overview') {
+                fetchDashboardData();
+            }
         }
 
         let isRegistering = false;
@@ -651,8 +673,8 @@
                 activeOrgId = orgDoc.id;
                 activeOrgPass = orgDoc.data().password;
                 
-                document.getElementById('orgNameDisplay').innerText = orgDoc.data().groupName;
-                document.getElementById('orgIdDisplay').innerText = `ID: ${activeOrgId}`;
+                document.getElementById('orgNameDisplayBento').innerText = orgDoc.data().groupName;
+                document.getElementById('orgIdDisplayBento').innerText = `ID: ${activeOrgId}`;
                 document.getElementById('shareGroupId').innerText = activeOrgId;
                 document.getElementById('shareGroupPass').innerText = activeOrgPass;
                 
@@ -665,187 +687,272 @@
         }
 
         // --- Data Fetching ---
-        async function fetchGlobalData() {
+        // --- Bento Dashboard Logic ---
+        
+        // Helper: Generate consistent colors from names/emails
+        const managerColors = ['#f43f5e', '#ec4899', '#d946ef', '#8b5cf6', '#6366f1', '#3b82f6', '#0ea5e9', '#06b6d4', '#14b8a6', '#10b981', '#84cc16', '#eab308', '#f59e0b', '#f97316'];
+        function getManagerColor(str) {
+            let hash = 0;
+            for (let i = 0; i < str.length; i++) hash = str.charCodeAt(i) + ((hash << 5) - hash);
+            return managerColors[Math.abs(hash) % managerColors.length];
+        }
+
+        // Initialize date picker to today
+        document.addEventListener("DOMContentLoaded", () => {
+            const picker = document.getElementById('dashboardDatePicker');
+            if(picker) picker.value = new Date().toISOString().split('T')[0];
+        });
+
+        async function fetchDashboardData() {
             if(!activeOrgId) return;
+            const selectedDate = document.getElementById('dashboardDatePicker').value || new Date().toISOString().split('T')[0];
             
-            // 1. Fetch active notes
-            db.collection('shift_notes').where('orgId', '==', activeOrgId).where('status', '==', 'Active')
-              .onSnapshot(snap => {
-                  document.getElementById('statNotesCount').innerText = snap.size;
-                  const container = document.getElementById('globalNotesContainer');
-                  if(snap.empty) {
-                      container.innerHTML = `<div class="text-center py-8 bg-white dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-800 text-slate-400 font-bold">No active notes across stores.</div>`;
-                      return;
-                  }
-                  
-                  let html = '';
-                  snap.forEach(doc => {
-                      const data = doc.data();
-                      const isUrgent = data.priority === 'Urgent';
-                      const color = isUrgent ? 'red' : 'indigo';
-                      html += `
-                        <div class="p-4 bg-white dark:bg-slate-900 rounded-xl border border-${color}-100 dark:border-${color}-900/50 shadow-sm flex items-start gap-4">
-                            <div class="w-10 h-10 rounded-full bg-${color}-100 dark:bg-${color}-900/30 flex items-center justify-center text-${color}-500 flex-shrink-0 mt-1">
-                                <i data-lucide="${isUrgent ? 'alert-triangle' : 'message-square'}"></i>
+            // Fetch Managers & Metrics
+            db.collection('users').where('orgId', '==', activeOrgId).onSnapshot(snap => {
+                const tbody = document.getElementById('managersTableBody');
+                const indivContainer = document.getElementById('individualPerformanceContainer');
+                
+                if(snap.empty) {
+                    tbody.innerHTML = `<tr><td colspan="4" class="px-6 py-8 text-center text-slate-400 font-bold">No managers found.</td></tr>`;
+                    indivContainer.innerHTML = `<div class="col-span-full text-center py-8 text-slate-400 font-bold">No performance data yet.</div>`;
+                    return;
+                }
+
+                let htmlManagers = '';
+                let htmlIndiv = '';
+                let allShifts = [];
+                
+                snap.forEach(doc => {
+                    const d = doc.data();
+                    const isOwner = doc.id === currentUser.uid;
+                    const displayName = d.name || d.email.split('@')[0];
+                    const color = getManagerColor(displayName);
+                    
+                    // 1. Manager Directory
+                    htmlManagers += `
+                    <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                        <td class="px-6 py-3">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-full flex items-center justify-center text-white font-black text-xs shadow-sm" style="background-color: ${color}">
+                                    ${displayName.substring(0, 2).toUpperCase()}
+                                </div>
+                                <div class="font-black text-slate-800 dark:text-slate-200">
+                                    ${displayName} ${isOwner ? '<span class="ml-2 text-[10px] bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400 px-2 py-0.5 rounded-full uppercase tracking-widest">Admin</span>' : ''}
+                                </div>
                             </div>
-                            <div>
-                                <div class="font-black text-slate-900 dark:text-white">${data.content}</div>
-                                <div class="text-xs font-bold uppercase tracking-widest text-slate-400 mt-1">From: ${data.authorName} • Priority: ${data.priority}</div>
+                        </td>
+                        <td class="px-6 py-3 text-slate-500 text-xs font-bold">${d.email || 'N/A'}</td>
+                        <td class="px-6 py-3">
+                            <select class="bg-slate-100 dark:bg-slate-800 border-none rounded-lg text-xs font-bold focus:ring-0 text-slate-600 dark:text-slate-300 py-1" onchange="alert('Permission update coming soon')">
+                                <option ${isOwner ? 'selected' : ''}>Admin</option>
+                                <option ${!isOwner ? 'selected' : ''}>Manager</option>
+                            </select>
+                        </td>
+                        <td class="px-6 py-3 text-right">
+                            ${!isOwner ? `<button onclick="removeManager('${doc.id}')" class="text-slate-400 hover:text-red-500 transition-colors"><i data-lucide="trash-2" class="w-4 h-4"></i></button>` : `<span class="text-slate-300">-</span>`}
+                        </td>
+                    </tr>`;
+
+                    // Aggregate shifts for charts
+                    const h = d.shiftHistory || [];
+                    allShifts = allShifts.concat(h);
+
+                    // 2. Individual Performance for Selected Date
+                    const todayShift = h.find(s => s.dateSaved === selectedDate);
+                    let score = 0;
+                    if (todayShift && todayShift.routines && todayShift.routines.length > 0) {
+                        const checked = todayShift.routines.filter(r => r.checked).length;
+                        score = Math.round((checked / todayShift.routines.length) * 100);
+                    }
+                    
+                    htmlIndiv += `
+                    <div class="p-4 bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-full flex items-center justify-center text-white font-black shadow-sm" style="background-color: ${color}">
+                                ${displayName.substring(0, 2).toUpperCase()}
                             </div>
+                            <div class="font-black text-sm">${displayName}</div>
                         </div>
-                      `;
-                  });
-                  container.innerHTML = html;
-                  lucide.createIcons();
-              });
-
-            // 2. Count Managers
-            db.collection('users').where('orgId', '==', activeOrgId).get().then(snap => {
-                document.getElementById('statManagersCount').innerText = snap.size;
+                        <div class="text-right">
+                            <div class="text-xl font-black ${score === 100 ? 'text-emerald-500' : (score > 0 ? 'text-indigo-500' : 'text-slate-400')}">${score}%</div>
+                            <div class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Completion</div>
+                        </div>
+                    </div>`;
+                });
+                
+                tbody.innerHTML = htmlManagers;
+                indivContainer.innerHTML = htmlIndiv;
+                lucide.createIcons();
+                
+                renderGlobalPerformanceChart(allShifts);
             });
-        }
 
-        function fetchManagers() {
-            if(!activeOrgId) return;
-            db.collection('users').where('orgId', '==', activeOrgId)
-              .onSnapshot(snap => {
-                  const tbody = document.getElementById('managersTableBody');
-                  if(snap.empty) {
-                      tbody.innerHTML = `<tr><td colspan="4" class="px-6 py-8 text-center text-slate-400 font-bold">No managers found.</td></tr>`;
-                      return;
-                  }
-                  let html = '';
-                  snap.forEach(doc => {
-                      const d = doc.data();
-                      const isOwner = doc.id === currentUser.uid;
-                      html += `
-                        <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
-                            <td class="px-6 py-4 font-black">${d.name || d.email.split('@')[0]} ${isOwner ? '<span class="ml-2 text-[10px] bg-indigo-100 text-indigo-700 px-2 py-1 rounded-full uppercase tracking-widest">Admin</span>' : ''}</td>
-                            <td class="px-6 py-4 text-slate-500">${d.email || 'N/A'}</td>
-                            <td class="px-6 py-4"><span class="px-2 py-1 bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 text-[10px] font-black uppercase tracking-widest rounded-full">Active</span></td>
-                            <td class="px-6 py-4 text-right">
-                                ${!isOwner ? `<button onclick="removeManager('${doc.id}')" class="text-red-400 hover:text-red-500 font-bold text-sm">Remove</button>` : `<span class="text-slate-300">-</span>`}
-                            </td>
-                        </tr>
-                      `;
-                  });
-                  tbody.innerHTML = html;
-              });
-        }
+            // Fetch Notes & Calculate Labor Saved for selected date
+            db.collection('shift_notes').where('orgId', '==', activeOrgId).onSnapshot(snap => {
+                const container = document.getElementById('globalNotesContainer');
+                let notesCount = 0;
+                let htmlNotes = '';
+                
+                snap.forEach(doc => {
+                    const data = doc.data();
+                    // Basic date filter (assuming timestamp is stored, or filtering by a date field if present)
+                    // If no explicit date field exists, we just show all or try to derive. Let's show all for demo if no date.
+                    
+                    const isUrgent = data.priority === 'Urgent';
+                    const color = isUrgent ? 'red' : 'indigo';
+                    const authorColor = getManagerColor(data.authorName || 'Unknown');
+                    
+                    notesCount++;
+                    htmlNotes += `
+                    <div class="p-4 bg-white dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-800 shadow-sm flex items-start gap-4 hover:border-${color}-200 dark:hover:border-${color}-800 transition-colors">
+                        <div class="w-10 h-10 rounded-full flex items-center justify-center text-white flex-shrink-0 mt-1 font-black shadow-sm" style="background-color: ${authorColor}">
+                            ${(data.authorName || 'U').substring(0, 1).toUpperCase()}
+                        </div>
+                        <div class="flex-grow">
+                            <div class="flex justify-between items-start mb-1">
+                                <div class="font-black text-slate-900 dark:text-white text-sm">${data.authorName}</div>
+                                ${isUrgent ? `<span class="bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400 text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full flex items-center"><i data-lucide="alert-triangle" class="w-3 h-3 mr-1"></i> Urgent</span>` : ''}
+                            </div>
+                            <div class="text-sm text-slate-600 dark:text-slate-400 mb-2">${data.content}</div>
+                            <div class="text-[10px] font-bold uppercase tracking-widest text-slate-400">Status: ${data.status}</div>
+                        </div>
+                    </div>`;
+                });
+                
+                document.getElementById('statNotesCount').innerText = `${notesCount} notes`;
+                container.innerHTML = notesCount > 0 ? htmlNotes : `<div class="text-center py-8 text-slate-400 font-bold">No notes for this date.</div>`;
+                
+                // Calculate Labor Saved: 15 mins per note
+                const totalMinutesSaved = notesCount * 15;
+                const hoursSaved = (totalMinutesSaved / 60).toFixed(1);
+                document.getElementById('laborSavedCount').innerText = `${hoursSaved}h`;
+                
+                lucide.createIcons();
+            });
 
-        function fetchJoinRequests() {
-            if(!activeOrgId) return;
+            // Fetch Pending Requests
             db.collection('shift_group_requests').where('groupId', '==', activeOrgId).where('status', '==', 'Pending')
               .onSnapshot(snap => {
                   const section = document.getElementById('pendingRequestsSection');
                   const container = document.getElementById('pendingRequestsContainer');
+                  const badge = document.getElementById('pendingRequestsBadge');
+                  
                   if(snap.empty) {
                       section.classList.add('hidden');
+                      badge.classList.add('hidden');
                       return;
                   }
-                  section.classList.remove('hidden');
+                  
+                  badge.innerText = snap.size;
+                  badge.classList.remove('hidden');
+                  
                   let html = '';
                   snap.forEach(doc => {
                       html += `
-                        <div class="flex justify-between items-center p-4 bg-white dark:bg-slate-900 border border-amber-200 dark:border-amber-900/50 rounded-xl">
+                        <div class="flex justify-between items-center p-3 bg-white dark:bg-slate-800 border border-amber-200 dark:border-amber-900/50 rounded-xl shadow-sm">
                             <div>
-                                <div class="font-black text-slate-900 dark:text-white">${doc.data().userName}</div>
-                                <div class="text-xs font-bold uppercase tracking-widest text-slate-500">Requested Access</div>
+                                <div class="font-black text-slate-900 dark:text-white text-sm">${doc.data().userName}</div>
+                                <div class="text-[10px] font-bold uppercase tracking-widest text-amber-500">Requested Access</div>
                             </div>
-                            <button onclick="approveRequest('${doc.id}')" class="btn btn-accent btn-sm px-6">Approve</button>
+                            <button onclick="approveRequest('${doc.id}')" class="btn btn-accent btn-sm py-1 px-4 text-xs">Approve</button>
                         </div>
                       `;
                   });
                   container.innerHTML = html;
               });
+        }
+
+        function togglePendingRequests() {
+            document.getElementById('pendingRequestsSection').classList.toggle('hidden');
+        }
+
+        function showInviteModal() {
+            alert(`Invite Managers by having them download the ezManage app and entering:\nGroup ID: ${activeOrgId}\nPassword: ${activeOrgPass}`);
         }
 
         async function approveRequest(requestId) {
             try {
                 const manageShiftGroups = firebase.functions().httpsCallable('manageShiftGroups');
-                await manageShiftGroups({
-                    action: "approve_join",
-                    payload: { requestId: requestId }
-                });
-                alert("Manager Approved!");
+                await manageShiftGroups({ action: "approve_join", payload: { requestId: requestId } });
             } catch(e) { alert("Failed: " + e.message); }
         }
 
         async function removeManager(userId) {
-            if(!confirm("Remove this manager from the organization? They will lose access to all shared notes and metrics.")) return;
-            try {
-                // To remove a manager securely without a dedicated cloud function, 
-                // the admin removes the orgId from the user doc. 
-                // NOTE: Requires firestore.rules update to allow owner to write to user doc!
-                // For safety in this demo, we'll inform the user it requires backend support.
-                alert("Removing managers requires backend Cloud Function support which is coming in v2!");
-            } catch(e) { console.error(e); }
+            if(!confirm("Remove this manager from the organization?")) return;
+            alert("Removing managers requires backend Cloud Function support which is coming in v2!");
         }
 
-        // --- Metrics Chart ---
-        function renderGlobalMetrics() {
-            if(!activeOrgId) return;
+        function renderGlobalPerformanceChart(allShifts) {
             const ctx = document.getElementById('globalPerformanceChart');
-            if(!ctx) return;
+            if(!ctx || allShifts.length === 0) {
+                document.getElementById('statAvgScore').innerText = '0%';
+                return;
+            }
 
-            // Fetch ALL users in org to aggregate their shift history
-            db.collection('users').where('orgId', '==', activeOrgId).get().then(snap => {
-                let allShifts = [];
-                snap.forEach(doc => {
-                    const h = doc.data().shiftHistory || [];
-                    allShifts = allShifts.concat(h);
+            // Group by date
+            const grouped = {};
+            allShifts.forEach(s => {
+                if(!s.dateSaved) return;
+                if(!grouped[s.dateSaved]) grouped[s.dateSaved] = { totalRoutines: 0, checkedRoutines: 0, count: 0 };
+                grouped[s.dateSaved].count++;
+                (s.routines || []).forEach(r => {
+                    grouped[s.dateSaved].totalRoutines++;
+                    if(r.checked) grouped[s.dateSaved].checkedRoutines++;
                 });
+            });
 
-                if(allShifts.length === 0) return;
+            const sortedDates = Object.keys(grouped).sort();
+            const labels = sortedDates.map(d => d.split('-').slice(-2).join('/')); // MM/DD
+            const scores = sortedDates.map(d => {
+                const g = grouped[d];
+                return g.totalRoutines === 0 ? 0 : Math.round((g.checkedRoutines / g.totalRoutines) * 100);
+            });
 
-                // Group by date
-                const grouped = {};
-                allShifts.forEach(s => {
-                    if(!s.dateSaved) return;
-                    if(!grouped[s.dateSaved]) grouped[s.dateSaved] = { totalRoutines: 0, checkedRoutines: 0, count: 0 };
-                    grouped[s.dateSaved].count++;
-                    (s.routines || []).forEach(r => {
-                        grouped[s.dateSaved].totalRoutines++;
-                        if(r.checked) grouped[s.dateSaved].checkedRoutines++;
-                    });
-                });
+            // Overall average score
+            const overallScore = scores.length > 0 ? Math.round(scores.reduce((a,b)=>a+b,0)/scores.length) : 0;
+            document.getElementById('statAvgScore').innerText = overallScore + '%';
 
-                const sortedDates = Object.keys(grouped).sort();
-                const labels = sortedDates.map(d => d.split('-').slice(-2).join('/')); // MM/DD
-                const scores = sortedDates.map(d => {
-                    const g = grouped[d];
-                    return g.totalRoutines === 0 ? 0 : Math.round((g.checkedRoutines / g.totalRoutines) * 100);
-                });
+            if(globalChartInstance) globalChartInstance.destroy();
 
-                // Overall average score
-                const overallScore = scores.length > 0 ? Math.round(scores.reduce((a,b)=>a+b,0)/scores.length) : 0;
-                document.getElementById('statAvgScore').innerText = overallScore + '%';
+            const isDark = document.documentElement.classList.contains('dark-mode');
+            const textColor = isDark ? '#94a3b8' : '#64748b';
+            const gridColor = isDark ? '#334155' : '#f1f5f9';
 
-                if(globalChartInstance) globalChartInstance.destroy();
-
-                const isDark = document.documentElement.classList.contains('dark-mode');
-                const textColor = isDark ? '#94a3b8' : '#64748b';
-
-                globalChartInstance = new Chart(ctx, {
-                    type: 'bar',
-                    data: {
-                        labels: labels,
-                        datasets: [{
-                            label: 'Avg Routine Completion (%)',
-                            data: scores,
-                            backgroundColor: 'rgba(99, 102, 241, 0.8)',
-                            borderRadius: 6
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        plugins: { legend: { display: false } },
-                        scales: {
-                            y: { beginAtZero: true, max: 100, ticks: { color: textColor } },
-                            x: { ticks: { color: textColor } }
+            globalChartInstance = new Chart(ctx, {
+                type: 'line', // Switched to line for better timeline view
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Completion %',
+                        data: scores,
+                        borderColor: '#6366f1',
+                        backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                        borderWidth: 3,
+                        pointBackgroundColor: '#6366f1',
+                        pointBorderColor: '#ffffff',
+                        pointBorderWidth: 2,
+                        pointRadius: 4,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { 
+                            beginAtZero: true, 
+                            max: 100, 
+                            ticks: { color: textColor, font: { weight: 'bold' } },
+                            grid: { color: gridColor }
+                        },
+                        x: { 
+                            ticks: { color: textColor, font: { weight: 'bold' } },
+                            grid: { display: false }
                         }
                     }
-                });
+                }
             });
         }
     </script>
