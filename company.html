@@ -899,6 +899,10 @@
             }, 100);
 
             try {
+                // Ensure auth state is completely fresh before making the cloud function call
+                if (!auth.currentUser) throw new Error("Local authentication missing. Please log in again.");
+                await auth.currentUser.getIdToken(true);
+
                 // Generate a random password for the group
                 const generatedPassword = Math.random().toString(36).slice(-8);
 
