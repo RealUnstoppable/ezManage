@@ -1043,6 +1043,16 @@
             const workers = document.getElementById('regWorkers').value;
             const aiEnabled = document.getElementById('configAi').checked;
 
+            // Guard: org name must be present
+            if (!orgName) {
+                isRegistering = false;
+                alert("Please enter a workspace name.");
+                transitionSteps('step-config', 'step-2');
+                currentStepIndex = onboardingFlow.indexOf('step-2');
+                updateProgressBar();
+                return;
+            }
+
             // Go to loading screen
             transitionSteps('step-config', 'step-loading');
 
@@ -1059,9 +1069,13 @@
             }, 100);
 
             try {
-                // Ensure auth state is completely fresh before making the cloud function call
-                if (!auth.currentUser) throw new Error("Local authentication missing. Please log in again.");
-                await auth.currentUser.getIdToken(true);
+                // Always pull from auth.currentUser (never the potentially-stale module var)
+                const activeUser = auth.currentUser;
+                if (!activeUser) throw new Error("Session expired. Please refresh and log in again.");
+
+                // Force-refresh the ID token and give the SDK 500ms to propagate it
+                await activeUser.getIdToken(true);
+                await new Promise(resolve => setTimeout(resolve, 500));
 
                 // Generate a random password for the group
                 const generatedPassword = Math.random().toString(36).slice(-8);
@@ -1070,7 +1084,7 @@
                 const result = await manageShiftGroups({
                     action: "create",
                     payload: {
-                        ownerName: currentUser.displayName || currentUser.email.split('@')[0],
+                        ownerName: activeUser.displayName || activeUser.email.split('@')[0],
                         groupName: orgName,
                         password: generatedPassword
                     }
@@ -1079,7 +1093,7 @@
                 const groupId = result.data.groupId;
 
                 // Update user document with orgId, plan, and workers
-                await db.collection('users').doc(currentUser.uid).set({
+                await db.collection('users').doc(activeUser.uid).set({
                     orgId: groupId,
                     plan: selectedPlan,
                     workersCount: workers,
@@ -1101,6 +1115,9 @@
                 bar.style.width = '100%';
                 status.innerText = "Complete!";
 
+                // Update currentUser module var to stay in sync
+                currentUser = activeUser;
+
                 setTimeout(() => {
                     transitionSteps('step-loading', 'step-tutorial');
                     runTutorialAnimation();
@@ -1109,6 +1126,7 @@
             } catch (e) {
                 isRegistering = false;
                 clearInterval(sim);
+                console.error("Workspace creation error:", e);
                 alert("Failed to create workspace: " + e.message);
                 transitionSteps('step-loading', 'step-config');
             }
