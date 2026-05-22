@@ -4,13 +4,23 @@ import * as authModule from '../../js/auth.js';
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
 import { getDoc } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
 
-jest.mock('../../js/auth.js', () => ({
+jest.unstable_mockModule('../../js/auth.js', () => ({
   auth: {},
   db: {},
   getUserRedirectPath: (userData) => userData && userData.isAdmin ? 'admin.html' : 'index.html'
 }));
 
 describe('loadNavbar', () => {
+  beforeAll(() => {
+    window.firebase = {
+        apps: [],
+        initializeApp: jest.fn(),
+        auth: () => ({ onAuthStateChanged: jest.fn() }),
+        firestore: () => ({})
+    };
+    global.firebase = window.firebase;
+  });
+
   beforeEach(() => {
     document.body.innerHTML = '<div class="main-header"></div>';
     jest.clearAllMocks();
