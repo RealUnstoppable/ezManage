@@ -2753,7 +2753,8 @@
                 shifts.push(newShift);
 
                 scheduleRef.set({
-                    uid: currentUser.uid,
+                    authorId: currentUser.uid,
+                    orgId: currentUserData?.orgId || null,
                     date: date,
                     shifts: shifts,
                     updatedAt: firebase.firestore.FieldValue.serverTimestamp()

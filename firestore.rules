@@ -95,6 +95,7 @@ service cloud.firestore {
     // SHIFT NOTES
     match /shift_notes/{noteId} {
       allow read: if request.auth != null && (
+          resource == null ||
           resource.data.authorId == request.auth.uid || 
           (resource.data.orgId != null && resource.data.orgId == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.orgId) ||
           isAdmin()
@@ -120,6 +121,7 @@ service cloud.firestore {
     // MAINTENANCE LOGS
     match /maintenance_logs/{logId} {
       allow read: if request.auth != null && (
+          resource == null ||
           resource.data.reportedByUid == request.auth.uid ||
           (resource.data.orgId != null && resource.data.orgId == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.orgId) ||
           isAdmin()
@@ -138,6 +140,7 @@ service cloud.firestore {
     // SCHEDULES
     match /schedules/{scheduleId} {
       allow read: if request.auth != null && (
+          resource == null ||
           resource.data.authorId == request.auth.uid ||
           (resource.data.orgId != null && resource.data.orgId == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.orgId) ||
           isAdmin()
