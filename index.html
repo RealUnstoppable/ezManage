@@ -1376,6 +1376,9 @@
 
         if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
         const auth = firebase.auth();
+        firebase.firestore().settings({
+            experimentalForceLongPolling: true
+        });
         const db = firebase.firestore();
         db.settings({ experimentalForceLongPolling: true });
         const cloudFunctions = firebase.functions();
@@ -2579,6 +2582,7 @@
             } catch (error) {
                 console.error("Error submitting ticket:", error);
                 if (error.code === 'unavailable' || error.code === 'auth/network-request-failed') {
+                    alert("Network error: Could not connect to the server. Please check your connection.");
                     alert("Network error: Could not submit maintenance ticket.");
                 } else {
                     alert("Failed to submit ticket. " + error.message);
@@ -2743,6 +2747,8 @@
                 }
                 shifts.push(newShift);
 
+                await scheduleRef.set({
+                    uid: currentUser.uid,
                 try {
                     await scheduleRef.set({
                         uid: currentUser.uid,
@@ -2773,6 +2779,12 @@
                 role.value = 'Cashier';
                 startTime.value = '';
                 endTime.value = '';
+            } catch(err) {
+                console.error("Error saving shift", err);
+                if (err.code === 'unavailable' || err.code === 'auth/network-request-failed') {
+                    alert("Network error: Could not connect to the server. Please check your connection.");
+                } else {
+                    alert("Failed to save shift: " + err.message);
             } catch (err) {
                 if (err.code === 'unavailable' || err.code === 'auth/network-request-failed') {
                     alert("Network error: Please check your connection.");
@@ -3092,6 +3104,7 @@
             document.getElementById('shiftNoteContent').value = "";
 
             try {
+                // To allow client-side writes since cloud functions were failing for some users
                 const manageShiftNotes = firebase.functions().httpsCallable('manageShiftNotes');
                 const result = await manageShiftNotes({
                     action: "create",
@@ -3108,6 +3121,19 @@
                     priority: priority,
                     status: 'Active',
                     orgId: currentUserData.orgId,
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                document.getElementById('shiftNoteContent').value = "";
+                fetchShiftNotes();
+
+            } catch (err) {
+                console.error("Error posting note", err);
+                if (err.code === 'unavailable' || err.code === 'auth/network-request-failed') {
+                    alert("Network error: Could not connect to the server. Please check your connection.");
+                } else {
+                    alert("Failed to post note: " + err.message);
+                }
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
                 document.getElementById('shiftNoteContent').value = "";
