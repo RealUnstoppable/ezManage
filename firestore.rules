@@ -138,6 +138,7 @@ service cloud.firestore {
           isAdmin()
       );
       allow create: if request.auth != null
+                    && request.resource.data.reportedByUid == request.auth.uid;
                     && request.resource.data.get('reportedByUid', null) == request.auth.uid
                     && request.resource.data.get('orgId', null) == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('orgId', null);
       allow update: if request.auth != null && (
@@ -151,6 +152,16 @@ service cloud.firestore {
     // SCHEDULES
     match /schedules/{scheduleId} {
       allow read: if request.auth != null && (
+          resource.data.uid == request.auth.uid ||
+          isAdmin()
+      );
+      allow create: if request.auth != null
+                    && request.resource.data.uid == request.auth.uid;
+      allow update: if request.auth != null && (
+          resource.data.uid == request.auth.uid ||
+          isAdmin()
+      );
+      allow delete: if request.auth != null && (resource.data.uid == request.auth.uid || isAdmin());
           resource.data.get('uid', null) == request.auth.uid ||
           resource.data.get('authorId', null) == request.auth.uid ||
           (resource.data.get('orgId', null) != null && resource.data.get('orgId', null) == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('orgId', null)) ||

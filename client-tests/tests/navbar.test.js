@@ -1,4 +1,6 @@
 import { jest } from "@jest/globals";
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
+import { getDoc } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
 
 jest.unstable_mockModule('../../js/auth.js', () => ({
   auth: {},
