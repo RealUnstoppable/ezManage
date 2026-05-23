@@ -157,7 +157,7 @@
                 </div>
             </div>
             <div class="flex items-center gap-4">
-                <button onclick="toggleTheme()"
+                <button onclick="toggleTheme()" aria-label="Toggle Theme"
                     class="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
                     <i data-lucide="moon" id="themeIcon"></i>
                 </button>
@@ -689,11 +689,34 @@
         if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
         const auth = firebase.auth();
         const db = firebase.firestore();
+        db.settings({ experimentalForceLongPolling: true });
 
         let currentUser = null;
         let activeOrgId = null;
         let activeOrgPass = null;
         let globalChartInstance = null;
+
+        // --- Cloud Function Caller (bypasses callable SDK token-attachment bugs) ---
+        const FUNCTIONS_BASE = 'https://us-central1-dts-hub-website.cloudfunctions.net';
+        async function callFunction(name, data) {
+            const user = auth.currentUser;
+            if (!user) throw new Error('User must be logged in.');
+            const token = await user.getIdToken(true);
+            console.log("DEBUG CLIENT: token type:", typeof token, "length:", token ? token.length : 0, "value starts with:", token ? token.substring(0, 15) : "null");
+            const res = await fetch(`${FUNCTIONS_BASE}/${name}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + token
+                },
+                body: JSON.stringify({ data })
+            });
+            const json = await res.json();
+            if (!res.ok || json.error) {
+                throw new Error((json.error && json.error.message) || `Function call failed (${res.status})`);
+            }
+            return json.result !== undefined ? { data: json.result } : { data: json };
+        }
 
         // --- Theme Management ---
         function toggleTheme() {
@@ -937,6 +960,9 @@
             try {
                 const cred = await auth.createUserWithEmailAndPassword(email, pass);
 
+                // Ensure auth state is completely fresh before making the cloud function call
+                await cred.user.getIdToken(true);
+
                 // Initialize user doc FIRST so the Cloud Function can update it
                 await db.collection('users').doc(cred.user.uid).set({
                     email: email,
@@ -946,13 +972,12 @@
                 });
 
                 // For a Corporate Workspace, we create a shift_group and make them the owner
-                const manageShiftGroups = firebase.functions().httpsCallable('manageShiftGroups');
-                const result = await manageShiftGroups({
+                const result = await callFunction('manageShiftGroups', {
                     action: "create",
                     payload: {
                         ownerName: email.split('@')[0],
                         groupName: orgName,
-                        password: pass // Set group password to admin password for simplicity
+                        password: pass
                     }
                 });
 
@@ -1020,7 +1045,7 @@
                     <span class="font-bold text-sm">${role.email}</span>
                     <div class="flex items-center gap-3">
                         <span class="text-xs uppercase tracking-widest font-black text-slate-400">${role.priority}</span>
-                        <button onclick="removeOnboardingRole(${i})" class="text-red-400 hover:text-red-500"><i data-lucide="x" class="w-4 h-4"></i></button>
+                        <button onclick="removeOnboardingRole(${i})" aria-label="Remove role" class="text-red-400 hover:text-red-500"><i data-lucide="x" class="w-4 h-4"></i></button>
                     </div>
                 </div>
             `).join('');
@@ -1040,8 +1065,19 @@
             const workers = document.getElementById('regWorkers').value;
             const aiEnabled = document.getElementById('configAi').checked;
 
-            // Go to loading screen
+            // Guard: org name must be present
+            if (!orgName) {
+                isRegistering = false;
+                alert("Please enter a workspace name.");
+                transitionSteps('step-config', 'step-2');
+                currentStepIndex = onboardingFlow.indexOf('step-2');
+                updateProgressBar();
+                return;
+            }
+
+            // Go to loading screen and sync the step index
             transitionSteps('step-config', 'step-loading');
+            currentStepIndex = onboardingFlow.indexOf('step-loading');
 
             // Start simulated loading animation
             const bar = document.getElementById('tutorialProgressBar');
@@ -1056,18 +1092,29 @@
             }, 100);
 
             try {
-                // Ensure auth state is completely fresh before making the cloud function call
-                if (!auth.currentUser) throw new Error("Local authentication missing. Please log in again.");
-                await auth.currentUser.getIdToken(true);
+                // Always pull from auth.currentUser (never the potentially-stale module var)
+                const activeUser = auth.currentUser;
+                if (!activeUser) throw new Error("Session expired. Please refresh and log in again.");
+
+                // Force-refresh the ID token and give the SDK 500ms to propagate it
+                await activeUser.getIdToken(true);
+                await new Promise(resolve => setTimeout(resolve, 500));
+
+                // Pre-create / ensure the user document exists so the Cloud Function
+                // can use .update() on it without throwing "No document to update".
+                await db.collection('users').doc(activeUser.uid).set({
+                    email: activeUser.email,
+                    role: 'CorporateAdmin',
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                }, { merge: true });
 
                 // Generate a random password for the group
                 const generatedPassword = Math.random().toString(36).slice(-8);
 
-                const manageShiftGroups = firebase.functions().httpsCallable('manageShiftGroups');
-                const result = await manageShiftGroups({
+                const result = await callFunction('manageShiftGroups', {
                     action: "create",
                     payload: {
-                        ownerName: currentUser.displayName || currentUser.email.split('@')[0],
+                        ownerName: activeUser.displayName || activeUser.email.split('@')[0],
                         groupName: orgName,
                         password: generatedPassword
                     }
@@ -1076,7 +1123,7 @@
                 const groupId = result.data.groupId;
 
                 // Update user document with orgId, plan, and workers
-                await db.collection('users').doc(currentUser.uid).set({
+                await db.collection('users').doc(activeUser.uid).set({
                     orgId: groupId,
                     plan: selectedPlan,
                     workersCount: workers,
@@ -1098,16 +1145,24 @@
                 bar.style.width = '100%';
                 status.innerText = "Complete!";
 
+                // Update currentUser module var to stay in sync
+                currentUser = activeUser;
+
                 setTimeout(() => {
                     transitionSteps('step-loading', 'step-tutorial');
+                    currentStepIndex = onboardingFlow.indexOf('step-tutorial');
                     runTutorialAnimation();
                 }, 1000);
 
             } catch (e) {
+                // Reset state so the user can retry
                 isRegistering = false;
                 clearInterval(sim);
+                console.error("Workspace creation error:", e);
                 alert("Failed to create workspace: " + e.message);
                 transitionSteps('step-loading', 'step-config');
+                currentStepIndex = onboardingFlow.indexOf('step-config');
+                updateProgressBar();
             }
         }
 
@@ -1134,8 +1189,12 @@
         }
 
         function finishTutorial() {
+            // Use auth.currentUser to avoid relying on the potentially-stale module var.
+            // Also clear isRegistering so future auth state changes work normally.
+            isRegistering = false;
+            const userToInit = auth.currentUser || currentUser;
             document.getElementById('view-register').classList.remove('active');
-            initializeCorporateWorkspace(currentUser);
+            initializeCorporateWorkspace(userToInit);
         }
 
 
@@ -1229,7 +1288,7 @@
                             </select>
                         </td>
                         <td class="px-6 py-3 text-right">
-                            ${!isOwner ? `<button onclick="removeManager('${doc.id}')" class="text-slate-400 hover:text-red-500 transition-colors"><i data-lucide="trash-2" class="w-4 h-4"></i></button>` : `<span class="text-slate-300">-</span>`}
+                            ${!isOwner ? `<button onclick="removeManager('${doc.id}')" aria-label="Remove manager" class="text-slate-400 hover:text-red-500 transition-colors"><i data-lucide="trash-2" class="w-4 h-4"></i></button>` : `<span class="text-slate-300">-</span>`}
                         </td>
                     </tr>`;
 
@@ -1352,8 +1411,7 @@
 
         async function approveRequest(requestId) {
             try {
-                const manageShiftGroups = firebase.functions().httpsCallable('manageShiftGroups');
-                await manageShiftGroups({ action: "approve_join", payload: { requestId: requestId } });
+                await callFunction('manageShiftGroups', { action: "approve_join", payload: { requestId } });
             } catch (e) { alert("Failed: " + e.message); }
         }
 
