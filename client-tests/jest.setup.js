@@ -8,3 +8,12 @@ window.firebase = {
     initializeApp: jest.fn()
 };
 global.firebase = window.firebase;
+global.firebase = {
+  apps: [],
+  initializeApp: jest.fn(),
+  auth: () => ({
+    onAuthStateChanged: jest.fn()
+  }),
+  firestore: () => ({})
+};
+window.firebase = global.firebase;
