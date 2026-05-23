@@ -19,9 +19,14 @@ if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
 
 export const auth = firebase.auth();
 export const db = firebase.firestore();
+db.settings({ experimentalForceLongPolling: true });
 
 export function getUserRedirectPath(userData) {
     return userData && userData.isAdmin ? 'admin.html' : 'index.html';
+}
+
+export async function fetchUserDoc(uid) {
+    return await db.collection("users").doc(uid).get();
 }
 
 const ADMIN_EMAIL = null;
@@ -31,12 +36,9 @@ auth.onAuthStateChanged(async (user) => {
     const membershipStatusContainer = document.getElementById('membership-status-container');
 
     if (user) {
-
         try {
-            const userDocRef = doc(db, "users", user.uid);
-            const userDoc = await getDoc(userDocRef);
-
-            if (userDoc.exists()) {
+            const userDoc = await fetchUserDoc(user.uid);
+            if (userDoc.exists) {
                 const userData = userDoc.data();
                 const destination = getUserRedirectPath(userData);
 
@@ -54,7 +56,6 @@ auth.onAuthStateChanged(async (user) => {
             console.error("Error fetching user document in auth state change:", error);
         }
     } else {
-
         if (authLink) {
             authLink.href = 'sign in beta.html';
             authLink.textContent = "Sign In / Sign Up";
