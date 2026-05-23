@@ -1,5 +1,6 @@
 const functions = require("firebase-functions");
-const { onRequest, onCall, HttpsError } = require("firebase-functions/v2/https");
+const { onRequest } = require("firebase-functions/v2/https");
+const HttpsError = functions.https.HttpsError;
 const admin = require("firebase-admin");
 const cors = require("cors")({ origin: true });
 
@@ -170,11 +171,14 @@ exports.cancelSubscription = onRequest({ invoker: "public" }, (req, res) => {
  * Manage Shift Notes API
  * Handles creation, updating, and resolution of shift notes.
  */
-exports.manageShiftNotes = onCall({ invoker: "public" }, async (request) => {
-  const data = request.data;
-  const context = request;
+exports.manageShiftNotes = functions.https.onCall(async (data, context) => {
+  // Gracefully adapt between Gen 1 (data, context) and Gen 2 (request) parameters
+  if (data && typeof data === "object" && "rawRequest" in data && "auth" in data) {
+    context = data;
+    data = data.data;
+  }
 
-  if (!context.auth) {
+  if (!context || !context.auth) {
     throw new HttpsError(
         "unauthenticated", "User must be logged in.");
   }
@@ -267,11 +271,14 @@ exports.manageShiftNotes = onCall({ invoker: "public" }, async (request) => {
  * Manage Shift Groups API
  * Handles creating groups, joining groups, and approving joins.
  */
-exports.manageShiftGroups = onCall({ invoker: "public" }, async (request) => {
-  const data = request.data;
-  const context = request;
+exports.manageShiftGroups = functions.https.onCall(async (data, context) => {
+  // Gracefully adapt between Gen 1 (data, context) and Gen 2 (request) parameters
+  if (data && typeof data === "object" && "rawRequest" in data && "auth" in data) {
+    context = data;
+    data = data.data;
+  }
 
-  if (!context.auth) {
+  if (!context || !context.auth) {
     throw new HttpsError(
         "unauthenticated", "User must be logged in.");
   }
@@ -307,9 +314,9 @@ exports.manageShiftGroups = onCall({ invoker: "public" }, async (request) => {
           .add(newGroup);
 
       // Automatically set the owner's orgId to the new group ID
-      await admin.firestore().collection("users").doc(uid).update({
+      await admin.firestore().collection("users").doc(uid).set({
         orgId: docRef.id,
-      });
+      }, {merge: true});
 
       return {success: true, groupId: docRef.id};
     }
@@ -347,6 +354,27 @@ exports.manageShiftGroups = onCall({ invoker: "public" }, async (request) => {
       return {success: true};
     }
 
+    // Retract a join request
+    if (action === "retract_join") {
+      const {requestId} = payload;
+      if (!requestId) {
+        throw new HttpsError("invalid-argument", "Missing requestId");
+      }
+      const requestDocRef = admin.firestore().collection("shift_group_requests").doc(requestId);
+      const requestDoc = await requestDocRef.get();
+      
+      if (!requestDoc.exists) {
+        throw new HttpsError("not-found", "Request not found");
+      }
+      
+      if (requestDoc.data().userId !== uid) {
+        throw new HttpsError("permission-denied", "You can only retract your own requests.");
+      }
+      
+      await requestDocRef.delete();
+      return {success: true};
+    }
+
     // Approve a join request
     if (action === "approve_join") {
       const {requestId} = payload;
@@ -376,9 +404,9 @@ exports.manageShiftGroups = onCall({ invoker: "public" }, async (request) => {
       }
 
       // Update the requesting user's orgId
-      await admin.firestore().collection("users").doc(userId).update({
+      await admin.firestore().collection("users").doc(userId).set({
         orgId: groupId,
-      });
+      }, {merge: true});
 
       // Update request status
       await requestDocRef.update({

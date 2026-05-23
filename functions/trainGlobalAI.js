@@ -1,21 +1,9 @@
 const { getDayOfWeek, parseNum } = require("./utils");
 const {onSchedule} = require("firebase-functions/v2/scheduler");
 const admin = require("firebase-admin");
-const { parseNum, getDayOfWeek } = require("./utils");
 
 exports.trainGlobalAI = onSchedule("every 24 hours", async (event) => {
   console.log("Starting Global AI Training...");
-  try {
-    const snapshot = await admin.firestore().collection("users")
-        .where("cloudSyncEnabled", "==", true)
-        .where("aiTrainingEnabled", "==", true)
-        .get();
-
-    if (snapshot.empty) {
-      console.log("No users opted into AI training.");
-      return null;
-    }
-
   try {
     const snapshot = await admin.firestore().collection("users")
         .where("cloudSyncEnabled", "==", true)
@@ -31,13 +19,17 @@ exports.trainGlobalAI = onSchedule("every 24 hours", async (event) => {
     const maxValues = {};
     const allHistory = [];
 
+    snapshot.forEach((doc) => {
+      const data = doc.data();
+      if (data.shiftHistory && Array.isArray(data.shiftHistory)) {
+        allHistory.push(...data.shiftHistory);
+      }
+    });
 
-  if (allHistory.length < 3) {
-    console.log("Not enough global data to train.");
-    return null;
-  }
-
-  const { parseNum, getDayOfWeek } = require("./utils.js");
+    if (allHistory.length < 3) {
+      console.log("Not enough global data to train.");
+      return null;
+    }
 
   // 1. Find Max Values
   allHistory.forEach((shift) => {
@@ -111,4 +103,8 @@ exports.trainGlobalAI = onSchedule("every 24 hours", async (event) => {
 
   console.log("Global AI Training completed and saved.");
   return true;
+  } catch (err) {
+    console.error("Training error:", err);
+    return null;
+  }
 });

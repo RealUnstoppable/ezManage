@@ -9,18 +9,11 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script type="module">
-        import { parseNum } from './js/utils/parseUtils.js';
-        window.parseNum = parseNum;
-    </script>
+
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
-    <script type="module">
-        import { parseNum, escapeHTML } from '/js/utils.js';
-        window.parseNum = parseNum;
-        window.escapeHTML = escapeHTML;
-    </script>
+
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         :root {
@@ -208,12 +201,14 @@
     </main>
 </div>
 
-<script type="module">
-    import { parseNum, getDayOfWeek } from "./js/utils.js";
-    window.parseNum = parseNum;
-    window.getDayOfWeek = getDayOfWeek;
-</script>
+
 <script>
+    function parseNum(val) {
+        if (!val) return 0;
+        const parsed = parseFloat(val.toString().replace(/[^0-9.]/g, ""));
+        return isNaN(parsed) ? 0 : parsed;
+    }
+
     const firebaseConfig = {
         apiKey: "AIzaSyBgrI9HwJPSc5b4pu2Egsv4DE7shNwptSw",
         authDomain: "dts-hub-website.firebaseapp.com",
@@ -225,6 +220,7 @@
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     const db   = firebase.firestore();
+    db.settings({ experimentalForceLongPolling: true });
 
     const ADMIN_EMAIL = 'catalinandrian1@gmail.com';
 
@@ -242,8 +238,14 @@
     auth.onAuthStateChanged(user => {
         if (!user) { document.getElementById('gate').style.display = 'flex'; document.getElementById('app').style.display = 'none'; return; }
         if (user.email !== ADMIN_EMAIL) {
-            auth.signOut();
-            document.getElementById('gateErr').textContent = 'Access denied. Admin only.';
+            document.getElementById('gate').style.display = 'flex';
+            document.getElementById('app').style.display = 'none';
+            document.getElementById('gate').innerHTML = `
+                <div style="font-size:2.5rem; margin-bottom:4px;">⛔</div>
+                <h1>Access Denied</h1>
+                <p>This panel is restricted to Administrators only.</p>
+                <button onclick="window.location.href='index.html'" style="margin-top:16px;">Return to Main App</button>
+            `;
             return;
         }
         document.getElementById('gate').style.display = 'none';

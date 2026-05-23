@@ -10,7 +10,7 @@
     <link rel="icon" type="image/jpeg" href="ManagerPro.jpg">
     <link rel="apple-touch-icon" href="ManagerPro.jpg">
 
-    <meta name="apple-mobile-web-app-capable" content="yes">
+
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="ezManage">
 
@@ -248,11 +248,11 @@
 
         #sidebar {
             transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            transform: translateX(-100%);
+            transform: translateX(-100%) !important;
         }
 
         #sidebar.open {
-            transform: translateX(0);
+            transform: translateX(0) !important;
         }
 
         @media print {
@@ -935,6 +935,12 @@
                     </div>
                 </div>
 
+                <div id="mySentRequestsPanel" class="hidden mb-8">
+                    <h3 class="text-sm font-black text-slate-500 uppercase tracking-widest mb-3">My Pending Join
+                        Requests</h3>
+                    <div id="mySentRequestsContainer" class="space-y-2"></div>
+                </div>
+
                 <div id="createGroupModal"
                     class="hidden bg-white dark:bg-slate-900 rounded-3xl p-6 md:p-8 shadow-sm border border-slate-100 dark:border-slate-800 mb-12">
                     <h2 class="text-xl font-bold mb-4">Create a Management Group</h2>
@@ -1371,9 +1377,10 @@
         if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
         const auth = firebase.auth();
         const db = firebase.firestore();
+        db.settings({ experimentalForceLongPolling: true });
         const cloudFunctions = firebase.functions();
 
-        db.enablePersistence({ synchronizeTabs: true }).catch(err => console.error("Offline sync error:", err));
+        db.enablePersistence().catch(err => console.error("Offline sync error:", err));
 
         let currentUser = null;
         function escapeHTML(str) {
@@ -1397,6 +1404,7 @@
 
         // Legal & Privacy Settings
         let cloudSyncEnabled = false;
+        let isInitializingAuth = true;
 
 
 
@@ -1476,6 +1484,7 @@
                 initialDraftLoaded = false;
                 cloudSyncEnabled = false;
                 updateCloudSyncUI();
+                isInitializingAuth = false;
             }
         });
 
@@ -1999,7 +2008,7 @@
             Object.keys(grouped).sort().reverse().forEach(key => {
                 const groupContainer = document.createElement('div');
                 groupContainer.className = "mb-4 bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden";
-                
+
                 const groupHeader = document.createElement('div');
                 groupHeader.className = "px-6 py-4 flex justify-between items-center cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors";
                 groupHeader.innerHTML = `
@@ -2009,10 +2018,10 @@
                         <i data-lucide="chevron-down" class="w-5 h-5 text-slate-400 transition-transform duration-200"></i>
                     </div>
                 `;
-                
+
                 const groupContent = document.createElement('div');
                 groupContent.className = "hidden px-6 pb-4 pt-2 border-t border-slate-100 dark:border-slate-800 space-y-3";
-                
+
                 groupHeader.onclick = () => {
                     groupContent.classList.toggle('hidden');
                     const icon = groupHeader.querySelector('[data-lucide="chevron-down"]');
@@ -2022,7 +2031,7 @@
                         icon.style.transform = 'rotate(180deg)';
                     }
                 };
-                
+
                 grouped[key].forEach(data => {
                     const div = document.createElement('div');
                     div.className = "flex justify-between items-center p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl hover:bg-sky-50 dark:hover:bg-sky-900/20 transition-colors group";
@@ -2044,7 +2053,7 @@
                     div.querySelector('.history-delete').onclick = (e) => { e.stopPropagation(); deleteHistoryShift(data.id); };
                     groupContent.appendChild(div);
                 });
-                
+
                 groupContainer.appendChild(groupHeader);
                 groupContainer.appendChild(groupContent);
                 container.appendChild(groupContainer);
@@ -2148,7 +2157,7 @@
         function renderPerformanceChart(history) {
             const ctx = document.getElementById('performanceChart');
             if (!ctx) return;
-            
+
             const sorted = [...history].reverse();
             const labels = sorted.map(h => (h.dateSaved || 'Unknown').split('-').slice(-2).join('/'));
             const durations = sorted.map(h => h.durationMins || 0);
@@ -2555,7 +2564,7 @@
                     status: 'Open',
                     reportedByUid: currentUser.uid,
                     reportedByName: currentUserData.name || currentUser.email,
-                    orgId: currentUserData.orgId,
+                    orgId: currentUserData.orgId || null,
                     createdAt: firebase.firestore.FieldValue.serverTimestamp(),
                     updatedAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
@@ -2569,7 +2578,11 @@
                 fetchMaintenanceTickets();
             } catch (error) {
                 console.error("Error submitting ticket:", error);
-                alert("Failed to submit ticket. " + error.message);
+                if (error.code === 'unavailable' || error.code === 'auth/network-request-failed') {
+                    alert("Network error: Could not submit maintenance ticket.");
+                } else {
+                    alert("Failed to submit ticket. " + error.message);
+                }
             } finally {
                 submitBtn.innerHTML = originalText;
                 submitBtn.disabled = false;
@@ -2699,7 +2712,7 @@
             });
         }
 
-        function addShiftToSchedule() {
+        async function addShiftToSchedule() {
             const dateInput = document.getElementById('scheduleDate');
             const empName = document.getElementById('shiftEmpName');
             const role = document.getElementById('shiftRole');
@@ -2721,27 +2734,52 @@
             const date = dateInput.value;
             const scheduleRef = db.collection('schedules').doc(`${currentUser.uid}_${date}`);
 
-            scheduleRef.get().then(doc => {
+            scheduleRef.get().then(async doc => {
+            try {
+                const doc = await scheduleRef.get();
                 let shifts = [];
                 if (doc.exists) {
                     shifts = doc.data().shifts || [];
                 }
                 shifts.push(newShift);
 
-                scheduleRef.set({
-                    uid: currentUser.uid,
-                    date: date,
-                    shifts: shifts,
-                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-                }, { merge: true }).then(() => {
+                try {
+                    await scheduleRef.set({
+                        uid: currentUser.uid,
+                        orgId: currentUserData.orgId || null,
+                        date: date,
+                        shifts: shifts,
+                        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    }, { merge: true });
                     empName.value = '';
                     role.value = 'Cashier';
                     startTime.value = '';
                     endTime.value = '';
-                }).catch(err => {
+                } catch(err) {
                     console.error("Error saving shift", err);
-                });
+                }
             });
+                await scheduleRef.set({
+                    uid: currentUser.uid,
+                scheduleRef.set({
+                    authorId: currentUser.uid,
+                    orgId: currentUserData?.orgId || null,
+                    date: date,
+                    shifts: shifts,
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                }, { merge: true });
+
+                empName.value = '';
+                role.value = 'Cashier';
+                startTime.value = '';
+                endTime.value = '';
+            } catch (err) {
+                if (err.code === 'unavailable' || err.code === 'auth/network-request-failed') {
+                    alert("Network error: Please check your connection.");
+                } else {
+                    console.error("Error saving shift", err);
+                }
+            }
         }
 
         let unsubscribeSchedule = null;
@@ -2793,21 +2831,25 @@
                 });
         }
 
-        function removeShift(index) {
+        async function removeShift(index) {
             const dateInput = document.getElementById('scheduleDate');
             if (!dateInput || !dateInput.value) return;
 
             const date = dateInput.value;
             const scheduleRef = db.collection('schedules').doc(`${currentUser.uid}_${date}`);
 
-            scheduleRef.get().then(doc => {
+            try {
+                const doc = await scheduleRef.get();
+            scheduleRef.get().then(async doc => {
                 if (doc.exists) {
                     const data = doc.data();
                     let shifts = data.shifts || [];
                     shifts.splice(index, 1);
-                    scheduleRef.update({ shifts: shifts });
+                    await scheduleRef.update({ shifts: shifts });
                 }
-            });
+            } catch (error) {
+                console.error("Error removing shift:", error);
+            }
         }
 
 
@@ -2869,11 +2911,13 @@
                 `;
                 postArea.classList.add('hidden');
                 lucide.createIcons();
+                fetchMySentRequests();
                 return false;
             }
 
             // User is in an org
             postArea.classList.remove('hidden');
+            fetchMySentRequests();
 
             // If they are the owner, show the request panel logic
             db.collection('shift_groups').doc(currentUserData.orgId).get().then(doc => {
@@ -3057,13 +3101,25 @@
                         priority: priority,
                         orgId: currentUserData.orgId
                     }
+                await db.collection('shift_notes').add({
+                    authorId: currentUser.uid,
+                    authorName: currentUser.email.split('@')[0],
+                    content: content,
+                    priority: priority,
+                    status: 'Active',
+                    orgId: currentUserData.orgId,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
-                if (result.data.success) {
-                    document.getElementById('shiftNoteContent').value = "";
-                    fetchShiftNotes();
-                }
+                document.getElementById('shiftNoteContent').value = "";
+                fetchShiftNotes();
             } catch (err) {
-                alert("Failed to post note: " + err.message);
+                console.error(err);
+                if (err.code === 'unavailable' || err.code === 'auth/network-request-failed') {
+                    alert("Network error: Could not submit shift note.");
+                } else {
+                    alert("Failed to submit shift note. " + err.message);
+                }
+                noteDiv.remove(); // revert optimistic UI
             }
         }
 
@@ -3177,6 +3233,51 @@
                         container.appendChild(div);
                     });
                 });
+        }
+
+        function fetchMySentRequests() {
+            if (window.mySentRequestsUnsubscribe) window.mySentRequestsUnsubscribe();
+            if (!currentUser) return;
+            window.mySentRequestsUnsubscribe = db.collection('shift_group_requests')
+                .where('userId', '==', currentUser.uid)
+                .where('status', '==', 'Pending')
+                .onSnapshot(snap => {
+                    const panel = document.getElementById('mySentRequestsPanel');
+                    const container = document.getElementById('mySentRequestsContainer');
+                    if (!panel) return;
+                    if (snap.empty) {
+                        panel.classList.add('hidden');
+                        return;
+                    }
+                    panel.classList.remove('hidden');
+                    container.innerHTML = '';
+                    snap.forEach(doc => {
+                        const data = doc.data();
+                        const div = document.createElement('div');
+                        div.className = "flex justify-between items-center bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border border-slate-200 dark:border-slate-700";
+                        div.innerHTML = `
+                            <div>
+                                <p class="font-bold text-sm">Group ID: ${escapeHTML(data.groupId)}</p>
+                                <p class="text-xs text-slate-500">Awaiting approval</p>
+                            </div>
+                            <button onclick="retractGroupRequest('${escapeHTML(doc.id)}')" class="btn btn-outline btn-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20">Retract</button>
+                        `;
+                        container.appendChild(div);
+                    });
+                });
+        }
+
+        async function retractGroupRequest(requestId) {
+            try {
+                const manageShiftGroups = firebase.functions().httpsCallable('manageShiftGroups');
+                await manageShiftGroups({
+                    action: "retract_join",
+                    payload: { requestId: requestId }
+                });
+                alert("Request Retracted!");
+            } catch (e) {
+                alert("Failed to retract: " + e.message);
+            }
         }
 
         async function approveGroupRequest(requestId) {

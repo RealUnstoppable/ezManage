@@ -15,6 +15,7 @@
     </script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -110,27 +111,54 @@
         }
 
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(5px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(5px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Autofill Styling */
+        input:-webkit-autofill,
+        input:-webkit-autofill:hover,
+        input:-webkit-autofill:focus,
+        input:-webkit-autofill:active {
+            -webkit-box-shadow: 0 0 0 30px white inset !important;
+        }
+
+        .dark-mode input:-webkit-autofill,
+        .dark-mode input:-webkit-autofill:hover,
+        .dark-mode input:-webkit-autofill:focus,
+        .dark-mode input:-webkit-autofill:active {
+            -webkit-box-shadow: 0 0 0 30px #1e293b inset !important;
+            -webkit-text-fill-color: white !important;
         }
     </style>
 </head>
 
 <body class="min-h-screen relative">
     <!-- Navbar -->
-    <nav class="fixed top-0 w-full z-50 bg-white/80 dark:bg-slate-950/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 transition-colors">
+    <nav
+        class="fixed top-0 w-full z-50 bg-white/80 dark:bg-slate-950/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 transition-colors">
         <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
             <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white shadow-lg">
+                <div
+                    class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white shadow-lg">
                     <i data-lucide="building-2" class="w-6 h-6"></i>
                 </div>
                 <div>
-                    <h1 class="font-black text-xl tracking-tight leading-none text-slate-900 dark:text-white">ezManage</h1>
+                    <h1 class="font-black text-xl tracking-tight leading-none text-slate-900 dark:text-white">ezManage
+                    </h1>
                     <div class="text-[10px] font-black uppercase tracking-widest text-indigo-500">Corporate Portal</div>
                 </div>
             </div>
             <div class="flex items-center gap-4">
-                <button onclick="toggleTheme()" class="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                <button onclick="toggleTheme()" aria-label="Toggle Theme"
+                    class="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
                     <i data-lucide="moon" id="themeIcon"></i>
                 </button>
                 <div id="authContainer">
@@ -150,145 +178,493 @@
                     <h2 class="text-3xl font-black mb-2">Corporate Login</h2>
                     <p class="text-slate-500">Manage your stores, managers, and insights from one central dashboard.</p>
                 </div>
-                <div class="card space-y-4 p-8">
-                    <input type="email" id="loginEmail" placeholder="Corporate Email" class="w-full bg-slate-50 dark:bg-slate-800 p-4 rounded-xl border-none focus:ring-2 focus:ring-indigo-500">
-                    <input type="password" id="loginPass" placeholder="Password" class="w-full bg-slate-50 dark:bg-slate-800 p-4 rounded-xl border-none focus:ring-2 focus:ring-indigo-500">
-                    <button onclick="handleLogin()" class="btn btn-primary w-full py-4 text-lg">Sign In</button>
+                <form onsubmit="handleLogin(event)" class="card space-y-4 p-8">
+                    <input type="email" id="loginEmail" required placeholder="Corporate Email"
+                        class="w-full bg-slate-50 dark:bg-slate-800 p-4 rounded-xl border-none focus:ring-2 focus:ring-indigo-500">
+                    <input type="password" id="loginPass" required placeholder="Password"
+                        class="w-full bg-slate-50 dark:bg-slate-800 p-4 rounded-xl border-none focus:ring-2 focus:ring-indigo-500">
+                    <button type="submit" class="btn btn-primary w-full py-4 text-lg">Sign In</button>
                     <div class="text-center pt-4">
-                        <button onclick="navTo('register')" class="text-sm font-bold text-indigo-500 hover:text-indigo-600">Need a corporate account? Create Organization</button>
+                        <button onclick="navTo('register')"
+                            class="text-sm font-bold text-indigo-500 hover:text-indigo-600">Need a corporate account?
+                            Create Organization</button>
                     </div>
-                </div>
+                </form>
             </div>
         </div>
 
-        <!-- REGISTER VIEW -->
-        <div id="view-register" class="view-section px-4">
-            <div class="max-w-md mx-auto mt-20">
-                <div class="text-center mb-10">
-                    <h2 class="text-3xl font-black mb-2">Create Organization</h2>
-                    <p class="text-slate-500">Set up your corporate workspace.</p>
+        <!-- REGISTER VIEW (ONBOARDING) -->
+        <div id="view-register" class="view-section px-4 h-[80vh] flex flex-col justify-center">
+            <div class="max-w-xl mx-auto w-full relative">
+                <!-- Progress Bar -->
+                <div id="onboardingProgressContainer"
+                    class="w-full bg-slate-200 dark:bg-slate-800 rounded-full h-3 mb-12 hidden shadow-inner">
+                    <div id="onboardingProgressBar"
+                        class="bg-indigo-500 h-3 rounded-full transition-all duration-500 ease-out relative overflow-hidden"
+                        style="width: 0%">
+                        <div class="absolute inset-0 bg-white/20"
+                            style="transform: skewX(-20deg); animation: shimmer 2s infinite;"></div>
+                    </div>
                 </div>
-                <div class="card space-y-4 p-8">
-                    <input type="text" id="regOrgName" placeholder="Organization/Company Name" class="w-full bg-slate-50 dark:bg-slate-800 p-4 rounded-xl border-none focus:ring-2 focus:ring-indigo-500">
-                    <input type="email" id="regEmail" placeholder="Admin Email" class="w-full bg-slate-50 dark:bg-slate-800 p-4 rounded-xl border-none focus:ring-2 focus:ring-indigo-500">
-                    <input type="password" id="regPass" placeholder="Password (Min 6 chars)" class="w-full bg-slate-50 dark:bg-slate-800 p-4 rounded-xl border-none focus:ring-2 focus:ring-indigo-500">
-                    <button onclick="handleRegister()" class="btn btn-primary w-full py-4 text-lg">Create Workspace</button>
-                    <div class="text-center pt-4">
-                        <button onclick="navTo('login')" class="text-sm font-bold text-slate-500 hover:text-slate-700">Back to Login</button>
+
+                <div id="onboardingSteps" class="relative overflow-hidden min-h-[400px]">
+                    <!-- Step 1: Welcome -->
+                    <div id="step-1" class="onboarding-step transition-all duration-500 ease-in-out transform w-full">
+                        <div class="text-center">
+                            <div
+                                class="w-24 h-24 bg-indigo-100 dark:bg-indigo-900/50 rounded-full flex items-center justify-center mx-auto mb-8 shadow-inner border border-indigo-200 dark:border-indigo-800">
+                                <i data-lucide="rocket" class="w-12 h-12 text-indigo-500"></i>
+                            </div>
+                            <h2 class="text-4xl md:text-5xl font-black mb-6">Let's build your workspace.</h2>
+                            <p class="text-lg text-slate-500 dark:text-slate-400 mb-10">We'll set up your corporate
+                                organization in just a few quick steps.</p>
+                            <button type="button" onclick="nextOnboardingStep(2)"
+                                class="btn btn-primary w-full py-5 text-xl rounded-2xl shadow-[0_8px_30px_rgba(99,102,241,0.3)] animate-[pulse_2s_infinite] hover:animate-none">Get
+                                Started</button>
+                            <button onclick="navTo('login')"
+                                class="mt-6 text-sm font-bold text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300">Already
+                                have an account? Login</button>
+                        </div>
+                    </div>
+
+                    <!-- Step 2: Org Name -->
+                    <div id="step-2"
+                        class="onboarding-step hidden opacity-0 translate-x-full transition-all duration-500 ease-in-out absolute top-0 w-full">
+                        <h2 class="text-3xl font-black mb-8 text-center">What should we call your workspace?</h2>
+                        <input type="text" id="regOrgName" required placeholder="e.g. Acme Corp"
+                            class="w-full bg-white dark:bg-slate-900 text-center text-3xl font-black p-6 rounded-2xl border-4 border-slate-100 dark:border-slate-800 focus:border-indigo-500 focus:ring-0 transition-colors shadow-sm mb-8 placeholder:text-slate-300 dark:placeholder:text-slate-700"
+                            onkeydown="handleEnterKey(event, 3)">
+                        <button type="button" onclick="nextOnboardingStep(3)"
+                            class="btn btn-primary w-full py-5 text-xl rounded-2xl shadow-lg border-b-4 border-indigo-700 active:border-b-0 active:mt-1">Continue</button>
+                    </div>
+
+                    <!-- Step 3: Admin Email -->
+                    <div id="step-3"
+                        class="onboarding-step hidden opacity-0 translate-x-full transition-all duration-500 ease-in-out absolute top-0 w-full">
+                        <h2 class="text-3xl font-black mb-8 text-center">What is your admin email?</h2>
+                        <input type="email" id="regEmail" required placeholder="admin@example.com"
+                            class="w-full bg-white dark:bg-slate-900 text-center text-3xl font-black p-6 rounded-2xl border-4 border-slate-100 dark:border-slate-800 focus:border-indigo-500 focus:ring-0 transition-colors shadow-sm mb-8 placeholder:text-slate-300 dark:placeholder:text-slate-700"
+                            onkeydown="handleEnterKey(event, 4)">
+                        <button type="button" onclick="nextOnboardingStep(4)"
+                            class="btn btn-primary w-full py-5 text-xl rounded-2xl shadow-lg border-b-4 border-indigo-700 active:border-b-0 active:mt-1">Continue</button>
+                    </div>
+
+                    <!-- Step 4: Password -->
+                    <div id="step-4"
+                        class="onboarding-step hidden opacity-0 translate-x-full transition-all duration-500 ease-in-out absolute top-0 w-full">
+                        <h2 class="text-3xl font-black mb-8 text-center">Secure your workspace.</h2>
+                        <input type="password" id="regPass" required placeholder="Password (Min 6 chars)"
+                            class="w-full bg-white dark:bg-slate-900 text-center text-3xl font-black p-6 rounded-2xl border-4 border-slate-100 dark:border-slate-800 focus:border-indigo-500 focus:ring-0 transition-colors shadow-sm mb-8 placeholder:text-slate-300 dark:placeholder:text-slate-700"
+                            onkeydown="handleEnterKey(event, 5)">
+                        <button type="button" onclick="nextOnboardingStep(5)"
+                            class="btn btn-primary w-full py-5 text-xl rounded-2xl shadow-lg border-b-4 border-indigo-700 active:border-b-0 active:mt-1"
+                            id="btnFinishOnboarding">Create Workspace</button>
+                    </div>
+
+                    <!-- Step 5: Creation/Celebration -->
+                    <div id="step-5"
+                        class="onboarding-step hidden opacity-0 translate-x-full transition-all duration-500 ease-in-out absolute top-0 w-full">
+                        <div class="text-center" id="onboardingLoadingState">
+                            <i data-lucide="loader-2" class="w-16 h-16 animate-spin text-indigo-500 mx-auto mb-8"></i>
+                            <h2 class="text-3xl font-black mb-4">Creating your organization...</h2>
+                            <p class="text-slate-500">Setting up your secure environment.</p>
+                        </div>
+                        <div class="text-center hidden" id="onboardingSuccessState">
+                            <div
+                                class="w-24 h-24 bg-emerald-100 dark:bg-emerald-900/50 rounded-full flex items-center justify-center mx-auto mb-8 shadow-inner border border-emerald-200 dark:border-emerald-800">
+                                <i data-lucide="check" class="w-12 h-12 text-emerald-500"></i>
+                            </div>
+                            <h2 class="text-4xl font-black mb-4 text-emerald-600 dark:text-emerald-400">Workspace
+                                Created!</h2>
+                            <p class="text-slate-500 mb-8">You are all set. Let's head to your dashboard.</p>
+                            <div class="animate-pulse flex items-center justify-center gap-2 text-indigo-500 font-bold">
+                                <span>Redirecting</span>
+                                <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- NEW: Step Workers -->
+                    <div id="step-workers"
+                        class="onboarding-step hidden opacity-0 translate-x-full transition-all duration-500 ease-in-out absolute top-0 w-full">
+                        <h2 class="text-3xl font-black mb-8 text-center">How large is your team?</h2>
+                        <select id="regWorkers"
+                            class="w-full bg-white dark:bg-slate-900 text-center text-3xl font-black p-6 rounded-2xl border-4 border-slate-100 dark:border-slate-800 focus:border-indigo-500 focus:ring-0 transition-colors shadow-sm mb-8">
+                            <option value="">Select Team Size</option>
+                            <option value="1-10">1-10 Employees</option>
+                            <option value="11-50">11-50 Employees</option>
+                            <option value="51-200">51-200 Employees</option>
+                            <option value="200+">200+ Employees</option>
+                        </select>
+                        <button type="button" onclick="advanceOnboarding()"
+                            class="btn btn-primary w-full py-5 text-xl rounded-2xl shadow-lg border-b-4 border-indigo-700 active:border-b-0 active:mt-1">Continue</button>
+                    </div>
+
+                    <!-- NEW: Step Plan -->
+                    <div id="step-plan"
+                        class="onboarding-step hidden opacity-0 translate-x-full transition-all duration-500 ease-in-out absolute top-0 w-full">
+                        <h2 class="text-3xl font-black mb-8 text-center">Select your plan.</h2>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                            <!-- Free -->
+                            <div onclick="selectPlan('Free')" id="plan-Free"
+                                class="plan-card border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20 cursor-pointer border-4 rounded-2xl p-6 text-center hover:border-indigo-300 transition-colors">
+                                <h3 class="font-black text-xl mb-2">Free</h3>
+                                <p class="text-3xl font-black text-indigo-500 mb-4">$0<span
+                                        class="text-sm text-slate-500">/mo</span></p>
+                                <p class="text-xs text-slate-500 font-bold uppercase tracking-widest">Basic Features</p>
+                            </div>
+                            <!-- Business Individual -->
+                            <div onclick="selectPlan('Business Individual')" id="plan-Business Individual"
+                                class="plan-card border-slate-100 dark:border-slate-800 cursor-pointer bg-white dark:bg-slate-900 border-4 rounded-2xl p-6 text-center hover:border-indigo-300 transition-colors">
+                                <h3 class="font-black text-xl mb-2">Business Indv.</h3>
+                                <p class="text-3xl font-black text-indigo-500 mb-4">$29<span
+                                        class="text-sm text-slate-500">/mo</span></p>
+                                <p class="text-xs text-slate-500 font-bold uppercase tracking-widest">Advanced Tools</p>
+                            </div>
+                            <!-- Business Pro -->
+                            <div onclick="selectPlan('Business Pro')" id="plan-Business Pro"
+                                class="plan-card relative border-slate-100 dark:border-slate-800 cursor-pointer bg-white dark:bg-slate-900 border-4 rounded-2xl p-6 text-center hover:border-indigo-300 transition-colors">
+                                <div
+                                    class="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-indigo-500 text-white text-[10px] font-black uppercase px-3 py-1 rounded-full whitespace-nowrap">
+                                    Most Popular</div>
+                                <h3 class="font-black text-xl mb-2">Business Pro</h3>
+                                <p class="text-3xl font-black text-indigo-500 mb-4">$99<span
+                                        class="text-sm text-slate-500">/mo</span></p>
+                                <p class="text-xs text-slate-500 font-bold uppercase tracking-widest">Unlimited
+                                    Everything</p>
+                            </div>
+                        </div>
+                        <button type="button" onclick="advanceOnboarding()"
+                            class="btn btn-primary w-full py-5 text-xl rounded-2xl shadow-lg border-b-4 border-indigo-700 active:border-b-0 active:mt-1">Continue</button>
+                    </div>
+
+                    <!-- NEW: Step Roles -->
+                    <div id="step-roles"
+                        class="onboarding-step hidden opacity-0 translate-x-full transition-all duration-500 ease-in-out absolute top-0 w-full">
+                        <h2 class="text-3xl font-black mb-4 text-center">Add your managers.</h2>
+                        <p class="text-center text-slate-500 mb-8 font-bold">You can always do this later in the
+                            dashboard.</p>
+
+                        <div class="bg-slate-50 dark:bg-slate-800 p-6 rounded-2xl mb-8 space-y-4">
+                            <div class="flex gap-4">
+                                <input type="email" id="roleEmail" placeholder="Manager Email"
+                                    class="flex-1 w-full bg-white dark:bg-slate-900 p-3 rounded-xl border-none focus:ring-2 focus:ring-indigo-500 shadow-sm">
+                                <select id="rolePriority"
+                                    class="w-1/3 bg-white dark:bg-slate-900 p-3 rounded-xl border-none focus:ring-2 focus:ring-indigo-500 shadow-sm">
+                                    <option value="Normal">Normal</option>
+                                    <option value="Urgent">Urgent</option>
+                                    <option value="Low">Low</option>
+                                </select>
+                                <button type="button" onclick="addOnboardingRole()"
+                                    class="btn btn-outline bg-white dark:bg-slate-900"><i data-lucide="plus"
+                                        class="w-5 h-5"></i></button>
+                            </div>
+                            <div id="onboardingRoleList"
+                                class="space-y-2 mt-4 max-h-[150px] overflow-y-auto custom-scrollbar pr-2 text-left">
+                                <!-- Roles added here -->
+                            </div>
+                        </div>
+
+                        <button type="button" onclick="advanceOnboarding()"
+                            class="btn btn-primary w-full py-5 text-xl rounded-2xl shadow-lg border-b-4 border-indigo-700 active:border-b-0 active:mt-1">Continue</button>
+                    </div>
+
+                    <!-- NEW: Step Config -->
+                    <div id="step-config"
+                        class="onboarding-step hidden opacity-0 translate-x-full transition-all duration-500 ease-in-out absolute top-0 w-full">
+                        <h2 class="text-3xl font-black mb-8 text-center">Final Settings.</h2>
+
+                        <div class="space-y-4 mb-8 text-left">
+                            <label
+                                class="flex items-center gap-4 bg-slate-50 dark:bg-slate-800 p-4 rounded-xl cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+                                <input type="checkbox" id="configAi" checked
+                                    class="w-6 h-6 text-indigo-500 rounded focus:ring-0">
+                                <div>
+                                    <div class="font-black text-lg">Enable AI Features</div>
+                                    <div class="text-sm text-slate-500">Use ezManage AI to summarize shift notes and
+                                        detect trends.</div>
+                                </div>
+                            </label>
+
+                            <label
+                                class="flex items-center gap-4 bg-slate-50 dark:bg-slate-800 p-4 rounded-xl cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+                                <input type="checkbox" id="configSync" checked
+                                    class="w-6 h-6 text-indigo-500 rounded focus:ring-0">
+                                <div>
+                                    <div class="font-black text-lg">Cloud Sync</div>
+                                    <div class="text-sm text-slate-500">Automatically sync changes across all your
+                                        devices in real-time.</div>
+                                </div>
+                            </label>
+
+                            <label
+                                class="flex items-center gap-4 bg-slate-50 dark:bg-slate-800 p-4 rounded-xl cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors border-2 border-transparent">
+                                <input type="checkbox" id="termsCheck"
+                                    class="w-6 h-6 text-indigo-500 rounded focus:ring-0">
+                                <div>
+                                    <div class="font-black text-lg">Accept Terms</div>
+                                    <div class="text-sm text-slate-500">I agree to the Terms of Service and Privacy
+                                        Policy.</div>
+                                </div>
+                            </label>
+                        </div>
+
+                        <button type="button" onclick="advanceOnboarding()"
+                            class="btn btn-primary w-full py-5 text-xl rounded-2xl shadow-lg border-b-4 border-indigo-700 active:border-b-0 active:mt-1">Complete
+                            Setup</button>
+                    </div>
+
+                    <!-- NEW: Step Loading -->
+                    <div id="step-loading"
+                        class="onboarding-step hidden opacity-0 translate-x-full transition-all duration-500 ease-in-out absolute top-0 w-full h-full flex flex-col items-center justify-center min-h-[400px]">
+                        <div class="text-center w-full">
+                            <div
+                                class="w-24 h-24 bg-yellow-100 dark:bg-yellow-900/50 rounded-full flex items-center justify-center mx-auto mb-8 shadow-inner border border-yellow-200 dark:border-yellow-800 animate-pulse">
+                                <i data-lucide="zap" class="w-12 h-12 text-yellow-500"></i>
+                            </div>
+                            <h2 class="text-3xl font-black mb-4">Get ready to ditch the clipboard.</h2>
+                            <p class="text-slate-500 mb-8 font-bold">Provisioning your organization...</p>
+
+                            <div
+                                class="w-full max-w-md mx-auto bg-slate-200 dark:bg-slate-800 rounded-full h-4 shadow-inner overflow-hidden relative">
+                                <div id="tutorialProgressBar"
+                                    class="bg-indigo-500 h-4 rounded-full transition-all ease-linear"
+                                    style="width: 0%; transition-duration: 200ms;">
+                                    <div class="absolute inset-0 bg-white/20"
+                                        style="transform: skewX(-20deg); animation: shimmer 2s infinite;"></div>
+                                </div>
+                            </div>
+                            <div id="loadingStatusText"
+                                class="text-xs uppercase tracking-widest font-bold text-slate-400 mt-4">Initializing
+                                database...</div>
+                        </div>
+                    </div>
+
+                    <!-- NEW: Step Tutorial -->
+                    <div id="step-tutorial"
+                        class="onboarding-step hidden opacity-0 translate-x-full transition-all duration-500 ease-in-out absolute top-0 w-full min-h-[400px] flex flex-col justify-center">
+                        <div class="text-center">
+                            <div id="tutorialIcon"
+                                class="w-24 h-24 bg-sky-100 dark:bg-sky-900/50 rounded-full flex items-center justify-center mx-auto mb-8 shadow-inner border border-sky-200 dark:border-sky-800 transition-all duration-300 transform scale-90">
+                                <i data-lucide="layout-dashboard" class="w-12 h-12 text-sky-500"></i>
+                            </div>
+                            <h2 id="tutorialTitle" class="text-3xl font-black mb-4 transition-opacity duration-300">
+                                Welcome to your Bento Dashboard.</h2>
+                            <p id="tutorialText"
+                                class="text-lg text-slate-500 dark:text-slate-400 mb-10 transition-opacity duration-300 px-4">
+                                Everything you need to manage your business is now accessible in one beautiful, unified
+                                view.</p>
+                            <button type="button" onclick="finishTutorial()"
+                                class="btn btn-primary w-full py-5 text-xl rounded-2xl shadow-[0_8px_30px_rgba(99,102,241,0.3)] hover:scale-[1.02] transition-transform">Enter
+                                Dashboard</button>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
+        <style>
+            @keyframes shimmer {
+                0% {
+                    left: -100%;
+                }
+
+                100% {
+                    left: 100%;
+                }
+            }
+
+            .bento-grid {
+                opacity: 0;
+                animation: fadeInGrid 0.1s forwards;
+            }
+
+            .bento-item {
+                opacity: 0;
+                transform: translateY(20px) scale(0.95);
+                animation: bentoFadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            }
+
+            @keyframes bentoFadeIn {
+                0% {
+                    opacity: 0;
+                    transform: translateY(20px) scale(0.95);
+                }
+
+                100% {
+                    opacity: 1;
+                    transform: translateY(0) scale(1);
+                }
+            }
+
+            @keyframes fadeInGrid {
+                to {
+                    opacity: 1;
+                }
+            }
+
+            .custom-scrollbar::-webkit-scrollbar {
+                width: 6px;
+            }
+
+            .custom-scrollbar::-webkit-scrollbar-track {
+                background: transparent;
+            }
+
+            .custom-scrollbar::-webkit-scrollbar-thumb {
+                background-color: #cbd5e1;
+                border-radius: 20px;
+            }
+
+            .dark-mode .custom-scrollbar::-webkit-scrollbar-thumb {
+                background-color: #334155;
+            }
+        </style>
 
         <!-- DASHBOARD SHELL (Requires Auth) -->
-        <div id="dashboard-shell" class="hidden">
-            <div class="flex flex-col md:flex-row gap-8 px-4">
-                <!-- Sidebar Nav -->
-                <div class="w-full md:w-64 flex-shrink-0">
-                    <div class="card p-4 space-y-2 sticky top-24">
-                        <div class="mb-6 px-4 pt-2">
-                            <h3 class="font-black text-lg truncate" id="orgNameDisplay">Organization</h3>
-                            <span class="text-[10px] font-bold uppercase tracking-widest text-indigo-500" id="orgIdDisplay">Loading ID...</span>
-                        </div>
-                        <a href="#" onclick="navTo('overview')" class="nav-link flex items-center gap-3 p-3 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors font-bold text-slate-600 dark:text-slate-300">
-                            <i data-lucide="layout-dashboard"></i> Overview
-                        </a>
-                        <a href="#" onclick="navTo('managers')" class="nav-link flex items-center gap-3 p-3 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors font-bold text-slate-600 dark:text-slate-300">
-                            <i data-lucide="users"></i> Manage Staff
-                        </a>
-                        <a href="#" onclick="navTo('metrics')" class="nav-link flex items-center gap-3 p-3 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors font-bold text-slate-600 dark:text-slate-300">
-                            <i data-lucide="bar-chart-3"></i> Global Metrics
-                        </a>
-                        <div class="pt-4 mt-4 border-t border-slate-200 dark:border-slate-800">
-                            <button onclick="firebase.auth().signOut()" class="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 text-red-500 transition-colors font-bold">
-                                <i data-lucide="log-out"></i> Sign Out
-                            </button>
+        <div id="dashboard-shell" class="hidden max-w-7xl mx-auto w-full">
+
+            <!-- Dashboard Header -->
+            <div class="mb-8 flex flex-col md:flex-row justify-between items-center px-4 gap-4 bento-item"
+                style="animation-delay: 0.05s;">
+                <div>
+                    <h2 class="text-3xl font-black" id="orgNameDisplayBento">Organization Dashboard</h2>
+                    <p class="text-slate-500 font-bold uppercase tracking-widest text-xs" id="orgIdDisplayBento">Loading
+                        ID...</p>
+                </div>
+                <div class="flex items-center gap-4">
+                    <div
+                        class="bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2 flex items-center shadow-sm">
+                        <i data-lucide="calendar" class="w-4 h-4 text-indigo-500 mr-2"></i>
+                        <input type="date" id="dashboardDatePicker"
+                            class="bg-transparent font-bold focus:ring-0 focus:outline-none text-slate-700 dark:text-slate-300 border-none p-0"
+                            onchange="fetchDashboardData()">
+                    </div>
+                    <button onclick="firebase.auth().signOut()"
+                        class="btn btn-outline text-red-500 border-red-200 hover:bg-red-50 dark:border-red-900/30 dark:hover:bg-red-900/20"><i
+                            data-lucide="log-out" class="w-4 h-4"></i></button>
+                </div>
+            </div>
+
+            <!-- Bento Grid -->
+            <div id="view-overview" class="view-section active px-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 bento-grid">
+
+                    <!-- 1. Org Access Details (Small) -->
+                    <div class="card p-6 flex flex-col justify-between bento-item" style="animation-delay: 0.1s;">
+                        <div>
+                            <h3
+                                class="font-black text-slate-400 text-xs uppercase tracking-widest mb-4 flex items-center">
+                                <i data-lucide="key" class="w-3 h-3 mr-1"></i> Workspace Access
+                            </h3>
+                            <div class="space-y-4">
+                                <div>
+                                    <div class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1">
+                                        Group ID</div>
+                                    <div class="font-mono font-black text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30 p-2 rounded-lg"
+                                        id="shareGroupId">...</div>
+                                </div>
+                                <div>
+                                    <div class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1">
+                                        Password</div>
+                                    <div class="font-mono font-black text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30 p-2 rounded-lg"
+                                        id="shareGroupPass">...</div>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                <!-- Main Content Area -->
-                <div class="flex-grow">
-                    
-                    <!-- Overview Tab -->
-                    <div id="view-overview" class="view-section active">
-                        <div class="flex justify-between items-center mb-6">
-                            <h2 class="text-3xl font-black">Overview</h2>
-                            <button onclick="fetchGlobalData()" class="btn btn-outline btn-sm"><i data-lucide="refresh-cw" class="w-4"></i> Refresh</button>
+                    <!-- 2. Labor Saved (Small) -->
+                    <div class="card p-6 bg-gradient-to-br from-indigo-500 to-purple-600 text-white border-none shadow-lg bento-item flex flex-col"
+                        style="animation-delay: 0.2s;">
+                        <h3 class="font-black text-indigo-100 text-xs uppercase tracking-widest mb-2 flex items-center">
+                            <i data-lucide="clock" class="w-3 h-3 mr-1"></i> Labor Saved Today
+                        </h3>
+                        <div class="flex-grow flex items-center justify-center flex-col">
+                            <div class="text-6xl font-black mb-1 drop-shadow-md" id="laborSavedCount">0h</div>
+                            <div class="text-indigo-200 font-bold text-sm bg-indigo-900/20 px-3 py-1 rounded-full">
+                                approx. time saved</div>
                         </div>
-                        
-                        <div class="grid md:grid-cols-3 gap-4 mb-8">
-                            <div class="card">
-                                <div class="text-slate-500 font-bold text-xs uppercase tracking-widest mb-1">Total Stores/Managers</div>
-                                <div class="text-3xl font-black text-indigo-500" id="statManagersCount">0</div>
-                            </div>
-                            <div class="card">
-                                <div class="text-slate-500 font-bold text-xs uppercase tracking-widest mb-1">Global Shift Notes</div>
-                                <div class="text-3xl font-black text-sky-500" id="statNotesCount">0</div>
-                            </div>
-                            <div class="card">
-                                <div class="text-slate-500 font-bold text-xs uppercase tracking-widest mb-1">Avg Global Score</div>
+                    </div>
+
+                    <!-- 3. Global Performance (Medium/Large - Col Span 2) -->
+                    <div class="card p-6 col-span-1 md:col-span-2 lg:col-span-2 bento-item flex flex-col"
+                        style="animation-delay: 0.3s;">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="font-black text-slate-400 text-xs uppercase tracking-widest flex items-center"><i
+                                    data-lucide="trending-up" class="w-3 h-3 mr-1"></i> Performance Overview</h3>
+                            <div class="text-right">
                                 <div class="text-3xl font-black text-emerald-500" id="statAvgScore">0%</div>
+                                <div class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Avg
+                                    Completion</div>
                             </div>
                         </div>
-
-                        <div class="card p-6 border-none bg-indigo-50 dark:bg-indigo-900/20 mb-8">
-                            <h3 class="text-lg font-black mb-2 text-indigo-900 dark:text-indigo-100"><i data-lucide="key" class="inline w-5 mr-2"></i>Organization Access Details</h3>
-                            <p class="text-sm text-indigo-700 dark:text-indigo-300 mb-4">Provide these details to your Store Managers so they can join your workspace from the ezManage app.</p>
-                            <div class="flex flex-col sm:flex-row gap-4">
-                                <div class="bg-white dark:bg-slate-900 p-3 rounded-xl flex-grow font-mono text-sm border border-indigo-100 dark:border-indigo-800">
-                                    <span class="text-slate-400">Group ID:</span> <strong id="shareGroupId">...</strong>
-                                </div>
-                                <div class="bg-white dark:bg-slate-900 p-3 rounded-xl flex-grow font-mono text-sm border border-indigo-100 dark:border-indigo-800">
-                                    <span class="text-slate-400">Password:</span> <strong id="shareGroupPass">...</strong>
-                                </div>
-                            </div>
+                        <div class="flex-grow w-full relative min-h-[120px]">
+                            <canvas id="globalPerformanceChart" class="absolute inset-0 w-full h-full"></canvas>
                         </div>
+                    </div>
 
-                        <h3 class="text-xl font-black mb-4">Recent Shift Notes (Global)</h3>
-                        <div id="globalNotesContainer" class="space-y-4">
+                    <!-- 4. Reports Submitted (Large - Row Span 2, Col Span 2) -->
+                    <div class="card p-6 col-span-1 md:col-span-2 lg:col-span-2 lg:row-span-2 flex flex-col bento-item"
+                        style="animation-delay: 0.4s;">
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="font-black text-slate-400 text-xs uppercase tracking-widest flex items-center"><i
+                                    data-lucide="file-text" class="w-3 h-3 mr-1"></i> Submitted Reports</h3>
+                            <div class="text-xs font-bold bg-indigo-100 dark:bg-indigo-900/30 px-3 py-1 rounded-full text-indigo-600 dark:text-indigo-400"
+                                id="statNotesCount">0 notes</div>
+                        </div>
+                        <div id="globalNotesContainer"
+                            class="flex-grow overflow-y-auto space-y-3 max-h-[400px] lg:max-h-[500px] pr-2 custom-scrollbar">
                             <div class="text-center py-8 text-slate-400 font-bold">Loading notes...</div>
                         </div>
                     </div>
 
-                    <!-- Managers Tab -->
-                    <div id="view-managers" class="view-section">
-                        <h2 class="text-3xl font-black mb-6">Manage Staff</h2>
-                        
-                        <div id="pendingRequestsSection" class="mb-8 hidden">
-                            <h3 class="text-lg font-black text-amber-500 mb-4 flex items-center gap-2"><i data-lucide="user-plus"></i> Pending Join Requests</h3>
-                            <div id="pendingRequestsContainer" class="space-y-3"></div>
-                        </div>
-
-                        <h3 class="text-lg font-black mb-4">Active Managers</h3>
-                        <div class="card p-0 overflow-hidden">
-                            <div class="overflow-x-auto">
-                                <table class="w-full text-left text-sm">
-                                    <thead class="bg-slate-50 dark:bg-slate-800/50 text-xs uppercase font-black text-slate-500">
-                                        <tr>
-                                            <th class="px-6 py-4">Manager Name</th>
-                                            <th class="px-6 py-4">Email</th>
-                                            <th class="px-6 py-4">Status</th>
-                                            <th class="px-6 py-4 text-right">Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="managersTableBody" class="divide-y divide-slate-100 dark:divide-slate-800">
-                                        <tr><td colspan="4" class="px-6 py-8 text-center text-slate-400 font-bold">Loading managers...</td></tr>
-                                    </tbody>
-                                </table>
+                    <!-- 5. Active Managers / Directory (Medium - Col Span 2) -->
+                    <div class="card p-0 col-span-1 md:col-span-2 lg:col-span-2 flex flex-col overflow-hidden bento-item"
+                        style="animation-delay: 0.5s;">
+                        <div
+                            class="p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50/50 dark:bg-slate-900/50">
+                            <h3 class="font-black text-slate-400 text-xs uppercase tracking-widest flex items-center"><i
+                                    data-lucide="users" class="w-3 h-3 mr-1"></i> Manager Directory</h3>
+                            <div class="flex gap-2">
+                                <button onclick="togglePendingRequests()"
+                                    class="btn btn-outline btn-sm relative bg-white dark:bg-slate-800">
+                                    Requests <span id="pendingRequestsBadge"
+                                        class="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] w-5 h-5 rounded-full flex items-center justify-center hidden shadow-sm">0</span>
+                                </button>
+                                <button onclick="showInviteModal()" class="btn btn-primary btn-sm"><i
+                                        data-lucide="user-plus" class="w-4 h-4"></i> Invite</button>
                             </div>
+                        </div>
+                        <div id="pendingRequestsSection"
+                            class="hidden p-4 bg-amber-50 dark:bg-amber-900/10 border-b border-amber-100 dark:border-amber-900/30">
+                            <h4
+                                class="text-xs font-black text-amber-600 dark:text-amber-500 uppercase tracking-widest mb-3">
+                                Pending Join Requests</h4>
+                            <div id="pendingRequestsContainer"
+                                class="space-y-2 max-h-[150px] overflow-y-auto custom-scrollbar pr-2"></div>
+                        </div>
+                        <div class="overflow-y-auto max-h-[250px] lg:max-h-[300px] custom-scrollbar">
+                            <table class="w-full text-left text-sm">
+                                <tbody id="managersTableBody" class="divide-y divide-slate-100 dark:divide-slate-800">
+                                    <tr>
+                                        <td colspan="4" class="px-6 py-8 text-center text-slate-400 font-bold">Loading
+                                            managers...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
                         </div>
                     </div>
 
-                    <!-- Metrics Tab -->
-                    <div id="view-metrics" class="view-section">
-                        <div class="flex justify-between items-center mb-6">
-                            <h2 class="text-3xl font-black">Global Metrics</h2>
-                        </div>
-                        
-                        <div class="card mb-8">
-                            <h3 class="font-bold mb-4 text-slate-500 uppercase tracking-widest text-xs">Global Routine Performance (All Stores)</h3>
-                            <canvas id="globalPerformanceChart" height="120"></canvas>
+                    <!-- 6. Schedule / Individual Performance (Medium - Col Span 2) -->
+                    <div class="card p-6 col-span-1 md:col-span-2 lg:col-span-4 bento-item"
+                        style="animation-delay: 0.6s;">
+                        <h3 class="font-black text-slate-400 text-xs uppercase tracking-widest mb-4 flex items-center">
+                            <i data-lucide="award" class="w-3 h-3 mr-1"></i> Individual Performance Leaderboard
+                        </h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
+                            id="individualPerformanceContainer">
+                            <div class="col-span-full text-center py-8 text-slate-400 font-bold">No performance data
+                                yet.</div>
                         </div>
                     </div>
 
@@ -313,20 +689,43 @@
         if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
         const auth = firebase.auth();
         const db = firebase.firestore();
-        
+        db.settings({ experimentalForceLongPolling: true });
+
         let currentUser = null;
         let activeOrgId = null;
         let activeOrgPass = null;
         let globalChartInstance = null;
 
+        // --- Cloud Function Caller (bypasses callable SDK token-attachment bugs) ---
+        const FUNCTIONS_BASE = 'https://us-central1-dts-hub-website.cloudfunctions.net';
+        async function callFunction(name, data) {
+            const user = auth.currentUser;
+            if (!user) throw new Error('User must be logged in.');
+            const token = await user.getIdToken(true);
+            console.log("DEBUG CLIENT: token type:", typeof token, "length:", token ? token.length : 0, "value starts with:", token ? token.substring(0, 15) : "null");
+            const res = await fetch(`${FUNCTIONS_BASE}/${name}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + token
+                },
+                body: JSON.stringify({ data })
+            });
+            const json = await res.json();
+            if (!res.ok || json.error) {
+                throw new Error((json.error && json.error.message) || `Function call failed (${res.status})`);
+            }
+            return json.result !== undefined ? { data: json.result } : { data: json };
+        }
+
         // --- Theme Management ---
         function toggleTheme() {
             document.documentElement.classList.toggle('dark-mode');
             const isDark = document.documentElement.classList.contains('dark-mode');
-            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+            localStorage.setItem('userTheme', isDark ? 'dark' : 'light');
             document.getElementById('themeIcon').setAttribute('data-lucide', isDark ? 'sun' : 'moon');
             lucide.createIcons();
-            if(globalChartInstance) {
+            if (globalChartInstance) {
                 // Adjust chart text color for theme
                 globalChartInstance.options.scales.x.ticks.color = isDark ? '#94a3b8' : '#64748b';
                 globalChartInstance.options.scales.y.ticks.color = isDark ? '#94a3b8' : '#64748b';
@@ -334,7 +733,7 @@
             }
         }
 
-        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        if (localStorage.getItem('userTheme') === 'dark' || (!localStorage.getItem('userTheme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
             document.documentElement.classList.add('dark-mode');
         }
         document.getElementById('themeIcon').setAttribute('data-lucide', document.documentElement.classList.contains('dark-mode') ? 'sun' : 'moon');
@@ -344,16 +743,22 @@
         function navTo(viewId) {
             document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
             document.getElementById('view-' + viewId).classList.add('active');
-            
+
             document.querySelectorAll('.nav-link').forEach(el => {
-                if(el.getAttribute('onclick').includes(viewId)) el.classList.add('bg-slate-100', 'dark:bg-slate-800', 'text-indigo-600', 'dark:text-indigo-400');
+                if (el.getAttribute('onclick').includes(viewId)) el.classList.add('bg-slate-100', 'dark:bg-slate-800', 'text-indigo-600', 'dark:text-indigo-400');
                 else el.classList.remove('bg-slate-100', 'dark:bg-slate-800', 'text-indigo-600', 'dark:text-indigo-400');
             });
-            
-            if(viewId === 'overview') fetchGlobalData();
-            if(viewId === 'managers') { fetchManagers(); fetchJoinRequests(); }
-            if(viewId === 'metrics') renderGlobalMetrics();
+
+            if (viewId === 'register') {
+                resetOnboarding();
+            }
+
+            if (viewId === 'overview') {
+                fetchDashboardData();
+            }
         }
+
+        let isRegistering = false;
 
         // --- Auth State ---
         auth.onAuthStateChanged(async (user) => {
@@ -364,10 +769,12 @@
                         ${user.email.charAt(0).toUpperCase()}
                     </div>
                 `;
-                document.getElementById('view-login').classList.remove('active');
-                document.getElementById('view-register').classList.remove('active');
-                
-                await initializeCorporateWorkspace(user);
+                if (!isRegistering) {
+                    document.getElementById('view-login').classList.remove('active');
+                    document.getElementById('view-register').classList.remove('active');
+
+                    await initializeCorporateWorkspace(user);
+                }
             } else {
                 document.getElementById('authContainer').innerHTML = `<button onclick="navTo('login')" class="btn btn-outline btn-sm">Login</button>`;
                 document.getElementById('dashboard-shell').classList.add('hidden');
@@ -376,44 +783,420 @@
         });
 
         // --- Login & Registration ---
-        async function handleLogin() {
+        async function handleLogin(e) {
+            if (e) e.preventDefault();
             const email = document.getElementById('loginEmail').value;
             const pass = document.getElementById('loginPass').value;
-            if(!email || !pass) return alert("Required fields missing");
+            if (!email || !pass) return alert("Required fields missing");
+
+            const btn = e.target.querySelector('button[type="submit"]');
+            const originalText = btn.innerText;
+            btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin inline-block"></i> Signing In...`;
+            btn.disabled = true;
+            lucide.createIcons();
+
             try {
-                await auth.signInWithEmailAndPassword(email, pass);
-            } catch(e) { alert("Login failed: " + e.message); }
+                const cred = await auth.signInWithEmailAndPassword(email, pass);
+                document.getElementById('view-login').classList.remove('active');
+                await initializeCorporateWorkspace(cred.user);
+            } catch (error) {
+                alert("Login failed: " + error.message);
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
         }
 
-        async function handleRegister() {
+        // --- Onboarding Logic ---
+        let onboardingFlow = ['step-1', 'step-2', 'step-3', 'step-4', 'step-5'];
+        let currentStepIndex = 0;
+
+        function resetOnboarding() {
+            if (currentUser) {
+                onboardingFlow = ['step-2', 'step-workers', 'step-plan', 'step-roles', 'step-config', 'step-loading', 'step-tutorial'];
+            } else {
+                onboardingFlow = ['step-1', 'step-2', 'step-3', 'step-4', 'step-5'];
+            }
+            currentStepIndex = 0;
+
+            document.querySelectorAll('.onboarding-step').forEach(el => {
+                el.classList.add('hidden', 'opacity-0', '-translate-x-full', 'absolute', 'top-0');
+                el.classList.remove('opacity-100', 'translate-x-0');
+            });
+
+            const firstStep = document.getElementById(onboardingFlow[0]);
+            firstStep.classList.remove('hidden', 'opacity-0', '-translate-x-full', 'absolute', 'top-0');
+            firstStep.classList.add('opacity-100', 'translate-x-0');
+
+            document.getElementById('regOrgName').value = '';
+            document.getElementById('regEmail').value = '';
+            document.getElementById('regPass').value = '';
+
+            document.getElementById('onboardingLoadingState').classList.remove('hidden');
+            document.getElementById('onboardingSuccessState').classList.add('hidden');
+
+            updateProgressBar();
+        }
+
+        function updateProgressBar() {
+            const progressContainer = document.getElementById('onboardingProgressContainer');
+            const progressBar = document.getElementById('onboardingProgressBar');
+
+            const currentStepId = onboardingFlow[currentStepIndex];
+            if (['step-1', 'step-5', 'step-loading', 'step-tutorial'].includes(currentStepId)) {
+                progressContainer.classList.add('hidden');
+            } else {
+                progressContainer.classList.remove('hidden');
+                const functionalSteps = onboardingFlow.filter(id => !['step-1', 'step-5', 'step-loading', 'step-tutorial'].includes(id));
+                const functionalIndex = functionalSteps.indexOf(currentStepId);
+                const progress = Math.max(0, Math.min(100, (functionalIndex / Math.max(1, functionalSteps.length - 1)) * 100));
+                progressBar.style.width = `${progress}%`;
+            }
+        }
+
+        function advanceOnboarding() {
+            const currentStepId = onboardingFlow[currentStepIndex];
+
+            // Validation
+            if (currentStepId === 'step-2') {
+                const name = document.getElementById('regOrgName').value.trim();
+                if (!name) return alert("Please enter an organization name.");
+            }
+            if (currentStepId === 'step-3') {
+                const email = document.getElementById('regEmail').value.trim();
+                if (!email || !email.includes('@')) return alert("Please enter a valid email.");
+            }
+            if (currentStepId === 'step-4') {
+                const pass = document.getElementById('regPass').value;
+                if (!pass || pass.length < 6) return alert("Password must be at least 6 characters.");
+                // Legacy flow registration
+                executeRegistration();
+                return;
+            }
+            if (currentStepId === 'step-workers') {
+                const workers = document.getElementById('regWorkers').value;
+                if (!workers) return alert("Please select a team size.");
+            }
+            if (currentStepId === 'step-plan') {
+                if (!selectedPlan) return alert("Please select a plan.");
+            }
+            if (currentStepId === 'step-config') {
+                const terms = document.getElementById('termsCheck').checked;
+                if (!terms) return alert("You must accept the terms of service.");
+                executeLoggedInRegistration();
+                return;
+            }
+
+            if (currentStepIndex >= onboardingFlow.length - 1) return;
+
+            const nextStepId = onboardingFlow[currentStepIndex + 1];
+            transitionSteps(currentStepId, nextStepId);
+            currentStepIndex++;
+            updateProgressBar();
+        }
+
+        // Maintain backward compatibility for hardcoded onclicks
+        function nextOnboardingStep(stepNumber) {
+            advanceOnboarding();
+        }
+
+        function transitionSteps(currentStepId, nextStepId) {
+            const currentEl = document.getElementById(currentStepId);
+            currentEl.classList.remove('translate-x-0', 'opacity-100');
+            currentEl.classList.add('-translate-x-full', 'opacity-0');
+
+            setTimeout(() => {
+                currentEl.classList.add('hidden');
+                currentEl.classList.remove('absolute', 'top-0');
+
+                const nextEl = document.getElementById(nextStepId);
+                nextEl.classList.remove('hidden');
+                nextEl.classList.add('absolute', 'top-0', 'translate-x-full');
+
+                void nextEl.offsetWidth;
+
+                nextEl.classList.remove('absolute', 'top-0', 'translate-x-full');
+                nextEl.classList.add('translate-x-0', 'opacity-100');
+
+                const input = nextEl.querySelector('input');
+                if (input) input.focus();
+            }, 300);
+        }
+
+        function triggerConfetti() {
+            if (typeof confetti === 'function') {
+                const duration = 3 * 1000;
+                const end = Date.now() + duration;
+
+                (function frame() {
+                    confetti({
+                        particleCount: 5,
+                        angle: 60,
+                        spread: 55,
+                        origin: { x: 0 },
+                        colors: ['#6366f1', '#8b5cf6', '#ec4899']
+                    });
+                    confetti({
+                        particleCount: 5,
+                        angle: 120,
+                        spread: 55,
+                        origin: { x: 1 },
+                        colors: ['#6366f1', '#8b5cf6', '#ec4899']
+                    });
+
+                    if (Date.now() < end) {
+                        requestAnimationFrame(frame);
+                    }
+                }());
+            }
+        }
+
+        async function executeRegistration() {
             const orgName = document.getElementById('regOrgName').value;
             const email = document.getElementById('regEmail').value;
             const pass = document.getElementById('regPass').value;
-            if(!orgName || !email || !pass) return alert("Required fields missing");
-            
+
+            isRegistering = true;
             try {
                 const cred = await auth.createUserWithEmailAndPassword(email, pass);
-                
+
+                // Ensure auth state is completely fresh before making the cloud function call
+                await cred.user.getIdToken(true);
+
+                // Initialize user doc FIRST so the Cloud Function can update it
+                await db.collection('users').doc(cred.user.uid).set({
+                    email: email,
+                    role: "CorporateAdmin",
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    name: orgName + " Admin" // Helpful default
+                });
+
                 // For a Corporate Workspace, we create a shift_group and make them the owner
-                const manageShiftGroups = firebase.functions().httpsCallableFromURL('https://manageshiftgroups-dsy7tdoigq-uc.a.run.app');
-                await manageShiftGroups({
+                const result = await callFunction('manageShiftGroups', {
                     action: "create",
                     payload: {
                         ownerName: email.split('@')[0],
                         groupName: orgName,
-                        password: pass // Set group password to admin password for simplicity
+                        password: pass
                     }
                 });
-                
-                // Initialize user doc
-                await db.collection('users').doc(cred.user.uid).set({
-                    email: email,
-                    role: "CorporateAdmin",
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                }, {merge: true});
-                
-            } catch(e) { alert("Registration failed: " + e.message); }
+
+                // Update the user doc with the returned orgId just in case
+                if (result && result.data && result.data.groupId) {
+                    await db.collection('users').doc(cred.user.uid).set({
+                        orgId: result.data.groupId
+                    }, { merge: true });
+                }
+
+                // Show celebration
+                document.getElementById('onboardingLoadingState').classList.add('hidden');
+                document.getElementById('onboardingSuccessState').classList.remove('hidden');
+                triggerConfetti();
+
+                // Redirect to dashboard after celebration
+                setTimeout(() => {
+                    isRegistering = false;
+                    document.getElementById('view-register').classList.remove('active');
+                    initializeCorporateWorkspace(cred.user);
+                }, 2500);
+
+            } catch (e) {
+                isRegistering = false;
+                alert("Registration failed: " + e.message);
+                // Go back to step 4
+                document.getElementById(`step-5`).classList.add('hidden');
+                document.getElementById(`step-4`).classList.remove('hidden', '-translate-x-full', 'opacity-0', 'absolute', 'top-0');
+                document.getElementById(`step-4`).classList.add('translate-x-0', 'opacity-100');
+                currentStepIndex = onboardingFlow.indexOf('step-4');
+                updateProgressBar();
+            }
         }
+
+        // --- Logged-In Flow Additions ---
+        let selectedPlan = 'Free';
+        function selectPlan(planName) {
+            selectedPlan = planName;
+            document.querySelectorAll('.plan-card').forEach(card => {
+                card.classList.remove('border-indigo-500', 'bg-indigo-50', 'dark:bg-indigo-900/20');
+                card.classList.add('border-slate-100', 'dark:border-slate-800', 'bg-white', 'dark:bg-slate-900');
+                if (card.id === `plan-${planName}`) {
+                    card.classList.remove('border-slate-100', 'dark:border-slate-800', 'bg-white', 'dark:bg-slate-900');
+                    card.classList.add('border-indigo-500', 'bg-indigo-50', 'dark:bg-indigo-900/20');
+                }
+            });
+        }
+
+        let onboardingRoles = [];
+        function addOnboardingRole() {
+            const email = document.getElementById('roleEmail').value.trim();
+            const priority = document.getElementById('rolePriority').value;
+            if (!email || !email.includes('@')) return alert("Enter valid email");
+
+            onboardingRoles.push({ email, priority });
+            document.getElementById('roleEmail').value = '';
+
+            renderOnboardingRoles();
+        }
+
+        function renderOnboardingRoles() {
+            const container = document.getElementById('onboardingRoleList');
+            container.innerHTML = onboardingRoles.map((role, i) => `
+                <div class="flex justify-between items-center bg-white dark:bg-slate-900 p-3 rounded-lg shadow-sm border border-slate-100 dark:border-slate-800">
+                    <span class="font-bold text-sm">${role.email}</span>
+                    <div class="flex items-center gap-3">
+                        <span class="text-xs uppercase tracking-widest font-black text-slate-400">${role.priority}</span>
+                        <button onclick="removeOnboardingRole(${i})" aria-label="Remove role" class="text-red-400 hover:text-red-500"><i data-lucide="x" class="w-4 h-4"></i></button>
+                    </div>
+                </div>
+            `).join('');
+            lucide.createIcons();
+        }
+
+        function removeOnboardingRole(index) {
+            onboardingRoles.splice(index, 1);
+            renderOnboardingRoles();
+        }
+
+        async function executeLoggedInRegistration() {
+            if (isRegistering) return;
+            isRegistering = true;
+
+            const orgName = document.getElementById('regOrgName').value.trim();
+            const workers = document.getElementById('regWorkers').value;
+            const aiEnabled = document.getElementById('configAi').checked;
+
+            // Guard: org name must be present
+            if (!orgName) {
+                isRegistering = false;
+                alert("Please enter a workspace name.");
+                transitionSteps('step-config', 'step-2');
+                currentStepIndex = onboardingFlow.indexOf('step-2');
+                updateProgressBar();
+                return;
+            }
+
+            // Go to loading screen and sync the step index
+            transitionSteps('step-config', 'step-loading');
+            currentStepIndex = onboardingFlow.indexOf('step-loading');
+
+            // Start simulated loading animation
+            const bar = document.getElementById('tutorialProgressBar');
+            const status = document.getElementById('loadingStatusText');
+            let progress = 0;
+            const sim = setInterval(() => {
+                progress += 2;
+                if (progress <= 95) bar.style.width = `${progress}%`;
+                if (progress === 30) status.innerText = "Creating shift groups...";
+                if (progress === 60) status.innerText = "Provisioning AI features...";
+                if (progress === 90) status.innerText = "Finalizing workspace...";
+            }, 100);
+
+            try {
+                // Always pull from auth.currentUser (never the potentially-stale module var)
+                const activeUser = auth.currentUser;
+                if (!activeUser) throw new Error("Session expired. Please refresh and log in again.");
+
+                // Force-refresh the ID token and give the SDK 500ms to propagate it
+                await activeUser.getIdToken(true);
+                await new Promise(resolve => setTimeout(resolve, 500));
+
+                // Pre-create / ensure the user document exists so the Cloud Function
+                // can use .update() on it without throwing "No document to update".
+                await db.collection('users').doc(activeUser.uid).set({
+                    email: activeUser.email,
+                    role: 'CorporateAdmin',
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                }, { merge: true });
+
+                // Generate a random password for the group
+                const generatedPassword = Math.random().toString(36).slice(-8);
+
+                const result = await callFunction('manageShiftGroups', {
+                    action: "create",
+                    payload: {
+                        ownerName: activeUser.displayName || activeUser.email.split('@')[0],
+                        groupName: orgName,
+                        password: generatedPassword
+                    }
+                });
+
+                const groupId = result.data.groupId;
+
+                // Update user document with orgId, plan, and workers
+                await db.collection('users').doc(activeUser.uid).set({
+                    orgId: groupId,
+                    plan: selectedPlan,
+                    workersCount: workers,
+                    aiEnabled: aiEnabled
+                }, { merge: true });
+
+                // Invite roles if any
+                for (let role of onboardingRoles) {
+                    await db.collection('invites').add({
+                        groupId: groupId,
+                        email: role.email,
+                        priority: role.priority,
+                        status: 'Pending',
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                }
+
+                clearInterval(sim);
+                bar.style.width = '100%';
+                status.innerText = "Complete!";
+
+                // Update currentUser module var to stay in sync
+                currentUser = activeUser;
+
+                setTimeout(() => {
+                    transitionSteps('step-loading', 'step-tutorial');
+                    currentStepIndex = onboardingFlow.indexOf('step-tutorial');
+                    runTutorialAnimation();
+                }, 1000);
+
+            } catch (e) {
+                // Reset state so the user can retry
+                isRegistering = false;
+                clearInterval(sim);
+                console.error("Workspace creation error:", e);
+                alert("Failed to create workspace: " + e.message);
+                transitionSteps('step-loading', 'step-config');
+                currentStepIndex = onboardingFlow.indexOf('step-config');
+                updateProgressBar();
+            }
+        }
+
+        function runTutorialAnimation() {
+            const icon = document.getElementById('tutorialIcon');
+            const title = document.getElementById('tutorialTitle');
+            const text = document.getElementById('tutorialText');
+
+            setTimeout(() => {
+                icon.innerHTML = `<i data-lucide="bar-chart-2" class="w-12 h-12 text-emerald-500"></i>`;
+                icon.className = "w-24 h-24 bg-emerald-100 dark:bg-emerald-900/50 rounded-full flex items-center justify-center mx-auto mb-8 shadow-inner border border-emerald-200 dark:border-emerald-800 transition-all duration-500 transform scale-110";
+                title.innerText = "Real-time Metrics.";
+                text.innerText = "Instantly see labor saved, shift performance, and manager leaderboards all dynamically reacting to your timeline.";
+                lucide.createIcons();
+            }, 3000);
+
+            setTimeout(() => {
+                icon.innerHTML = `<i data-lucide="users" class="w-12 h-12 text-fuchsia-500"></i>`;
+                icon.className = "w-24 h-24 bg-fuchsia-100 dark:bg-fuchsia-900/50 rounded-full flex items-center justify-center mx-auto mb-8 shadow-inner border border-fuchsia-200 dark:border-fuchsia-800 transition-all duration-500 transform scale-100";
+                title.innerText = "Manager Directory.";
+                text.innerText = "Seamlessly invite and manage access for your shift managers directly from the grid.";
+                lucide.createIcons();
+            }, 6000);
+        }
+
+        function finishTutorial() {
+            // Use auth.currentUser to avoid relying on the potentially-stale module var.
+            // Also clear isRegistering so future auth state changes work normally.
+            isRegistering = false;
+            const userToInit = auth.currentUser || currentUser;
+            document.getElementById('view-register').classList.remove('active');
+            initializeCorporateWorkspace(userToInit);
+        }
+
 
         // --- Workspace Initialization ---
         async function initializeCorporateWorkspace(user) {
@@ -421,20 +1204,19 @@
                 // Find the group this user owns
                 const groupSnap = await db.collection('shift_groups').where('ownerId', '==', user.uid).limit(1).get();
                 if (groupSnap.empty) {
-                    alert("This account does not own any organizations. Please use the ezManage app, or create a new organization.");
-                    auth.signOut();
+                    navTo('register');
                     return;
                 }
-                
+
                 const orgDoc = groupSnap.docs[0];
                 activeOrgId = orgDoc.id;
                 activeOrgPass = orgDoc.data().password;
-                
-                document.getElementById('orgNameDisplay').innerText = orgDoc.data().groupName;
-                document.getElementById('orgIdDisplay').innerText = `ID: ${activeOrgId}`;
+
+                document.getElementById('orgNameDisplayBento').innerText = orgDoc.data().groupName;
+                document.getElementById('orgIdDisplayBento').innerText = `ID: ${activeOrgId}`;
                 document.getElementById('shareGroupId').innerText = activeOrgId;
                 document.getElementById('shareGroupPass').innerText = activeOrgPass;
-                
+
                 document.getElementById('dashboard-shell').classList.remove('hidden');
                 navTo('overview');
             } catch (e) {
@@ -444,189 +1226,274 @@
         }
 
         // --- Data Fetching ---
-        async function fetchGlobalData() {
-            if(!activeOrgId) return;
-            
-            // 1. Fetch active notes
-            db.collection('shift_notes').where('orgId', '==', activeOrgId).where('status', '==', 'Active')
-              .onSnapshot(snap => {
-                  document.getElementById('statNotesCount').innerText = snap.size;
-                  const container = document.getElementById('globalNotesContainer');
-                  if(snap.empty) {
-                      container.innerHTML = `<div class="text-center py-8 bg-white dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-800 text-slate-400 font-bold">No active notes across stores.</div>`;
-                      return;
-                  }
-                  
-                  let html = '';
-                  snap.forEach(doc => {
-                      const data = doc.data();
-                      const isUrgent = data.priority === 'Urgent';
-                      const color = isUrgent ? 'red' : 'indigo';
-                      html += `
-                        <div class="p-4 bg-white dark:bg-slate-900 rounded-xl border border-${color}-100 dark:border-${color}-900/50 shadow-sm flex items-start gap-4">
-                            <div class="w-10 h-10 rounded-full bg-${color}-100 dark:bg-${color}-900/30 flex items-center justify-center text-${color}-500 flex-shrink-0 mt-1">
-                                <i data-lucide="${isUrgent ? 'alert-triangle' : 'message-square'}"></i>
-                            </div>
-                            <div>
-                                <div class="font-black text-slate-900 dark:text-white">${data.content}</div>
-                                <div class="text-xs font-bold uppercase tracking-widest text-slate-400 mt-1">From: ${data.authorName} • Priority: ${data.priority}</div>
-                            </div>
-                        </div>
-                      `;
-                  });
-                  container.innerHTML = html;
-                  lucide.createIcons();
-              });
+        // --- Bento Dashboard Logic ---
 
-            // 2. Count Managers
-            db.collection('users').where('orgId', '==', activeOrgId).get().then(snap => {
-                document.getElementById('statManagersCount').innerText = snap.size;
+        // Helper: Generate consistent colors from names/emails
+        const managerColors = ['#f43f5e', '#ec4899', '#d946ef', '#8b5cf6', '#6366f1', '#3b82f6', '#0ea5e9', '#06b6d4', '#14b8a6', '#10b981', '#84cc16', '#eab308', '#f59e0b', '#f97316'];
+        function getManagerColor(str) {
+            let hash = 0;
+            for (let i = 0; i < str.length; i++) hash = str.charCodeAt(i) + ((hash << 5) - hash);
+            return managerColors[Math.abs(hash) % managerColors.length];
+        }
+
+        // Initialize date picker to today
+        document.addEventListener("DOMContentLoaded", () => {
+            const picker = document.getElementById('dashboardDatePicker');
+            if (picker) picker.value = new Date().toISOString().split('T')[0];
+        });
+
+        async function fetchDashboardData() {
+            if (!activeOrgId) return;
+            const selectedDate = document.getElementById('dashboardDatePicker').value || new Date().toISOString().split('T')[0];
+
+            // Fetch Managers & Metrics
+            db.collection('users').where('orgId', '==', activeOrgId).onSnapshot(snap => {
+                const tbody = document.getElementById('managersTableBody');
+                const indivContainer = document.getElementById('individualPerformanceContainer');
+
+                if (snap.empty) {
+                    tbody.innerHTML = `<tr><td colspan="4" class="px-6 py-8 text-center text-slate-400 font-bold">No managers found.</td></tr>`;
+                    indivContainer.innerHTML = `<div class="col-span-full text-center py-8 text-slate-400 font-bold">No performance data yet.</div>`;
+                    return;
+                }
+
+                let htmlManagers = '';
+                let htmlIndiv = '';
+                let allShifts = [];
+
+                snap.forEach(doc => {
+                    const d = doc.data();
+                    const isOwner = doc.id === currentUser.uid;
+                    const displayName = d.name || d.email.split('@')[0];
+                    const color = getManagerColor(displayName);
+
+                    // 1. Manager Directory
+                    htmlManagers += `
+                    <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                        <td class="px-6 py-3">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-full flex items-center justify-center text-white font-black text-xs shadow-sm" style="background-color: ${color}">
+                                    ${displayName.substring(0, 2).toUpperCase()}
+                                </div>
+                                <div class="font-black text-slate-800 dark:text-slate-200">
+                                    ${displayName} ${isOwner ? '<span class="ml-2 text-[10px] bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400 px-2 py-0.5 rounded-full uppercase tracking-widest">Admin</span>' : ''}
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-3 text-slate-500 text-xs font-bold">${d.email || 'N/A'}</td>
+                        <td class="px-6 py-3">
+                            <select class="bg-slate-100 dark:bg-slate-800 border-none rounded-lg text-xs font-bold focus:ring-0 text-slate-600 dark:text-slate-300 py-1" onchange="alert('Permission update coming soon')">
+                                <option ${isOwner ? 'selected' : ''}>Admin</option>
+                                <option ${!isOwner ? 'selected' : ''}>Manager</option>
+                            </select>
+                        </td>
+                        <td class="px-6 py-3 text-right">
+                            ${!isOwner ? `<button onclick="removeManager('${doc.id}')" aria-label="Remove manager" class="text-slate-400 hover:text-red-500 transition-colors"><i data-lucide="trash-2" class="w-4 h-4"></i></button>` : `<span class="text-slate-300">-</span>`}
+                        </td>
+                    </tr>`;
+
+                    // Aggregate shifts for charts
+                    const h = d.shiftHistory || [];
+                    allShifts = allShifts.concat(h);
+
+                    // 2. Individual Performance for Selected Date
+                    const todayShift = h.find(s => s.dateSaved === selectedDate);
+                    let score = 0;
+                    if (todayShift && todayShift.routines && todayShift.routines.length > 0) {
+                        const checked = todayShift.routines.filter(r => r.checked).length;
+                        score = Math.round((checked / todayShift.routines.length) * 100);
+                    }
+
+                    htmlIndiv += `
+                    <div class="p-4 bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-full flex items-center justify-center text-white font-black shadow-sm" style="background-color: ${color}">
+                                ${displayName.substring(0, 2).toUpperCase()}
+                            </div>
+                            <div class="font-black text-sm">${displayName}</div>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-xl font-black ${score === 100 ? 'text-emerald-500' : (score > 0 ? 'text-indigo-500' : 'text-slate-400')}">${score}%</div>
+                            <div class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Completion</div>
+                        </div>
+                    </div>`;
+                });
+
+                tbody.innerHTML = htmlManagers;
+                indivContainer.innerHTML = htmlIndiv;
+                lucide.createIcons();
+
+                renderGlobalPerformanceChart(allShifts);
             });
-        }
 
-        function fetchManagers() {
-            if(!activeOrgId) return;
-            db.collection('users').where('orgId', '==', activeOrgId)
-              .onSnapshot(snap => {
-                  const tbody = document.getElementById('managersTableBody');
-                  if(snap.empty) {
-                      tbody.innerHTML = `<tr><td colspan="4" class="px-6 py-8 text-center text-slate-400 font-bold">No managers found.</td></tr>`;
-                      return;
-                  }
-                  let html = '';
-                  snap.forEach(doc => {
-                      const d = doc.data();
-                      const isOwner = doc.id === currentUser.uid;
-                      html += `
-                        <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
-                            <td class="px-6 py-4 font-black">${d.name || d.email.split('@')[0]} ${isOwner ? '<span class="ml-2 text-[10px] bg-indigo-100 text-indigo-700 px-2 py-1 rounded-full uppercase tracking-widest">Admin</span>' : ''}</td>
-                            <td class="px-6 py-4 text-slate-500">${d.email || 'N/A'}</td>
-                            <td class="px-6 py-4"><span class="px-2 py-1 bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 text-[10px] font-black uppercase tracking-widest rounded-full">Active</span></td>
-                            <td class="px-6 py-4 text-right">
-                                ${!isOwner ? `<button onclick="removeManager('${doc.id}')" class="text-red-400 hover:text-red-500 font-bold text-sm">Remove</button>` : `<span class="text-slate-300">-</span>`}
-                            </td>
-                        </tr>
-                      `;
-                  });
-                  tbody.innerHTML = html;
-              });
-        }
+            // Fetch Notes & Calculate Labor Saved for selected date
+            db.collection('shift_notes').where('orgId', '==', activeOrgId).onSnapshot(snap => {
+                const container = document.getElementById('globalNotesContainer');
+                let notesCount = 0;
+                let htmlNotes = '';
 
-        function fetchJoinRequests() {
-            if(!activeOrgId) return;
-            db.collection('shift_group_requests').where('groupId', '==', activeOrgId).where('status', '==', 'Pending')
-              .onSnapshot(snap => {
-                  const section = document.getElementById('pendingRequestsSection');
-                  const container = document.getElementById('pendingRequestsContainer');
-                  if(snap.empty) {
-                      section.classList.add('hidden');
-                      return;
-                  }
-                  section.classList.remove('hidden');
-                  let html = '';
-                  snap.forEach(doc => {
-                      html += `
-                        <div class="flex justify-between items-center p-4 bg-white dark:bg-slate-900 border border-amber-200 dark:border-amber-900/50 rounded-xl">
-                            <div>
-                                <div class="font-black text-slate-900 dark:text-white">${doc.data().userName}</div>
-                                <div class="text-xs font-bold uppercase tracking-widest text-slate-500">Requested Access</div>
+                snap.forEach(doc => {
+                    const data = doc.data();
+                    // Basic date filter (assuming timestamp is stored, or filtering by a date field if present)
+                    // If no explicit date field exists, we just show all or try to derive. Let's show all for demo if no date.
+
+                    const isUrgent = data.priority === 'Urgent';
+                    const color = isUrgent ? 'red' : 'indigo';
+                    const authorColor = getManagerColor(data.authorName || 'Unknown');
+
+                    notesCount++;
+                    htmlNotes += `
+                    <div class="p-4 bg-white dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-800 shadow-sm flex items-start gap-4 hover:border-${color}-200 dark:hover:border-${color}-800 transition-colors">
+                        <div class="w-10 h-10 rounded-full flex items-center justify-center text-white flex-shrink-0 mt-1 font-black shadow-sm" style="background-color: ${authorColor}">
+                            ${(data.authorName || 'U').substring(0, 1).toUpperCase()}
+                        </div>
+                        <div class="flex-grow">
+                            <div class="flex justify-between items-start mb-1">
+                                <div class="font-black text-slate-900 dark:text-white text-sm">${data.authorName}</div>
+                                ${isUrgent ? `<span class="bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400 text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full flex items-center"><i data-lucide="alert-triangle" class="w-3 h-3 mr-1"></i> Urgent</span>` : ''}
                             </div>
-                            <button onclick="approveRequest('${doc.id}')" class="btn btn-accent btn-sm px-6">Approve</button>
+                            <div class="text-sm text-slate-600 dark:text-slate-400 mb-2">${data.content}</div>
+                            <div class="text-[10px] font-bold uppercase tracking-widest text-slate-400">Status: ${data.status}</div>
+                        </div>
+                    </div>`;
+                });
+
+                document.getElementById('statNotesCount').innerText = `${notesCount} notes`;
+                container.innerHTML = notesCount > 0 ? htmlNotes : `<div class="text-center py-8 text-slate-400 font-bold">No notes for this date.</div>`;
+
+                // Calculate Labor Saved: 15 mins per note
+                const totalMinutesSaved = notesCount * 15;
+                const hoursSaved = (totalMinutesSaved / 60).toFixed(1);
+                document.getElementById('laborSavedCount').innerText = `${hoursSaved}h`;
+
+                lucide.createIcons();
+            });
+
+            // Fetch Pending Requests
+            db.collection('shift_group_requests').where('groupId', '==', activeOrgId).where('status', '==', 'Pending')
+                .onSnapshot(snap => {
+                    const section = document.getElementById('pendingRequestsSection');
+                    const container = document.getElementById('pendingRequestsContainer');
+                    const badge = document.getElementById('pendingRequestsBadge');
+
+                    if (snap.empty) {
+                        section.classList.add('hidden');
+                        badge.classList.add('hidden');
+                        return;
+                    }
+
+                    badge.innerText = snap.size;
+                    badge.classList.remove('hidden');
+
+                    let html = '';
+                    snap.forEach(doc => {
+                        html += `
+                        <div class="flex justify-between items-center p-3 bg-white dark:bg-slate-800 border border-amber-200 dark:border-amber-900/50 rounded-xl shadow-sm">
+                            <div>
+                                <div class="font-black text-slate-900 dark:text-white text-sm">${doc.data().userName}</div>
+                                <div class="text-[10px] font-bold uppercase tracking-widest text-amber-500">Requested Access</div>
+                            </div>
+                            <button onclick="approveRequest('${doc.id}')" class="btn btn-accent btn-sm py-1 px-4 text-xs">Approve</button>
                         </div>
                       `;
-                  });
-                  container.innerHTML = html;
-              });
+                    });
+                    container.innerHTML = html;
+                });
+        }
+
+        function togglePendingRequests() {
+            document.getElementById('pendingRequestsSection').classList.toggle('hidden');
+        }
+
+        function showInviteModal() {
+            alert(`Invite Managers by having them download the ezManage app and entering:\nGroup ID: ${activeOrgId}\nPassword: ${activeOrgPass}`);
         }
 
         async function approveRequest(requestId) {
             try {
-                const manageShiftGroups = firebase.functions().httpsCallableFromURL('https://manageshiftgroups-dsy7tdoigq-uc.a.run.app');
-                await manageShiftGroups({
-                    action: "approve_join",
-                    payload: { requestId: requestId }
-                });
-                alert("Manager Approved!");
-            } catch(e) { alert("Failed: " + e.message); }
+                await callFunction('manageShiftGroups', { action: "approve_join", payload: { requestId } });
+            } catch (e) { alert("Failed: " + e.message); }
         }
 
         async function removeManager(userId) {
-            if(!confirm("Remove this manager from the organization? They will lose access to all shared notes and metrics.")) return;
-            try {
-                // To remove a manager securely without a dedicated cloud function, 
-                // the admin removes the orgId from the user doc. 
-                // NOTE: Requires firestore.rules update to allow owner to write to user doc!
-                // For safety in this demo, we'll inform the user it requires backend support.
-                alert("Removing managers requires backend Cloud Function support which is coming in v2!");
-            } catch(e) { console.error(e); }
+            if (!confirm("Remove this manager from the organization?")) return;
+            alert("Removing managers requires backend Cloud Function support which is coming in v2!");
         }
 
-        // --- Metrics Chart ---
-        function renderGlobalMetrics() {
-            if(!activeOrgId) return;
+        function renderGlobalPerformanceChart(allShifts) {
             const ctx = document.getElementById('globalPerformanceChart');
-            if(!ctx) return;
+            if (!ctx || allShifts.length === 0) {
+                document.getElementById('statAvgScore').innerText = '0%';
+                return;
+            }
 
-            // Fetch ALL users in org to aggregate their shift history
-            db.collection('users').where('orgId', '==', activeOrgId).get().then(snap => {
-                let allShifts = [];
-                snap.forEach(doc => {
-                    const h = doc.data().shiftHistory || [];
-                    allShifts = allShifts.concat(h);
+            // Group by date
+            const grouped = {};
+            allShifts.forEach(s => {
+                if (!s.dateSaved) return;
+                if (!grouped[s.dateSaved]) grouped[s.dateSaved] = { totalRoutines: 0, checkedRoutines: 0, count: 0 };
+                grouped[s.dateSaved].count++;
+                (s.routines || []).forEach(r => {
+                    grouped[s.dateSaved].totalRoutines++;
+                    if (r.checked) grouped[s.dateSaved].checkedRoutines++;
                 });
+            });
 
-                if(allShifts.length === 0) return;
+            const sortedDates = Object.keys(grouped).sort();
+            const labels = sortedDates.map(d => d.split('-').slice(-2).join('/')); // MM/DD
+            const scores = sortedDates.map(d => {
+                const g = grouped[d];
+                return g.totalRoutines === 0 ? 0 : Math.round((g.checkedRoutines / g.totalRoutines) * 100);
+            });
 
-                // Group by date
-                const grouped = {};
-                allShifts.forEach(s => {
-                    if(!s.dateSaved) return;
-                    if(!grouped[s.dateSaved]) grouped[s.dateSaved] = { totalRoutines: 0, checkedRoutines: 0, count: 0 };
-                    grouped[s.dateSaved].count++;
-                    (s.routines || []).forEach(r => {
-                        grouped[s.dateSaved].totalRoutines++;
-                        if(r.checked) grouped[s.dateSaved].checkedRoutines++;
-                    });
-                });
+            // Overall average score
+            const overallScore = scores.length > 0 ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 0;
+            document.getElementById('statAvgScore').innerText = overallScore + '%';
 
-                const sortedDates = Object.keys(grouped).sort();
-                const labels = sortedDates.map(d => d.split('-').slice(-2).join('/')); // MM/DD
-                const scores = sortedDates.map(d => {
-                    const g = grouped[d];
-                    return g.totalRoutines === 0 ? 0 : Math.round((g.checkedRoutines / g.totalRoutines) * 100);
-                });
+            if (globalChartInstance) globalChartInstance.destroy();
 
-                // Overall average score
-                const overallScore = scores.length > 0 ? Math.round(scores.reduce((a,b)=>a+b,0)/scores.length) : 0;
-                document.getElementById('statAvgScore').innerText = overallScore + '%';
+            const isDark = document.documentElement.classList.contains('dark-mode');
+            const textColor = isDark ? '#94a3b8' : '#64748b';
+            const gridColor = isDark ? '#334155' : '#f1f5f9';
 
-                if(globalChartInstance) globalChartInstance.destroy();
-
-                const isDark = document.documentElement.classList.contains('dark-mode');
-                const textColor = isDark ? '#94a3b8' : '#64748b';
-
-                globalChartInstance = new Chart(ctx, {
-                    type: 'bar',
-                    data: {
-                        labels: labels,
-                        datasets: [{
-                            label: 'Avg Routine Completion (%)',
-                            data: scores,
-                            backgroundColor: 'rgba(99, 102, 241, 0.8)',
-                            borderRadius: 6
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        plugins: { legend: { display: false } },
-                        scales: {
-                            y: { beginAtZero: true, max: 100, ticks: { color: textColor } },
-                            x: { ticks: { color: textColor } }
+            globalChartInstance = new Chart(ctx, {
+                type: 'line', // Switched to line for better timeline view
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Completion %',
+                        data: scores,
+                        borderColor: '#6366f1',
+                        backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                        borderWidth: 3,
+                        pointBackgroundColor: '#6366f1',
+                        pointBorderColor: '#ffffff',
+                        pointBorderWidth: 2,
+                        pointRadius: 4,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            ticks: { color: textColor, font: { weight: 'bold' } },
+                            grid: { color: gridColor }
+                        },
+                        x: {
+                            ticks: { color: textColor, font: { weight: 'bold' } },
+                            grid: { display: false }
                         }
                     }
-                });
+                }
             });
         }
     </script>
 </body>
+
 </html>
