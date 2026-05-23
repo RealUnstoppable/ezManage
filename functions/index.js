@@ -311,9 +311,9 @@ exports.manageShiftGroups = functions.https.onCall(async (data, context) => {
           .add(newGroup);
 
       // Automatically set the owner's orgId to the new group ID
-      await admin.firestore().collection("users").doc(uid).update({
+      await admin.firestore().collection("users").doc(uid).set({
         orgId: docRef.id,
-      });
+      }, {merge: true});
 
       return {success: true, groupId: docRef.id};
     }
@@ -401,9 +401,9 @@ exports.manageShiftGroups = functions.https.onCall(async (data, context) => {
       }
 
       // Update the requesting user's orgId
-      await admin.firestore().collection("users").doc(userId).update({
+      await admin.firestore().collection("users").doc(userId).set({
         orgId: groupId,
-      });
+      }, {merge: true});
 
       // Update request status
       await requestDocRef.update({

@@ -1376,7 +1376,11 @@
 
         if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
         const auth = firebase.auth();
+        firebase.firestore().settings({
+            experimentalForceLongPolling: true
+        });
         const db = firebase.firestore();
+        db.settings({ experimentalForceLongPolling: true });
         const cloudFunctions = firebase.functions();
 
         db.enablePersistence().catch(err => console.error("Offline sync error:", err));
@@ -1405,15 +1409,7 @@
         let cloudSyncEnabled = false;
         let isInitializingAuth = true;
 
-        function escapeHTML(str) {
-            if (!str && str !== 0) return "";
-            return String(str)
-                .replace(/&/g, "&amp;")
-                .replace(/</g, "&lt;")
-                .replace(/>/g, "&gt;")
-                .replace(/"/g, "&quot;")
-                .replace(/'/g, "&#039;");
-        }
+
 
         auth.onAuthStateChanged((user) => {
             currentUser = user;
@@ -2544,15 +2540,7 @@
 
 
 
-        function escapeHTML(str) {
-            if (!str && str !== 0) return "";
-            return String(str)
-                .replace(/&/g, "&amp;")
-                .replace(/</g, "&lt;")
-                .replace(/>/g, "&gt;")
-                .replace(/"/g, "&quot;")
-                .replace(/'/g, "&#039;");
-        }
+
 
         async function submitMaintenanceTicket() {
             if (!currentUser || !currentUserData || !currentUserData.orgId) {
@@ -2583,7 +2571,7 @@
                     status: 'Open',
                     reportedByUid: currentUser.uid,
                     reportedByName: currentUserData.name || currentUser.email,
-                    orgId: currentUserData.orgId,
+                    orgId: currentUserData.orgId || null,
                     createdAt: firebase.firestore.FieldValue.serverTimestamp(),
                     updatedAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
@@ -2597,7 +2585,12 @@
                 fetchMaintenanceTickets();
             } catch (error) {
                 console.error("Error submitting ticket:", error);
-                alert("Failed to submit ticket. " + error.message);
+                if (error.code === 'unavailable' || error.code === 'auth/network-request-failed') {
+                    alert("Network error: Could not connect to the server. Please check your connection.");
+                    alert("Network error: Could not submit maintenance ticket.");
+                } else {
+                    alert("Failed to submit ticket. " + error.message);
+                }
             } finally {
                 submitBtn.innerHTML = originalText;
                 submitBtn.disabled = false;
@@ -2727,7 +2720,7 @@
             });
         }
 
-        function addShiftToSchedule() {
+        async function addShiftToSchedule() {
             const dateInput = document.getElementById('scheduleDate');
             const empName = document.getElementById('shiftEmpName');
             const role = document.getElementById('shiftRole');
@@ -2749,27 +2742,60 @@
             const date = dateInput.value;
             const scheduleRef = db.collection('schedules').doc(`${currentUser.uid}_${date}`);
 
-            scheduleRef.get().then(doc => {
+            scheduleRef.get().then(async doc => {
+            try {
+                const doc = await scheduleRef.get();
                 let shifts = [];
                 if (doc.exists) {
                     shifts = doc.data().shifts || [];
                 }
                 shifts.push(newShift);
 
-                scheduleRef.set({
+                await scheduleRef.set({
                     uid: currentUser.uid,
-                    date: date,
-                    shifts: shifts,
-                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-                }, { merge: true }).then(() => {
+                try {
+                    await scheduleRef.set({
+                        uid: currentUser.uid,
+                        orgId: currentUserData.orgId || null,
+                        date: date,
+                        shifts: shifts,
+                        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    }, { merge: true });
                     empName.value = '';
                     role.value = 'Cashier';
                     startTime.value = '';
                     endTime.value = '';
-                }).catch(err => {
+                } catch(err) {
                     console.error("Error saving shift", err);
-                });
+                }
             });
+                await scheduleRef.set({
+                    uid: currentUser.uid,
+                scheduleRef.set({
+                    authorId: currentUser.uid,
+                    orgId: currentUserData?.orgId || null,
+                    date: date,
+                    shifts: shifts,
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                }, { merge: true });
+
+                empName.value = '';
+                role.value = 'Cashier';
+                startTime.value = '';
+                endTime.value = '';
+            } catch(err) {
+                console.error("Error saving shift", err);
+                if (err.code === 'unavailable' || err.code === 'auth/network-request-failed') {
+                    alert("Network error: Could not connect to the server. Please check your connection.");
+                } else {
+                    alert("Failed to save shift: " + err.message);
+            } catch (err) {
+                if (err.code === 'unavailable' || err.code === 'auth/network-request-failed') {
+                    alert("Network error: Please check your connection.");
+                } else {
+                    console.error("Error saving shift", err);
+                }
+            }
         }
 
         let unsubscribeSchedule = null;
@@ -2804,11 +2830,11 @@
                             div.className = "flex justify-between items-center p-4 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800";
                             div.innerHTML = `
                                 <div>
-                                    <h4 class="font-bold text-lg">${shift.employeeName}</h4>
-                                    <p class="text-sm text-slate-500">${shift.role}</p>
+                                    <h4 class="font-bold text-lg">${escapeHTML(shift.employeeName)}</h4>
+                                    <p class="text-sm text-slate-500">${escapeHTML(shift.role)}</p>
                                 </div>
                                 <div class="text-right">
-                                    <p class="font-mono bg-slate-50 dark:bg-slate-800 px-3 py-1 rounded-lg border border-slate-100 dark:border-slate-700">${shift.startTime} - ${shift.endTime}</p>
+                                    <p class="font-mono bg-slate-50 dark:bg-slate-800 px-3 py-1 rounded-lg border border-slate-100 dark:border-slate-700">${escapeHTML(shift.startTime)} - ${escapeHTML(shift.endTime)}</p>
                                     <button onclick="removeShift(${index})" class="text-red-500 text-xs mt-2 hover:underline">Remove</button>
                                 </div>
                             `;
@@ -2821,21 +2847,25 @@
                 });
         }
 
-        function removeShift(index) {
+        async function removeShift(index) {
             const dateInput = document.getElementById('scheduleDate');
             if (!dateInput || !dateInput.value) return;
 
             const date = dateInput.value;
             const scheduleRef = db.collection('schedules').doc(`${currentUser.uid}_${date}`);
 
-            scheduleRef.get().then(doc => {
+            try {
+                const doc = await scheduleRef.get();
+            scheduleRef.get().then(async doc => {
                 if (doc.exists) {
                     const data = doc.data();
                     let shifts = data.shifts || [];
                     shifts.splice(index, 1);
-                    scheduleRef.update({ shifts: shifts });
+                    await scheduleRef.update({ shifts: shifts });
                 }
-            });
+            } catch (error) {
+                console.error("Error removing shift:", error);
+            }
         }
 
 
@@ -2881,15 +2911,7 @@
                 });
         }
 
-        function escapeHTML(str) {
-            if (str === null || str === undefined) return '';
-            return String(str)
-                .replace(/&/g, "&amp;")
-                .replace(/</g, "&lt;")
-                .replace(/>/g, "&gt;")
-                .replace(/"/g, "&quot;")
-                .replace(/'/g, "&#039;");
-        }
+
 
         function checkAndRenderOrgControls() {
             if (!currentUser) return false;
@@ -3086,6 +3108,7 @@
             document.getElementById('shiftNoteContent').value = "";
 
             try {
+                // To allow client-side writes since cloud functions were failing for some users
                 const manageShiftNotes = firebase.functions().httpsCallable('manageShiftNotes');
                 const result = await manageShiftNotes({
                     action: "create",
@@ -3095,13 +3118,38 @@
                         priority: priority,
                         orgId: currentUserData.orgId
                     }
+                await db.collection('shift_notes').add({
+                    authorId: currentUser.uid,
+                    authorName: currentUser.email.split('@')[0],
+                    content: content,
+                    priority: priority,
+                    status: 'Active',
+                    orgId: currentUserData.orgId,
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
                 });
-                if (result.data.success) {
-                    document.getElementById('shiftNoteContent').value = "";
-                    fetchShiftNotes();
-                }
+
+                document.getElementById('shiftNoteContent').value = "";
+                fetchShiftNotes();
+
             } catch (err) {
-                alert("Failed to post note: " + err.message);
+                console.error("Error posting note", err);
+                if (err.code === 'unavailable' || err.code === 'auth/network-request-failed') {
+                    alert("Network error: Could not connect to the server. Please check your connection.");
+                } else {
+                    alert("Failed to post note: " + err.message);
+                }
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                document.getElementById('shiftNoteContent').value = "";
+                fetchShiftNotes();
+            } catch (err) {
+                console.error(err);
+                if (err.code === 'unavailable' || err.code === 'auth/network-request-failed') {
+                    alert("Network error: Could not submit shift note.");
+                } else {
+                    alert("Failed to submit shift note. " + err.message);
+                }
+                noteDiv.remove(); // revert optimistic UI
             }
         }
 
