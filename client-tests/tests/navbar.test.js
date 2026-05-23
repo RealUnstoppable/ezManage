@@ -1,9 +1,5 @@
 import { jest } from "@jest/globals";
 
-global.window = Object.create(window);
-global.window.firebase = { apps: [], initializeApp: jest.fn(), auth: () => ({ onAuthStateChanged: jest.fn() }), firestore: () => ({ settings: jest.fn() }) };
-global.firebase = global.window.firebase;
-
 jest.unstable_mockModule('../../js/auth.js', () => ({
   auth: {},
   db: {},
@@ -16,6 +12,16 @@ const { onAuthStateChanged } = await import("https://www.gstatic.com/firebasejs/
 const { getDoc } = await import("https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js");
 
 describe('loadNavbar', () => {
+  beforeAll(() => {
+    window.firebase = {
+        apps: [],
+        initializeApp: jest.fn(),
+        auth: () => ({ onAuthStateChanged: jest.fn() }),
+        firestore: () => ({})
+    };
+    global.firebase = window.firebase;
+  });
+
   beforeEach(() => {
     document.body.innerHTML = '<div class="main-header"></div>';
     jest.clearAllMocks();
