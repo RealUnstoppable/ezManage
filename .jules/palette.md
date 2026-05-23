@@ -16,3 +16,7 @@
 ## 2024-05-24 - Lucide Icon Injection & Async Loading States
 **Learning:** When injecting `<i data-lucide="...">` icons dynamically into the DOM (such as appending a `loader-2` spinner during an async form submission), the icons will not render until `lucide.createIcons()` is explicitly called.
 **Action:** Always call `lucide.createIcons()` immediately after any `innerHTML` assignment or DOM manipulation that introduces new Lucide icons to ensure visual parity.
+
+## 2024-05-24 - Form accessibility enhancements on User Profile
+**Learning:** Placeholder attributes in text inputs (e.g., in the Personal Details section of user profiles) do not serve as an accessible replacement for proper labels. Screen readers may ignore them, leaving users without context on what the inputs represent.
+**Action:** Always wrap inputs in a container and provide a visible, explicitly mapped `<label>` element using the `for` attribute that points to the `<input>` `id`. This ensures both visual clarity and proper screen reader announcements.
