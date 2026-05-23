@@ -20,3 +20,6 @@
 ## 2024-05-24 - Form accessibility enhancements on User Profile
 **Learning:** Placeholder attributes in text inputs (e.g., in the Personal Details section of user profiles) do not serve as an accessible replacement for proper labels. Screen readers may ignore them, leaving users without context on what the inputs represent.
 **Action:** Always wrap inputs in a container and provide a visible, explicitly mapped `<label>` element using the `for` attribute that points to the `<input>` `id`. This ensures both visual clarity and proper screen reader announcements.
+## 2024-05-21 - Icon-only buttons in template literals missing aria-labels
+**Learning:** When generating HTML dynamically via template literals (e.g., iterating through items in `company.html`), icon-only buttons (like remove buttons using Lucide icons) are frequently missing `aria-label` attributes because standard linting doesn't catch them in JS template strings. This significantly impacts screen reader accessibility for dynamic lists.
+**Action:** When reviewing dynamic list generation (like onboarding roles or manager lists), explicitly verify that any action buttons containing only icons include an appropriate `aria-label`.
