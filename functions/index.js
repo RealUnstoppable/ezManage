@@ -3,6 +3,7 @@ const { onRequest } = require("firebase-functions/v2/https");
 const HttpsError = functions.https.HttpsError;
 const admin = require("firebase-admin");
 const cors = require("cors")({ origin: true });
+const { adaptGen2Params } = require("./utils");
 
 admin.initializeApp();
 
@@ -172,11 +173,9 @@ exports.cancelSubscription = onRequest({ invoker: "public" }, (req, res) => {
  * Handles creation, updating, and resolution of shift notes.
  */
 exports.manageShiftNotes = functions.https.onCall(async (data, context) => {
-  // Gracefully adapt between Gen 1 (data, context) and Gen 2 (request) parameters
-  if (data && typeof data === "object" && "rawRequest" in data && "auth" in data) {
-    context = data;
-    data = data.data;
-  }
+  const adapted = adaptGen2Params(data, context);
+  data = adapted.data;
+  context = adapted.context;
 
   if (!context || !context.auth) {
     throw new HttpsError(
@@ -262,7 +261,7 @@ exports.manageShiftNotes = functions.https.onCall(async (data, context) => {
     throw new HttpsError(
         "invalid-argument", "Invalid action");
   } catch (error) {
-    console.error("Shift Note Error:", error);
+    console.error("Manager Troubleshooting: Shift Note Error:", error);
     throw new HttpsError("internal", error.message);
   }
 });
@@ -272,11 +271,9 @@ exports.manageShiftNotes = functions.https.onCall(async (data, context) => {
  * Handles creating groups, joining groups, and approving joins.
  */
 exports.manageShiftGroups = functions.https.onCall(async (data, context) => {
-  // Gracefully adapt between Gen 1 (data, context) and Gen 2 (request) parameters
-  if (data && typeof data === "object" && "rawRequest" in data && "auth" in data) {
-    context = data;
-    data = data.data;
-  }
+  const adapted = adaptGen2Params(data, context);
+  data = adapted.data;
+  context = adapted.context;
 
   if (!context || !context.auth) {
     throw new HttpsError(
@@ -419,7 +416,7 @@ exports.manageShiftGroups = functions.https.onCall(async (data, context) => {
 
     throw new HttpsError("invalid-argument", "Invalid action");
   } catch (error) {
-    console.error("Shift Groups Error:", error);
+    console.error("Manager Troubleshooting: Shift Groups Error:", error);
     if (error instanceof HttpsError) {
       throw error;
     }

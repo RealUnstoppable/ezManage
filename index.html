@@ -2012,6 +2012,9 @@
                 grouped[groupKey].push(data);
             });
 
+            // ⚡ Bolt Optimization: Batch DOM insertions using a DocumentFragment
+            const fragment = document.createDocumentFragment();
+
             Object.keys(grouped).sort().reverse().forEach(key => {
                 const groupContainer = document.createElement('div');
                 groupContainer.className = "mb-4 bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden";
@@ -2063,8 +2066,9 @@
 
                 groupContainer.appendChild(groupHeader);
                 groupContainer.appendChild(groupContent);
-                container.appendChild(groupContainer);
+                fragment.appendChild(groupContainer);
             });
+            container.appendChild(fragment);
             lucide.createIcons();
         }
 
