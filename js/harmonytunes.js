@@ -206,6 +206,8 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
+        // ⚡ Bolt Optimization: Replace O(N) DOM manipulations in loop with a DocumentFragment
+        const fragment = document.createDocumentFragment();
         songs.forEach((song, index) => {
             const row = document.createElement('tr');
 
@@ -226,8 +228,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 playContext(songs, index);
             });
 
-            songListBody.appendChild(row);
+            fragment.appendChild(row);
         });
+        songListBody.appendChild(fragment);
     }
 
     function playContext(newQueue, startIndex) {
