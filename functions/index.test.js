@@ -6,14 +6,19 @@ jest.mock("firebase-admin", () => {
   const firestoreMock = {
     collection: jest.fn().mockReturnThis(),
     doc: jest.fn().mockReturnThis(),
-    set: jest.fn(),
     where: jest.fn().mockReturnThis(),
-    get: jest.fn(),
-    update: jest.fn(),
+    get: jest.fn().mockResolvedValue({
+      exists: true,
+      data: () => ({email: "test@example.com"}),
+      docs: [],
+    }),
+    update: jest.fn().mockResolvedValue({}),
+    set: jest.fn().mockResolvedValue({}),
+    add: jest.fn().mockResolvedValue({id: "docId123"}),
   };
   return {
     initializeApp: jest.fn(),
-    firestore: jest.fn(() => firestoreMock),
+    firestore: Object.assign(jest.fn(() => firestoreMock), {FieldValue: {serverTimestamp: jest.fn()}}),
   };
 });
 admin.firestore.FieldValue = {
@@ -223,7 +228,8 @@ describe("createCheckoutSession", () => {
     });
 
     expect(mockStripeMock.checkout.sessions.create).toHaveBeenCalled();
-    expect(consoleSpy).toHaveBeenCalledWith("Checkout Error:", expect.any(Error));
+    expect(consoleSpy).toHaveBeenCalledWith("Manager Troubleshooting: Checkout Error for uid: " + req.body.uid, expect.any(Error));
+    expect(consoleSpy).toHaveBeenCalledWith("Manager Troubleshooting: Checkout Error for uid: test_uid", expect.any(Error));
     expect(res.status).toHaveBeenCalledWith(500);
     expect(res.json).toHaveBeenCalledWith({error: errorMessage});
 

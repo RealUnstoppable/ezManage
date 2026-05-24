@@ -114,54 +114,58 @@ function updateCartSummary() {
     cartTotalPriceEl.textContent = `$${totalPrice.toFixed(2)}`;
 }
 
-async function handleAddToCart(productId) {
+async function updateCartState(mutationFn, errorMessage) {
     const originalCart = { ...cart };
     try {
-        cart[productId] = (cart[productId] || 0) + 1;
+        mutationFn();
         renderCart();
         await saveCart();
     } catch (error) {
-        console.error("Error adding item to cart:", error);
+        console.error("Manager Troubleshooting: Error adding item to cart for productId:", productId, error);
+        console.error(`Manager Troubleshooting: ${errorMessage}:`, error);
         cart = originalCart;
         renderCart();
     }
 }
 
+async function handleAddToCart(productId) {
+    await updateCartState(() => {
+        cart[productId] = (cart[productId] || 0) + 1;
+    }, "Error adding item to cart");
+}
+
 async function handleUpdateQuantity(productId, quantity) {
+    if (quantity <= 0) {
+        return handleRemoveFromCart(productId);
+    }
     const originalCart = { ...cart };
     try {
-        if (quantity <= 0) {
-            await handleRemoveFromCart(productId);
-        } else {
-            cart[productId] = parseInt(quantity, 10);
-            renderCart();
-            await saveCart();
-        }
+        cart[productId] = parseInt(quantity, 10);
+        renderCart();
+        await saveCart();
     } catch (error) {
-        console.error("Error updating item quantity:", error);
+        console.error("Manager Troubleshooting: Error updating item quantity for productId:", productId, error);
         cart = originalCart;
         renderCart();
-        try {
-            await saveCart();
-        } catch (e) {
-            cart = prevCart;
-            renderCart();
-            console.error("Rollback handleUpdateQuantity:", e);
-        }
+        await handleRemoveFromCart(productId);
+    } else {
+        await updateCartState(() => {
+            cart[productId] = parseInt(quantity, 10);
+        }, "Error updating item quantity");
     }
 }
 
 async function handleRemoveFromCart(productId) {
-    const originalCart = { ...cart };
-    try {
+    await updateCartState(() => {
         delete cart[productId];
         renderCart();
         await saveCart();
     } catch (error) {
-        console.error("Error removing item from cart:", error);
+        console.error("Manager Troubleshooting: Error removing item from cart for productId:", productId, error);
         cart = originalCart;
         renderCart();
     }
+    }, "Error removing item from cart");
 }
 
 async function saveCart() {
@@ -170,7 +174,8 @@ async function saveCart() {
             const userCartRef = doc(db, 'carts', currentUser.uid);
             await setDoc(userCartRef, { items: cart });
         } catch (error) {
-            console.error("Error saving cart to Firestore:", error);
+            console.error("Manager Troubleshooting: Error saving cart to Firestore for uid:", currentUser.uid, error);
+            console.error("Manager Troubleshooting: Error saving cart to Firestore:", error);
         }
     } else {
         localStorage.setItem('localCart', JSON.stringify(cart));
@@ -251,7 +256,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 await saveCart();
                 localStorage.removeItem('localCart');
             } catch (error) {
-                console.error("Error loading cart:", error);
+                console.error("Manager Troubleshooting: Error loading cart during auth state change:", error);
+                console.error("Manager Troubleshooting: Error loading cart:", error);
                 cart = localCart;
             }
         } else {

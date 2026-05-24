@@ -4,7 +4,8 @@
   "description": "ezManage Desktop Application",
   "main": "main.js",
   "scripts": {
-    "test": "NODE_OPTIONS='--experimental-vm-modules' jest",
+    "test": "NODE_OPTIONS='--experimental-vm-modules' jest js/tests client-tests/tests tests/footer.test.js",
+    "test": "NODE_OPTIONS='--experimental-vm-modules' jest js/tests/auth.test.js js/theme-loader.test.js tests/footer.test.js",
     "start": "node server.cjs",
     "start:electron": "electron .",
     "dev": "concurrently \"npm run start\" \"npm run start:electron\"",
@@ -24,13 +25,18 @@
   "devDependencies": {
     "@babel/core": "^7.29.0",
     "@babel/preset-env": "^7.29.2",
+    "@playwright/test": "^1.41.2",
     "babel-jest": "^30.3.0",
     "concurrently": "^9.2.1",
     "electron": "^41.4.0",
     "electron-builder": "^26.8.1",
     "jest": "^30.3.0",
-    "jest-environment-jsdom": "^30.3.0",
+    "jest-environment-jsdom": "^30.4.1",
+    "jsdom": "^29.1.1",
     "jsdom": "^29.1.0"
+    "jest-environment-jsdom": "^30.3.0",
+    "jsdom": "^29.1.0",
+    "playwright": "^1.60.0"
   },
   "type": "module",
   "dependencies": {
