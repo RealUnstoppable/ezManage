@@ -3,6 +3,8 @@ const {onRequest} = require("firebase-functions/v2/https");
 const HttpsError = functions.https.HttpsError;
 const admin = require("firebase-admin");
 const cors = require("cors")({origin: true});
+const cors = require("cors")({ origin: true });
+const { adaptGen2Params } = require("./utils");
 
 admin.initializeApp();
 
@@ -75,7 +77,7 @@ exports.createCheckoutSession = onRequest({invoker: "public"}, (req, res) => {
 
       res.status(200).json({url: session.url});
     } catch (err) {
-      console.error("Manager Troubleshooting: Checkout Error for uid: " + uid, err);
+      console.error("Checkout Error:", err);
       res.status(500).json({error: err.message});
     }
   });
@@ -89,7 +91,7 @@ exports.stripeWebhook = onRequest({invoker: "public"}, async (req, res) => {
   try {
     event = stripe.webhooks.constructEvent(req.rawBody, sig, endpointSecret);
   } catch (err) {
-    console.error("Webhook Error:", err);
+    console.error("Manager Troubleshooting: Webhook Error:", err);
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
 
@@ -113,7 +115,7 @@ exports.stripeWebhook = onRequest({invoker: "public"}, async (req, res) => {
         }, {merge: true});
         console.log(`✅ Successfully upgraded user ${uid} to ${planName}`);
       } catch (error) {
-        console.error("Error updating user subscription status:", error);
+        console.error("Manager Troubleshooting: Error updating user subscription status:", error);
       }
     }
   }
@@ -161,7 +163,7 @@ exports.cancelSubscription = onRequest({invoker: "public"}, (req, res) => {
       );
       res.status(200).json({success: true});
     } catch (err) {
-      console.error("Manager Troubleshooting: Cancel Error for customerId: " + customerId, err);
+      console.error("Cancel Error:", err);
       res.status(500).json({error: err.message});
     }
   });
@@ -172,11 +174,9 @@ exports.cancelSubscription = onRequest({invoker: "public"}, (req, res) => {
  * Handles creation, updating, and resolution of shift notes.
  */
 exports.manageShiftNotes = functions.https.onCall(async (data, context) => {
-  // Gracefully adapt between Gen 1 (data, context) and Gen 2 (request) parameters
-  if (data && typeof data === "object" && "rawRequest" in data && "auth" in data) {
-    context = data;
-    data = data.data;
-  }
+  const adapted = adaptGen2Params(data, context);
+  data = adapted.data;
+  context = adapted.context;
 
   if (!context || !context.auth) {
     throw new HttpsError(
@@ -263,6 +263,129 @@ exports.manageShiftNotes = functions.https.onCall(async (data, context) => {
         "invalid-argument", "Invalid action");
   } catch (error) {
     console.error("Manager Troubleshooting: Shift Note Error for uid:", uid, error);
+    console.error("Manager Troubleshooting: Shift Note Error:", error);
+    throw new HttpsError("internal", error.message);
+  }
+});
+
+/**
+ * Manage Employees API
+ * Handles creation, updating, and deletion of employees.
+ */
+exports.manageEmployees = functions.https.onCall(async (data, context) => {
+  if (data && typeof data === "object" && "rawRequest" in data && "auth" in data) {
+    context = data;
+    data = data.data;
+  }
+
+  if (!context || !context.auth) {
+    throw new HttpsError("unauthenticated", "User must be logged in.");
+  }
+
+  const {action, payload} = data;
+  const uid = context.auth.uid;
+
+  if (!action || !payload) {
+    throw new HttpsError("invalid-argument", "Missing action or payload");
+  }
+
+  try {
+    const userDoc = await admin.firestore().collection("users").doc(uid).get();
+    if (!userDoc.exists) {
+      throw new HttpsError("not-found", "User not found");
+    }
+    const actualOrgId = userDoc.data().orgId || null;
+
+    if (!actualOrgId) {
+       throw new HttpsError("permission-denied", "User must be part of an organization.");
+    }
+
+    if (action === "create") {
+      const {name, role, phone} = payload;
+
+      if (!name || !role) {
+        throw new HttpsError("invalid-argument", "Missing required employee details");
+      }
+
+      const newEmployee = {
+        name,
+        role,
+        phone: phone || "",
+        status: "Active",
+        orgId: actualOrgId,
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      };
+
+      const docRef = await admin.firestore().collection("employees").add(newEmployee);
+      return {success: true, id: docRef.id};
+    }
+
+    if (action === "get") {
+      const snapshot = await admin.firestore().collection("employees")
+        .where("orgId", "==", actualOrgId)
+        .where("status", "==", "Active")
+        .get();
+
+      const employees = [];
+      snapshot.forEach(doc => employees.push({id: doc.id, ...doc.data()}));
+      return {success: true, employees};
+    }
+
+    if (action === "update") {
+       const {empId, name, role, phone, status} = payload;
+       if (!empId) {
+          throw new HttpsError("invalid-argument", "Missing employee ID");
+       }
+
+       const empRef = admin.firestore().collection("employees").doc(empId);
+       const empDoc = await empRef.get();
+
+       if (!empDoc.exists) {
+          throw new HttpsError("not-found", "Employee not found");
+       }
+
+       if (empDoc.data().orgId !== actualOrgId) {
+          throw new HttpsError("permission-denied", "Unauthorized to update this employee");
+       }
+
+       const updates = {};
+       if (name !== undefined) updates.name = name;
+       if (role !== undefined) updates.role = role;
+       if (phone !== undefined) updates.phone = phone;
+       if (status !== undefined) updates.status = status;
+
+       await empRef.update(updates);
+       return {success: true};
+    }
+
+    if (action === "delete") {
+       const {empId} = payload;
+       if (!empId) {
+          throw new HttpsError("invalid-argument", "Missing employee ID");
+       }
+
+       const empRef = admin.firestore().collection("employees").doc(empId);
+       const empDoc = await empRef.get();
+
+       if (!empDoc.exists) {
+          throw new HttpsError("not-found", "Employee not found");
+       }
+
+       if (empDoc.data().orgId !== actualOrgId) {
+          throw new HttpsError("permission-denied", "Unauthorized to delete this employee");
+       }
+
+       // Soft delete
+       await empRef.update({ status: "Inactive" });
+       return {success: true};
+    }
+
+    throw new HttpsError("invalid-argument", "Invalid action");
+  } catch (error) {
+    console.error("Manage Employees Error:", error);
+    if (error instanceof HttpsError) {
+      throw error;
+    }
     throw new HttpsError("internal", error.message);
   }
 });
@@ -272,11 +395,9 @@ exports.manageShiftNotes = functions.https.onCall(async (data, context) => {
  * Handles creating groups, joining groups, and approving joins.
  */
 exports.manageShiftGroups = functions.https.onCall(async (data, context) => {
-  // Gracefully adapt between Gen 1 (data, context) and Gen 2 (request) parameters
-  if (data && typeof data === "object" && "rawRequest" in data && "auth" in data) {
-    context = data;
-    data = data.data;
-  }
+  const adapted = adaptGen2Params(data, context);
+  data = adapted.data;
+  context = adapted.context;
 
   if (!context || !context.auth) {
     throw new HttpsError(
@@ -314,9 +435,9 @@ exports.manageShiftGroups = functions.https.onCall(async (data, context) => {
           .add(newGroup);
 
       // Automatically set the owner's orgId to the new group ID
-      await admin.firestore().collection("users").doc(uid).update({
+      await admin.firestore().collection("users").doc(uid).set({
         orgId: docRef.id,
-      });
+      }, {merge: true});
 
       return {success: true, groupId: docRef.id};
     }
@@ -404,9 +525,9 @@ exports.manageShiftGroups = functions.https.onCall(async (data, context) => {
       }
 
       // Update the requesting user's orgId
-      await admin.firestore().collection("users").doc(userId).update({
+      await admin.firestore().collection("users").doc(userId).set({
         orgId: groupId,
-      });
+      }, {merge: true});
 
       // Update request status
       await requestDocRef.update({
@@ -417,9 +538,34 @@ exports.manageShiftGroups = functions.https.onCall(async (data, context) => {
       return {success: true};
     }
 
+    // Remove a manager from a group
+    if (action === "remove_manager") {
+      const {userId, groupId} = payload;
+
+      if (!userId || !groupId) {
+        throw new HttpsError(
+            "invalid-argument", "Missing required fields");
+      }
+
+      const groupDoc = await admin.firestore()
+          .collection("shift_groups").doc(groupId).get();
+
+      if (!groupDoc.exists || groupDoc.data().ownerId !== uid) {
+        throw new HttpsError(
+            "permission-denied", "Unauthorized");
+      }
+
+      await admin.firestore().collection("users").doc(userId).update({
+        orgId: null,
+      });
+
+      return {success: true};
+    }
+
     throw new HttpsError("invalid-argument", "Invalid action");
   } catch (error) {
     console.error("Manager Troubleshooting: Shift Groups Error for uid:", uid, error);
+    console.error("Manager Troubleshooting: Shift Groups Error:", error);
     if (error instanceof HttpsError) {
       throw error;
     }

@@ -30,6 +30,7 @@ document.querySelectorAll('.signup-form').forEach(form => {
                 }, 5000);
             } catch (error) {
                 console.error("Manager Troubleshooting: Newsletter subscription error for email:", email, error);
+                console.error("Manager Troubleshooting: Newsletter subscription error:", error);
                 alert("There was an error subscribing. Please try again later.");
             }
         }
