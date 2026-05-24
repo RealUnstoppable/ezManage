@@ -46,8 +46,22 @@ function escapeHTML(str) {
         .replace(/'/g, "&#039;");
 }
 
+/**
+ * Gracefully adapt between Gen 1 (data, context) and Gen 2 (request) parameters.
+ * @param {any} data
+ * @param {any} context
+ * @return {Object} An object containing adapted data and context
+ */
+function adaptGen2Params(data, context) {
+    if (data && typeof data === "object" && "rawRequest" in data && "auth" in data) {
+        return { data: data.data, context: data };
+    }
+    return { data, context };
+}
+
 module.exports = {
     parseNum,
     getDayOfWeek,
-    escapeHTML
+    escapeHTML,
+    adaptGen2Params
 };
