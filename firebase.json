@@ -15,19 +15,6 @@
         "*.local"
       ],
       "predeploy": []
-    },
-    {
-      "source": "dts-hub-website",
-      "codebase": "dts-hub-website",
-      "disallowLegacyRuntimeConfig": true,
-      "ignore": [
-        "node_modules",
-        ".git",
-        "firebase-debug.log",
-        "firebase-debug.*.log",
-        "*.local"
-      ],
-      "predeploy": []
     }
   ]
 }
