@@ -1,5 +1,9 @@
 import { jest } from "@jest/globals";
 
+// The gstatic URLs are mocked by moduleNameMapper pointing to __mocks__/firebase.js
+import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js';
+import { getDoc, doc } from 'https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js';
+
 const mockFirebase = {
   apps: [],
   initializeApp: jest.fn(() => ({ name: '[DEFAULT]' })),
@@ -8,7 +12,6 @@ const mockFirebase = {
 };
 
 global.window = global.window || {};
-global.firebase = mockFirebase;
 global.window.firebase = mockFirebase;
 globalThis.firebase = mockFirebase;
 
