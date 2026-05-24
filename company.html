@@ -1247,6 +1247,28 @@
         }
 
         // --- Data Fetching ---
+        async function fetchGlobalData() {
+            if(!activeOrgId) return;
+            
+            // 1. Fetch active notes
+            db.collection('shift_notes').where('orgId', '==', activeOrgId).where('status', '==', 'Active')
+              .onSnapshot(snap => {
+                  document.getElementById('statNotesCount').innerText = snap.size;
+                  const container = document.getElementById('globalNotesContainer');
+                  if(snap.empty) {
+                      container.innerHTML = `<div class="text-center py-8 bg-white dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-800 text-slate-400 font-bold">No active notes across stores.</div>`;
+                      return;
+                  }
+                  
+                  // ⚡ Bolt Optimization: Replace O(n²) string concatenation inside loop with array map().join('')
+                  container.innerHTML = snap.docs.map(doc => {
+                      const data = doc.data();
+                      const isUrgent = data.priority === 'Urgent';
+                      const color = isUrgent ? 'red' : 'indigo';
+                      return `
+                        <div class="p-4 bg-white dark:bg-slate-900 rounded-xl border border-${color}-100 dark:border-${color}-900/50 shadow-sm flex items-start gap-4">
+                            <div class="w-10 h-10 rounded-full bg-${color}-100 dark:bg-${color}-900/30 flex items-center justify-center text-${color}-500 flex-shrink-0 mt-1">
+                                <i data-lucide="${isUrgent ? 'alert-triangle' : 'message-square'}"></i>
         // --- Bento Dashboard Logic ---
 
         // Helper: Generate consistent colors from names/emails
@@ -1334,6 +1356,14 @@
                             </div>
                             <div class="font-black text-sm">${escapeHTML(displayName)}</div>
                         </div>
+                      `;
+                  }).join('');
+                  lucide.createIcons();
+              });
+
+            // 2. Count Managers
+            db.collection('users').where('orgId', '==', activeOrgId).get().then(snap => {
+                document.getElementById('statManagersCount').innerText = snap.size;
                         <div class="text-right">
                             <div class="text-xl font-black ${score === 100 ? 'text-emerald-500' : (score > 0 ? 'text-indigo-500' : 'text-slate-400')}">${score}%</div>
                             <div class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Completion</div>
@@ -1348,6 +1378,32 @@
                 renderGlobalPerformanceChart(allShifts);
             });
 
+        function fetchManagers() {
+            if(!activeOrgId) return;
+            db.collection('users').where('orgId', '==', activeOrgId)
+              .onSnapshot(snap => {
+                  const tbody = document.getElementById('managersTableBody');
+                  if(snap.empty) {
+                      tbody.innerHTML = `<tr><td colspan="4" class="px-6 py-8 text-center text-slate-400 font-bold">No managers found.</td></tr>`;
+                      return;
+                  }
+                  // ⚡ Bolt Optimization: Replace O(n²) string concatenation inside loop with array map().join('')
+                  tbody.innerHTML = snap.docs.map(doc => {
+                      const d = doc.data();
+                      const isOwner = doc.id === currentUser.uid;
+                      return `
+                        <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                            <td class="px-6 py-4 font-black">${d.name || d.email.split('@')[0]} ${isOwner ? '<span class="ml-2 text-[10px] bg-indigo-100 text-indigo-700 px-2 py-1 rounded-full uppercase tracking-widest">Admin</span>' : ''}</td>
+                            <td class="px-6 py-4 text-slate-500">${d.email || 'N/A'}</td>
+                            <td class="px-6 py-4"><span class="px-2 py-1 bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 text-[10px] font-black uppercase tracking-widest rounded-full">Active</span></td>
+                            <td class="px-6 py-4 text-right">
+                                ${!isOwner ? `<button onclick="removeManager('${doc.id}')" class="text-red-400 hover:text-red-500 font-bold text-sm">Remove</button>` : `<span class="text-slate-300">-</span>`}
+                            </td>
+                        </tr>
+                      `;
+                  }).join('');
+              });
+        }
             // Fetch Notes & Calculate Labor Saved for selected date
             db.collection('shift_notes').where('orgId', '==', activeOrgId).onSnapshot(snap => {
                 const container = document.getElementById('globalNotesContainer');
@@ -1393,6 +1449,18 @@
 
             // Fetch Pending Requests
             db.collection('shift_group_requests').where('groupId', '==', activeOrgId).where('status', '==', 'Pending')
+              .onSnapshot(snap => {
+                  const section = document.getElementById('pendingRequestsSection');
+                  const container = document.getElementById('pendingRequestsContainer');
+                  if(snap.empty) {
+                      section.classList.add('hidden');
+                      return;
+                  }
+                  section.classList.remove('hidden');
+                  // ⚡ Bolt Optimization: Replace O(n²) string concatenation inside loop with array map().join('')
+                  container.innerHTML = snap.docs.map(doc => {
+                      return `
+                        <div class="flex justify-between items-center p-4 bg-white dark:bg-slate-900 border border-amber-200 dark:border-amber-900/50 rounded-xl">
                 .onSnapshot(snap => {
                     const section = document.getElementById('pendingRequestsSection');
                     const container = document.getElementById('pendingRequestsContainer');
@@ -1418,6 +1486,8 @@
                             <button onclick="approveRequest('${escapeHTML(doc.id)}')" class="btn btn-accent btn-sm py-1 px-4 text-xs">Approve</button>
                         </div>
                       `;
+                  }).join('');
+              });
                     });
                     container.innerHTML = html;
                 });

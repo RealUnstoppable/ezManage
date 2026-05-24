@@ -1,3 +1,4 @@
+export default { testEnvironment: 'jsdom', transform: {}, moduleNameMapper: { '^https://www.gstatic.com/firebasejs/(.*)$': '<rootDir>/__mocks__/firebase.js' }, rootDir: '.', roots: ['<rootDir>/tests'], setupFiles: ['<rootDir>/__mocks__/setup.js'] };
 export default {
   testEnvironment: 'jsdom',
   setupFiles: ['<rootDir>/jest.setup.js'],
