@@ -1,7 +1,5 @@
 import { getFirebaseErrorMessage } from './utils.js';
 
-import { getFirebaseErrorMessage } from './utils.js';
-
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
 import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, sendEmailVerification } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
 import { getFirestore, doc, setDoc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
@@ -21,12 +19,9 @@ if (!window.firebase) { console.error("Firebase Compat SDK must be loaded before
 
 export const auth = window.firebase ? window.firebase.auth() : {};
 export const db = window.firebase ? window.firebase.firestore() : {};
-export const auth = firebase.auth();
-export const db = firebase.firestore();
-db.settings({ experimentalForceLongPolling: true });
-
-// Fallback for network reliability to bypass CORS/network errors
-db.settings({ experimentalForceLongPolling: true });
+if (db.settings) {
+  db.settings({ experimentalForceLongPolling: true });
+}
 
 export function getUserRedirectPath(userData) {
     return userData && userData.isAdmin ? 'admin.html' : 'index.html';
@@ -45,9 +40,6 @@ auth.onAuthStateChanged(async (user) => {
 
     if (user) {
         try {
-            const userDocRef = db.collection("users").doc(user.uid);
-            const userDoc = await userDocRef.get();
-
             const userDoc = await fetchUserDoc(user.uid);
             if (userDoc.exists) {
                 const userData = userDoc.data();
@@ -65,7 +57,6 @@ auth.onAuthStateChanged(async (user) => {
             }
         } catch (error) {
             console.error("Manager Troubleshooting: Error fetching user document in auth state change for uid:", user.uid, error);
-            console.error("Manager Troubleshooting: Error fetching user document in auth state change:", error);
         }
     } else {
         if (authLink) {

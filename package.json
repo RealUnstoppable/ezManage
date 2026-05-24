@@ -33,7 +33,6 @@
     "jest": "^30.3.0",
     "jest-environment-jsdom": "^30.4.1",
     "jsdom": "^29.1.1",
-    "jsdom": "^29.1.0"
     "jest-environment-jsdom": "^30.3.0",
     "jsdom": "^29.1.0",
     "playwright": "^1.60.0"
