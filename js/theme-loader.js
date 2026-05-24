@@ -1,3 +1,6 @@
+import { logManagerError } from './utils.js';
+
+import { auth, db, onAuthStateChanged, doc, getDoc } from './auth.js';
 
 (function() {
     const localTheme = localStorage.getItem('userTheme');
@@ -5,7 +8,6 @@
     if (localTheme) document.body.dataset.theme = localTheme;
     if (localAccent) document.body.dataset.accent = localAccent;
 })();
-import { auth, db, onAuthStateChanged, doc, getDoc } from './auth.js';
 
 export const applyTheme = (theme, accentColor) => {
     document.body.dataset.theme = theme || 'dark';
@@ -30,14 +32,18 @@ onAuthStateChanged(auth, async (user) => {
                 applyTheme('dark', 'blue');
             }
         } catch (error) {
-            console.error("Error loading theme from Firestore:", error);
+            logManagerError("Error loading theme from Firestore:", error);
             applyTheme('dark', 'blue');
         }
     } else {
-
-        const localTheme = localStorage.getItem('userTheme');
-        const localAccent = localStorage.getItem('userAccent');
-        applyTheme(localTheme, localAccent);
+        try {
+            const localTheme = localStorage.getItem('userTheme');
+            const localAccent = localStorage.getItem('userAccent');
+            applyTheme(localTheme, localAccent);
+        } catch (error) {
+            logManagerError("Error reading local storage for theme:", error);
+            applyTheme('dark', 'blue');
+        }
     }
 });
 

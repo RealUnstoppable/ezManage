@@ -1,6 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <script type="module">
+    import { escapeHTML } from '/js/utils.js';
+    window.escapeHTML = escapeHTML;
+  </script>
+
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ezManage | Admin Intelligence Panel</title>
@@ -9,18 +14,11 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script type="module">
-        import { parseNum } from './js/utils/parseUtils.js';
-        window.parseNum = parseNum;
-    </script>
+
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
-    <script type="module">
-        import { parseNum, escapeHTML } from '/js/utils.js';
-        window.parseNum = parseNum;
-        window.escapeHTML = escapeHTML;
-    </script>
+
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         :root {
@@ -208,12 +206,14 @@
     </main>
 </div>
 
-<script type="module">
-    import { parseNum, getDayOfWeek } from "./js/utils.js";
-    window.parseNum = parseNum;
-    window.getDayOfWeek = getDayOfWeek;
-</script>
+
 <script>
+    function parseNum(val) {
+        if (!val) return 0;
+        const parsed = parseFloat(val.toString().replace(/[^0-9.]/g, ""));
+        return isNaN(parsed) ? 0 : parsed;
+    }
+
     const firebaseConfig = {
         apiKey: "AIzaSyBgrI9HwJPSc5b4pu2Egsv4DE7shNwptSw",
         authDomain: "dts-hub-website.firebaseapp.com",
@@ -225,6 +225,7 @@
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     const db   = firebase.firestore();
+    db.settings({ experimentalForceLongPolling: true });
 
     const ADMIN_EMAIL = 'catalinandrian1@gmail.com';
 
@@ -242,8 +243,14 @@
     auth.onAuthStateChanged(user => {
         if (!user) { document.getElementById('gate').style.display = 'flex'; document.getElementById('app').style.display = 'none'; return; }
         if (user.email !== ADMIN_EMAIL) {
-            auth.signOut();
-            document.getElementById('gateErr').textContent = 'Access denied. Admin only.';
+            document.getElementById('gate').style.display = 'flex';
+            document.getElementById('app').style.display = 'none';
+            document.getElementById('gate').innerHTML = `
+                <div style="font-size:2.5rem; margin-bottom:4px;">⛔</div>
+                <h1>Access Denied</h1>
+                <p>This panel is restricted to Administrators only.</p>
+                <button onclick="window.location.href='index.html'" style="margin-top:16px;">Return to Main App</button>
+            `;
             return;
         }
         document.getElementById('gate').style.display = 'none';
@@ -372,17 +379,7 @@
                backgroundColor: planLabels.map((_,i)=>palettes[i % palettes.length]),
                borderWidth: 2, borderColor:'#0d0d14' }]);
 
-        function escapeHTML(str) {
-            if (!str && str !== 0) return "";
-            return String(str)
-                .replace(/&/g, "&amp;")
-                .replace(/</g, "&lt;")
-                .replace(/>/g, "&gt;")
-                .replace(/"/g, "&quot;")
-                .replace(/'/g, "&#039;");
-        }
-
-        /* Top items bars */
+/* Top items bars */
         const topItems = Object.entries(itemCount).sort((a,b)=>b[1]-a[1]).slice(0, 12);
         const maxCount = topItems[0]?.[1] || 1;
         const wrap = document.getElementById('topItems');
@@ -394,7 +391,7 @@
                 const pct = Math.round((cnt/maxCount)*100);
                 return `
                 <div class="item-bar">
-                    <div class="item-bar-label" title="${name}">${name}</div>
+                    <div class="item-bar-label" title="${escapeHTML(name)}">${escapeHTML(name)}</div>
                     <div class="item-bar-track"><div class="item-bar-fill" style="width:${pct}%"></div></div>
                     <div class="item-bar-val">${cnt}</div>
                 </div>`;
@@ -409,18 +406,7 @@
              .forEach(u => {
         // ⚡ Bolt Performance Optimization:
         // Replaced document.createElement('p') sanitization with regex to eliminate GC overhead in loops.
-        function escapeHTML(str) {
-            if (!str) return "";
-            // ⚡ Bolt Optimization: Use regex-based replacement instead of document.createElement for faster escaping and lower memory overhead
-            return String(str)
-                .replace(/&/g, "&amp;")
-                .replace(/</g, "&lt;")
-                .replace(/>/g, "&gt;")
-                .replace(/"/g, "&quot;")
-                .replace(/'/g, "&#039;");
-        }
-
-        // ⚡ Bolt Optimization: Batch DOM insertions to prevent O(n²) layout thrashing
+// ⚡ Bolt Optimization: Batch DOM insertions to prevent O(n²) layout thrashing
         tbody.innerHTML = users.sort((a,b) => (b.shiftHistory||[]).length - (a.shiftHistory||[]).length)
              .map(u => {
             const shifts = u.shiftHistory || [];

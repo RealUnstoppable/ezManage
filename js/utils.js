@@ -29,6 +29,8 @@ export function escapeHTML(str) {
         .replace(/>/g, "&gt;")
         .replace(/"/g, "&quot;")
         .replace(/'/g, "&#039;");
+}
+
 export function showToast(message) {
     const toast = document.createElement('div');
     toast.className = 'toast-notification';
@@ -55,4 +57,8 @@ export function getFirebaseErrorMessage(error) {
         default:
             return 'An unexpected error occurred. Please try again.';
     }
+}
+
+export function logManagerError(actionMessage, error) {
+    console.error("Manager Troubleshooting: " + actionMessage, error);
 }

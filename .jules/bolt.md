@@ -13,3 +13,13 @@
 ## 2025-02-18 - Optimistic UI State Management
 **Learning:** Sequential full-list fetch and render operations after local write actions block the main thread and create perceived UI lag for the user. When using Firebase, `.get()` calls to collections can be expensive.
 **Action:** Implemented Optimistic UI rendering. Immediately constructed and prepended visual elements into the DOM during `submitShiftNote` and removed them manually inside `catch` blocks if the network request fails, fully bypassing the need for a redundant `fetchShiftNotes()` re-render cycle.
+## 2024-05-24 - [DOM Insertions Bottleneck]
+**Learning:** Sequential calls to `.appendChild()` inside loops cause expensive layout thrashing and repaint cycles on the main thread, leading to perceived UI jank during rendering.
+**Action:** Always batch DOM insertions using a `DocumentFragment` (`document.createDocumentFragment()`) before appending the entire batch to the live DOM in a single operation.
+## 2025-05-19 - [O(n²) DOM Updates Avoidance]
+**Learning:** Performing string concatenations via `innerHTML += ...` within iterative loops causes O(n²) performance degradation by forcing the browser to continually re-serialize, parse, and render the entire container.
+**Action:** Replace `html +=` inside loops with array accumulation using `.map().join('')` before setting `.innerHTML` once at the end of the data fetch block.
+
+## 2024-05-24 - [DOM Append Bottleneck in Admin Dashboard]
+**Learning:** Sequential `appendChild` calls within loops (e.g., rendering table rows in `admin.html` and `harmonytunes.js`) create performance bottlenecks by causing repetitive DOM layout recalculations.
+**Action:** Replace sequential `appendChild` inside loops with a single `innerHTML` assignment using array `.map().join('')` for faster, batched string insertions. When event listeners need to be attached programmatically to each node, use a `DocumentFragment` to batch the DOM insertions instead.

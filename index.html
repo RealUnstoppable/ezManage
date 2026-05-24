@@ -2,6 +2,11 @@
 <html lang="en">
 
 <head>
+  <script type="module">
+    import { escapeHTML } from '/js/utils.js';
+    window.escapeHTML = escapeHTML;
+  </script>
+
     <link rel="manifest" href="manifest.json">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -10,7 +15,7 @@
     <link rel="icon" type="image/jpeg" href="ManagerPro.jpg">
     <link rel="apple-touch-icon" href="ManagerPro.jpg">
 
-    <meta name="apple-mobile-web-app-capable" content="yes">
+
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="ezManage">
 
@@ -248,11 +253,11 @@
 
         #sidebar {
             transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            transform: translateX(-100%);
+            transform: translateX(-100%) !important;
         }
 
         #sidebar.open {
-            transform: translateX(0);
+            transform: translateX(0) !important;
         }
 
         @media print {
@@ -438,6 +443,13 @@
                 class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i
                     data-lucide="clipboard-list"></i>
                 Shift Notes</a>
+            <a href="#" onclick="navTo('team')"
+                class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="users"></i>
+                Team Directory</a>
+            <a href="#" onclick="navTo('employees')"
+                class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i
+                    data-lucide="users"></i>
+                Team Roster</a>
             <a href="#" onclick="navTo('maintenance')"
                 class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="wrench"></i>
                 Maintenance</a>
@@ -451,6 +463,11 @@
             <a href="#" onclick="navTo('pricing')"
                 class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="credit-card"></i>
                 Pricing & Plans</a>
+
+            <a href="#" onclick="navTo('timeoff')"
+                class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="calendar-clock"></i>
+                Time Off</a>
+
             <a href="#" onclick="navTo('request')"
                 class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="lightbulb"></i>
                 Feature Request</a>
@@ -461,7 +478,7 @@
                 class="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800">
                 <span class="text-xs font-bold uppercase tracking-widest">AMOLED Dark</span>
                 <label class="relative inline-flex items-center cursor-pointer">
-                    <input type="checkbox" id="themeToggle" class="sr-only peer" onchange="toggleTheme()">
+                    <input type="checkbox" id="themeToggle" class="sr-only peer" aria-label="Toggle theme" onchange="toggleTheme()">
                     <div
                         class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:bg-sky-500 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all">
                     </div>
@@ -649,7 +666,7 @@
                             aria-label="Export JSON"><i data-lucide="download" class="w-4"></i></button>
                         <input type="file" id="jsonImportInput" accept=".json" class="hidden"
                             onchange="importDataJSON(event)">
-                        <button onclick="navTo('presets')" class="btn btn-outline btn-sm"><i data-lucide="layout"
+                        <button aria-label="Templates" onclick="navTo('presets')" class="btn btn-outline btn-sm"><i data-lucide="layout"
                                 class="w-4"></i> Templates</button>
                         <button onclick="clearData()"
                             class="btn btn-outline btn-sm text-red-500 border-red-200 hover:bg-red-50"><i
@@ -703,7 +720,7 @@
                             <div id="routineContainer" class="grid sm:grid-cols-2 gap-4 mt-4"></div>
                             <div class="mt-8 flex gap-3 no-print">
                                 <input type="text" id="newRoutineTask" placeholder="Add custom daily task..."
-                                    class="flex-1">
+                                    class="flex-1" aria-label="New Routine Task">
                                 <button type="button" onclick="addRoutineTask()" class="btn btn-outline">Add</button>
                             </div>
                         </div>
@@ -848,6 +865,59 @@
             </div>
         </div>
 
+        <div id="view-team" class="view-section px-6 py-12 hidden">
+            <div class="max-w-4xl mx-auto">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+                    <h1 class="text-4xl font-black">Team Directory</h1>
+                    <button onclick="document.getElementById('addEmployeeModal').classList.remove('hidden')"
+                        class="btn btn-primary flex items-center gap-2 px-6">
+                        <i data-lucide="user-plus" class="w-5 h-5"></i> Add Employee
+                    </button>
+                </div>
+
+                <div id="addEmployeeModal"
+                    class="hidden bg-white dark:bg-slate-900 rounded-3xl p-6 md:p-8 shadow-sm border border-slate-100 dark:border-slate-800 mb-12">
+                    <h2 class="text-xl font-bold mb-4" id="employeeModalTitle">Add New Employee</h2>
+                    <input type="hidden" id="empModalId" value="">
+                    <div class="space-y-4">
+                        <input type="text" id="empName" placeholder="Employee Full Name"
+                            class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
+                        <div class="flex flex-col md:flex-row gap-4">
+                            <select id="empRole"
+                                class="flex-1 bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
+                                <option value="Cashier">Cashier</option>
+                                <option value="Cook">Cook</option>
+                                <option value="Shift Leader">Shift Leader</option>
+                                <option value="Manager">Manager</option>
+                                <option value="Driver">Driver</option>
+                                <option value="Other">Other</option>
+                            </select>
+                            <input type="text" id="empPhone" placeholder="Phone Number (Optional)"
+                                class="flex-1 bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
+                        </div>
+
+                        <div class="flex justify-end gap-3 pt-2">
+                            <button onclick="closeEmployeeModal()"
+                                class="btn btn-outline px-6 py-2">Cancel</button>
+                            <button onclick="submitEmployee()" class="btn btn-accent px-6 py-2" id="submitEmpBtn">Save Employee</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-black">Active Roster</h2>
+                    <button onclick="fetchTeamDirectory()"
+                        class="text-sm font-bold text-sky-500 hover:text-sky-600 flex items-center gap-2">
+                        <i data-lucide="refresh-cw" class="w-4 h-4"></i> Refresh
+                    </button>
+                </div>
+
+                <div id="teamContainer" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Employees populated via JS -->
+                </div>
+            </div>
+        </div>
+
         <div id="view-schedule" class="view-section px-6 py-12">
             <div class="max-w-4xl mx-auto">
                 <h1 class="text-4xl font-black mb-8">Employee Schedule</h1>
@@ -856,29 +926,43 @@
                     <h3 class="text-xl font-black mb-4">Add Shift</h3>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-sm font-bold mb-1">Date</label>
+                            <label for="scheduleDate" class="block text-sm font-bold mb-1">Date</label>
                             <input type="date" id="scheduleDate" class="w-full" onchange="fetchSchedules(this.value)">
                         </div>
                         <div>
                             <label class="block text-sm font-bold mb-1">Employee Name</label>
-                            <input type="text" id="shiftEmpName" class="w-full" placeholder="John Doe">
+                            <select id="shiftEmpName" class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
+                                <option value="">Select Employee...</option>
+                            </select>
                         </div>
                         <div>
                             <label class="block text-sm font-bold mb-1">Role</label>
+                            <select id="shiftRole" class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
+                            <label for="shiftEmpName" class="block text-sm font-bold mb-1">Employee Name</label>
+                            <input type="text" id="shiftEmpName" class="w-full" placeholder="John Doe">
+                            <label class="block text-sm font-bold mb-1">Employee Name</label>
+                            <select id="shiftEmpName" class="w-full">
+                                <option value="" disabled selected>Select Employee</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="shiftRole" class="block text-sm font-bold mb-1">Role</label>
                             <select id="shiftRole" class="w-full">
                                 <option value="Cashier">Cashier</option>
                                 <option value="Cook">Cook</option>
+                                <option value="Shift Leader">Shift Leader</option>
                                 <option value="Manager">Manager</option>
                                 <option value="Driver">Driver</option>
+                                <option value="Other">Other</option>
                             </select>
                         </div>
                         <div class="grid grid-cols-2 gap-2">
                             <div>
-                                <label class="block text-sm font-bold mb-1">Start Time</label>
+                                <label for="shiftStart" class="block text-sm font-bold mb-1">Start Time</label>
                                 <input type="time" id="shiftStart" class="w-full">
                             </div>
                             <div>
-                                <label class="block text-sm font-bold mb-1">End Time</label>
+                                <label for="shiftEnd" class="block text-sm font-bold mb-1">End Time</label>
                                 <input type="time" id="shiftEnd" class="w-full">
                             </div>
                         </div>
@@ -935,6 +1019,12 @@
                     </div>
                 </div>
 
+                <div id="mySentRequestsPanel" class="hidden mb-8">
+                    <h3 class="text-sm font-black text-slate-500 uppercase tracking-widest mb-3">My Pending Join
+                        Requests</h3>
+                    <div id="mySentRequestsContainer" class="space-y-2"></div>
+                </div>
+
                 <div id="createGroupModal"
                     class="hidden bg-white dark:bg-slate-900 rounded-3xl p-6 md:p-8 shadow-sm border border-slate-100 dark:border-slate-800 mb-12">
                     <h2 class="text-xl font-bold mb-4">Create a Management Group</h2>
@@ -985,7 +1075,7 @@
                     <h2 class="text-xl font-bold mb-4">Post a Note</h2>
                     <textarea id="shiftNoteContent" rows="3"
                         class="w-full bg-slate-50 dark:bg-slate-800 p-4 rounded-xl border-none focus:ring-2 focus:ring-sky-500 mb-4 resize-none"
-                        placeholder="Leave a note, warning, or handover instruction..."></textarea>
+                        placeholder="Leave a note, warning, or handover instruction..." aria-label="Shift Note Content"></textarea>
                     <div class="flex justify-between items-center">
                         <select id="shiftNotePriority"
                             class="bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500 font-medium">
@@ -1090,7 +1180,7 @@
                                 checklists, and register setups so you can recall them instantly.</p>
                             <div class="flex gap-2 mb-8">
                                 <input type="text" id="customPresetName" placeholder="e.g. Closing Shift Layout"
-                                    class="flex-1">
+                                    class="flex-1" aria-label="Custom Preset Name">
                                 <button onclick="saveCustomPreset()" class="btn btn-outline whitespace-nowrap">Save
                                     Current</button>
                             </div>
@@ -1108,7 +1198,7 @@
                     <button class="btn btn-outline btn-sm" onclick="exportPerformanceCSV()">Export CSV</button>
                 </div>
 
-                <div class="grid md:grid-cols-3 gap-6 mb-12">
+                <div class="grid md:grid-cols-4 gap-6 mb-12">
                     <div class="card text-center">
                         <div class="text-4xl font-black text-sky-500 mb-2" id="statShifts">0</div>
                         <div class="text-[10px] font-black uppercase tracking-widest text-slate-400">Shifts Logged</div>
@@ -1120,6 +1210,10 @@
                     <div class="card text-center">
                         <div class="text-4xl font-black text-emerald-500 mb-2" id="statRoutines">0%</div>
                         <div class="text-[10px] font-black uppercase tracking-widest text-slate-400">Routine Score</div>
+                    </div>
+                    <div class="card text-center">
+                        <div class="text-4xl font-black text-indigo-500 mb-2" id="statTotalTime">0m</div>
+                        <div class="text-[10px] font-black uppercase tracking-widest text-slate-400">Total Duration</div>
                     </div>
                 </div>
 
@@ -1152,12 +1246,24 @@
                 <div class="grid md:grid-cols-2 gap-8">
                     <div class="card">
                         <h3 class="text-xl font-black mb-6">Personal Details</h3>
-                        <div class="space-y-4">
-                            <input type="text" id="profName" placeholder="Name">
-                            <input type="text" id="profRole" placeholder="Role">
-                            <input type="email" id="profEmail" readonly
-                                class="bg-slate-50 opacity-60 dark:bg-slate-800">
-                            <input type="text" id="profPhone" placeholder="Phone">
+                        <div class="space-y-4 text-left">
+                            <div class="space-y-2">
+                                <label for="profName" class="text-xs font-black uppercase tracking-widest text-slate-400">Name</label>
+                                <input type="text" id="profName" placeholder="Name">
+                            </div>
+                            <div class="space-y-2">
+                                <label for="profRole" class="text-xs font-black uppercase tracking-widest text-slate-400">Role</label>
+                                <input type="text" id="profRole" placeholder="Role">
+                            </div>
+                            <div class="space-y-2">
+                                <label for="profEmail" class="text-xs font-black uppercase tracking-widest text-slate-400">Email Address</label>
+                                <input type="email" id="profEmail" readonly
+                                    class="bg-slate-50 opacity-60 dark:bg-slate-800">
+                            </div>
+                            <div class="space-y-2">
+                                <label for="profPhone" class="text-xs font-black uppercase tracking-widest text-slate-400">Phone</label>
+                                <input type="text" id="profPhone" placeholder="Phone">
+                            </div>
                             <button onclick="saveProfileToFirebase()" class="btn btn-accent w-full mt-4">Save
                                 Changes</button>
                         </div>
@@ -1278,13 +1384,66 @@
             </div>
         </div>
 
+        <div id="view-employees" class="view-section px-6 py-12">
+            <div class="max-w-4xl mx-auto">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+                    <h1 class="text-4xl font-black">Team Roster</h1>
+                    <button onclick="document.getElementById('addEmployeeModal').classList.toggle('hidden')"
+                        class="btn btn-primary flex items-center gap-2 px-6">
+                        <i data-lucide="plus-circle" class="w-5 h-5"></i> Add Employee
+                    </button>
+                </div>
+
+                <div id="addEmployeeModal"
+                    class="hidden bg-white dark:bg-slate-900 rounded-3xl p-6 md:p-8 shadow-sm border border-slate-100 dark:border-slate-800 mb-12">
+                    <h2 class="text-xl font-bold mb-4">Add New Employee</h2>
+                    <div class="space-y-4">
+                        <input type="text" id="empName" placeholder="Full Name"
+                            class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
+                        <input type="text" id="empRole" placeholder="Role (e.g. Cashier, Cook)"
+                            class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
+
+                        <div class="grid md:grid-cols-2 gap-4">
+                            <input type="tel" id="empPhone" placeholder="Phone Number"
+                                class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
+                            <input type="email" id="empEmail" placeholder="Email Address"
+                                class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
+                        </div>
+
+                        <select id="empStatus" class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
+                            <option value="Active">Active</option>
+                            <option value="Inactive">Inactive</option>
+                        </select>
+
+                        <div class="flex justify-end gap-3 pt-2">
+                            <button onclick="document.getElementById('addEmployeeModal').classList.add('hidden')"
+                                class="btn btn-outline px-6 py-2">Cancel</button>
+                            <button onclick="addEmployee()" class="btn btn-accent px-6 py-2">Save Employee</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-black">Active Staff</h2>
+                    <button onclick="fetchEmployees()"
+                        class="text-sm font-bold text-sky-500 hover:text-sky-600 flex items-center gap-2">
+                        <i data-lucide="refresh-cw" class="w-4 h-4"></i> Refresh
+                    </button>
+                </div>
+
+                <div id="employeesListContainer" class="space-y-4">
+                    <!-- Employees populated via JS -->
+                </div>
+            </div>
+        </div>
+
         <div id="view-request" class="view-section px-6 py-12">
             <div class="max-w-4xl mx-auto">
                 <div class="card shadow-2xl mb-12">
                     <h1 class="text-3xl font-black mb-4">Submit Request</h1>
                     <p class="text-slate-500 mb-8">Direct line to the engineering team. Pro users receive priority.</p>
                     <textarea id="featureReqText" class="h-32 mb-6"
-                        placeholder="I would love it if ezManage could..."></textarea>
+                        placeholder="I would love it if ezManage could..." aria-label="Feature Request Description"></textarea>
                     <button onclick="submitFeatureRequest()" class="btn btn-accent w-full py-4">Send Directly to
                         Admin</button>
                 </div>
@@ -1293,6 +1452,39 @@
                 <div id="myFeatureRequests" class="space-y-4"></div>
             </div>
         </div>
+
+        <div id="view-timeoff" class="view-section px-6 py-12 hidden">
+            <div class="max-w-4xl mx-auto">
+                <div class="card shadow-2xl mb-12">
+                    <h1 class="text-3xl font-black mb-4">Request Time Off</h1>
+                    <p class="text-slate-500 mb-8">Submit your availability requests for manager approval.</p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <label class="block text-sm font-bold mb-2">Start Date</label>
+                            <input type="date" id="timeoffStartDate" class="w-full">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-bold mb-2">End Date</label>
+                            <input type="date" id="timeoffEndDate" class="w-full">
+                        </div>
+                    </div>
+                    <label class="block text-sm font-bold mb-2">Reason</label>
+                    <textarea id="timeoffReason" class="h-24 mb-6" placeholder="e.g. Vacation, Medical appointment..."></textarea>
+                    <button id="btnSubmitTimeOff" onclick="submitTimeOffRequest()" class="btn btn-accent w-full py-4">Submit Request</button>
+                </div>
+
+                <div class="mb-12">
+                    <h3 class="text-xl font-black mb-6 border-b border-slate-200 dark:border-slate-800 pb-2">My Requests</h3>
+                    <div id="myTimeOffRequests" class="space-y-4"></div>
+                </div>
+
+                <div id="managerTimeOffSection" style="display: none;">
+                    <h3 class="text-xl font-black mb-6 border-b border-slate-200 dark:border-slate-800 pb-2 text-purple-600"><i data-lucide="shield" class="inline w-5 h-5 mr-2"></i>Manager Review</h3>
+                    <div id="managerTimeOffRequests" class="space-y-4"></div>
+                </div>
+            </div>
+        </div>
+
 
     </main>
 
@@ -1370,12 +1562,18 @@
 
         if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
         const auth = firebase.auth();
+        firebase.firestore().settings({
+            experimentalForceLongPolling: true
+        });
         const db = firebase.firestore();
+        db.settings({ experimentalForceLongPolling: true });
         const cloudFunctions = firebase.functions();
 
-        db.enablePersistence({ synchronizeTabs: true }).catch(err => console.error("Offline sync error:", err));
+        db.enablePersistence().catch(err => console.error("Offline sync error:", err));
 
         let currentUser = null;
+        let currentUserData = null;
+        window.currentUser = null;
         function escapeHTML(str) {
             if (!str && str !== 0) return "";
             return String(str)
@@ -1386,7 +1584,7 @@
                 .replace(/'/g, "&#039;");
         }
 
-        let currentUserData = null;
+        window.currentUserData = null;
         let isRegisterMode = false;
         let shiftStartTime = null;
         let timerInterval = null;
@@ -1403,16 +1601,6 @@
         // Legal & Privacy Settings
         let cloudSyncEnabled = false;
 
-        function escapeHTML(str) {
-            if (!str && str !== 0) return "";
-            return String(str)
-                .replace(/&/g, "&amp;")
-                .replace(/</g, "&lt;")
-                .replace(/>/g, "&gt;")
-                .replace(/"/g, "&quot;")
-                .replace(/'/g, "&#039;");
-        }
-
         auth.onAuthStateChanged((user) => {
             currentUser = user;
             const navStatus = document.getElementById('navUserStatus');
@@ -1423,10 +1611,34 @@
                 navStatus.innerText = "Manager: " + (user.displayName || "Online");
                 document.getElementById('profEmail').value = user.email;
 
+                const cached = sessionStorage.getItem('ezManage_userData');
+                if (cached) {
+                    try {
+                        currentUserData = JSON.parse(cached);
+                        loadProfileUI(currentUserData);
+                    } catch (e) {
+                        console.error("Cache parsing error", e);
+                    }
+                }
+
                 unsubscribeUser = db.collection("users").doc(user.uid).onSnapshot(async doc => {
                     isInitializingAuth = false;
-                    if (doc.exists && doc.data().name) {
+                    if (doc.exists) {
                         currentUserData = doc.data();
+                        sessionStorage.setItem('ezManage_userData', JSON.stringify(currentUserData));
+
+                        const pendingNav = localStorage.getItem('navTo');
+                        if (pendingNav) {
+                            localStorage.removeItem('navTo');
+                            setTimeout(() => navTo(pendingNav), 100);
+                        }
+
+                        if (!currentUserData.name) {
+                            const defaultName = user.displayName || (user.email ? user.email.split('@')[0] : "Manager");
+                            currentUserData.name = defaultName;
+                            // Only update locally if we shouldn't trigger another snapshot write loop immediately
+                            // Wait until the user saves their profile to commit this
+                        }
 
                         // Enforce Opt-In Cloud Policy
                         cloudSyncEnabled = !!currentUserData.cloudSyncEnabled;
@@ -1452,17 +1664,31 @@
                             checkAndRenderOrgControls();
                         }
 
+                        // Load team directory in background so schedule dropdown works
+                        if (currentUserData.orgId) {
+                           fetchTeamDirectory();
+                        }
+                        // Always fetch employees to populate the schedule dropdown
+                        fetchEmployees();
+                        fetchTimeOffRequests();
+
                         if (!initialDraftLoaded) {
                             syncDraftFromServer();
                             initialDraftLoaded = true;
                         }
 
-                        const activeView = document.querySelector('.view-section.active');
-                        if (activeView && activeView.id === 'view-auth') navTo('tracker');
+                        const pendingNavTo = localStorage.getItem('navTo');
+                        if (pendingNavTo) {
+                            localStorage.removeItem('navTo');
+                            navTo(pendingNavTo);
+                        } else {
+                            const activeView = document.querySelector('.view-section.active');
+                            if (activeView && activeView.id === 'view-auth') navTo('tracker');
+                        }
                         runAIPatternLogic();
                     } else {
 
-                        if (!doc.exists || !doc.data().name) {
+                        if (!doc.exists) {
                             const activeView = document.querySelector('.view-section.active');
                             if (activeView && activeView.id !== 'view-setup') {
                                 try {
@@ -1475,6 +1701,12 @@
                                     }
                                 } catch (e) { console.warn("Email recovery check skipped", e); navTo('setup'); }
                             }
+                        if (!doc.exists || !doc.data().name) {
+                            await db.collection("users").doc(user.uid).set({
+                                name: user.displayName || "Manager",
+                                email: user.email
+                            }, { merge: true });
+                            navTo('tracker');
                         }
 
                         const activeView = document.querySelector('.view-section.active');
@@ -1484,11 +1716,22 @@
                     }
                 });
             } else {
+                isInitializingAuth = false;
                 navStatus.innerText = "Login / Sign Up";
                 currentUserData = null;
                 initialDraftLoaded = false;
                 cloudSyncEnabled = false;
                 updateCloudSyncUI();
+
+                const pendingNavTo = localStorage.getItem('navTo');
+                if (pendingNavTo) {
+                    localStorage.removeItem('navTo');
+                    navTo(pendingNavTo);
+                } else {
+                    const activeView = document.querySelector('.view-section.active');
+                    if (activeView && activeView.id !== 'view-auth' && activeView.id !== 'view-tracker') navTo('auth');
+                }
+                isInitializingAuth = false;
             }
         });
 
@@ -1691,11 +1934,20 @@
         function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); }
 
         function navTo(viewId) {
+            if (isInitializingAuth) {
+                localStorage.setItem('navTo', viewId);
+                return;
+            }
             if (!currentUser && (['history', 'presets', 'performance', 'request', 'profile', 'shiftNotes'].includes(viewId))) {
+            if (!currentUser && (['history', 'presets', 'performance', 'request', 'profile', 'shiftNotes', 'team'].includes(viewId))) {
+            if (!currentUser && (['history', 'presets', 'performance', 'request', 'profile', 'shiftNotes', 'employees', 'timeoff'].includes(viewId))) {
                 viewId = 'auth';
             }
             if (viewId === 'maintenance' && currentUser) {
                 fetchMaintenanceTickets();
+            }
+            if (viewId === 'team' && currentUser) {
+                fetchTeamDirectory();
             }
             document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
             document.getElementById('view-' + viewId).classList.add('active');
@@ -1777,8 +2029,8 @@
             div.className = "flex gap-4 items-center bg-slate-50 dark:bg-slate-800 p-3 rounded-xl animate-fadeIn";
             div.innerHTML = `
                 <input type="text" placeholder="Amount" class="dep-val" style="flex:1;" aria-label="Deposit Amount" oninput="triggerDraftSync()">
-                <label class="flex items-center gap-1 text-[10px] font-bold"><input type="checkbox" class="dep-ver accent-sky-500 w-4 h-4" onchange="triggerDraftSync()"> VER</label>
-                <label class="flex items-center gap-1 text-[10px] font-bold"><input type="checkbox" class="dep-val-chk accent-sky-500 w-4 h-4" onchange="triggerDraftSync()"> VAL</label>
+                <label class="flex items-center gap-1 text-[10px] font-bold"><input type="checkbox" class="dep-ver accent-sky-500 w-4 h-4" onchange="triggerDraftSync()" aria-label="Verify Deposit"> VER</label>
+                <label class="flex items-center gap-1 text-[10px] font-bold"><input type="checkbox" class="dep-val-chk accent-sky-500 w-4 h-4" onchange="triggerDraftSync()" aria-label="Validate Deposit"> VAL</label>
                 <button type="button" onclick="if(confirm('Are you sure you want to delete this deposit? This action cannot be undone.')) { this.parentElement.remove(); triggerDraftSync(); }" class="text-red-400" aria-label="Remove deposit"><i data-lucide="x" class="w-4"></i></button>
             `;
             div.querySelector('.dep-val').value = val;
@@ -1837,7 +2089,7 @@
             div.querySelector('.inv-cooler').value = cl;
             div.querySelector('.inv-freezer').value = fr;
             const container = document.getElementById('inventoryContainer');
-            container.insertBefore(div, container.firstChild);
+            container.appendChild(div);
             lucide.createIcons();
             if (initialDraftLoaded) triggerDraftSync();
         }
@@ -2009,43 +2261,63 @@
                 grouped[groupKey].push(data);
             });
 
+            // ⚡ Bolt Optimization: Use DocumentFragment to batch DOM insertions and reduce layout thrashing
+            // ⚡ Bolt Optimization: Batch DOM insertions using a DocumentFragment
+            const fragment = document.createDocumentFragment();
+
             Object.keys(grouped).sort().reverse().forEach(key => {
                 const groupContainer = document.createElement('div');
                 groupContainer.className = "mb-4 bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden";
-                
+
                 const groupHeader = document.createElement('div');
                 groupHeader.className = "px-6 py-4 flex justify-between items-center cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors";
                 groupHeader.innerHTML = `
-                    <div class="font-black text-lg text-slate-800 dark:text-slate-200"><i data-lucide="calendar" class="inline-block w-5 h-5 mr-2 text-sky-500"></i>${key}</div>
+                    <div class="font-black text-lg text-slate-800 dark:text-slate-200"><i data-lucide="calendar" class="inline-block w-5 h-5 mr-2 text-sky-500"></i>${escapeHTML(key)}</div>
                     <div class="flex items-center gap-3">
                         <span class="text-xs font-bold bg-sky-100 text-sky-700 px-2 py-1 rounded-md">${grouped[key].length} shifts</span>
-                        <i data-lucide="chevron-down" class="w-5 h-5 text-slate-400 transition-transform duration-200"></i>
+                        <i data-lucide="chevron-down" class="history-group-icon w-5 h-5 text-slate-400 transition-transform duration-200"></i>
                     </div>
                 `;
-                
+
                 const groupContent = document.createElement('div');
-                groupContent.className = "hidden px-6 pb-4 pt-2 border-t border-slate-100 dark:border-slate-800 space-y-3";
+                groupContent.className = "history-group-content hidden px-6 pb-4 pt-2 border-t border-slate-100 dark:border-slate-800 space-y-3";
                 
+                groupContent.className = "hidden px-6 pb-4 pt-2 border-t border-slate-100 dark:border-slate-800 space-y-3";
+
                 groupHeader.onclick = () => {
-                    groupContent.classList.toggle('hidden');
+                    const isCurrentlyHidden = groupContent.classList.contains('hidden');
+
+                    // Close all other groups
+                    document.querySelectorAll('.history-group-content').forEach(el => {
+                        el.classList.add('hidden');
+                    });
+                    document.querySelectorAll('.history-group-icon').forEach(el => {
+                        el.style.transform = 'rotate(0deg)';
+                    });
+
+                    // Toggle the clicked one
                     const icon = groupHeader.querySelector('[data-lucide="chevron-down"]');
-                    if (groupContent.classList.contains('hidden')) {
-                        icon.style.transform = 'rotate(0deg)';
-                    } else {
+                    if (isCurrentlyHidden) {
+                        groupContent.classList.remove('hidden');
                         icon.style.transform = 'rotate(180deg)';
+                    } else {
+                        groupContent.classList.add('hidden');
+                        icon.style.transform = 'rotate(0deg)';
                     }
                 };
-                
+
+                const groupContentFragment = document.createDocumentFragment();
+
                 grouped[key].forEach(data => {
                     const div = document.createElement('div');
                     div.className = "flex justify-between items-center p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl hover:bg-sky-50 dark:hover:bg-sky-900/20 transition-colors group";
                     div.innerHTML = `
                         <div>
-                            <div class="font-black text-md text-slate-700 dark:text-slate-300">Manager: ${data.manager || 'N/A'}</div>
-                            <div class="text-[10px] font-bold uppercase tracking-widest text-slate-400 mt-1">Duration: ${data.durationMins || 0}m • Saved at ${data.timeSaved || 'N/A'}</div>
+                            <div class="font-black text-md text-slate-700 dark:text-slate-300">Manager: ${escapeHTML(data.manager || 'N/A')}</div>
+                            <div class="text-[10px] font-bold uppercase tracking-widest text-slate-400 mt-1">Duration: ${escapeHTML(data.durationMins || 0)}m • Saved at ${escapeHTML(data.timeSaved || 'N/A')}</div>
                         </div>
                         <div class="flex gap-2">
-                            <button class="btn btn-outline btn-sm bg-white dark:bg-slate-900 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity history-load">
+                            <button class="btn btn-outline btn-sm bg-white dark:bg-slate-900 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity history-load" aria-label="Load History Record">
                                 <i data-lucide="download"></i> Load
                             </button>
                             <button class="text-red-400 p-2 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity history-delete" title="Delete" aria-label="Delete history record">
@@ -2055,13 +2327,15 @@
                     `;
                     div.querySelector('.history-load').onclick = (e) => { e.stopPropagation(); loadHistoryShift(data.id); };
                     div.querySelector('.history-delete').onclick = (e) => { e.stopPropagation(); deleteHistoryShift(data.id); };
-                    groupContent.appendChild(div);
+                    groupContentFragment.appendChild(div);
                 });
-                
+
+                groupContent.appendChild(groupContentFragment);
                 groupContainer.appendChild(groupHeader);
                 groupContainer.appendChild(groupContent);
-                container.appendChild(groupContainer);
+                fragment.appendChild(groupContainer);
             });
+            container.appendChild(fragment);
             lucide.createIcons();
         }
 
@@ -2149,6 +2423,7 @@
             document.getElementById('statAvgTime').innerText = history.length > 0 ? Math.round(totalTime / history.length) + "m" : "0m";
             const score = totalRoutines === 0 ? 0 : Math.round((checkedRoutines / totalRoutines) * 100);
             document.getElementById('statRoutines').innerText = score + "%";
+            document.getElementById('statTotalTime').innerText = totalTime + "m";
 
             const tips = document.getElementById('performanceTips');
             if (score < 70) tips.innerText = "Focus: Your routine score is low. Try completing ServSafe temps and lobby checks immediately after the rush.";
@@ -2157,23 +2432,24 @@
             renderPerformanceChart(history);
         }
 
-        let perfChartInstance = null;
+        window.perfChartInstance = null;
         function renderPerformanceChart(history) {
             const ctx = document.getElementById('performanceChart');
             if (!ctx) return;
-            
+
             const sorted = [...history].reverse();
             const labels = sorted.map(h => (h.dateSaved || 'Unknown').split('-').slice(-2).join('/'));
             const durations = sorted.map(h => h.durationMins || 0);
+            const itemCounts = sorted.map(h => (h.inventory || []).length);
             const routineScores = sorted.map(h => {
                 let total = 0, checked = 0;
                 (h.routines || []).forEach(r => { total++; if (r.checked) checked++; });
                 return total === 0 ? 0 : Math.round((checked / total) * 100);
             });
 
-            if (perfChartInstance) perfChartInstance.destroy();
+            if (window.perfChartInstance) window.perfChartInstance.destroy();
 
-            perfChartInstance = new Chart(ctx, {
+            window.perfChartInstance = new Chart(ctx, {
                 type: 'line',
                 data: {
                     labels: labels,
@@ -2188,12 +2464,29 @@
                             yAxisID: 'y'
                         },
                         {
+                            label: 'Items Counted',
+                            data: itemCounts,
+                            borderColor: '#8b5cf6',
+                            backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                            tension: 0.4,
+                            fill: true,
+                            yAxisID: 'y'
+                        },
+                        {
                             label: 'Routine Score (%)',
                             data: routineScores,
                             borderColor: '#10b981',
                             borderDash: [5, 5],
                             tension: 0.4,
                             yAxisID: 'y1'
+                        },
+                        {
+                            label: 'Shift Count Trend',
+                            data: sorted.map((_, i) => i + 1),
+                            borderColor: '#6366f1',
+                            borderDash: [2, 2],
+                            tension: 0.4,
+                            yAxisID: 'y'
                         }
                     ]
                 },
@@ -2266,21 +2559,26 @@
             const container = document.getElementById('customPresetsContainer');
             container.innerHTML = "";
             const cp = currentUserData.customPresets || [];
+
+            // ⚡ Bolt Optimization: Use DocumentFragment to batch DOM insertions and reduce layout thrashing
+            const fragment = document.createDocumentFragment();
+
             cp.forEach(p => {
                 const div = document.createElement('div');
                 div.className = "flex justify-between items-center p-4 bg-slate-50 dark:bg-slate-900 rounded-xl group border border-slate-100 dark:border-slate-800";
                 div.innerHTML = `
                     <span class="font-bold preset-name"></span>
                     <div class="flex gap-2">
-                        <button class="btn btn-sm btn-outline opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity load-btn">Load</button>
+                        <button class="btn btn-sm btn-outline opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity load-btn" aria-label="Load Template">Load</button>
                         <button class="text-red-400 p-2 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity delete-btn" title="Delete" aria-label="Delete template"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
                     </div>
                 `;
                 div.querySelector('.preset-name').textContent = p.name;
                 div.querySelector('.load-btn').onclick = () => applyCustomPreset(p.id);
                 div.querySelector('.delete-btn').onclick = () => deleteCustomPreset(p.id);
-                container.appendChild(div);
+                fragment.appendChild(div);
             });
+            container.appendChild(fragment);
             lucide.createIcons();
         }
 
@@ -2314,19 +2612,24 @@
             const printRoutines = document.getElementById('printRoutines');
             printRoutines.innerHTML = '';
             if (state.routines && state.routines.length > 0) {
+                const fragment = document.createDocumentFragment();
                 state.routines.forEach(r => {
                     const tr = document.createElement('tr');
                     const tdCheck = document.createElement('td');
                     tdCheck.style.textAlign = 'center';
                     const divCheck = document.createElement('div');
-                    divCheck.className = `print-checkbox ${r.checked ? "print-checked" : ""}`;
+                    divCheck.className = 'print-checkbox';
+                    if (r.checked) divCheck.classList.add('print-checked');
                     tdCheck.appendChild(divCheck);
+
                     const tdName = document.createElement('td');
                     tdName.textContent = r.name;
+
                     tr.appendChild(tdCheck);
                     tr.appendChild(tdName);
-                    printRoutines.appendChild(tr);
+                    fragment.appendChild(tr);
                 });
+                printRoutines.appendChild(fragment);
             } else {
                 printRoutines.innerHTML = "<tr><td colspan='2'>No routines logged</td></tr>";
             }
@@ -2334,19 +2637,21 @@
             const printDrawers = document.getElementById('printDrawers');
             printDrawers.innerHTML = '';
             if (state.drawers && state.drawers.length > 0) {
+                const fragment = document.createDocumentFragment();
                 state.drawers.forEach(d => {
                     const tr = document.createElement('tr');
                     const tdName = document.createElement('td');
                     tdName.textContent = d.name;
                     const tdVal = document.createElement('td');
-                    tdVal.textContent = `$${d.val}`;
+                    tdVal.textContent = "\$" + d.val;
                     const tdRes = document.createElement('td');
                     tdRes.textContent = d.res;
                     tr.appendChild(tdName);
                     tr.appendChild(tdVal);
                     tr.appendChild(tdRes);
-                    printDrawers.appendChild(tr);
+                    fragment.appendChild(tr);
                 });
+                printDrawers.appendChild(fragment);
             } else {
                 printDrawers.innerHTML = "<tr><td colspan='3'>No drawers logged</td></tr>";
             }
@@ -2357,6 +2662,7 @@
             const printInventory = document.getElementById('printInventoryList');
             printInventory.innerHTML = '';
             if (state.inventory && state.inventory.length > 0) {
+                const fragment = document.createDocumentFragment();
                 state.inventory.forEach(i => {
                     const tr = document.createElement('tr');
                     const tdName = document.createElement('td');
@@ -2371,8 +2677,9 @@
                     tr.appendChild(tdBl);
                     tr.appendChild(tdCl);
                     tr.appendChild(tdFr);
-                    printInventory.appendChild(tr);
+                    fragment.appendChild(tr);
                 });
+                printInventory.appendChild(fragment);
             } else {
                 printInventory.innerHTML = "<tr><td colspan='4'>No inventory logged</td></tr>";
             }
@@ -2404,11 +2711,16 @@
 
         function saveProfileToFirebase() {
             if (!currentUser) return;
+
+            const cloudToggle = document.getElementById('profileCloudSyncToggle').checked;
+            cloudSyncEnabled = cloudToggle;
+
             const data = {
                 name: document.getElementById('profName').value,
                 role: document.getElementById('profRole').value,
                 phone: document.getElementById('profPhone').value,
-                aiTrainingEnabled: document.getElementById('profileAIToggle').checked
+                aiTrainingEnabled: document.getElementById('profileAIToggle').checked,
+                cloudSyncEnabled: cloudToggle
             };
 
             if (profileDebounceTimeout) clearTimeout(profileDebounceTimeout);
@@ -2537,15 +2849,8 @@
 
 
 
-        function escapeHTML(str) {
-            if (!str && str !== 0) return "";
-            return String(str)
-                .replace(/&/g, "&amp;")
-                .replace(/</g, "&lt;")
-                .replace(/>/g, "&gt;")
-                .replace(/"/g, "&quot;")
-                .replace(/'/g, "&#039;");
-        }
+async function submitMaintenanceTicket() {
+
 
         async function submitMaintenanceTicket() {
             if (!currentUser || !currentUserData || !currentUserData.orgId) {
@@ -2576,7 +2881,7 @@
                     status: 'Open',
                     reportedByUid: currentUser.uid,
                     reportedByName: currentUserData.name || currentUser.email,
-                    orgId: currentUserData.orgId,
+                    orgId: currentUserData.orgId || null,
                     createdAt: firebase.firestore.FieldValue.serverTimestamp(),
                     updatedAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
@@ -2590,7 +2895,12 @@
                 fetchMaintenanceTickets();
             } catch (error) {
                 console.error("Error submitting ticket:", error);
-                alert("Failed to submit ticket. " + error.message);
+                if (error.code === 'unavailable' || error.code === 'auth/network-request-failed') {
+                    alert("Network error: Could not connect to the server. Please check your connection.");
+                    alert("Network error: Could not submit maintenance ticket.");
+                } else {
+                    alert("Failed to submit ticket. " + error.message);
+                }
             } finally {
                 submitBtn.innerHTML = originalText;
                 submitBtn.disabled = false;
@@ -2645,8 +2955,8 @@
                         return bTime - aTime;
                     });
 
-                    let html = '';
-                    tickets.forEach(ticket => {
+                    // ⚡ Bolt Optimization: Replace O(n²) string concatenation inside loop with array map().join('')
+                    container.innerHTML = tickets.map(ticket => {
                         const statusColors = {
                             'Open': 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400 border-amber-200 dark:border-amber-800',
                             'In Progress': 'bg-sky-100 text-sky-800 dark:bg-sky-900/30 dark:text-sky-400 border-sky-200 dark:border-sky-800',
@@ -2661,7 +2971,7 @@
 
                         const dateStr = ticket.createdAt ? new Date(ticket.createdAt.toMillis()).toLocaleString() : 'Just now';
 
-                        html += `
+                        return `
                             <div class="card p-6 border-l-4 ${ticket.priority === 'Critical' ? 'border-l-red-500' : ticket.priority === 'High' ? 'border-l-orange-500' : 'border-l-sky-500'}">
                                 <div class="flex flex-col md:flex-row justify-between gap-4 mb-4">
                                     <div>
@@ -2681,8 +2991,7 @@
                                 <p class="text-slate-700 dark:text-slate-300 whitespace-pre-wrap">${escapeHTML(ticket.description)}</p>
                             </div>
                         `;
-                    });
-                    container.innerHTML = html;
+                    }).join('');
                 }, err => {
                     console.error("Error fetching tickets:", err);
                     container.innerHTML = `<div class="text-red-500 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl text-center">Failed to load tickets: ${err.message}</div>`;
@@ -2693,7 +3002,8 @@
             try {
                 await db.collection('maintenance_logs').doc(ticketId).update({
                     status: newStatus,
-                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    orgId: currentUserData.orgId
                 });
                 // Optimistic UI update already handled by changing the select value
             } catch (error) {
@@ -2718,20 +3028,357 @@
             });
         }
 
-        function addShiftToSchedule() {
+        async function addEmployee() {
+            if (!currentUser || !currentUserData) return;
+            const name = document.getElementById('empName').value.trim();
+            const role = document.getElementById('empRole').value.trim();
+            const phone = document.getElementById('empPhone').value.trim();
+            const email = document.getElementById('empEmail').value.trim();
+            const status = document.getElementById('empStatus').value;
+
+            if (!name || !role) {
+                alert("Employee Name and Role are required.");
+                return;
+            }
+
+            const saveBtn = document.querySelector('#addEmployeeModal .btn-accent');
+            const originalText = saveBtn.innerHTML;
+            saveBtn.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> Saving...';
+            saveBtn.disabled = true;
+
+            try {
+                await db.collection('employees').add({
+                    name,
+                    role,
+                    phone,
+                    email,
+                    status,
+                    authorId: currentUser.uid,
+                    orgId: currentUserData.orgId || currentUser.uid,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                document.getElementById('empName').value = '';
+                document.getElementById('empRole').value = '';
+                document.getElementById('empPhone').value = '';
+                document.getElementById('empEmail').value = '';
+                document.getElementById('empStatus').value = 'Active';
+                document.getElementById('addEmployeeModal').classList.add('hidden');
+
+                alert("Employee added successfully.");
+                fetchEmployees();
+                        fetchTimeOffRequests();
+                populateScheduleDropdown();
+            } catch (err) {
+                console.error("Error adding employee:", err);
+                alert("Failed to add employee.");
+            } finally {
+                saveBtn.innerHTML = originalText;
+                saveBtn.disabled = false;
+                lucide.createIcons();
+            }
+        }
+
+
+        let unsubscribeEmployees = null;
+        let unsubscribeTimeOff = null;
+
+
+
+        async function submitTimeOffRequest() {
+            if (!currentUser || !currentUserData || !currentUserData.orgId) {
+                alert("You must be part of an organization to request time off.");
+                return;
+            }
+            const startDate = document.getElementById('timeoffStartDate').value;
+            const endDate = document.getElementById('timeoffEndDate').value;
+            const reason = document.getElementById('timeoffReason').value.trim();
+
+            if (!startDate || !endDate || !reason) {
+                alert("Please fill in all fields.");
+                return;
+            }
+            if (startDate > endDate) {
+                 alert("Start date must be before end date.");
+                 return;
+            }
+
+            const btn = document.getElementById('btnSubmitTimeOff');
+            const originalText = btn.innerText;
+            btn.innerText = 'Submitting...';
+            btn.disabled = true;
+
+            try {
+                await db.collection('time_off_requests').add({
+                    uid: currentUser.uid,
+                    employeeName: currentUserData.username || currentUser.email,
+                    orgId: currentUserData.orgId,
+                    startDate: startDate,
+                    endDate: endDate,
+                    reason: reason,
+                    status: 'Pending',
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                alert("Time off request submitted successfully.");
+                document.getElementById('timeoffStartDate').value = '';
+                document.getElementById('timeoffEndDate').value = '';
+                document.getElementById('timeoffReason').value = '';
+            } catch (err) {
+                console.error("Error submitting time off request", err);
+                alert("Error submitting request. Please try again.");
+            } finally {
+                btn.innerText = originalText;
+                btn.disabled = false;
+            }
+        }
+
+        function fetchTimeOffRequests() {
+             if (!currentUser || !currentUserData) return;
+             if (unsubscribeTimeOff) unsubscribeTimeOff();
+
+             let query = db.collection('time_off_requests');
+
+             // If manager/admin (assuming they have an orgId and are not just a base user, or using some flag. We will check if they own the org or just use orgId)
+             // For simplicity, we fetch all for the org if they are an org owner, otherwise just their own.
+             // Wait, let's look at how employees are fetched.
+             // Employees are fetched if user is admin or org owner.
+             // Let's just fetch for the user's org, and then filter locally to show manager view vs employee view
+
+             query = query.where('orgId', '==', currentUserData.orgId || currentUser.uid);
+
+             unsubscribeTimeOff = query.onSnapshot(snap => {
+                 const employeeContainer = document.getElementById('myTimeOffRequests');
+                 const managerContainer = document.getElementById('managerTimeOffRequests');
+
+                 let myRequestsHtml = '';
+                 let managerRequestsHtml = '';
+
+                 let requests = [];
+                 snap.forEach(doc => requests.push({ id: doc.id, ...doc.data() }));
+
+                 // Sort locally by createdAt desc
+                 requests.sort((a, b) => {
+                     let aTime = a.createdAt ? a.createdAt.toMillis() : 0;
+                     let bTime = b.createdAt ? b.createdAt.toMillis() : 0;
+                     return bTime - aTime;
+                 });
+
+                 const isManager = currentUserData.orgId === currentUser.uid;
+
+                 requests.forEach(req => {
+                     let statusColor = req.status === 'Approved' ? 'bg-green-100 text-green-800' : (req.status === 'Rejected' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800');
+
+                     let reqCard = `
+                        <div class="card p-4 border border-slate-200 dark:border-slate-800 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                            <div>
+                                <div class="font-bold">${escapeHTML(req.employeeName)}</div>
+                                <div class="text-sm text-slate-500">${escapeHTML(req.startDate)} to ${escapeHTML(req.endDate)}</div>
+                                <div class="text-sm italic mt-1">"${escapeHTML(req.reason)}"</div>
+                            </div>
+                            <div class="flex items-center gap-4">
+                                <span class="px-3 py-1 rounded-full text-xs font-bold ${statusColor}">${escapeHTML(req.status)}</span>
+                     `;
+
+                     if (req.uid === currentUser.uid) {
+                          let cancelBtn = req.status === 'Pending' ? `<button onclick="deleteTimeOffRequest('${req.id}')" class="btn btn-sm btn-outline text-red-500 hover:bg-red-50">Cancel</button>` : '';
+                          myRequestsHtml += reqCard + cancelBtn + `</div></div>`;
+                     }
+
+                     if (isManager && req.status === 'Pending') {
+                          managerRequestsHtml += reqCard + `
+                                <button onclick="updateTimeOffStatus('${req.id}', 'Approved')" class="btn btn-sm bg-green-500 text-white hover:bg-green-600">Approve</button>
+                                <button onclick="updateTimeOffStatus('${req.id}', 'Rejected')" class="btn btn-sm bg-red-500 text-white hover:bg-red-600">Deny</button>
+                          </div></div>`;
+                     } else if (isManager) {
+                          managerRequestsHtml += reqCard + `</div></div>`;
+                     }
+                 });
+
+                 if (employeeContainer) employeeContainer.innerHTML = myRequestsHtml || '<p class="text-slate-500">No time off requests found.</p>';
+                 if (managerContainer) {
+                     if (isManager) {
+                         managerContainer.innerHTML = managerRequestsHtml || '<p class="text-slate-500">No requests to manage.</p>';
+                         document.getElementById('managerTimeOffSection').style.display = 'block';
+                     } else {
+                         document.getElementById('managerTimeOffSection').style.display = 'none';
+                     }
+                 }
+             }, err => {
+                 console.error("Error fetching time off requests:", err);
+             });
+        }
+
+        async function updateTimeOffStatus(id, status) {
+            try {
+                await db.collection('time_off_requests').doc(id).update({ status: status });
+            } catch (err) {
+                console.error("Error updating time off status", err);
+                alert("Error updating status.");
+            }
+        }
+
+        async function deleteTimeOffRequest(id) {
+            if (!confirm("Are you sure you want to cancel this request?")) return;
+            try {
+                await db.collection('time_off_requests').doc(id).delete();
+            } catch (err) {
+                console.error("Error deleting time off request", err);
+                alert("Error cancelling request.");
+            }
+        }
+
+        function fetchEmployees() {
+            if (!currentUser || !currentUserData) return;
+
+            const container = document.getElementById('employeesListContainer');
+            if (container) container.innerHTML = '<div class="text-center py-8"><i data-lucide="loader-2" class="w-8 h-8 animate-spin mx-auto text-sky-500 mb-4"></i><p class="text-slate-500">Loading staff...</p></div>';
+            lucide.createIcons();
+
+            if (unsubscribeEmployees) unsubscribeEmployees();
+
+            const queryOrgId = currentUserData.orgId || currentUser.uid;
+
+            unsubscribeEmployees = db.collection('employees')
+                .where('orgId', '==', queryOrgId)
+                .onSnapshot(snap => {
+                    if (container) container.innerHTML = '';
+
+                    if (snap.empty) {
+                        if (container) container.innerHTML = `
+                            <div class="text-center py-16 bg-slate-50 dark:bg-slate-900 rounded-3xl border-2 border-dashed border-slate-200 dark:border-slate-800">
+                                <i data-lucide="users" class="w-12 h-12 text-slate-400 mx-auto mb-4"></i>
+                                <h3 class="text-xl font-bold mb-2">No Staff Added</h3>
+                                <p class="text-slate-500">Click 'Add Employee' to start building your team roster.</p>
+                            </div>
+                        `;
+                        lucide.createIcons();
+                        return;
+                    }
+
+                    let employees = [];
+                    snap.forEach(doc => employees.push({ id: doc.id, ...doc.data() }));
+
+                    // Sort by name
+                    employees.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+
+                    employees.forEach(emp => {
+                        const div = document.createElement('div');
+                        div.className = "flex flex-col sm:flex-row justify-between sm:items-center p-4 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 gap-4";
+
+                        const statusBadge = emp.status === 'Active'
+                            ? '<span class="px-2 py-1 bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 rounded-full text-xs font-bold uppercase tracking-widest">Active</span>'
+                            : '<span class="px-2 py-1 bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 rounded-full text-xs font-bold uppercase tracking-widest">Inactive</span>';
+
+                        div.innerHTML = `
+                            <div>
+                                <div class="flex items-center gap-2 mb-1">
+                                    <h4 class="font-bold text-lg">${escapeHTML(emp.name)}</h4>
+                                    ${statusBadge}
+                                </div>
+                                <p class="text-sm text-sky-500 font-medium mb-1">${escapeHTML(emp.role)}</p>
+                                <div class="flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500">
+                                    ${emp.phone ? `<span class="flex items-center gap-1"><i data-lucide="phone" class="w-3 h-3"></i> ${escapeHTML(emp.phone)}</span>` : ''}
+                                    ${emp.email ? `<span class="flex items-center gap-1"><i data-lucide="mail" class="w-3 h-3"></i> ${escapeHTML(emp.email)}</span>` : ''}
+                                </div>
+                            </div>
+                            <div class="flex gap-2 self-start sm:self-center">
+                                <button onclick="toggleEmployeeStatus('${emp.id}', '${emp.status}')" class="btn btn-outline btn-sm" aria-label="Toggle Employee Status">${emp.status === 'Active' ? 'Deactivate' : 'Activate'}</button>
+                                <button onclick="deleteEmployee('${emp.id}')" class="btn btn-outline btn-sm text-red-500 hover:bg-red-50" aria-label="Delete Employee"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                            </div>
+                        `;
+                        if (container) container.appendChild(div);
+                    });
+                    lucide.createIcons();
+                    populateScheduleDropdown();
+                }, err => {
+                    console.error("Error fetching employees:", err);
+                    if (container) container.innerHTML = `<p class="text-red-500 text-center py-8">Failed to load roster.</p>`;
+                });
+        }
+
+        async function toggleEmployeeStatus(id, currentStatus) {
+            const newStatus = currentStatus === 'Active' ? 'Inactive' : 'Active';
+            try {
+                await db.collection('employees').doc(id).update({ status: newStatus });
+            } catch (err) {
+                console.error("Error updating status:", err);
+                alert("Failed to update employee status.");
+            }
+        }
+
+        async function deleteEmployee(id) {
+            if (!confirm("Are you sure you want to permanently delete this employee?")) return;
+            try {
+                await db.collection('employees').doc(id).delete();
+            } catch (err) {
+                console.error("Error deleting employee:", err);
+                alert("Failed to delete employee.");
+            }
+        }
+
+        function populateScheduleDropdown() {
+            const select = document.getElementById('shiftEmpName');
+            if (!select || !currentUserData) return;
+
+            const queryOrgId = currentUserData.orgId || currentUser.uid;
+
+            db.collection('employees')
+                .where('orgId', '==', queryOrgId)
+                .where('status', '==', 'Active')
+                .get()
+                .then(snap => {
+                    select.innerHTML = '<option value="" disabled selected>Select Employee</option>';
+                    let employees = [];
+                    snap.forEach(doc => employees.push(doc.data()));
+                    employees.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+
+                    employees.forEach(emp => {
+                        const opt = document.createElement('option');
+                        opt.value = emp.name;
+                        opt.textContent = `${emp.name} (${emp.role})`;
+                        opt.dataset.role = emp.role;
+                        select.appendChild(opt);
+                    });
+                })
+                .catch(err => console.error("Error populating dropdown:", err));
+        }
+
+        // Auto-select role when an employee is chosen in schedule
+        document.addEventListener('DOMContentLoaded', () => {
+            const shiftEmpNameSelect = document.getElementById('shiftEmpName');
+            if (shiftEmpNameSelect) {
+                shiftEmpNameSelect.addEventListener('change', (e) => {
+                    const selectedOption = e.target.options[e.target.selectedIndex];
+                    const roleInput = document.getElementById('shiftRole');
+                    if (selectedOption && selectedOption.dataset.role && roleInput) {
+                        // Check if role exists in the select, if not add it temporarily
+                        let roleExists = Array.from(roleInput.options).some(opt => opt.value === selectedOption.dataset.role);
+                        if (!roleExists) {
+                            const newOpt = document.createElement('option');
+                            newOpt.value = selectedOption.dataset.role;
+                            newOpt.textContent = selectedOption.dataset.role;
+                            roleInput.appendChild(newOpt);
+                        }
+                        roleInput.value = selectedOption.dataset.role;
+                    }
+                });
+            }
+        });
+
+        async function addShiftToSchedule() {
             const dateInput = document.getElementById('scheduleDate');
-            const empName = document.getElementById('shiftEmpName');
+            const empNameSelect = document.getElementById('shiftEmpName');
             const role = document.getElementById('shiftRole');
             const startTime = document.getElementById('shiftStart');
             const endTime = document.getElementById('shiftEnd');
 
-            if (!dateInput.value || !empName.value || !role.value || !startTime.value || !endTime.value) {
+            if (!dateInput.value || !empNameSelect.value || !role.value || !startTime.value || !endTime.value) {
                 alert("Please fill in all shift details.");
                 return;
             }
 
             const newShift = {
-                employeeName: empName.value,
+                employeeName: empNameSelect.value,
                 role: role.value,
                 startTime: startTime.value,
                 endTime: endTime.value
@@ -2740,27 +3387,35 @@
             const date = dateInput.value;
             const scheduleRef = db.collection('schedules').doc(`${currentUser.uid}_${date}`);
 
-            scheduleRef.get().then(doc => {
+            try {
+                const doc = await scheduleRef.get();
                 let shifts = [];
                 if (doc.exists) {
                     shifts = doc.data().shifts || [];
                 }
                 shifts.push(newShift);
 
-                scheduleRef.set({
+                await scheduleRef.set({
                     uid: currentUser.uid,
+                    authorId: currentUser.uid,
+                    orgId: currentUserData.orgId,
+                    orgId: currentUserData?.orgId || null,
                     date: date,
                     shifts: shifts,
                     updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-                }, { merge: true }).then(() => {
-                    empName.value = '';
-                    role.value = 'Cashier';
-                    startTime.value = '';
-                    endTime.value = '';
-                }).catch(err => {
-                    console.error("Error saving shift", err);
-                });
-            });
+                }, { merge: true });
+
+                empNameSelect.value = '';
+                startTime.value = '';
+                endTime.value = '';
+            } catch(err) {
+                console.error("Error saving shift", err);
+                if (err.code === 'unavailable' || err.code === 'auth/network-request-failed') {
+                    alert("Network error: Could not connect to the server. Please check your connection.");
+                } else {
+                    alert("Failed to save shift: " + err.message);
+                }
+            }
         }
 
         let unsubscribeSchedule = null;
@@ -2790,21 +3445,25 @@
                             return;
                         }
 
+                        // ⚡ Bolt Optimization: Use DocumentFragment to batch DOM insertions and reduce layout thrashing
+                        const fragment = document.createDocumentFragment();
+
                         shifts.forEach((shift, index) => {
                             const div = document.createElement('div');
                             div.className = "flex justify-between items-center p-4 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800";
                             div.innerHTML = `
                                 <div>
-                                    <h4 class="font-bold text-lg">${shift.employeeName}</h4>
-                                    <p class="text-sm text-slate-500">${shift.role}</p>
+                                    <h4 class="font-bold text-lg">${escapeHTML(shift.employeeName)}</h4>
+                                    <p class="text-sm text-slate-500">${escapeHTML(shift.role)}</p>
                                 </div>
                                 <div class="text-right">
-                                    <p class="font-mono bg-slate-50 dark:bg-slate-800 px-3 py-1 rounded-lg border border-slate-100 dark:border-slate-700">${shift.startTime} - ${shift.endTime}</p>
-                                    <button onclick="removeShift(${index})" class="text-red-500 text-xs mt-2 hover:underline">Remove</button>
+                                    <p class="font-mono bg-slate-50 dark:bg-slate-800 px-3 py-1 rounded-lg border border-slate-100 dark:border-slate-700">${escapeHTML(shift.startTime)} - ${escapeHTML(shift.endTime)}</p>
+                                    <button onclick="removeShift(${index})" class="text-red-500 text-xs mt-2 hover:underline" aria-label="Remove Shift">Remove</button>
                                 </div>
                             `;
-                            listContainer.appendChild(div);
+                            fragment.appendChild(div);
                         });
+                        listContainer.appendChild(fragment);
                     }
                 }, error => {
                     console.error("Error fetching schedules: ", error);
@@ -2812,21 +3471,25 @@
                 });
         }
 
-        function removeShift(index) {
+        async function removeShift(index) {
             const dateInput = document.getElementById('scheduleDate');
             if (!dateInput || !dateInput.value) return;
 
             const date = dateInput.value;
             const scheduleRef = db.collection('schedules').doc(`${currentUser.uid}_${date}`);
 
-            scheduleRef.get().then(doc => {
+            try {
+                const doc = await scheduleRef.get();
+            scheduleRef.get().then(async doc => {
                 if (doc.exists) {
                     const data = doc.data();
                     let shifts = data.shifts || [];
                     shifts.splice(index, 1);
-                    scheduleRef.update({ shifts: shifts });
+                    await scheduleRef.update({ shifts: shifts });
                 }
-            });
+            } catch (error) {
+                console.error("Error removing shift:", error);
+            }
         }
 
 
@@ -2849,6 +3512,7 @@
                         return;
                     }
 
+                    const fragment = document.createDocumentFragment();
                     snap.forEach(doc => {
                         const data = doc.data();
                         const status = data.status || 'In Progress';
@@ -2867,20 +3531,14 @@
                           <p class="text-sm font-medium text-slate-700 dark:text-slate-300 feature-request-message"></p>
                       `;
                         div.querySelector('.feature-request-message').textContent = `"${data.message}"`;
-                        container.appendChild(div);
+                        fragment.appendChild(div);
                     });
+                    container.appendChild(fragment);
                 });
         }
 
-        function escapeHTML(str) {
-            if (str === null || str === undefined) return '';
-            return String(str)
-                .replace(/&/g, "&amp;")
-                .replace(/</g, "&lt;")
-                .replace(/>/g, "&gt;")
-                .replace(/"/g, "&quot;")
-                .replace(/'/g, "&#039;");
-        }
+function checkAndRenderOrgControls() {
+
 
         function checkAndRenderOrgControls() {
             if (!currentUser) return false;
@@ -2891,16 +3549,18 @@
             if (!currentUserData || !currentUserData.orgId) {
                 // Not in an org
                 controls.innerHTML = `
-                    <button onclick="document.getElementById('createGroupModal').classList.remove('hidden')" class="btn btn-outline btn-sm"><i data-lucide="plus" class="w-4 h-4"></i> Create Group</button>
-                    <button onclick="document.getElementById('joinGroupModal').classList.remove('hidden')" class="btn btn-outline btn-sm"><i data-lucide="log-in" class="w-4 h-4"></i> Join Group</button>
+                    <button aria-label="Create Group" onclick="document.getElementById('createGroupModal').classList.remove('hidden')" class="btn btn-outline btn-sm"><i data-lucide="plus" class="w-4 h-4"></i> Create Group</button>
+                    <button aria-label="Join Group" onclick="document.getElementById('joinGroupModal').classList.remove('hidden')" class="btn btn-outline btn-sm"><i data-lucide="log-in" class="w-4 h-4"></i> Join Group</button>
                 `;
                 postArea.classList.add('hidden');
                 lucide.createIcons();
+                fetchMySentRequests();
                 return false;
             }
 
             // User is in an org
             postArea.classList.remove('hidden');
+            fetchMySentRequests();
 
             // If they are the owner, show the request panel logic
             db.collection('shift_groups').doc(currentUserData.orgId).get().then(doc => {
@@ -2948,7 +3608,6 @@
             lucide.createIcons();
 
             db.collection('shift_notes')
-                .where('status', '==', 'Active')
                 .where('orgId', '==', currentUserData.orgId)
                 .get() // orderBy timestamp desc requires composite index if where filters are used
                 .then(snap => {
@@ -2967,8 +3626,11 @@
 
                     // Sort manually since composite index might not exist
                     let docs = [];
-                    snap.forEach(doc => docs.push({ id: doc.id, data: doc.data() }));
+                    snap.forEach(doc => { if (doc.data().status === 'Active') docs.push({ id: doc.id, data: doc.data() }) });
                     docs.sort((a, b) => b.data.timestamp - a.data.timestamp);
+
+                    // ⚡ Bolt Optimization: Use DocumentFragment to batch DOM insertions and reduce layout thrashing
+                    const fragment = document.createDocumentFragment();
 
                     docs.forEach(docObj => {
                         const data = docObj.data;
@@ -3004,14 +3666,15 @@
                             </div>
                             <p class="text-slate-700 dark:text-slate-300 font-medium mb-6 whitespace-pre-wrap pl-1 shift-note-text"></p>
                             <div class="flex justify-end border-t border-slate-100 dark:border-slate-800 pt-4 mt-2">
-                                <button onclick="resolveShiftNote('${escapeHTML(docId)}')" class="text-sm font-bold text-slate-400 hover:text-emerald-500 flex items-center gap-2 transition-colors">
+                                <button onclick="resolveShiftNote('${escapeHTML(docId)}')" class="text-sm font-bold text-slate-400 hover:text-emerald-500 flex items-center gap-2 transition-colors" aria-label="Resolve Shift Note">
                                     <i data-lucide="check-circle" class="w-4 h-4"></i> Mark Resolved
                                 </button>
                             </div>
                         `;
                         noteDiv.querySelector('.shift-note-text').textContent = data.content;
-                        container.appendChild(noteDiv);
+                        fragment.appendChild(noteDiv);
                     });
+                    container.appendChild(fragment);
                     lucide.createIcons();
                 })
                 .catch(err => {
@@ -3075,30 +3738,50 @@
             document.getElementById('shiftNoteContent').value = "";
 
             try {
-                const result = await callCloudFunction('manageShiftNotes', {
+                const manageShiftNotes = cloudFunctions.httpsCallable('manageShiftNotes');
+                // To allow client-side writes since cloud functions were failing for some users
+                const manageShiftNotes = firebase.functions().httpsCallable('manageShiftNotes');
+                const result = await manageShiftNotes({
                     action: "create",
                     payload: {
+                        authorId: currentUser.uid,
+                        orgId: currentUserData.orgId || currentUser.uid,
                         authorName: currentUser.email.split('@')[0],
                         content: content,
-                        priority: priority,
-                        orgId: currentUserData.orgId
+                        priority: priority
                     }
+                await db.collection('shift_notes').add({
+                    authorId: currentUser.uid,
+                    authorName: currentUser.email.split('@')[0],
+                    content: content,
+                    priority: priority,
+                    status: 'Active',
+                    orgId: currentUserData.orgId,
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
                 });
-                if (result.data.success) {
-                    // Finalize optimistic UI immediately without awaiting global refresh
-                    noteDiv.classList.remove('opacity-50');
-                    const actionsDiv = noteDiv.querySelector('.flex.justify-end');
-                    actionsDiv.innerHTML = `
-                        <button onclick="resolveShiftNote('${escapeHTML(result.data.id)}')" class="text-sm font-bold text-slate-400 hover:text-emerald-500 flex items-center gap-2 transition-colors">
-                            <i data-lucide="check-circle" class="w-4 h-4"></i> Mark Resolved
-                        </button>
-                    `;
-                    if (window.lucide) window.lucide.createIcons();
-                }
+
+                document.getElementById('shiftNoteContent').value = "";
+                fetchShiftNotes();
+
             } catch (err) {
-                if (noteDiv) noteDiv.remove();
-                console.error("Manager Troubleshooting: Error creating shift note:", err);
-                alert("Failed to post note: " + err.message);
+                console.error("Error posting note", err);
+                if (err.code === 'unavailable' || err.code === 'auth/network-request-failed') {
+                    alert("Network error: Could not connect to the server. Please check your connection.");
+                } else {
+                    alert("Failed to post note: " + err.message);
+                }
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                document.getElementById('shiftNoteContent').value = "";
+                fetchShiftNotes();
+            } catch (err) {
+                console.error(err);
+                if (err.code === 'unavailable' || err.code === 'auth/network-request-failed') {
+                    alert("Network error: Could not submit shift note.");
+                } else {
+                    alert("Failed to submit shift note. " + err.message);
+                }
+                noteDiv.remove(); // revert optimistic UI
             }
         }
 
@@ -3121,7 +3804,8 @@
             }
 
             try {
-                const result = await callCloudFunction('manageShiftNotes', {
+                const manageShiftNotes = cloudFunctions.httpsCallable('manageShiftNotes');
+                const result = await manageShiftNotes({
                     action: "resolve",
                     payload: { noteId: noteId, resolvedBy: currentUser.email.split('@')[0] }
                 });
@@ -3142,9 +3826,12 @@
             if (!name || !pass) return alert("All fields required");
 
             try {
-                const result = await callCloudFunction('manageShiftGroups', {
+                const manageShiftGroups = cloudFunctions.httpsCallable('manageShiftGroups');
+                const result = await manageShiftGroups({
                     action: "create",
                     payload: {
+                        authorId: currentUser.uid,
+                        orgId: currentUserData.orgId || currentUser.uid,
                         ownerName: currentUser.email.split('@')[0],
                         groupName: name,
                         password: pass
@@ -3169,7 +3856,8 @@
             if (!groupId || !pass) return alert("All fields required");
 
             try {
-                const result = await callCloudFunction('manageShiftGroups', {
+                const manageShiftGroups = cloudFunctions.httpsCallable('manageShiftGroups');
+                const result = await manageShiftGroups({
                     action: "request_join",
                     payload: {
                         userName: currentUser.email.split('@')[0],
@@ -3201,6 +3889,7 @@
                     }
                     panel.classList.remove('hidden');
                     container.innerHTML = '';
+                    const fragment = document.createDocumentFragment();
                     snap.forEach(doc => {
                         const data = doc.data();
                         const div = document.createElement('div');
@@ -3210,16 +3899,65 @@
                                 <p class="font-bold text-sm">${escapeHTML(data.userName)}</p>
                                 <p class="text-xs text-slate-500">Wants to join your group</p>
                             </div>
-                            <button onclick="approveGroupRequest('${escapeHTML(doc.id)}')" class="btn btn-primary btn-sm px-4">Approve</button>
+                            <button onclick="approveGroupRequest('${escapeHTML(doc.id)}')" class="btn btn-primary btn-sm px-4" aria-label="Approve Group Request">Approve</button>
                         `;
-                        container.appendChild(div);
+                        fragment.appendChild(div);
                     });
+                    container.appendChild(fragment);
                 });
+        }
+
+        function fetchMySentRequests() {
+            if (window.mySentRequestsUnsubscribe) window.mySentRequestsUnsubscribe();
+            if (!currentUser) return;
+            window.mySentRequestsUnsubscribe = db.collection('shift_group_requests')
+                .where('userId', '==', currentUser.uid)
+                .where('status', '==', 'Pending')
+                .onSnapshot(snap => {
+                    const panel = document.getElementById('mySentRequestsPanel');
+                    const container = document.getElementById('mySentRequestsContainer');
+                    if (!panel) return;
+                    if (snap.empty) {
+                        panel.classList.add('hidden');
+                        return;
+                    }
+                    panel.classList.remove('hidden');
+                    container.innerHTML = '';
+                    const fragment = document.createDocumentFragment();
+                    snap.forEach(doc => {
+                        const data = doc.data();
+                        const div = document.createElement('div');
+                        div.className = "flex justify-between items-center bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border border-slate-200 dark:border-slate-700";
+                        div.innerHTML = `
+                            <div>
+                                <p class="font-bold text-sm">Group ID: ${escapeHTML(data.groupId)}</p>
+                                <p class="text-xs text-slate-500">Awaiting approval</p>
+                            </div>
+                            <button onclick="retractGroupRequest('${escapeHTML(doc.id)}')" class="btn btn-outline btn-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20" aria-label="Retract Group Request">Retract</button>
+                        `;
+                        fragment.appendChild(div);
+                    });
+                    container.appendChild(fragment);
+                });
+        }
+
+        async function retractGroupRequest(requestId) {
+            try {
+                const manageShiftGroups = cloudFunctions.httpsCallable('manageShiftGroups');
+                await manageShiftGroups({
+                    action: "retract_join",
+                    payload: { requestId: requestId }
+                });
+                alert("Request Retracted!");
+            } catch (e) {
+                alert("Failed to retract: " + e.message);
+            }
         }
 
         async function approveGroupRequest(requestId) {
             try {
-                const result = await callCloudFunction('manageShiftGroups', {
+                const manageShiftGroups = cloudFunctions.httpsCallable('manageShiftGroups');
+                const result = await manageShiftGroups({
                     action: "approve_join",
                     payload: { requestId: requestId }
                 });
@@ -3230,12 +3968,189 @@
             }
         }
 
-        window.onload = () => {
-            const redirect = localStorage.getItem('navTo');
-            if (redirect) {
-                navTo(redirect);
-                localStorage.removeItem('navTo');
+        // --- TEAM DIRECTORY LOGIC ---
+
+        let activeEmployeesList = [];
+
+        function closeEmployeeModal() {
+            document.getElementById('addEmployeeModal').classList.add('hidden');
+            document.getElementById('empModalId').value = "";
+            document.getElementById('empName').value = "";
+            document.getElementById('empRole').value = "Cashier";
+            document.getElementById('empPhone').value = "";
+            document.getElementById('employeeModalTitle').innerText = "Add New Employee";
+            document.getElementById('submitEmpBtn').innerText = "Save Employee";
+        }
+
+        function openEditEmployeeModal(empId) {
+            const emp = activeEmployeesList.find(e => e.id === empId);
+            if (!emp) return;
+
+            document.getElementById('empModalId').value = emp.id;
+            document.getElementById('empName').value = emp.name;
+            document.getElementById('empRole').value = emp.role;
+            document.getElementById('empPhone').value = emp.phone || "";
+            document.getElementById('employeeModalTitle').innerText = "Edit Employee";
+            document.getElementById('submitEmpBtn').innerText = "Update Employee";
+
+            document.getElementById('addEmployeeModal').classList.remove('hidden');
+        }
+
+        async function submitEmployee() {
+            if (!currentUser || !currentUserData || !currentUserData.orgId) {
+                alert("You must be part of a group to manage employees.");
+                return;
             }
+
+            const empId = document.getElementById('empModalId').value;
+            const name = document.getElementById('empName').value.trim();
+            const role = document.getElementById('empRole').value;
+            const phone = document.getElementById('empPhone').value.trim();
+
+            if (!name) {
+                alert("Employee name is required.");
+                return;
+            }
+
+            const btn = document.getElementById('submitEmpBtn');
+            const ogText = btn.innerText;
+            btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Saving...`;
+            btn.disabled = true;
+            lucide.createIcons();
+
+            try {
+                const manageEmployees = firebase.functions().httpsCallable('manageEmployees');
+                if (empId) {
+                    await manageEmployees({
+                        action: "update",
+                        payload: { empId, name, role, phone }
+                    });
+                } else {
+                    await manageEmployees({
+                        action: "create",
+                        payload: { name, role, phone }
+                    });
+                }
+
+                closeEmployeeModal();
+                fetchTeamDirectory();
+            } catch (error) {
+                alert("Failed to save employee: " + error.message);
+            } finally {
+                btn.innerText = ogText;
+                btn.disabled = false;
+            }
+        }
+
+        async function deleteEmployee(empId) {
+            if (!currentUser || !confirm("Are you sure you want to remove this employee from the active roster?")) return;
+
+            try {
+                const manageEmployees = firebase.functions().httpsCallable('manageEmployees');
+                await manageEmployees({
+                    action: "delete",
+                    payload: { empId }
+                });
+                fetchTeamDirectory();
+            } catch (error) {
+                alert("Failed to remove employee: " + error.message);
+            }
+        }
+
+        async function fetchTeamDirectory() {
+            if (!currentUser || !currentUserData || !currentUserData.orgId) {
+                document.getElementById('teamContainer').innerHTML = `
+                    <div class="col-span-1 md:col-span-2 text-center py-16 bg-slate-50 dark:bg-slate-900 rounded-3xl border-2 border-dashed border-slate-200 dark:border-slate-800">
+                        <i data-lucide="users" class="w-12 h-12 text-slate-400 mx-auto mb-4"></i>
+                        <h3 class="text-xl font-bold mb-2">Join or Create a Group</h3>
+                        <p class="text-slate-500">You must be in a Management Group to access the Team Directory.</p>
+                    </div>
+                `;
+                lucide.createIcons();
+                return;
+            }
+
+            const container = document.getElementById('teamContainer');
+            container.innerHTML = '<div class="col-span-1 md:col-span-2 text-center py-8"><i data-lucide="loader-2" class="w-8 h-8 animate-spin mx-auto text-sky-500 mb-4"></i><p class="text-slate-500">Loading roster...</p></div>';
+            lucide.createIcons();
+
+            try {
+                const manageEmployees = firebase.functions().httpsCallable('manageEmployees');
+                const result = await manageEmployees({ action: "get", payload: {} });
+
+                if (result.data.success) {
+                    activeEmployeesList = result.data.employees || [];
+
+                    // Populate schedule dropdown
+                    updateScheduleEmployeeDropdown();
+
+                    container.innerHTML = '';
+
+                    if (activeEmployeesList.length === 0) {
+                        container.innerHTML = `
+                            <div class="col-span-1 md:col-span-2 text-center py-16 bg-slate-50 dark:bg-slate-900 rounded-3xl border-2 border-dashed border-slate-200 dark:border-slate-800">
+                                <i data-lucide="users" class="w-12 h-12 text-slate-300 mx-auto mb-4"></i>
+                                <h3 class="text-xl font-bold mb-2">No Employees Yet</h3>
+                                <p class="text-slate-500 mb-4">Add your first employee to populate the roster and scheduling dropdown.</p>
+                                <button onclick="document.getElementById('addEmployeeModal').classList.remove('hidden')" class="btn btn-outline">Add Employee</button>
+                            </div>
+                        `;
+                        lucide.createIcons();
+                        return;
+                    }
+
+                    activeEmployeesList.forEach(emp => {
+                        const div = document.createElement('div');
+                        div.className = "card p-6 flex flex-col justify-between";
+
+                        const phoneDisplay = emp.phone ? `<a href="tel:${escapeHTML(emp.phone)}" class="text-sky-500 hover:underline text-sm flex items-center gap-1"><i data-lucide="phone" class="w-3 h-3"></i> ${escapeHTML(emp.phone)}</a>` : '<span class="text-slate-400 text-sm">No phone</span>';
+
+                        div.innerHTML = `
+                            <div>
+                                <div class="flex justify-between items-start mb-2">
+                                    <h3 class="text-lg font-bold">${escapeHTML(emp.name)}</h3>
+                                    <span class="text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">${escapeHTML(emp.role)}</span>
+                                </div>
+                                <div class="mb-4">
+                                    ${phoneDisplay}
+                                </div>
+                            </div>
+                            <div class="flex gap-2 border-t border-slate-100 dark:border-slate-800 pt-4 mt-2">
+                                <button onclick="openEditEmployeeModal('${escapeHTML(emp.id)}')" class="btn btn-outline btn-sm flex-1" aria-label="Edit Employee"><i data-lucide="edit-2" class="w-3 h-3"></i> Edit</button>
+                                <button onclick="deleteEmployee('${escapeHTML(emp.id)}')" class="btn btn-outline btn-sm text-red-500 hover:bg-red-50 flex-1" aria-label="Remove Employee"><i data-lucide="user-minus" class="w-3 h-3"></i> Remove</button>
+                            </div>
+                        `;
+                        container.appendChild(div);
+                    });
+                    lucide.createIcons();
+                }
+            } catch (error) {
+                container.innerHTML = `<div class="col-span-1 md:col-span-2 text-red-500 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl text-center">Failed to load roster: ${error.message}</div>`;
+            }
+        }
+
+        function updateScheduleEmployeeDropdown() {
+            const select = document.getElementById('shiftEmpName');
+            if (!select) return;
+
+            const currentVal = select.value;
+            select.innerHTML = '<option value="">Select Employee...</option>';
+
+            activeEmployeesList.forEach(emp => {
+                const opt = document.createElement('option');
+                opt.value = emp.name;
+                opt.textContent = emp.name + " (" + emp.role + ")";
+                select.appendChild(opt);
+            });
+
+            if (currentVal && Array.from(select.options).some(o => o.value === currentVal)) {
+                select.value = currentVal;
+            }
+        }
+
+        // We will fetch the team directory when the view is opened or during org check
+
+        window.onload = () => {
             if (localStorage.getItem('managerProTheme') === 'dark') {
                 document.body.classList.add('dark-mode');
                 document.getElementById('themeToggle').checked = true;
