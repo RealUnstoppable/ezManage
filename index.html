@@ -3086,10 +3086,11 @@
                 const result = await manageShiftNotes({
                     action: "create",
                     payload: {
+                        authorId: currentUser.uid,
+                        orgId: currentUserData.orgId || currentUser.uid,
                         authorName: currentUser.email.split('@')[0],
                         content: content,
-                        priority: priority,
-                        orgId: currentUserData.orgId
+                        priority: priority
                     }
                 });
                 if (result.data.success) {
@@ -3142,6 +3143,8 @@
                 const result = await manageShiftGroups({
                     action: "create",
                     payload: {
+                        authorId: currentUser.uid,
+                        orgId: currentUserData.orgId || currentUser.uid,
                         ownerName: currentUser.email.split('@')[0],
                         groupName: name,
                         password: pass
