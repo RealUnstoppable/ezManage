@@ -1395,6 +1395,11 @@
         let unsubscribeUser = null;
         let initialDraftLoaded = false;
 
+        async function callCloudFunction(functionName, payload) {
+            const func = firebase.functions().httpsCallable(functionName);
+            return await func(payload);
+        }
+
         // Legal & Privacy Settings
         let cloudSyncEnabled = false;
 
@@ -2691,10 +2696,8 @@
                     updatedAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
                 // Optimistic UI update already handled by changing the select value
-                // but refreshing guarantees sync
-                fetchMaintenanceTickets();
             } catch (error) {
-                console.error("Error updating ticket:", error);
+                console.error("Manager Troubleshooting: Error updating ticket:", error);
                 alert("Failed to update status. " + error.message);
                 fetchMaintenanceTickets(); // revert
             }
@@ -3072,8 +3075,7 @@
             document.getElementById('shiftNoteContent').value = "";
 
             try {
-                const manageShiftNotes = firebase.functions().httpsCallableFromURL('https://manageshiftnotes-dsy7tdoigq-uc.a.run.app');
-                const result = await manageShiftNotes({
+                const result = await callCloudFunction('manageShiftNotes', {
                     action: "create",
                     payload: {
                         authorName: currentUser.email.split('@')[0],
@@ -3083,10 +3085,19 @@
                     }
                 });
                 if (result.data.success) {
-                    document.getElementById('shiftNoteContent').value = "";
-                    fetchShiftNotes();
+                    // Finalize optimistic UI immediately without awaiting global refresh
+                    noteDiv.classList.remove('opacity-50');
+                    const actionsDiv = noteDiv.querySelector('.flex.justify-end');
+                    actionsDiv.innerHTML = `
+                        <button onclick="resolveShiftNote('${escapeHTML(result.data.id)}')" class="text-sm font-bold text-slate-400 hover:text-emerald-500 flex items-center gap-2 transition-colors">
+                            <i data-lucide="check-circle" class="w-4 h-4"></i> Mark Resolved
+                        </button>
+                    `;
+                    if (window.lucide) window.lucide.createIcons();
                 }
             } catch (err) {
+                if (noteDiv) noteDiv.remove();
+                console.error("Manager Troubleshooting: Error creating shift note:", err);
                 alert("Failed to post note: " + err.message);
             }
         }
@@ -3110,13 +3121,16 @@
             }
 
             try {
-                const manageShiftNotes = firebase.functions().httpsCallableFromURL('https://manageshiftnotes-dsy7tdoigq-uc.a.run.app');
-                const result = await manageShiftNotes({
+                const result = await callCloudFunction('manageShiftNotes', {
                     action: "resolve",
                     payload: { noteId: noteId, resolvedBy: currentUser.email.split('@')[0] }
                 });
-                if (result.data.success) fetchShiftNotes();
+                if (result.data.success && noteDiv) {
+                    noteDiv.remove();
+                }
             } catch (err) {
+                if (noteDiv) noteDiv.style.display = originalDisplay; // Revert optimistic hide
+                console.error("Manager Troubleshooting: Error resolving shift note:", err);
                 alert("Failed to resolve note: " + err.message);
             }
         }
@@ -3128,8 +3142,7 @@
             if (!name || !pass) return alert("All fields required");
 
             try {
-                const manageShiftGroups = firebase.functions().httpsCallableFromURL('https://manageshiftgroups-dsy7tdoigq-uc.a.run.app');
-                const result = await manageShiftGroups({
+                const result = await callCloudFunction('manageShiftGroups', {
                     action: "create",
                     payload: {
                         ownerName: currentUser.email.split('@')[0],
@@ -3144,6 +3157,7 @@
                     window.location.reload();
                 }
             } catch (e) {
+                console.error("Manager Troubleshooting: Error creating shift group:", e);
                 alert("Failed to create group: " + e.message);
             }
         }
@@ -3155,8 +3169,7 @@
             if (!groupId || !pass) return alert("All fields required");
 
             try {
-                const manageShiftGroups = firebase.functions().httpsCallableFromURL('https://manageshiftgroups-dsy7tdoigq-uc.a.run.app');
-                const result = await manageShiftGroups({
+                const result = await callCloudFunction('manageShiftGroups', {
                     action: "request_join",
                     payload: {
                         userName: currentUser.email.split('@')[0],
@@ -3169,6 +3182,7 @@
                     document.getElementById('joinGroupModal').classList.add('hidden');
                 }
             } catch (e) {
+                console.error("Manager Troubleshooting: Error requesting to join shift group:", e);
                 alert("Failed to request join: " + e.message);
             }
         }
@@ -3205,13 +3219,13 @@
 
         async function approveGroupRequest(requestId) {
             try {
-                const manageShiftGroups = firebase.functions().httpsCallableFromURL('https://manageshiftgroups-dsy7tdoigq-uc.a.run.app');
-                const result = await manageShiftGroups({
+                const result = await callCloudFunction('manageShiftGroups', {
                     action: "approve_join",
                     payload: { requestId: requestId }
                 });
                 if (result.data.success) alert("Approved!");
             } catch (e) {
+                console.error("Manager Troubleshooting: Error approving group request:", e);
                 alert("Failed to approve: " + e.message);
             }
         }
