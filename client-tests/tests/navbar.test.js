@@ -1,4 +1,17 @@
 import { jest } from "@jest/globals";
+
+global.window = global.window || {};
+global.firebase = {
+    apps: [],
+    auth: jest.fn(() => ({ onAuthStateChanged: jest.fn() })),
+    firestore: jest.fn(() => ({ collection: jest.fn() }))
+};
+global.window.firebase = global.firebase;
+
+import { loadNavbar } from '../../js/navbar.js';
+import * as authModule from '../../js/auth.js';
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
+import { getDoc } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
 window.firebase = {
   apps: [],
   auth: jest.fn(),

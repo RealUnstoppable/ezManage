@@ -17,8 +17,9 @@ const firebaseConfig = {
 };
 
 if (!window.firebase) { console.error("Firebase Compat SDK must be loaded before auth.js"); }
-if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
 
+export const auth = window.firebase ? window.firebase.auth() : {};
+export const db = window.firebase ? window.firebase.firestore() : {};
 export const auth = firebase.auth();
 export const db = firebase.firestore();
 db.settings({ experimentalForceLongPolling: true });
@@ -36,12 +37,16 @@ export async function fetchUserDoc(uid) {
 
 const ADMIN_EMAIL = null;
 
+if (auth.onAuthStateChanged) {
 auth.onAuthStateChanged(async (user) => {
     const authLink = document.getElementById('auth-link');
     const membershipStatusContainer = document.getElementById('membership-status-container');
 
     if (user) {
         try {
+            const userDocRef = db.collection("users").doc(user.uid);
+            const userDoc = await userDocRef.get();
+
             const userDoc = await fetchUserDoc(user.uid);
             if (userDoc.exists) {
                 const userData = userDoc.data();
@@ -70,6 +75,7 @@ auth.onAuthStateChanged(async (user) => {
         }
     }
 });
+}
 
 if (document.getElementById('auth-form')) {
     const form = document.getElementById('auth-form');

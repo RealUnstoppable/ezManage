@@ -1524,7 +1524,7 @@
 
         db.enablePersistence().catch(err => console.error("Offline sync error:", err));
 
-        let currentUser = null;
+        window.currentUser = null;
         function escapeHTML(str) {
             if (!str && str !== 0) return "";
             return String(str)
@@ -1535,7 +1535,7 @@
                 .replace(/'/g, "&#039;");
         }
 
-        let currentUserData = null;
+        window.currentUserData = null;
         let isRegisterMode = false;
         let shiftStartTime = null;
         let timerInterval = null;
@@ -1996,7 +1996,7 @@
             div.querySelector('.inv-cooler').value = cl;
             div.querySelector('.inv-freezer').value = fr;
             const container = document.getElementById('inventoryContainer');
-            container.insertBefore(div, container.firstChild);
+            container.appendChild(div);
             lucide.createIcons();
             if (initialDraftLoaded) triggerDraftSync();
         }
@@ -2320,7 +2320,7 @@
             renderPerformanceChart(history);
         }
 
-        let perfChartInstance = null;
+        window.perfChartInstance = null;
         function renderPerformanceChart(history) {
             const ctx = document.getElementById('performanceChart');
             if (!ctx) return;
@@ -2328,15 +2328,16 @@
             const sorted = [...history].reverse();
             const labels = sorted.map(h => (h.dateSaved || 'Unknown').split('-').slice(-2).join('/'));
             const durations = sorted.map(h => h.durationMins || 0);
+            const itemCounts = sorted.map(h => (h.inventory || []).length);
             const routineScores = sorted.map(h => {
                 let total = 0, checked = 0;
                 (h.routines || []).forEach(r => { total++; if (r.checked) checked++; });
                 return total === 0 ? 0 : Math.round((checked / total) * 100);
             });
 
-            if (perfChartInstance) perfChartInstance.destroy();
+            if (window.perfChartInstance) window.perfChartInstance.destroy();
 
-            perfChartInstance = new Chart(ctx, {
+            window.perfChartInstance = new Chart(ctx, {
                 type: 'line',
                 data: {
                     labels: labels,
@@ -2346,6 +2347,15 @@
                             data: durations,
                             borderColor: '#38bdf8',
                             backgroundColor: 'rgba(56, 189, 248, 0.1)',
+                            tension: 0.4,
+                            fill: true,
+                            yAxisID: 'y'
+                        },
+                        {
+                            label: 'Items Counted',
+                            data: itemCounts,
+                            borderColor: '#8b5cf6',
+                            backgroundColor: 'rgba(139, 92, 246, 0.1)',
                             tension: 0.4,
                             fill: true,
                             yAxisID: 'y'
