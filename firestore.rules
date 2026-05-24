@@ -90,6 +90,23 @@ service cloud.firestore {
         allow write: if isAdmin();
     }
 
+    // EMPLOYEES (Team Roster)
+    match /employees/{employeeId} {
+      allow read: if request.auth != null && (
+          resource.data.get('authorId', null) == request.auth.uid ||
+          resource.data.get('orgId', null) == request.auth.uid ||
+          (resource.data.get('orgId', null) != null && resource.data.get('orgId', null) == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('orgId', null)) ||
+          isAdmin()
+      );
+      allow create: if request.auth != null; // Rely on client to set correct orgId/authorId
+      allow update, delete: if request.auth != null && (
+          resource.data.get('authorId', null) == request.auth.uid ||
+          resource.data.get('orgId', null) == request.auth.uid ||
+          (resource.data.get('orgId', null) != null && resource.data.get('orgId', null) == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('orgId', null)) ||
+          isAdmin()
+      );
+    }
+
     // FEATURE REQUESTS (ezManage)
     match /feature_requests/{requestId} {
       allow create: if request.auth != null && request.resource.data.uid == request.auth.uid;
