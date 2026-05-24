@@ -1,4 +1,23 @@
 import { jest } from "@jest/globals";
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
+import { getDoc } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
+
+global.window = Object.create(window);
+global.window.firebase = {
+    apps: [],
+    initializeApp: jest.fn(),
+    auth: jest.fn(() => ({
+        onAuthStateChanged: jest.fn()
+    })),
+    firestore: jest.fn(() => ({
+        collection: jest.fn(() => ({
+            doc: jest.fn(() => ({
+                get: jest.fn()
+            }))
+        }))
+    }))
+};
+global.firebase = global.window.firebase;
 
 // The gstatic URLs are mocked by moduleNameMapper pointing to __mocks__/firebase.js
 import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js';

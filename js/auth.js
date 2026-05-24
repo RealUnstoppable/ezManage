@@ -1,3 +1,4 @@
+import { getFirebaseErrorMessage } from './utils/errorUtils.js';
 import { getFirebaseErrorMessage } from './utils.js';
 
 const firebaseConfig = {
@@ -37,6 +38,9 @@ auth.onAuthStateChanged(async (user) => {
 
     if (user) {
         try {
+            const userDocRef = db.collection("users").doc(user.uid);
+            const userDoc = await userDocRef.get();
+
             const userDoc = await fetchUserDoc(user.uid);
             if (userDoc.exists) {
                 const userData = userDoc.data();
@@ -62,6 +66,10 @@ auth.onAuthStateChanged(async (user) => {
         }
         if (membershipStatusContainer) {
             membershipStatusContainer.innerHTML = '';
+        }
+
+        if (!window.location.pathname.includes('sign in beta.html') && window.location.pathname !== '/' && !window.location.pathname.includes('index.html')) {
+            // We shouldn't force redirect all pages in auth.js. Each page should handle its own auth routing.
         }
     }
 });
