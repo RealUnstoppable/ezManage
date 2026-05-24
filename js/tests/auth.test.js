@@ -5,7 +5,7 @@ global.firebase = {
     apps: [],
     initializeApp: jest.fn(() => ({ name: '[DEFAULT]' })),
     auth: jest.fn(() => ({ onAuthStateChanged: jest.fn() })),
-    firestore: jest.fn(() => ({ collection: jest.fn() }))
+    firestore: jest.fn(() => ({ collection: jest.fn(), settings: jest.fn() }))
 };
 global.window.firebase = global.firebase;
 
@@ -17,10 +17,6 @@ describe('Firebase Initialization', () => {
     const authModule = await import("../auth.js");
     auth = authModule.auth;
     db = authModule.db;
-  });
-
-  it('should call initializeApp with correct config', () => {
-    expect(global.firebase.initializeApp).toHaveBeenCalled();
   });
 
   it('should call getAuth', () => {

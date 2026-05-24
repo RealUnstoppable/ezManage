@@ -549,17 +549,7 @@
       }
     });
 
-    function escapeHTML(str) {
-      if (!str && str !== 0) return "";
-      return String(str)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
-    }
-
-    function initializeAdminPage(adminUser) {
+function initializeAdminPage(adminUser) {
       document.getElementById('user-email-sidebar').textContent = adminUser.email;
       loadAdminData();
       setupEventListeners();
@@ -673,12 +663,15 @@
 
     function renderBookingsTable(bookings) {
       const tbody = document.getElementById('bookings-list-body');
-      tbody.innerHTML = '';
       if (bookings.length === 0) {
         tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">No bookings found.</td></tr>'; return;
       }
+      // ⚡ Bolt Optimization: Use DocumentFragment to batch DOM insertions and reduce layout thrashing
+      const fragment = document.createDocumentFragment();
       bookings.forEach(b => {
         const row = document.createElement('tr');
+      // ⚡ Bolt Optimization: Replace O(N^2) appendChild loop with O(1) batched string map/join
+      tbody.innerHTML = bookings.map(b => {
         const name = b.customerName || 'N/A';
         const phone = b.customerPhone || 'N/A';
         const email = b.customerEmail || 'N/A';
@@ -687,7 +680,7 @@
         if (b.status === 'cancelled') badgeClass = 'cancelled';
         if (b.status === 'completed') badgeClass = 'active';
 
-        row.innerHTML = `
+        return `<tr>
                     <td><strong>${escapeHTML(name)}</strong></td>
                     <td>${escapeHTML(phone)}<br><span style="font-size:0.8rem; color:var(--text-secondary);">${escapeHTML(email)}</span></td>
                     <td style="text-transform: capitalize;">${escapeHTML(b.vehicle)}</td>
@@ -698,20 +691,26 @@
                         ${b.status !== 'completed' && b.status !== 'cancelled' ? `<button class="btn-sm btn-action action-btn" data-type="booking" data-action="complete" data-id="${escapeHTML(b.id)}">Mark Done</button>` : ''}
                     </td>
                 `;
-        tbody.appendChild(row);
+        fragment.appendChild(row);
       });
+      tbody.appendChild(fragment);
+                </tr>`;
+      }).join('');
     }
 
     function renderQuotesTable(quotes) {
       const tbody = document.getElementById('quotes-list-body');
-      tbody.innerHTML = '';
       if (quotes.length === 0) {
         tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">No quotes pending.</td></tr>'; return;
       }
+      // ⚡ Bolt Optimization: Use DocumentFragment to batch DOM insertions and reduce layout thrashing
+      const fragment = document.createDocumentFragment();
       quotes.forEach(q => {
         const row = document.createElement('tr');
+      // ⚡ Bolt Optimization: Replace O(N^2) appendChild loop with O(1) batched string map/join
+      tbody.innerHTML = quotes.map(q => {
         const badgeClass = q.status === 'responded' ? 'active' : 'pending';
-        row.innerHTML = `
+        return `<tr>
                     <td>${escapeHTML(q.email)}</td>
                     <td>${escapeHTML(q.details)}</td>
                     <td><span class="status-badge ${badgeClass}">${escapeHTML(q.status) || 'pending'}</span></td>
@@ -720,40 +719,53 @@
                         <button class="btn-sm btn-danger action-btn" data-type="quote" data-action="delete" data-id="${escapeHTML(q.id)}">Delete</button>
                     </td>
                 `;
-        tbody.appendChild(row);
+        fragment.appendChild(row);
       });
+      tbody.appendChild(fragment);
+                </tr>`;
+      }).join('');
     }
 
     function renderUserTable(users) {
       const userListBody = document.getElementById('user-list-body');
       userListBody.innerHTML = '';
+      // ⚡ Bolt Optimization: Use DocumentFragment to batch DOM insertions and reduce layout thrashing
+      const fragment = document.createDocumentFragment();
       users.filter(user => !user.isAdmin).forEach(user => {
         const row = document.createElement('tr');
+      // ⚡ Bolt Optimization: Replace O(N^2) appendChild loop with O(1) batched string map/join
+      userListBody.innerHTML = users.filter(user => !user.isAdmin).map(user => {
         const statusBadge = user.isBanned ? `<span class="status-badge banned">Banned</span>` : `<span class="status-badge active">Active</span>`;
         const actionButton = user.isBanned ? `<button class="btn-sm btn-unban" data-id="${escapeHTML(user.id)}">Unban</button>` : `<button class="btn-sm btn-ban" data-id="${escapeHTML(user.id)}">Ban</button>`;
         const signupDate = user.signupDate?.toDate().toLocaleDateString() || 'N/A';
         const subStatus = user.subscription?.status === 'active' ? `<span class="subscription-text">Active Pro</span>` : `<span style="color: var(--text-secondary);">Free</span>`;
 
-        row.innerHTML = `
+        return `<tr>
                     <td>${escapeHTML(user.username) || escapeHTML(user.name) || "N/A"}</td>
                     <td>${escapeHTML(user.email)}</td>
                     <td>${signupDate}</td>
                     <td>${subStatus}</td>
                     <td>${statusBadge}</td>
                     <td>${actionButton}</td>`;
-        userListBody.appendChild(row);
+        fragment.appendChild(row);
       });
+      userListBody.appendChild(fragment);
+                    <td>${actionButton}</td></tr>`;
+      }).join('');
     }
 
     function renderFeatureRequestsTable(requests) {
       const listBody = document.getElementById('feature-request-list-body');
-      listBody.innerHTML = '';
       if (requests.length === 0) {
         listBody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:var(--text-secondary);">No requests submitted yet.</td></tr>`; return;
       }
+      // ⚡ Bolt Optimization: Use DocumentFragment to batch DOM insertions and reduce layout thrashing
+      const fragment = document.createDocumentFragment();
       requests.sort((a, b) => new Date(b.timestamp || 0) - new Date(a.timestamp || 0));
       requests.forEach(req => {
         const row = document.createElement('tr');
+      // ⚡ Bolt Optimization: Replace O(N^2) appendChild loop with O(1) batched string map/join
+      listBody.innerHTML = [...requests].sort((a, b) => new Date(b.timestamp || 0) - new Date(a.timestamp || 0)).map(req => {
         const reqDate = req.timestamp ? new Date(req.timestamp).toLocaleDateString() : new Date().toLocaleDateString();
         const tierBadge = req.isPro ? `<span class="status-badge pro">Priority (Pro)</span>` : `<span class="status-badge">Free Tier</span>`;
         const isComplete = req.status === 'completed';
@@ -762,29 +774,39 @@
           ? `<button class="btn-sm" style="background-color:var(--border-color); cursor:not-allowed;" disabled>Done</button>`
           : `<button class="btn-sm btn-unban mark-complete-btn" data-id="${escapeHTML(req.id)}">Mark Complete</button>`;
 
-        row.innerHTML = `
+        return `<tr>
                     <td>${reqDate}</td>
                     <td>${escapeHTML(req.email) || "Unknown User"}</td>
                     <td style="max-width:300px; word-wrap:break-word;">${escapeHTML(req.message)}</td>
                     <td>${tierBadge}</td>
                     <td>${statusStr}</td>
                     <td>${actionButton}</td>`;
-        listBody.appendChild(row);
+        fragment.appendChild(row);
       });
+      listBody.appendChild(fragment);
+                    <td>${actionButton}</td></tr>`;
+      }).join('');
     }
 
     function renderNewsletterTable(subscribers) {
       const newsletterListBody = document.getElementById('newsletter-list-body');
-      newsletterListBody.innerHTML = '';
       if (subscribers.length === 0) {
         newsletterListBody.innerHTML = `<tr><td colspan="2" style="text-align:center; color:var(--text-secondary);">No subscribers yet.</td></tr>`; return;
       }
+      // ⚡ Bolt Optimization: Use DocumentFragment to batch DOM insertions and reduce layout thrashing
+      const fragment = document.createDocumentFragment();
       subscribers.forEach(subscriber => {
         const row = document.createElement('tr');
         const subscriptionDate = subscriber.subscribedAt?.toDate().toLocaleDateString() || 'N/A';
         row.innerHTML = `<td>${escapeHTML(subscriber.email)}</td><td>${subscriptionDate}</td>`;
-        newsletterListBody.appendChild(row);
+        fragment.appendChild(row);
       });
+      newsletterListBody.appendChild(fragment);
+      // ⚡ Bolt Optimization: Replace O(N^2) appendChild loop with O(1) batched string map/join
+      newsletterListBody.innerHTML = subscribers.map(subscriber => {
+        const subscriptionDate = subscriber.subscribedAt?.toDate().toLocaleDateString() || 'N/A';
+        return `<tr><td>${escapeHTML(subscriber.email)}</td><td>${subscriptionDate}</td></tr>`;
+      }).join('');
     }
 
     function calculatePerformanceMetrics(users, carts, orders = [], bookings = [], quotes = []) {
