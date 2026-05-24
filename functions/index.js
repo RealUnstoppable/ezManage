@@ -2,10 +2,8 @@ const functions = require("firebase-functions");
 const {onRequest} = require("firebase-functions/v2/https");
 const HttpsError = functions.https.HttpsError;
 const admin = require("firebase-admin");
-const cors = require("cors")({origin: true});
-const {adaptGen2Params} = require("./utils");
 const cors = require("cors")({ origin: true });
-const { adaptGen2Params } = require("./utils");
+const { adaptGen2Params, logManagerError } = require("./utils");
 
 admin.initializeApp();
 
@@ -78,7 +76,7 @@ exports.createCheckoutSession = onRequest({invoker: "public"}, (req, res) => {
 
       res.status(200).json({url: session.url});
     } catch (err) {
-      console.error("Checkout Error:", err);
+      logManagerError(`Checkout Error for uid: ${uid}`, err);
       res.status(500).json({error: err.message});
     }
   });
@@ -92,7 +90,7 @@ exports.stripeWebhook = onRequest({invoker: "public"}, async (req, res) => {
   try {
     event = stripe.webhooks.constructEvent(req.rawBody, sig, endpointSecret);
   } catch (err) {
-    console.error("Manager Troubleshooting: Webhook Error:", err);
+    logManagerError("Webhook Error:", err);
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
 
@@ -116,7 +114,7 @@ exports.stripeWebhook = onRequest({invoker: "public"}, async (req, res) => {
         }, {merge: true});
         console.log(`✅ Successfully upgraded user ${uid} to ${planName}`);
       } catch (error) {
-        console.error("Manager Troubleshooting: Error updating user subscription status:", error);
+        logManagerError("Error updating user subscription status:", error);
       }
     }
   }
@@ -140,7 +138,7 @@ exports.stripeWebhook = onRequest({invoker: "public"}, async (req, res) => {
         });
         console.log(`❌ Reverted user ${doc.id} back to Free plan.`);
       } catch (err) {
-        console.error(`Manager Troubleshooting: Error reverting user ${doc.id} back to Free plan:`, err);
+        logManagerError(`Error reverting user ${doc.id} back to Free plan:`, err);
       }
     }
   }
@@ -164,7 +162,7 @@ exports.cancelSubscription = onRequest({invoker: "public"}, (req, res) => {
       );
       res.status(200).json({success: true});
     } catch (err) {
-      console.error("Cancel Error:", err);
+      logManagerError(`Cancel Error for customerId: ${customerId}`, err);
       res.status(500).json({error: err.message});
     }
   });
@@ -263,8 +261,8 @@ exports.manageShiftNotes = functions.https.onCall(async (data, context) => {
     throw new HttpsError(
         "invalid-argument", "Invalid action");
   } catch (error) {
-    console.error("Manager Troubleshooting: Shift Note Error for uid:", uid, error);
-    console.error("Manager Troubleshooting: Shift Note Error:", error);
+    logManagerError("Shift Note Error for uid:", uid, error);
+    logManagerError("Shift Note Error:", error);
     throw new HttpsError("internal", error.message);
   }
 });
@@ -383,7 +381,7 @@ exports.manageEmployees = functions.https.onCall(async (data, context) => {
 
     throw new HttpsError("invalid-argument", "Invalid action");
   } catch (error) {
-    console.error("Manage Employees Error:", error);
+    logManagerError(`Manage Employees Error for uid: ${uid}`, error);
     if (error instanceof HttpsError) {
       throw error;
     }
@@ -566,8 +564,8 @@ exports.manageShiftGroups = functions.https.onCall(async (data, context) => {
 
     throw new HttpsError("invalid-argument", "Invalid action");
   } catch (error) {
-    console.error("Manager Troubleshooting: Shift Groups Error for uid:", uid, error);
-    console.error("Manager Troubleshooting: Shift Groups Error:", error);
+    logManagerError("Shift Groups Error for uid:", uid, error);
+    logManagerError("Shift Groups Error:", error);
     if (error instanceof HttpsError) {
       throw error;
     }
