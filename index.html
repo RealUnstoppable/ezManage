@@ -1534,6 +1534,7 @@
         db.enablePersistence().catch(err => console.error("Offline sync error:", err));
 
         let currentUser = null;
+        let isInitializingAuth = true;
 let currentUserData = null;
         window.currentUser = null;
         function escapeHTML(str) {
@@ -1584,7 +1585,7 @@ auth.onAuthStateChanged((user) => {
 
                 unsubscribeUser = db.collection("users").doc(user.uid).onSnapshot(async doc => {
                     isInitializingAuth = false;
-                    if (doc.exists && doc.data().name) {
+                    if (doc.exists) {
                         currentUserData = doc.data();
                         sessionStorage.setItem('ezManage_userData', JSON.stringify(currentUserData));
 
@@ -1592,6 +1593,13 @@ auth.onAuthStateChanged((user) => {
                         if (pendingNav) {
                             localStorage.removeItem('navTo');
                             setTimeout(() => navTo(pendingNav), 100);
+                        }
+
+                        if (!currentUserData.name) {
+                            const defaultName = user.displayName || (user.email ? user.email.split('@')[0] : "Manager");
+                            currentUserData.name = defaultName;
+                            // Only update locally if we shouldn't trigger another snapshot write loop immediately
+                            // Wait until the user saves their profile to commit this
                         }
 
                         // Enforce Opt-In Cloud Policy
@@ -1630,11 +1638,30 @@ auth.onAuthStateChanged((user) => {
                             initialDraftLoaded = true;
                         }
 
-                        const activeView = document.querySelector('.view-section.active');
-                        if (activeView && activeView.id === 'view-auth') navTo('tracker');
+                        const pendingNavTo = localStorage.getItem('navTo');
+                        if (pendingNavTo) {
+                            localStorage.removeItem('navTo');
+                            navTo(pendingNavTo);
+                        } else {
+                            const activeView = document.querySelector('.view-section.active');
+                            if (activeView && activeView.id === 'view-auth') navTo('tracker');
+                        }
                         runAIPatternLogic();
                     } else {
 
+                        if (!doc.exists) {
+                            const activeView = document.querySelector('.view-section.active');
+                            if (activeView && activeView.id !== 'view-setup') {
+                                try {
+                                    const emailDoc = await db.collection("users").doc(user.email).get();
+                                    if (emailDoc.exists) {
+                                        await db.collection("users").doc(user.uid).set(emailDoc.data(), { merge: true });
+                                        return;
+                                    } else {
+                                        navTo('setup');
+                                    }
+                                } catch (e) { console.warn("Email recovery check skipped", e); navTo('setup'); }
+                            }
                         if (!doc.exists || !doc.data().name) {
                             await db.collection("users").doc(user.uid).set({
                                 name: user.displayName || "Manager",
@@ -1650,11 +1677,21 @@ auth.onAuthStateChanged((user) => {
                     }
                 });
             } else {
+                isInitializingAuth = false;
                 navStatus.innerText = "Login / Sign Up";
                 currentUserData = null;
                 initialDraftLoaded = false;
                 cloudSyncEnabled = false;
                 updateCloudSyncUI();
+
+                const pendingNavTo = localStorage.getItem('navTo');
+                if (pendingNavTo) {
+                    localStorage.removeItem('navTo');
+                    navTo(pendingNavTo);
+                } else {
+                    const activeView = document.querySelector('.view-section.active');
+                    if (activeView && activeView.id !== 'view-auth' && activeView.id !== 'view-tracker') navTo('auth');
+                }
                 isInitializingAuth = false;
             }
         });
@@ -1858,6 +1895,11 @@ auth.onAuthStateChanged((user) => {
         function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); }
 
         function navTo(viewId) {
+            if (isInitializingAuth) {
+                localStorage.setItem('navTo', viewId);
+                return;
+            }
+            if (!currentUser && (['history', 'presets', 'performance', 'request', 'profile', 'shiftNotes'].includes(viewId))) {
             if (!currentUser && (['history', 'presets', 'performance', 'request', 'profile', 'shiftNotes', 'team'].includes(viewId))) {
             if (!currentUser && (['history', 'presets', 'performance', 'request', 'profile', 'shiftNotes', 'employees'].includes(viewId))) {
                 viewId = 'auth';
@@ -3898,11 +3940,6 @@ function checkAndRenderOrgControls() {
         // We will fetch the team directory when the view is opened or during org check
 
         window.onload = () => {
-            const redirect = localStorage.getItem('navTo');
-            if (redirect) {
-                navTo(redirect);
-                localStorage.removeItem('navTo');
-            }
             if (localStorage.getItem('managerProTheme') === 'dark') {
                 document.body.classList.add('dark-mode');
                 document.getElementById('themeToggle').checked = true;
