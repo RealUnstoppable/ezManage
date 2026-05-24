@@ -1,10 +1,25 @@
 const mockListSubscriptions = jest.fn();
 const mockCancelSubscription = jest.fn();
 
-jest.mock("firebase-admin", () => ({
-  initializeApp: jest.fn(),
-  firestore: () => ({}),
-}));
+jest.mock("firebase-admin", () => {
+  const firestoreMock = {
+    collection: jest.fn().mockReturnThis(),
+    doc: jest.fn().mockReturnThis(),
+    where: jest.fn().mockReturnThis(),
+    get: jest.fn().mockResolvedValue({
+      exists: true,
+      data: () => ({email: "test@example.com"}),
+      docs: [],
+    }),
+    update: jest.fn().mockResolvedValue({}),
+    set: jest.fn().mockResolvedValue({}),
+    add: jest.fn().mockResolvedValue({id: "docId123"}),
+  };
+  return {
+    initializeApp: jest.fn(),
+    firestore: Object.assign(jest.fn(() => firestoreMock), {FieldValue: {serverTimestamp: jest.fn()}}),
+  };
+});
 
 jest.mock("stripe", () => {
   return jest.fn(() => ({
@@ -51,7 +66,10 @@ describe("cancelSubscription", () => {
 
   it("should return 405 if method is not POST", async () => {
     req.method = "GET";
-    await cancelSubscription(req, res);
+    await new Promise((resolve) => {
+      res.send.mockImplementation(() => resolve());
+      cancelSubscription(req, res);
+    });
     expect(res.status).toHaveBeenCalledWith(405);
     expect(res.send).toHaveBeenCalledWith("Method Not Allowed");
   });
@@ -70,7 +88,10 @@ describe("cancelSubscription", () => {
 
     mockCancelSubscription.mockResolvedValue({});
 
-    await cancelSubscription(req, res);
+    await new Promise((resolve) => {
+      res.json.mockImplementation(() => resolve());
+      cancelSubscription(req, res);
+    });
 
     expect(mockListSubscriptions).toHaveBeenCalledWith({customer: "cus_test_123"});
     expect(mockCancelSubscription).toHaveBeenCalledTimes(2);
@@ -91,8 +112,13 @@ describe("cancelSubscription", () => {
 
     const consoleSpy = jest.spyOn(console, "error").mockImplementation(() => {});
 
-    await cancelSubscription(req, res);
+    await new Promise((resolve) => {
+      res.json.mockImplementation(() => resolve());
+      cancelSubscription(req, res);
+    });
 
+    expect(consoleSpy).toHaveBeenCalledWith("Manager Troubleshooting: Cancel Error for customerId: " + req.body.customerId, error);
+    expect(consoleSpy).toHaveBeenCalledWith("Manager Troubleshooting: Cancel Error for customerId: cus_test_123", error);
     expect(consoleSpy).toHaveBeenCalledWith("Manager Troubleshooting: Cancel Error for customerId: cus_test_123", error);
     expect(res.status).toHaveBeenCalledWith(500);
     expect(res.json).toHaveBeenCalledWith({error: "Stripe List Error"});
@@ -116,8 +142,12 @@ describe("cancelSubscription", () => {
 
     const consoleSpy = jest.spyOn(console, "error").mockImplementation(() => {});
 
-    await cancelSubscription(req, res);
+    await new Promise((resolve) => {
+      res.json.mockImplementation(() => resolve());
+      cancelSubscription(req, res);
+    });
 
+    expect(consoleSpy).toHaveBeenCalledWith("Manager Troubleshooting: Cancel Error for customerId: " + req.body.customerId, error);
     expect(consoleSpy).toHaveBeenCalledWith("Manager Troubleshooting: Cancel Error for customerId: cus_test_123", error);
     expect(res.status).toHaveBeenCalledWith(500);
     expect(res.json).toHaveBeenCalledWith({error: "Stripe Cancel Error"});

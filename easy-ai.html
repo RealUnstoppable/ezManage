@@ -315,8 +315,8 @@
         lucide.createIcons();
 
         function escapeHTML(str) {
-            if (typeof str !== 'string') return str;
-            return str
+            if (!str && str !== 0) return "";
+            return String(str)
                 .replace(/&/g, "&amp;")
                 .replace(/</g, "&lt;")
                 .replace(/>/g, "&gt;")
@@ -347,6 +347,7 @@
         if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
         const auth = firebase.auth();
         const db = firebase.firestore();
+        db.settings({ experimentalForceLongPolling: true });
         const storage = firebase.storage();
 
         let maxValues = {};
@@ -388,12 +389,7 @@
             }
         });
 
-        function escapeHTML(str) {
-            if (!str) return "";
-            const p = document.createElement("p");
-            p.textContent = str;
-            return p.innerHTML;
-        }
+
 
         function updateStatus(text, color) {
             const ind = document.getElementById('statusIndicator');

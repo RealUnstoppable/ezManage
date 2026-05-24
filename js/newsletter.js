@@ -1,3 +1,4 @@
+import { logManagerError } from './utils.js';
 import { db } from './auth.js';
 import { doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
 
@@ -29,7 +30,8 @@ document.querySelectorAll('.signup-form').forEach(form => {
                     messageEl.style.display = 'none';
                 }, 5000);
             } catch (error) {
-                console.error("Newsletter subscription error:", error);
+                logManagerError("Newsletter subscription error for email:", email, error);
+                logManagerError("Newsletter subscription error:", error);
                 alert("There was an error subscribing. Please try again later.");
             }
         }
