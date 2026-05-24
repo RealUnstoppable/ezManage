@@ -2792,11 +2792,11 @@
                             div.className = "flex justify-between items-center p-4 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800";
                             div.innerHTML = `
                                 <div>
-                                    <h4 class="font-bold text-lg">${shift.employeeName}</h4>
-                                    <p class="text-sm text-slate-500">${shift.role}</p>
+                                    <h4 class="font-bold text-lg">${escapeHTML(shift.employeeName)}</h4>
+                                    <p class="text-sm text-slate-500">${escapeHTML(shift.role)}</p>
                                 </div>
                                 <div class="text-right">
-                                    <p class="font-mono bg-slate-50 dark:bg-slate-800 px-3 py-1 rounded-lg border border-slate-100 dark:border-slate-700">${shift.startTime} - ${shift.endTime}</p>
+                                    <p class="font-mono bg-slate-50 dark:bg-slate-800 px-3 py-1 rounded-lg border border-slate-100 dark:border-slate-700">${escapeHTML(shift.startTime)} - ${escapeHTML(shift.endTime)}</p>
                                     <button onclick="removeShift(${index})" class="text-red-500 text-xs mt-2 hover:underline">Remove</button>
                                 </div>
                             `;
