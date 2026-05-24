@@ -157,7 +157,8 @@
                 </div>
             </div>
             <div class="flex items-center gap-4">
-                <button onclick="toggleTheme()"
+                <button onclick="toggleTheme()" aria-label="Toggle theme" class="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                <button onclick="toggleTheme()" aria-label="Toggle Theme"
                     class="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
                     <i data-lucide="moon" id="themeIcon"></i>
                 </button>
@@ -689,6 +690,7 @@
         if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
         const auth = firebase.auth();
         const db = firebase.firestore();
+        db.settings({ experimentalForceLongPolling: true });
 
         function escapeHTML(str) {
             if (!str && str !== 0) return "";
@@ -711,6 +713,7 @@
             const user = auth.currentUser;
             if (!user) throw new Error('User must be logged in.');
             const token = await user.getIdToken(true);
+            console.log("DEBUG CLIENT: token type:", typeof token, "length:", token ? token.length : 0, "value starts with:", token ? token.substring(0, 15) : "null");
             const res = await fetch(`${FUNCTIONS_BASE}/${name}`, {
                 method: 'POST',
                 headers: {
@@ -746,6 +749,16 @@
         }
         document.getElementById('themeIcon').setAttribute('data-lucide', document.documentElement.classList.contains('dark-mode') ? 'sun' : 'moon');
         lucide.createIcons();
+
+        function escapeHTML(str) {
+            if (!str && str !== 0) return "";
+            return String(str)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
 
         // --- Navigation ---
         function navTo(viewId) {
@@ -1050,10 +1063,10 @@
             const container = document.getElementById('onboardingRoleList');
             container.innerHTML = onboardingRoles.map((role, i) => `
                 <div class="flex justify-between items-center bg-white dark:bg-slate-900 p-3 rounded-lg shadow-sm border border-slate-100 dark:border-slate-800">
-                    <span class="font-bold text-sm">${role.email}</span>
+                    <span class="font-bold text-sm">${escapeHTML(role.email)}</span>
                     <div class="flex items-center gap-3">
-                        <span class="text-xs uppercase tracking-widest font-black text-slate-400">${role.priority}</span>
-                        <button onclick="removeOnboardingRole(${i})" class="text-red-400 hover:text-red-500"><i data-lucide="x" class="w-4 h-4"></i></button>
+                        <span class="text-xs uppercase tracking-widest font-black text-slate-400">${escapeHTML(role.priority)}</span>
+                        <button onclick="removeOnboardingRole(${i})" aria-label="Remove role" class="text-red-400 hover:text-red-500"><i data-lucide="x" class="w-4 h-4"></i></button>
                     </div>
                 </div>
             `).join('');
@@ -1297,6 +1310,7 @@
                         </td>
                         <td class="px-6 py-3 text-right">
                             ${!isOwner ? `<button onclick="removeManager('${escapeHTML(doc.id)}')" class="text-slate-400 hover:text-red-500 transition-colors"><i data-lucide="trash-2" class="w-4 h-4"></i></button>` : `<span class="text-slate-300">-</span>`}
+                            ${!isOwner ? `<button onclick="removeManager('${doc.id}')" aria-label="Remove manager" class="text-slate-400 hover:text-red-500 transition-colors"><i data-lucide="trash-2" class="w-4 h-4"></i></button>` : `<span class="text-slate-300">-</span>`}
                         </td>
                     </tr>`;
 
@@ -1425,7 +1439,9 @@
 
         async function removeManager(userId) {
             if (!confirm("Remove this manager from the organization?")) return;
-            alert("Removing managers requires backend Cloud Function support which is coming in v2!");
+            try {
+                await callFunction('manageShiftGroups', { action: "remove_manager", payload: { userId, groupId: activeOrgId } });
+            } catch (e) { alert("Failed: " + e.message); }
         }
 
         function renderGlobalPerformanceChart(allShifts) {
