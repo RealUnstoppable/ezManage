@@ -313,6 +313,7 @@
         if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
         const auth = firebase.auth();
         const db = firebase.firestore();
+        db.settings({ experimentalForceLongPolling: true });
         
         let currentUser = null;
         let activeOrgId = null;
@@ -395,7 +396,7 @@
                 const cred = await auth.createUserWithEmailAndPassword(email, pass);
                 
                 // For a Corporate Workspace, we create a shift_group and make them the owner
-                const manageShiftGroups = firebase.functions().httpsCallableFromURL('https://manageshiftgroups-dsy7tdoigq-uc.a.run.app');
+                const manageShiftGroups = firebase.functions().httpsCallable('manageShiftGroups');
                 await manageShiftGroups({
                     action: "create",
                     payload: {
@@ -541,7 +542,7 @@
 
         async function approveRequest(requestId) {
             try {
-                const manageShiftGroups = firebase.functions().httpsCallableFromURL('https://manageshiftgroups-dsy7tdoigq-uc.a.run.app');
+                const manageShiftGroups = firebase.functions().httpsCallable('manageShiftGroups');
                 await manageShiftGroups({
                     action: "approve_join",
                     payload: { requestId: requestId }
@@ -553,12 +554,12 @@
         async function removeManager(userId) {
             if(!confirm("Remove this manager from the organization? They will lose access to all shared notes and metrics.")) return;
             try {
-                // To remove a manager securely without a dedicated cloud function, 
-                // the admin removes the orgId from the user doc. 
-                // NOTE: Requires firestore.rules update to allow owner to write to user doc!
-                // For safety in this demo, we'll inform the user it requires backend support.
-                alert("Removing managers requires backend Cloud Function support which is coming in v2!");
-            } catch(e) { console.error(e); }
+                await db.collection('users').doc(userId).update({ orgId: null });
+                alert("Manager removed successfully.");
+            } catch(e) {
+                console.error(e);
+                alert("Failed to remove manager: " + e.message);
+            }
         }
 
         // --- Metrics Chart ---

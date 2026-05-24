@@ -1,4 +1,3 @@
-import { getFirebaseErrorMessage } from './utils/errorUtils.js';
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
 import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, sendEmailVerification } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
@@ -20,6 +19,7 @@ if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
 
 export const auth = firebase.auth();
 export const db = firebase.firestore();
+db.settings({ experimentalForceLongPolling: true });
 
 export function getUserRedirectPath(userData) {
     return userData && userData.isAdmin ? 'admin.html' : 'index.html';
