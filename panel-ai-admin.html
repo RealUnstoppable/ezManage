@@ -220,6 +220,7 @@
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     const db   = firebase.firestore();
+    db.settings({ experimentalForceLongPolling: true });
 
     const ADMIN_EMAIL = 'catalinandrian1@gmail.com';
 
@@ -395,7 +396,7 @@
                 const pct = Math.round((cnt/maxCount)*100);
                 return `
                 <div class="item-bar">
-                    <div class="item-bar-label" title="${name}">${name}</div>
+                    <div class="item-bar-label" title="${escapeHTML(name)}">${escapeHTML(name)}</div>
                     <div class="item-bar-track"><div class="item-bar-fill" style="width:${pct}%"></div></div>
                     <div class="item-bar-val">${cnt}</div>
                 </div>`;

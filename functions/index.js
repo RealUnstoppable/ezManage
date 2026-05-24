@@ -3,6 +3,7 @@ const { onRequest } = require("firebase-functions/v2/https");
 const HttpsError = functions.https.HttpsError;
 const admin = require("firebase-admin");
 const cors = require("cors")({ origin: true });
+const { adaptGen2Params } = require("./utils");
 
 admin.initializeApp();
 
@@ -89,7 +90,7 @@ exports.stripeWebhook = onRequest({ invoker: "public" }, async (req, res) => {
   try {
     event = stripe.webhooks.constructEvent(req.rawBody, sig, endpointSecret);
   } catch (err) {
-    console.error("Webhook Error:", err);
+    console.error("Manager Troubleshooting: Webhook Error:", err);
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
 
@@ -113,7 +114,7 @@ exports.stripeWebhook = onRequest({ invoker: "public" }, async (req, res) => {
         }, {merge: true});
         console.log(`✅ Successfully upgraded user ${uid} to ${planName}`);
       } catch (error) {
-        console.error("Error updating user subscription status:", error);
+        console.error("Manager Troubleshooting: Error updating user subscription status:", error);
       }
     }
   }
@@ -172,7 +173,11 @@ exports.cancelSubscription = onRequest({ invoker: "public" }, (req, res) => {
  * Handles creation, updating, and resolution of shift notes.
  */
 exports.manageShiftNotes = functions.https.onCall(async (data, context) => {
-  if (!context.auth) {
+  const adapted = adaptGen2Params(data, context);
+  data = adapted.data;
+  context = adapted.context;
+
+  if (!context || !context.auth) {
     throw new HttpsError(
         "unauthenticated", "User must be logged in.");
   }
@@ -256,7 +261,7 @@ exports.manageShiftNotes = functions.https.onCall(async (data, context) => {
     throw new HttpsError(
         "invalid-argument", "Invalid action");
   } catch (error) {
-    console.error("Shift Note Error:", error);
+    console.error("Manager Troubleshooting: Shift Note Error:", error);
     throw new HttpsError("internal", error.message);
   }
 });
@@ -266,7 +271,11 @@ exports.manageShiftNotes = functions.https.onCall(async (data, context) => {
  * Handles creating groups, joining groups, and approving joins.
  */
 exports.manageShiftGroups = functions.https.onCall(async (data, context) => {
-  if (!context.auth) {
+  const adapted = adaptGen2Params(data, context);
+  data = adapted.data;
+  context = adapted.context;
+
+  if (!context || !context.auth) {
     throw new HttpsError(
         "unauthenticated", "User must be logged in.");
   }
@@ -302,9 +311,9 @@ exports.manageShiftGroups = functions.https.onCall(async (data, context) => {
           .add(newGroup);
 
       // Automatically set the owner's orgId to the new group ID
-      await admin.firestore().collection("users").doc(uid).update({
+      await admin.firestore().collection("users").doc(uid).set({
         orgId: docRef.id,
-      });
+      }, {merge: true});
 
       return {success: true, groupId: docRef.id};
     }
@@ -392,9 +401,9 @@ exports.manageShiftGroups = functions.https.onCall(async (data, context) => {
       }
 
       // Update the requesting user's orgId
-      await admin.firestore().collection("users").doc(userId).update({
+      await admin.firestore().collection("users").doc(userId).set({
         orgId: groupId,
-      });
+      }, {merge: true});
 
       // Update request status
       await requestDocRef.update({
@@ -407,7 +416,7 @@ exports.manageShiftGroups = functions.https.onCall(async (data, context) => {
 
     throw new HttpsError("invalid-argument", "Invalid action");
   } catch (error) {
-    console.error("Shift Groups Error:", error);
+    console.error("Manager Troubleshooting: Shift Groups Error:", error);
     if (error instanceof HttpsError) {
       throw error;
     }

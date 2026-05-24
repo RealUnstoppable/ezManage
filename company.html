@@ -157,7 +157,7 @@
                 </div>
             </div>
             <div class="flex items-center gap-4">
-                <button onclick="toggleTheme()"
+                <button onclick="toggleTheme()" aria-label="Toggle Theme"
                     class="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
                     <i data-lucide="moon" id="themeIcon"></i>
                 </button>
@@ -689,11 +689,34 @@
         if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
         const auth = firebase.auth();
         const db = firebase.firestore();
+        db.settings({ experimentalForceLongPolling: true });
 
         let currentUser = null;
         let activeOrgId = null;
         let activeOrgPass = null;
         let globalChartInstance = null;
+
+        // --- Cloud Function Caller (bypasses callable SDK token-attachment bugs) ---
+        const FUNCTIONS_BASE = 'https://us-central1-dts-hub-website.cloudfunctions.net';
+        async function callFunction(name, data) {
+            const user = auth.currentUser;
+            if (!user) throw new Error('User must be logged in.');
+            const token = await user.getIdToken(true);
+            console.log("DEBUG CLIENT: token type:", typeof token, "length:", token ? token.length : 0, "value starts with:", token ? token.substring(0, 15) : "null");
+            const res = await fetch(`${FUNCTIONS_BASE}/${name}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + token
+                },
+                body: JSON.stringify({ data })
+            });
+            const json = await res.json();
+            if (!res.ok || json.error) {
+                throw new Error((json.error && json.error.message) || `Function call failed (${res.status})`);
+            }
+            return json.result !== undefined ? { data: json.result } : { data: json };
+        }
 
         // --- Theme Management ---
         function toggleTheme() {
@@ -715,6 +738,16 @@
         }
         document.getElementById('themeIcon').setAttribute('data-lucide', document.documentElement.classList.contains('dark-mode') ? 'sun' : 'moon');
         lucide.createIcons();
+
+        function escapeHTML(str) {
+            if (!str && str !== 0) return "";
+            return String(str)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
 
         // --- Navigation ---
         function navTo(viewId) {
@@ -949,13 +982,12 @@
                 });
 
                 // For a Corporate Workspace, we create a shift_group and make them the owner
-                const manageShiftGroups = firebase.functions().httpsCallable('manageShiftGroups');
-                const result = await manageShiftGroups({
+                const result = await callFunction('manageShiftGroups', {
                     action: "create",
                     payload: {
                         ownerName: email.split('@')[0],
                         groupName: orgName,
-                        password: pass // Set group password to admin password for simplicity
+                        password: pass
                     }
                 });
 
@@ -1020,10 +1052,10 @@
             const container = document.getElementById('onboardingRoleList');
             container.innerHTML = onboardingRoles.map((role, i) => `
                 <div class="flex justify-between items-center bg-white dark:bg-slate-900 p-3 rounded-lg shadow-sm border border-slate-100 dark:border-slate-800">
-                    <span class="font-bold text-sm">${role.email}</span>
+                    <span class="font-bold text-sm">${escapeHTML(role.email)}</span>
                     <div class="flex items-center gap-3">
-                        <span class="text-xs uppercase tracking-widest font-black text-slate-400">${role.priority}</span>
-                        <button onclick="removeOnboardingRole(${i})" class="text-red-400 hover:text-red-500"><i data-lucide="x" class="w-4 h-4"></i></button>
+                        <span class="text-xs uppercase tracking-widest font-black text-slate-400">${escapeHTML(role.priority)}</span>
+                        <button onclick="removeOnboardingRole(${i})" aria-label="Remove role" class="text-red-400 hover:text-red-500"><i data-lucide="x" class="w-4 h-4"></i></button>
                     </div>
                 </div>
             `).join('');
@@ -1053,8 +1085,9 @@
                 return;
             }
 
-            // Go to loading screen
+            // Go to loading screen and sync the step index
             transitionSteps('step-config', 'step-loading');
+            currentStepIndex = onboardingFlow.indexOf('step-loading');
 
             // Start simulated loading animation
             const bar = document.getElementById('tutorialProgressBar');
@@ -1077,11 +1110,18 @@
                 await activeUser.getIdToken(true);
                 await new Promise(resolve => setTimeout(resolve, 500));
 
+                // Pre-create / ensure the user document exists so the Cloud Function
+                // can use .update() on it without throwing "No document to update".
+                await db.collection('users').doc(activeUser.uid).set({
+                    email: activeUser.email,
+                    role: 'CorporateAdmin',
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                }, { merge: true });
+
                 // Generate a random password for the group
                 const generatedPassword = Math.random().toString(36).slice(-8);
 
-                const manageShiftGroups = firebase.functions().httpsCallable('manageShiftGroups');
-                const result = await manageShiftGroups({
+                const result = await callFunction('manageShiftGroups', {
                     action: "create",
                     payload: {
                         ownerName: activeUser.displayName || activeUser.email.split('@')[0],
@@ -1120,15 +1160,19 @@
 
                 setTimeout(() => {
                     transitionSteps('step-loading', 'step-tutorial');
+                    currentStepIndex = onboardingFlow.indexOf('step-tutorial');
                     runTutorialAnimation();
                 }, 1000);
 
             } catch (e) {
+                // Reset state so the user can retry
                 isRegistering = false;
                 clearInterval(sim);
                 console.error("Workspace creation error:", e);
                 alert("Failed to create workspace: " + e.message);
                 transitionSteps('step-loading', 'step-config');
+                currentStepIndex = onboardingFlow.indexOf('step-config');
+                updateProgressBar();
             }
         }
 
@@ -1155,8 +1199,12 @@
         }
 
         function finishTutorial() {
+            // Use auth.currentUser to avoid relying on the potentially-stale module var.
+            // Also clear isRegistering so future auth state changes work normally.
+            isRegistering = false;
+            const userToInit = auth.currentUser || currentUser;
             document.getElementById('view-register').classList.remove('active');
-            initializeCorporateWorkspace(currentUser);
+            initializeCorporateWorkspace(userToInit);
         }
 
 
@@ -1235,14 +1283,14 @@
                         <td class="px-6 py-3">
                             <div class="flex items-center gap-3">
                                 <div class="w-8 h-8 rounded-full flex items-center justify-center text-white font-black text-xs shadow-sm" style="background-color: ${color}">
-                                    ${displayName.substring(0, 2).toUpperCase()}
+                                    ${escapeHTML(displayName.substring(0, 2).toUpperCase())}
                                 </div>
                                 <div class="font-black text-slate-800 dark:text-slate-200">
-                                    ${displayName} ${isOwner ? '<span class="ml-2 text-[10px] bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400 px-2 py-0.5 rounded-full uppercase tracking-widest">Admin</span>' : ''}
+                                    ${escapeHTML(displayName)} ${isOwner ? '<span class="ml-2 text-[10px] bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400 px-2 py-0.5 rounded-full uppercase tracking-widest">Admin</span>' : ''}
                                 </div>
                             </div>
                         </td>
-                        <td class="px-6 py-3 text-slate-500 text-xs font-bold">${d.email || 'N/A'}</td>
+                        <td class="px-6 py-3 text-slate-500 text-xs font-bold">${escapeHTML(d.email || 'N/A')}</td>
                         <td class="px-6 py-3">
                             <select class="bg-slate-100 dark:bg-slate-800 border-none rounded-lg text-xs font-bold focus:ring-0 text-slate-600 dark:text-slate-300 py-1" onchange="alert('Permission update coming soon')">
                                 <option ${isOwner ? 'selected' : ''}>Admin</option>
@@ -1250,7 +1298,7 @@
                             </select>
                         </td>
                         <td class="px-6 py-3 text-right">
-                            ${!isOwner ? `<button onclick="removeManager('${doc.id}')" class="text-slate-400 hover:text-red-500 transition-colors"><i data-lucide="trash-2" class="w-4 h-4"></i></button>` : `<span class="text-slate-300">-</span>`}
+                            ${!isOwner ? `<button onclick="removeManager('${doc.id}')" aria-label="Remove manager" class="text-slate-400 hover:text-red-500 transition-colors"><i data-lucide="trash-2" class="w-4 h-4"></i></button>` : `<span class="text-slate-300">-</span>`}
                         </td>
                     </tr>`;
 
@@ -1270,9 +1318,9 @@
                     <div class="p-4 bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-100 dark:border-slate-800 flex items-center justify-between">
                         <div class="flex items-center gap-3">
                             <div class="w-10 h-10 rounded-full flex items-center justify-center text-white font-black shadow-sm" style="background-color: ${color}">
-                                ${displayName.substring(0, 2).toUpperCase()}
+                                ${escapeHTML(displayName.substring(0, 2).toUpperCase())}
                             </div>
-                            <div class="font-black text-sm">${displayName}</div>
+                            <div class="font-black text-sm">${escapeHTML(displayName)}</div>
                         </div>
                         <div class="text-right">
                             <div class="text-xl font-black ${score === 100 ? 'text-emerald-500' : (score > 0 ? 'text-indigo-500' : 'text-slate-400')}">${score}%</div>
@@ -1307,15 +1355,15 @@
                     htmlNotes += `
                     <div class="p-4 bg-white dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-800 shadow-sm flex items-start gap-4 hover:border-${color}-200 dark:hover:border-${color}-800 transition-colors">
                         <div class="w-10 h-10 rounded-full flex items-center justify-center text-white flex-shrink-0 mt-1 font-black shadow-sm" style="background-color: ${authorColor}">
-                            ${(data.authorName || 'U').substring(0, 1).toUpperCase()}
+                            ${escapeHTML((data.authorName || 'U').substring(0, 1).toUpperCase())}
                         </div>
                         <div class="flex-grow">
                             <div class="flex justify-between items-start mb-1">
-                                <div class="font-black text-slate-900 dark:text-white text-sm">${data.authorName}</div>
+                                <div class="font-black text-slate-900 dark:text-white text-sm">${escapeHTML(data.authorName)}</div>
                                 ${isUrgent ? `<span class="bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400 text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full flex items-center"><i data-lucide="alert-triangle" class="w-3 h-3 mr-1"></i> Urgent</span>` : ''}
                             </div>
-                            <div class="text-sm text-slate-600 dark:text-slate-400 mb-2">${data.content}</div>
-                            <div class="text-[10px] font-bold uppercase tracking-widest text-slate-400">Status: ${data.status}</div>
+                            <div class="text-sm text-slate-600 dark:text-slate-400 mb-2">${escapeHTML(data.content)}</div>
+                            <div class="text-[10px] font-bold uppercase tracking-widest text-slate-400">Status: ${escapeHTML(data.status)}</div>
                         </div>
                     </div>`;
                 });
@@ -1352,7 +1400,7 @@
                         html += `
                         <div class="flex justify-between items-center p-3 bg-white dark:bg-slate-800 border border-amber-200 dark:border-amber-900/50 rounded-xl shadow-sm">
                             <div>
-                                <div class="font-black text-slate-900 dark:text-white text-sm">${doc.data().userName}</div>
+                                <div class="font-black text-slate-900 dark:text-white text-sm">${escapeHTML(doc.data().userName)}</div>
                                 <div class="text-[10px] font-bold uppercase tracking-widest text-amber-500">Requested Access</div>
                             </div>
                             <button onclick="approveRequest('${doc.id}')" class="btn btn-accent btn-sm py-1 px-4 text-xs">Approve</button>
@@ -1373,8 +1421,7 @@
 
         async function approveRequest(requestId) {
             try {
-                const manageShiftGroups = firebase.functions().httpsCallable('manageShiftGroups');
-                await manageShiftGroups({ action: "approve_join", payload: { requestId: requestId } });
+                await callFunction('manageShiftGroups', { action: "approve_join", payload: { requestId } });
             } catch (e) { alert("Failed: " + e.message); }
         }
 
