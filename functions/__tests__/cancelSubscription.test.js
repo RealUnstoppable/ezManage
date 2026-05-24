@@ -93,7 +93,7 @@ describe("cancelSubscription", () => {
 
     await cancelSubscription(req, res);
 
-    expect(consoleSpy).toHaveBeenCalledWith("Cancel Error:", error);
+    expect(consoleSpy).toHaveBeenCalledWith("Manager Troubleshooting: Cancel Error for customerId: cus_test_123", error);
     expect(res.status).toHaveBeenCalledWith(500);
     expect(res.json).toHaveBeenCalledWith({error: "Stripe List Error"});
 
@@ -118,7 +118,7 @@ describe("cancelSubscription", () => {
 
     await cancelSubscription(req, res);
 
-    expect(consoleSpy).toHaveBeenCalledWith("Cancel Error:", error);
+    expect(consoleSpy).toHaveBeenCalledWith("Manager Troubleshooting: Cancel Error for customerId: cus_test_123", error);
     expect(res.status).toHaveBeenCalledWith(500);
     expect(res.json).toHaveBeenCalledWith({error: "Stripe Cancel Error"});
 
