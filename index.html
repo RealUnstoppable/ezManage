@@ -2269,6 +2269,7 @@
             const container = document.getElementById('customPresetsContainer');
             container.innerHTML = "";
             const cp = currentUserData.customPresets || [];
+            const fragment = document.createDocumentFragment();
             cp.forEach(p => {
                 const div = document.createElement('div');
                 div.className = "flex justify-between items-center p-4 bg-slate-50 dark:bg-slate-900 rounded-xl group border border-slate-100 dark:border-slate-800";
@@ -2282,8 +2283,9 @@
                 div.querySelector('.preset-name').textContent = p.name;
                 div.querySelector('.load-btn').onclick = () => applyCustomPreset(p.id);
                 div.querySelector('.delete-btn').onclick = () => deleteCustomPreset(p.id);
-                container.appendChild(div);
+                fragment.appendChild(div);
             });
+            container.appendChild(fragment);
             lucide.createIcons();
         }
 
@@ -2317,19 +2319,24 @@
             const printRoutines = document.getElementById('printRoutines');
             printRoutines.innerHTML = '';
             if (state.routines && state.routines.length > 0) {
+                const fragment = document.createDocumentFragment();
                 state.routines.forEach(r => {
                     const tr = document.createElement('tr');
                     const tdCheck = document.createElement('td');
                     tdCheck.style.textAlign = 'center';
                     const divCheck = document.createElement('div');
-                    divCheck.className = `print-checkbox ${r.checked ? "print-checked" : ""}`;
+                    divCheck.className = 'print-checkbox';
+                    if (r.checked) divCheck.classList.add('print-checked');
                     tdCheck.appendChild(divCheck);
+
                     const tdName = document.createElement('td');
                     tdName.textContent = r.name;
+
                     tr.appendChild(tdCheck);
                     tr.appendChild(tdName);
-                    printRoutines.appendChild(tr);
+                    fragment.appendChild(tr);
                 });
+                printRoutines.appendChild(fragment);
             } else {
                 printRoutines.innerHTML = "<tr><td colspan='2'>No routines logged</td></tr>";
             }
@@ -2337,19 +2344,21 @@
             const printDrawers = document.getElementById('printDrawers');
             printDrawers.innerHTML = '';
             if (state.drawers && state.drawers.length > 0) {
+                const fragment = document.createDocumentFragment();
                 state.drawers.forEach(d => {
                     const tr = document.createElement('tr');
                     const tdName = document.createElement('td');
                     tdName.textContent = d.name;
                     const tdVal = document.createElement('td');
-                    tdVal.textContent = `$${d.val}`;
+                    tdVal.textContent = "\$" + d.val;
                     const tdRes = document.createElement('td');
                     tdRes.textContent = d.res;
                     tr.appendChild(tdName);
                     tr.appendChild(tdVal);
                     tr.appendChild(tdRes);
-                    printDrawers.appendChild(tr);
+                    fragment.appendChild(tr);
                 });
+                printDrawers.appendChild(fragment);
             } else {
                 printDrawers.innerHTML = "<tr><td colspan='3'>No drawers logged</td></tr>";
             }
@@ -2360,6 +2369,7 @@
             const printInventory = document.getElementById('printInventoryList');
             printInventory.innerHTML = '';
             if (state.inventory && state.inventory.length > 0) {
+                const fragment = document.createDocumentFragment();
                 state.inventory.forEach(i => {
                     const tr = document.createElement('tr');
                     const tdName = document.createElement('td');
@@ -2374,8 +2384,9 @@
                     tr.appendChild(tdBl);
                     tr.appendChild(tdCl);
                     tr.appendChild(tdFr);
-                    printInventory.appendChild(tr);
+                    fragment.appendChild(tr);
                 });
+                printInventory.appendChild(fragment);
             } else {
                 printInventory.innerHTML = "<tr><td colspan='4'>No inventory logged</td></tr>";
             }
@@ -2795,6 +2806,7 @@
                             return;
                         }
 
+                        const fragment = document.createDocumentFragment();
                         shifts.forEach((shift, index) => {
                             const div = document.createElement('div');
                             div.className = "flex justify-between items-center p-4 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800";
@@ -2808,8 +2820,9 @@
                                     <button onclick="removeShift(${index})" class="text-red-500 text-xs mt-2 hover:underline">Remove</button>
                                 </div>
                             `;
-                            listContainer.appendChild(div);
+                            fragment.appendChild(div);
                         });
+                        listContainer.appendChild(fragment);
                     }
                 }, error => {
                     console.error("Error fetching schedules: ", error);
@@ -2854,6 +2867,7 @@
                         return;
                     }
 
+                    const fragment = document.createDocumentFragment();
                     snap.forEach(doc => {
                         const data = doc.data();
                         const status = data.status || 'In Progress';
@@ -2872,8 +2886,9 @@
                           <p class="text-sm font-medium text-slate-700 dark:text-slate-300 feature-request-message"></p>
                       `;
                         div.querySelector('.feature-request-message').textContent = `"${data.message}"`;
-                        container.appendChild(div);
+                        fragment.appendChild(div);
                     });
+                    container.appendChild(fragment);
                 });
         }
 
@@ -3017,7 +3032,7 @@
                             </div>
                         `;
                         noteDiv.querySelector('.shift-note-text').textContent = data.content;
-                        container.appendChild(noteDiv);
+                        fragment.appendChild(noteDiv);
                     });
                     lucide.createIcons();
                 })
@@ -3197,6 +3212,7 @@
                     }
                     panel.classList.remove('hidden');
                     container.innerHTML = '';
+                    const fragment = document.createDocumentFragment();
                     snap.forEach(doc => {
                         const data = doc.data();
                         const div = document.createElement('div');
@@ -3208,8 +3224,9 @@
                             </div>
                             <button onclick="approveGroupRequest('${escapeHTML(doc.id)}')" class="btn btn-primary btn-sm px-4">Approve</button>
                         `;
-                        container.appendChild(div);
+                        fragment.appendChild(div);
                     });
+                    container.appendChild(fragment);
                 });
         }
 
@@ -3229,6 +3246,7 @@
                     }
                     panel.classList.remove('hidden');
                     container.innerHTML = '';
+                    const fragment = document.createDocumentFragment();
                     snap.forEach(doc => {
                         const data = doc.data();
                         const div = document.createElement('div');
@@ -3240,8 +3258,9 @@
                             </div>
                             <button onclick="retractGroupRequest('${escapeHTML(doc.id)}')" class="btn btn-outline btn-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20">Retract</button>
                         `;
-                        container.appendChild(div);
+                        fragment.appendChild(div);
                     });
+                    container.appendChild(fragment);
                 });
         }
 
