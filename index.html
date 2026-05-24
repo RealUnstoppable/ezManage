@@ -2,6 +2,11 @@
 <html lang="en">
 
 <head>
+  <script type="module">
+    import { escapeHTML } from '/js/utils.js';
+    window.escapeHTML = escapeHTML;
+  </script>
+
     <link rel="manifest" href="manifest.json">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -458,6 +463,11 @@
             <a href="#" onclick="navTo('pricing')"
                 class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="credit-card"></i>
                 Pricing & Plans</a>
+
+            <a href="#" onclick="navTo('timeoff')"
+                class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="calendar-clock"></i>
+                Time Off</a>
+
             <a href="#" onclick="navTo('request')"
                 class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="lightbulb"></i>
                 Feature Request</a>
@@ -656,7 +666,7 @@
                             aria-label="Export JSON"><i data-lucide="download" class="w-4"></i></button>
                         <input type="file" id="jsonImportInput" accept=".json" class="hidden"
                             onchange="importDataJSON(event)">
-                        <button onclick="navTo('presets')" class="btn btn-outline btn-sm"><i data-lucide="layout"
+                        <button aria-label="Templates" onclick="navTo('presets')" class="btn btn-outline btn-sm"><i data-lucide="layout"
                                 class="w-4"></i> Templates</button>
                         <button onclick="clearData()"
                             class="btn btn-outline btn-sm text-red-500 border-red-200 hover:bg-red-50"><i
@@ -1443,6 +1453,39 @@
             </div>
         </div>
 
+        <div id="view-timeoff" class="view-section px-6 py-12 hidden">
+            <div class="max-w-4xl mx-auto">
+                <div class="card shadow-2xl mb-12">
+                    <h1 class="text-3xl font-black mb-4">Request Time Off</h1>
+                    <p class="text-slate-500 mb-8">Submit your availability requests for manager approval.</p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <label class="block text-sm font-bold mb-2">Start Date</label>
+                            <input type="date" id="timeoffStartDate" class="w-full">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-bold mb-2">End Date</label>
+                            <input type="date" id="timeoffEndDate" class="w-full">
+                        </div>
+                    </div>
+                    <label class="block text-sm font-bold mb-2">Reason</label>
+                    <textarea id="timeoffReason" class="h-24 mb-6" placeholder="e.g. Vacation, Medical appointment..."></textarea>
+                    <button id="btnSubmitTimeOff" onclick="submitTimeOffRequest()" class="btn btn-accent w-full py-4">Submit Request</button>
+                </div>
+
+                <div class="mb-12">
+                    <h3 class="text-xl font-black mb-6 border-b border-slate-200 dark:border-slate-800 pb-2">My Requests</h3>
+                    <div id="myTimeOffRequests" class="space-y-4"></div>
+                </div>
+
+                <div id="managerTimeOffSection" style="display: none;">
+                    <h3 class="text-xl font-black mb-6 border-b border-slate-200 dark:border-slate-800 pb-2 text-purple-600"><i data-lucide="shield" class="inline w-5 h-5 mr-2"></i>Manager Review</h3>
+                    <div id="managerTimeOffRequests" class="space-y-4"></div>
+                </div>
+            </div>
+        </div>
+
+
     </main>
 
     <div id="print-wrapper" class="hidden print:block absolute top-0 left-0 w-full bg-white z-50 p-8 text-black">
@@ -1528,6 +1571,8 @@
 
         db.enablePersistence().catch(err => console.error("Offline sync error:", err));
 
+        let currentUser = null;
+        let currentUserData = null;
         window.currentUser = null;
         function escapeHTML(str) {
             if (!str && str !== 0) return "";
@@ -1550,9 +1595,6 @@
 
         // Legal & Privacy Settings
         let cloudSyncEnabled = false;
-        let isInitializingAuth = true;
-
-
 
         auth.onAuthStateChanged((user) => {
             currentUser = user;
@@ -1576,7 +1618,7 @@
 
                 unsubscribeUser = db.collection("users").doc(user.uid).onSnapshot(async doc => {
                     isInitializingAuth = false;
-                    if (doc.exists && doc.data().name) {
+                    if (doc.exists) {
                         currentUserData = doc.data();
                         sessionStorage.setItem('ezManage_userData', JSON.stringify(currentUserData));
 
@@ -1584,6 +1626,13 @@
                         if (pendingNav) {
                             localStorage.removeItem('navTo');
                             setTimeout(() => navTo(pendingNav), 100);
+                        }
+
+                        if (!currentUserData.name) {
+                            const defaultName = user.displayName || (user.email ? user.email.split('@')[0] : "Manager");
+                            currentUserData.name = defaultName;
+                            // Only update locally if we shouldn't trigger another snapshot write loop immediately
+                            // Wait until the user saves their profile to commit this
                         }
 
                         // Enforce Opt-In Cloud Policy
@@ -1616,17 +1665,37 @@
                         }
                         // Always fetch employees to populate the schedule dropdown
                         fetchEmployees();
+                        fetchTimeOffRequests();
 
                         if (!initialDraftLoaded) {
                             syncDraftFromServer();
                             initialDraftLoaded = true;
                         }
 
-                        const activeView = document.querySelector('.view-section.active');
-                        if (activeView && activeView.id === 'view-auth') navTo('tracker');
+                        const pendingNavTo = localStorage.getItem('navTo');
+                        if (pendingNavTo) {
+                            localStorage.removeItem('navTo');
+                            navTo(pendingNavTo);
+                        } else {
+                            const activeView = document.querySelector('.view-section.active');
+                            if (activeView && activeView.id === 'view-auth') navTo('tracker');
+                        }
                         runAIPatternLogic();
                     } else {
 
+                        if (!doc.exists) {
+                            const activeView = document.querySelector('.view-section.active');
+                            if (activeView && activeView.id !== 'view-setup') {
+                                try {
+                                    const emailDoc = await db.collection("users").doc(user.email).get();
+                                    if (emailDoc.exists) {
+                                        await db.collection("users").doc(user.uid).set(emailDoc.data(), { merge: true });
+                                        return;
+                                    } else {
+                                        navTo('setup');
+                                    }
+                                } catch (e) { console.warn("Email recovery check skipped", e); navTo('setup'); }
+                            }
                         if (!doc.exists || !doc.data().name) {
                             await db.collection("users").doc(user.uid).set({
                                 name: user.displayName || "Manager",
@@ -1642,11 +1711,21 @@
                     }
                 });
             } else {
+                isInitializingAuth = false;
                 navStatus.innerText = "Login / Sign Up";
                 currentUserData = null;
                 initialDraftLoaded = false;
                 cloudSyncEnabled = false;
                 updateCloudSyncUI();
+
+                const pendingNavTo = localStorage.getItem('navTo');
+                if (pendingNavTo) {
+                    localStorage.removeItem('navTo');
+                    navTo(pendingNavTo);
+                } else {
+                    const activeView = document.querySelector('.view-section.active');
+                    if (activeView && activeView.id !== 'view-auth' && activeView.id !== 'view-tracker') navTo('auth');
+                }
                 isInitializingAuth = false;
             }
         });
@@ -1850,8 +1929,13 @@
         function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); }
 
         function navTo(viewId) {
+            if (isInitializingAuth) {
+                localStorage.setItem('navTo', viewId);
+                return;
+            }
+            if (!currentUser && (['history', 'presets', 'performance', 'request', 'profile', 'shiftNotes'].includes(viewId))) {
             if (!currentUser && (['history', 'presets', 'performance', 'request', 'profile', 'shiftNotes', 'team'].includes(viewId))) {
-            if (!currentUser && (['history', 'presets', 'performance', 'request', 'profile', 'shiftNotes', 'employees'].includes(viewId))) {
+            if (!currentUser && (['history', 'presets', 'performance', 'request', 'profile', 'shiftNotes', 'employees', 'timeoff'].includes(viewId))) {
                 viewId = 'auth';
             }
             if (viewId === 'maintenance' && currentUser) {
@@ -1940,8 +2024,8 @@
             div.className = "flex gap-4 items-center bg-slate-50 dark:bg-slate-800 p-3 rounded-xl animate-fadeIn";
             div.innerHTML = `
                 <input type="text" placeholder="Amount" class="dep-val" style="flex:1;" aria-label="Deposit Amount" oninput="triggerDraftSync()">
-                <label class="flex items-center gap-1 text-[10px] font-bold"><input type="checkbox" class="dep-ver accent-sky-500 w-4 h-4" onchange="triggerDraftSync()"> VER</label>
-                <label class="flex items-center gap-1 text-[10px] font-bold"><input type="checkbox" class="dep-val-chk accent-sky-500 w-4 h-4" onchange="triggerDraftSync()"> VAL</label>
+                <label class="flex items-center gap-1 text-[10px] font-bold"><input type="checkbox" class="dep-ver accent-sky-500 w-4 h-4" onchange="triggerDraftSync()" aria-label="Verify Deposit"> VER</label>
+                <label class="flex items-center gap-1 text-[10px] font-bold"><input type="checkbox" class="dep-val-chk accent-sky-500 w-4 h-4" onchange="triggerDraftSync()" aria-label="Validate Deposit"> VAL</label>
                 <button type="button" onclick="if(confirm('Are you sure you want to delete this deposit? This action cannot be undone.')) { this.parentElement.remove(); triggerDraftSync(); }" class="text-red-400" aria-label="Remove deposit"><i data-lucide="x" class="w-4"></i></button>
             `;
             div.querySelector('.dep-val').value = val;
@@ -2172,6 +2256,7 @@
                 grouped[groupKey].push(data);
             });
 
+            // ⚡ Bolt Optimization: Use DocumentFragment to batch DOM insertions and reduce layout thrashing
             // ⚡ Bolt Optimization: Batch DOM insertions using a DocumentFragment
             const fragment = document.createDocumentFragment();
 
@@ -2191,7 +2276,7 @@
 
                 const groupContent = document.createElement('div');
                 groupContent.className = "history-group-content hidden px-6 pb-4 pt-2 border-t border-slate-100 dark:border-slate-800 space-y-3";
-
+                
                 groupContent.className = "hidden px-6 pb-4 pt-2 border-t border-slate-100 dark:border-slate-800 space-y-3";
 
                 groupHeader.onclick = () => {
@@ -2216,6 +2301,8 @@
                     }
                 };
 
+                const groupContentFragment = document.createDocumentFragment();
+
                 grouped[key].forEach(data => {
                     const div = document.createElement('div');
                     div.className = "flex justify-between items-center p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl hover:bg-sky-50 dark:hover:bg-sky-900/20 transition-colors group";
@@ -2225,7 +2312,7 @@
                             <div class="text-[10px] font-bold uppercase tracking-widest text-slate-400 mt-1">Duration: ${escapeHTML(data.durationMins || 0)}m • Saved at ${escapeHTML(data.timeSaved || 'N/A')}</div>
                         </div>
                         <div class="flex gap-2">
-                            <button class="btn btn-outline btn-sm bg-white dark:bg-slate-900 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity history-load">
+                            <button class="btn btn-outline btn-sm bg-white dark:bg-slate-900 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity history-load" aria-label="Load History Record">
                                 <i data-lucide="download"></i> Load
                             </button>
                             <button class="text-red-400 p-2 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity history-delete" title="Delete" aria-label="Delete history record">
@@ -2235,9 +2322,10 @@
                     `;
                     div.querySelector('.history-load').onclick = (e) => { e.stopPropagation(); loadHistoryShift(data.id); };
                     div.querySelector('.history-delete').onclick = (e) => { e.stopPropagation(); deleteHistoryShift(data.id); };
-                    groupContent.appendChild(div);
+                    groupContentFragment.appendChild(div);
                 });
 
+                groupContent.appendChild(groupContentFragment);
                 groupContainer.appendChild(groupHeader);
                 groupContainer.appendChild(groupContent);
                 fragment.appendChild(groupContainer);
@@ -2466,21 +2554,26 @@
             const container = document.getElementById('customPresetsContainer');
             container.innerHTML = "";
             const cp = currentUserData.customPresets || [];
+
+            // ⚡ Bolt Optimization: Use DocumentFragment to batch DOM insertions and reduce layout thrashing
+            const fragment = document.createDocumentFragment();
+
             cp.forEach(p => {
                 const div = document.createElement('div');
                 div.className = "flex justify-between items-center p-4 bg-slate-50 dark:bg-slate-900 rounded-xl group border border-slate-100 dark:border-slate-800";
                 div.innerHTML = `
                     <span class="font-bold preset-name"></span>
                     <div class="flex gap-2">
-                        <button class="btn btn-sm btn-outline opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity load-btn">Load</button>
+                        <button class="btn btn-sm btn-outline opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity load-btn" aria-label="Load Template">Load</button>
                         <button class="text-red-400 p-2 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity delete-btn" title="Delete" aria-label="Delete template"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
                     </div>
                 `;
                 div.querySelector('.preset-name').textContent = p.name;
                 div.querySelector('.load-btn').onclick = () => applyCustomPreset(p.id);
                 div.querySelector('.delete-btn').onclick = () => deleteCustomPreset(p.id);
-                container.appendChild(div);
+                fragment.appendChild(div);
             });
+            container.appendChild(fragment);
             lucide.createIcons();
         }
 
@@ -2514,19 +2607,24 @@
             const printRoutines = document.getElementById('printRoutines');
             printRoutines.innerHTML = '';
             if (state.routines && state.routines.length > 0) {
+                const fragment = document.createDocumentFragment();
                 state.routines.forEach(r => {
                     const tr = document.createElement('tr');
                     const tdCheck = document.createElement('td');
                     tdCheck.style.textAlign = 'center';
                     const divCheck = document.createElement('div');
-                    divCheck.className = `print-checkbox ${r.checked ? "print-checked" : ""}`;
+                    divCheck.className = 'print-checkbox';
+                    if (r.checked) divCheck.classList.add('print-checked');
                     tdCheck.appendChild(divCheck);
+
                     const tdName = document.createElement('td');
                     tdName.textContent = r.name;
+
                     tr.appendChild(tdCheck);
                     tr.appendChild(tdName);
-                    printRoutines.appendChild(tr);
+                    fragment.appendChild(tr);
                 });
+                printRoutines.appendChild(fragment);
             } else {
                 printRoutines.innerHTML = "<tr><td colspan='2'>No routines logged</td></tr>";
             }
@@ -2534,19 +2632,21 @@
             const printDrawers = document.getElementById('printDrawers');
             printDrawers.innerHTML = '';
             if (state.drawers && state.drawers.length > 0) {
+                const fragment = document.createDocumentFragment();
                 state.drawers.forEach(d => {
                     const tr = document.createElement('tr');
                     const tdName = document.createElement('td');
                     tdName.textContent = d.name;
                     const tdVal = document.createElement('td');
-                    tdVal.textContent = `$${d.val}`;
+                    tdVal.textContent = "\$" + d.val;
                     const tdRes = document.createElement('td');
                     tdRes.textContent = d.res;
                     tr.appendChild(tdName);
                     tr.appendChild(tdVal);
                     tr.appendChild(tdRes);
-                    printDrawers.appendChild(tr);
+                    fragment.appendChild(tr);
                 });
+                printDrawers.appendChild(fragment);
             } else {
                 printDrawers.innerHTML = "<tr><td colspan='3'>No drawers logged</td></tr>";
             }
@@ -2557,6 +2657,7 @@
             const printInventory = document.getElementById('printInventoryList');
             printInventory.innerHTML = '';
             if (state.inventory && state.inventory.length > 0) {
+                const fragment = document.createDocumentFragment();
                 state.inventory.forEach(i => {
                     const tr = document.createElement('tr');
                     const tdName = document.createElement('td');
@@ -2571,8 +2672,9 @@
                     tr.appendChild(tdBl);
                     tr.appendChild(tdCl);
                     tr.appendChild(tdFr);
-                    printInventory.appendChild(tr);
+                    fragment.appendChild(tr);
                 });
+                printInventory.appendChild(fragment);
             } else {
                 printInventory.innerHTML = "<tr><td colspan='4'>No inventory logged</td></tr>";
             }
@@ -2604,11 +2706,16 @@
 
         function saveProfileToFirebase() {
             if (!currentUser) return;
+
+            const cloudToggle = document.getElementById('profileCloudSyncToggle').checked;
+            cloudSyncEnabled = cloudToggle;
+
             const data = {
                 name: document.getElementById('profName').value,
                 role: document.getElementById('profRole').value,
                 phone: document.getElementById('profPhone').value,
-                aiTrainingEnabled: document.getElementById('profileAIToggle').checked
+                aiTrainingEnabled: document.getElementById('profileAIToggle').checked,
+                cloudSyncEnabled: cloudToggle
             };
 
             if (profileDebounceTimeout) clearTimeout(profileDebounceTimeout);
@@ -2737,6 +2844,7 @@
 
 
 
+async function submitMaintenanceTicket() {
 
 
         async function submitMaintenanceTicket() {
@@ -2889,7 +2997,8 @@
             try {
                 await db.collection('maintenance_logs').doc(ticketId).update({
                     status: newStatus,
-                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    orgId: currentUserData.orgId
                 });
                 // Optimistic UI update already handled by changing the select value
                 // but refreshing guarantees sync
@@ -2955,6 +3064,7 @@
 
                 alert("Employee added successfully.");
                 fetchEmployees();
+                        fetchTimeOffRequests();
                 populateScheduleDropdown();
             } catch (err) {
                 console.error("Error adding employee:", err);
@@ -2966,7 +3076,153 @@
             }
         }
 
+
         let unsubscribeEmployees = null;
+        let unsubscribeTimeOff = null;
+
+
+
+        async function submitTimeOffRequest() {
+            if (!currentUser || !currentUserData || !currentUserData.orgId) {
+                alert("You must be part of an organization to request time off.");
+                return;
+            }
+            const startDate = document.getElementById('timeoffStartDate').value;
+            const endDate = document.getElementById('timeoffEndDate').value;
+            const reason = document.getElementById('timeoffReason').value.trim();
+
+            if (!startDate || !endDate || !reason) {
+                alert("Please fill in all fields.");
+                return;
+            }
+            if (startDate > endDate) {
+                 alert("Start date must be before end date.");
+                 return;
+            }
+
+            const btn = document.getElementById('btnSubmitTimeOff');
+            const originalText = btn.innerText;
+            btn.innerText = 'Submitting...';
+            btn.disabled = true;
+
+            try {
+                await db.collection('time_off_requests').add({
+                    uid: currentUser.uid,
+                    employeeName: currentUserData.username || currentUser.email,
+                    orgId: currentUserData.orgId,
+                    startDate: startDate,
+                    endDate: endDate,
+                    reason: reason,
+                    status: 'Pending',
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                alert("Time off request submitted successfully.");
+                document.getElementById('timeoffStartDate').value = '';
+                document.getElementById('timeoffEndDate').value = '';
+                document.getElementById('timeoffReason').value = '';
+            } catch (err) {
+                console.error("Error submitting time off request", err);
+                alert("Error submitting request. Please try again.");
+            } finally {
+                btn.innerText = originalText;
+                btn.disabled = false;
+            }
+        }
+
+        function fetchTimeOffRequests() {
+             if (!currentUser || !currentUserData) return;
+             if (unsubscribeTimeOff) unsubscribeTimeOff();
+
+             let query = db.collection('time_off_requests');
+
+             // If manager/admin (assuming they have an orgId and are not just a base user, or using some flag. We will check if they own the org or just use orgId)
+             // For simplicity, we fetch all for the org if they are an org owner, otherwise just their own.
+             // Wait, let's look at how employees are fetched.
+             // Employees are fetched if user is admin or org owner.
+             // Let's just fetch for the user's org, and then filter locally to show manager view vs employee view
+
+             query = query.where('orgId', '==', currentUserData.orgId || currentUser.uid);
+
+             unsubscribeTimeOff = query.onSnapshot(snap => {
+                 const employeeContainer = document.getElementById('myTimeOffRequests');
+                 const managerContainer = document.getElementById('managerTimeOffRequests');
+
+                 let myRequestsHtml = '';
+                 let managerRequestsHtml = '';
+
+                 let requests = [];
+                 snap.forEach(doc => requests.push({ id: doc.id, ...doc.data() }));
+
+                 // Sort locally by createdAt desc
+                 requests.sort((a, b) => {
+                     let aTime = a.createdAt ? a.createdAt.toMillis() : 0;
+                     let bTime = b.createdAt ? b.createdAt.toMillis() : 0;
+                     return bTime - aTime;
+                 });
+
+                 const isManager = currentUserData.orgId === currentUser.uid;
+
+                 requests.forEach(req => {
+                     let statusColor = req.status === 'Approved' ? 'bg-green-100 text-green-800' : (req.status === 'Rejected' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800');
+
+                     let reqCard = `
+                        <div class="card p-4 border border-slate-200 dark:border-slate-800 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                            <div>
+                                <div class="font-bold">${escapeHTML(req.employeeName)}</div>
+                                <div class="text-sm text-slate-500">${escapeHTML(req.startDate)} to ${escapeHTML(req.endDate)}</div>
+                                <div class="text-sm italic mt-1">"${escapeHTML(req.reason)}"</div>
+                            </div>
+                            <div class="flex items-center gap-4">
+                                <span class="px-3 py-1 rounded-full text-xs font-bold ${statusColor}">${escapeHTML(req.status)}</span>
+                     `;
+
+                     if (req.uid === currentUser.uid) {
+                          let cancelBtn = req.status === 'Pending' ? `<button onclick="deleteTimeOffRequest('${req.id}')" class="btn btn-sm btn-outline text-red-500 hover:bg-red-50">Cancel</button>` : '';
+                          myRequestsHtml += reqCard + cancelBtn + `</div></div>`;
+                     }
+
+                     if (isManager && req.status === 'Pending') {
+                          managerRequestsHtml += reqCard + `
+                                <button onclick="updateTimeOffStatus('${req.id}', 'Approved')" class="btn btn-sm bg-green-500 text-white hover:bg-green-600">Approve</button>
+                                <button onclick="updateTimeOffStatus('${req.id}', 'Rejected')" class="btn btn-sm bg-red-500 text-white hover:bg-red-600">Deny</button>
+                          </div></div>`;
+                     } else if (isManager) {
+                          managerRequestsHtml += reqCard + `</div></div>`;
+                     }
+                 });
+
+                 if (employeeContainer) employeeContainer.innerHTML = myRequestsHtml || '<p class="text-slate-500">No time off requests found.</p>';
+                 if (managerContainer) {
+                     if (isManager) {
+                         managerContainer.innerHTML = managerRequestsHtml || '<p class="text-slate-500">No requests to manage.</p>';
+                         document.getElementById('managerTimeOffSection').style.display = 'block';
+                     } else {
+                         document.getElementById('managerTimeOffSection').style.display = 'none';
+                     }
+                 }
+             }, err => {
+                 console.error("Error fetching time off requests:", err);
+             });
+        }
+
+        async function updateTimeOffStatus(id, status) {
+            try {
+                await db.collection('time_off_requests').doc(id).update({ status: status });
+            } catch (err) {
+                console.error("Error updating time off status", err);
+                alert("Error updating status.");
+            }
+        }
+
+        async function deleteTimeOffRequest(id) {
+            if (!confirm("Are you sure you want to cancel this request?")) return;
+            try {
+                await db.collection('time_off_requests').doc(id).delete();
+            } catch (err) {
+                console.error("Error deleting time off request", err);
+                alert("Error cancelling request.");
+            }
+        }
 
         function fetchEmployees() {
             if (!currentUser || !currentUserData) return;
@@ -3023,8 +3279,8 @@
                                 </div>
                             </div>
                             <div class="flex gap-2 self-start sm:self-center">
-                                <button onclick="toggleEmployeeStatus('${emp.id}', '${emp.status}')" class="btn btn-outline btn-sm">${emp.status === 'Active' ? 'Deactivate' : 'Activate'}</button>
-                                <button onclick="deleteEmployee('${emp.id}')" class="btn btn-outline btn-sm text-red-500 hover:bg-red-50"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                                <button onclick="toggleEmployeeStatus('${emp.id}', '${emp.status}')" class="btn btn-outline btn-sm" aria-label="Toggle Employee Status">${emp.status === 'Active' ? 'Deactivate' : 'Activate'}</button>
+                                <button onclick="deleteEmployee('${emp.id}')" class="btn btn-outline btn-sm text-red-500 hover:bg-red-50" aria-label="Delete Employee"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
                             </div>
                         `;
                         if (container) container.appendChild(div);
@@ -3139,6 +3395,7 @@
                 await scheduleRef.set({
                     uid: currentUser.uid,
                     authorId: currentUser.uid,
+                    orgId: currentUserData.orgId,
                     orgId: currentUserData?.orgId || null,
                     date: date,
                     shifts: shifts,
@@ -3185,6 +3442,9 @@
                             return;
                         }
 
+                        // ⚡ Bolt Optimization: Use DocumentFragment to batch DOM insertions and reduce layout thrashing
+                        const fragment = document.createDocumentFragment();
+
                         shifts.forEach((shift, index) => {
                             const div = document.createElement('div');
                             div.className = "flex justify-between items-center p-4 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800";
@@ -3195,11 +3455,12 @@
                                 </div>
                                 <div class="text-right">
                                     <p class="font-mono bg-slate-50 dark:bg-slate-800 px-3 py-1 rounded-lg border border-slate-100 dark:border-slate-700">${escapeHTML(shift.startTime)} - ${escapeHTML(shift.endTime)}</p>
-                                    <button onclick="removeShift(${index})" class="text-red-500 text-xs mt-2 hover:underline">Remove</button>
+                                    <button onclick="removeShift(${index})" class="text-red-500 text-xs mt-2 hover:underline" aria-label="Remove Shift">Remove</button>
                                 </div>
                             `;
-                            listContainer.appendChild(div);
+                            fragment.appendChild(div);
                         });
+                        listContainer.appendChild(fragment);
                     }
                 }, error => {
                     console.error("Error fetching schedules: ", error);
@@ -3248,6 +3509,7 @@
                         return;
                     }
 
+                    const fragment = document.createDocumentFragment();
                     snap.forEach(doc => {
                         const data = doc.data();
                         const status = data.status || 'In Progress';
@@ -3266,11 +3528,13 @@
                           <p class="text-sm font-medium text-slate-700 dark:text-slate-300 feature-request-message"></p>
                       `;
                         div.querySelector('.feature-request-message').textContent = `"${data.message}"`;
-                        container.appendChild(div);
+                        fragment.appendChild(div);
                     });
+                    container.appendChild(fragment);
                 });
         }
 
+function checkAndRenderOrgControls() {
 
 
         function checkAndRenderOrgControls() {
@@ -3282,8 +3546,8 @@
             if (!currentUserData || !currentUserData.orgId) {
                 // Not in an org
                 controls.innerHTML = `
-                    <button onclick="document.getElementById('createGroupModal').classList.remove('hidden')" class="btn btn-outline btn-sm"><i data-lucide="plus" class="w-4 h-4"></i> Create Group</button>
-                    <button onclick="document.getElementById('joinGroupModal').classList.remove('hidden')" class="btn btn-outline btn-sm"><i data-lucide="log-in" class="w-4 h-4"></i> Join Group</button>
+                    <button aria-label="Create Group" onclick="document.getElementById('createGroupModal').classList.remove('hidden')" class="btn btn-outline btn-sm"><i data-lucide="plus" class="w-4 h-4"></i> Create Group</button>
+                    <button aria-label="Join Group" onclick="document.getElementById('joinGroupModal').classList.remove('hidden')" class="btn btn-outline btn-sm"><i data-lucide="log-in" class="w-4 h-4"></i> Join Group</button>
                 `;
                 postArea.classList.add('hidden');
                 lucide.createIcons();
@@ -3341,7 +3605,6 @@
             lucide.createIcons();
 
             db.collection('shift_notes')
-                .where('status', '==', 'Active')
                 .where('orgId', '==', currentUserData.orgId)
                 .get() // orderBy timestamp desc requires composite index if where filters are used
                 .then(snap => {
@@ -3360,8 +3623,11 @@
 
                     // Sort manually since composite index might not exist
                     let docs = [];
-                    snap.forEach(doc => docs.push({ id: doc.id, data: doc.data() }));
+                    snap.forEach(doc => { if (doc.data().status === 'Active') docs.push({ id: doc.id, data: doc.data() }) });
                     docs.sort((a, b) => b.data.timestamp - a.data.timestamp);
+
+                    // ⚡ Bolt Optimization: Use DocumentFragment to batch DOM insertions and reduce layout thrashing
+                    const fragment = document.createDocumentFragment();
 
                     docs.forEach(docObj => {
                         const data = docObj.data;
@@ -3397,14 +3663,15 @@
                             </div>
                             <p class="text-slate-700 dark:text-slate-300 font-medium mb-6 whitespace-pre-wrap pl-1 shift-note-text"></p>
                             <div class="flex justify-end border-t border-slate-100 dark:border-slate-800 pt-4 mt-2">
-                                <button onclick="resolveShiftNote('${escapeHTML(docId)}')" class="text-sm font-bold text-slate-400 hover:text-emerald-500 flex items-center gap-2 transition-colors">
+                                <button onclick="resolveShiftNote('${escapeHTML(docId)}')" class="text-sm font-bold text-slate-400 hover:text-emerald-500 flex items-center gap-2 transition-colors" aria-label="Resolve Shift Note">
                                     <i data-lucide="check-circle" class="w-4 h-4"></i> Mark Resolved
                                 </button>
                             </div>
                         `;
                         noteDiv.querySelector('.shift-note-text').textContent = data.content;
-                        container.appendChild(noteDiv);
+                        fragment.appendChild(noteDiv);
                     });
+                    container.appendChild(fragment);
                     lucide.createIcons();
                 })
                 .catch(err => {
@@ -3468,15 +3735,17 @@
             document.getElementById('shiftNoteContent').value = "";
 
             try {
+                const manageShiftNotes = cloudFunctions.httpsCallable('manageShiftNotes');
                 // To allow client-side writes since cloud functions were failing for some users
                 const manageShiftNotes = firebase.functions().httpsCallable('manageShiftNotes');
                 const result = await manageShiftNotes({
                     action: "create",
                     payload: {
+                        authorId: currentUser.uid,
+                        orgId: currentUserData.orgId || currentUser.uid,
                         authorName: currentUser.email.split('@')[0],
                         content: content,
-                        priority: priority,
-                        orgId: currentUserData.orgId
+                        priority: priority
                     }
                 await db.collection('shift_notes').add({
                     authorId: currentUser.uid,
@@ -3532,7 +3801,7 @@
             }
 
             try {
-                const manageShiftNotes = firebase.functions().httpsCallable('manageShiftNotes');
+                const manageShiftNotes = cloudFunctions.httpsCallable('manageShiftNotes');
                 const result = await manageShiftNotes({
                     action: "resolve",
                     payload: { noteId: noteId, resolvedBy: currentUser.email.split('@')[0] }
@@ -3550,10 +3819,12 @@
             if (!name || !pass) return alert("All fields required");
 
             try {
-                const manageShiftGroups = firebase.functions().httpsCallable('manageShiftGroups');
+                const manageShiftGroups = cloudFunctions.httpsCallable('manageShiftGroups');
                 const result = await manageShiftGroups({
                     action: "create",
                     payload: {
+                        authorId: currentUser.uid,
+                        orgId: currentUserData.orgId || currentUser.uid,
                         ownerName: currentUser.email.split('@')[0],
                         groupName: name,
                         password: pass
@@ -3577,7 +3848,7 @@
             if (!groupId || !pass) return alert("All fields required");
 
             try {
-                const manageShiftGroups = firebase.functions().httpsCallable('manageShiftGroups');
+                const manageShiftGroups = cloudFunctions.httpsCallable('manageShiftGroups');
                 const result = await manageShiftGroups({
                     action: "request_join",
                     payload: {
@@ -3609,6 +3880,7 @@
                     }
                     panel.classList.remove('hidden');
                     container.innerHTML = '';
+                    const fragment = document.createDocumentFragment();
                     snap.forEach(doc => {
                         const data = doc.data();
                         const div = document.createElement('div');
@@ -3618,10 +3890,11 @@
                                 <p class="font-bold text-sm">${escapeHTML(data.userName)}</p>
                                 <p class="text-xs text-slate-500">Wants to join your group</p>
                             </div>
-                            <button onclick="approveGroupRequest('${escapeHTML(doc.id)}')" class="btn btn-primary btn-sm px-4">Approve</button>
+                            <button onclick="approveGroupRequest('${escapeHTML(doc.id)}')" class="btn btn-primary btn-sm px-4" aria-label="Approve Group Request">Approve</button>
                         `;
-                        container.appendChild(div);
+                        fragment.appendChild(div);
                     });
+                    container.appendChild(fragment);
                 });
         }
 
@@ -3641,6 +3914,7 @@
                     }
                     panel.classList.remove('hidden');
                     container.innerHTML = '';
+                    const fragment = document.createDocumentFragment();
                     snap.forEach(doc => {
                         const data = doc.data();
                         const div = document.createElement('div');
@@ -3650,16 +3924,17 @@
                                 <p class="font-bold text-sm">Group ID: ${escapeHTML(data.groupId)}</p>
                                 <p class="text-xs text-slate-500">Awaiting approval</p>
                             </div>
-                            <button onclick="retractGroupRequest('${escapeHTML(doc.id)}')" class="btn btn-outline btn-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20">Retract</button>
+                            <button onclick="retractGroupRequest('${escapeHTML(doc.id)}')" class="btn btn-outline btn-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20" aria-label="Retract Group Request">Retract</button>
                         `;
-                        container.appendChild(div);
+                        fragment.appendChild(div);
                     });
+                    container.appendChild(fragment);
                 });
         }
 
         async function retractGroupRequest(requestId) {
             try {
-                const manageShiftGroups = firebase.functions().httpsCallable('manageShiftGroups');
+                const manageShiftGroups = cloudFunctions.httpsCallable('manageShiftGroups');
                 await manageShiftGroups({
                     action: "retract_join",
                     payload: { requestId: requestId }
@@ -3672,7 +3947,7 @@
 
         async function approveGroupRequest(requestId) {
             try {
-                const manageShiftGroups = firebase.functions().httpsCallable('manageShiftGroups');
+                const manageShiftGroups = cloudFunctions.httpsCallable('manageShiftGroups');
                 const result = await manageShiftGroups({
                     action: "approve_join",
                     payload: { requestId: requestId }
@@ -3831,8 +4106,8 @@
                                 </div>
                             </div>
                             <div class="flex gap-2 border-t border-slate-100 dark:border-slate-800 pt-4 mt-2">
-                                <button onclick="openEditEmployeeModal('${escapeHTML(emp.id)}')" class="btn btn-outline btn-sm flex-1"><i data-lucide="edit-2" class="w-3 h-3"></i> Edit</button>
-                                <button onclick="deleteEmployee('${escapeHTML(emp.id)}')" class="btn btn-outline btn-sm text-red-500 hover:bg-red-50 flex-1"><i data-lucide="user-minus" class="w-3 h-3"></i> Remove</button>
+                                <button onclick="openEditEmployeeModal('${escapeHTML(emp.id)}')" class="btn btn-outline btn-sm flex-1" aria-label="Edit Employee"><i data-lucide="edit-2" class="w-3 h-3"></i> Edit</button>
+                                <button onclick="deleteEmployee('${escapeHTML(emp.id)}')" class="btn btn-outline btn-sm text-red-500 hover:bg-red-50 flex-1" aria-label="Remove Employee"><i data-lucide="user-minus" class="w-3 h-3"></i> Remove</button>
                             </div>
                         `;
                         container.appendChild(div);
@@ -3866,11 +4141,6 @@
         // We will fetch the team directory when the view is opened or during org check
 
         window.onload = () => {
-            const redirect = localStorage.getItem('navTo');
-            if (redirect) {
-                navTo(redirect);
-                localStorage.removeItem('navTo');
-            }
             if (localStorage.getItem('managerProTheme') === 'dark') {
                 document.body.classList.add('dark-mode');
                 document.getElementById('themeToggle').checked = true;

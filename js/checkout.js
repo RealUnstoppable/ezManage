@@ -1,3 +1,4 @@
+import { logManagerError } from './utils.js';
 
 import { auth, db } from './auth.js';
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
@@ -131,7 +132,8 @@ async function handlePlaceOrder(e) {
         setTimeout(() => window.location.href = './account.html', 3000);
 
     } catch (error) {
-        console.error("Manager Troubleshooting: Error processing checkout:", error);
+        logManagerError("Error processing checkout for uid:", currentUser.uid, error);
+        logManagerError("Error processing checkout:", error);
         messageEl.textContent = 'There was an error placing your order. Please try again.';
         messageEl.style.color = 'var(--accent-red)';
         placeOrderBtn.disabled = false;
@@ -147,7 +149,8 @@ onAuthStateChanged(auth, async (user) => {
             const docSnap = await getDoc(userCartRef);
             userCart = docSnap.exists() ? docSnap.data().items : {};
         } catch (error) {
-            console.error("Manager Troubleshooting: Error loading cart:", error);
+            logManagerError("Error loading cart for uid:", user.uid, error);
+            logManagerError("Error loading cart:", error);
             userCart = {};
         }
         renderCheckoutPage();

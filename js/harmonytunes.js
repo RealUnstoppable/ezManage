@@ -1,3 +1,4 @@
+import { logManagerError } from './utils.js';
 import { auth, db } from './auth.js';
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
 import { doc, getDoc, setDoc, updateDoc, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
@@ -272,7 +273,7 @@ document.addEventListener('DOMContentLoaded', () => {
             isPlaying = true;
             playIcon.style.display = 'none';
             pauseIcon.style.display = 'block';
-        }).catch(e => console.error("Manager Troubleshooting: Error playing audio:", e));
+        }).catch(e => logManagerError("Error playing audio:", e));
     }
 
     function pauseSong() {
@@ -409,16 +410,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 renderSongTable(userFavorites);
             }
         } catch (e) {
-            console.error("Manager Troubleshooting: Error toggling favorite:", e);
+            logManagerError("Error toggling favorite for songId:", songId, e);
+            logManagerError("Error toggling favorite:", e);
             if (e.code === 'not-found') {
                 try {
                     await setDoc(userRef, { musicFavorites: [songId] }, { merge: true });
                     userFavorites.push(song);
                 } catch (innerError) {
-                    console.error("Manager Troubleshooting: Error setting initial favorite document:", innerError);
+                    logManagerError("Error setting initial favorite document for songId:", songId, innerError);
                 }
             } else {
-                console.error("Manager Troubleshooting: Error toggling favorite:", e);
+                logManagerError("Error toggling favorite for songId:", songId, e);
             }
         }
     }
@@ -433,7 +435,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     const favIds = docSnap.data().musicFavorites;
                     userFavorites = librarySongs.filter(song => favIds.includes(song.id));
                 }
-            } catch (e) { console.error("Manager Troubleshooting: Error loading user favorites:", e); }
+            } catch (e) { logManagerError("Error loading user favorites for uid:", user.uid, e); }
 
             const hour = new Date().getHours();
             const timeGreeting = hour < 12 ? "Good Morning" : hour < 18 ? "Good Afternoon" : "Good Evening";

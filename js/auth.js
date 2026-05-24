@@ -1,10 +1,12 @@
 import { getFirebaseErrorMessage } from './utils.js';
-
-import { getFirebaseErrorMessage } from './utils.js';
+import { getFirebaseErrorMessage, logManagerError } from './utils.js';
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
 import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, sendEmailVerification } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
 import { getFirestore, doc, setDoc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
+
+import { getFirebaseErrorMessage } from './utils/errorUtils.js';
+import { getFirebaseErrorMessage } from './utils.js';
 
 const firebaseConfig = {
   apiKey: "AIzaSyBgrI9HwJPSc5b4pu2Egsv4DE7shNwptSw",
@@ -20,19 +22,29 @@ if (!window.firebase) { console.error("Firebase Compat SDK must be loaded before
 
 export const auth = window.firebase ? window.firebase.auth() : {};
 export const db = window.firebase ? window.firebase.firestore() : {};
+if (db.settings) {
+  db.settings({ experimentalForceLongPolling: true });
 export const auth = firebase.auth();
 export const db = firebase.firestore();
-db.settings({ experimentalForceLongPolling: true });
+export const auth = window.firebase ? window.firebase.auth() : {};
+export const db = window.firebase ? window.firebase.firestore() : {};
 
 // Fallback for network reliability to bypass CORS/network errors
-db.settings({ experimentalForceLongPolling: true });
+if (db.settings) {
+    db.settings({ experimentalForceLongPolling: true });
+}
 
 export function getUserRedirectPath(userData) {
     return userData && userData.isAdmin ? 'admin.html' : 'index.html';
 }
 
 export async function fetchUserDoc(uid) {
-    return await db.collection("users").doc(uid).get();
+    try {
+        return await db.collection("users").doc(uid).get();
+    } catch (error) {
+        logManagerError("Error fetching user document in fetchUserDoc for uid: " + uid, error);
+        throw error;
+    }
 }
 
 const ADMIN_EMAIL = null;
@@ -44,9 +56,6 @@ auth.onAuthStateChanged(async (user) => {
 
     if (user) {
         try {
-            const userDocRef = db.collection("users").doc(user.uid);
-            const userDoc = await userDocRef.get();
-
             const userDoc = await fetchUserDoc(user.uid);
             if (userDoc.exists) {
                 const userData = userDoc.data();
@@ -63,7 +72,9 @@ auth.onAuthStateChanged(async (user) => {
                 }
             }
         } catch (error) {
-            console.error("Manager Troubleshooting: Error fetching user document in auth state change:", error);
+            logManagerError("Error fetching user document in auth state change for uid:", user.uid, error);
+            logManagerError("Error fetching user document in auth state change:", error);
+            console.error("Manager Troubleshooting: Error fetching user document in auth state change for uid:", user.uid, error);
         }
     } else {
         if (authLink) {
@@ -72,6 +83,10 @@ auth.onAuthStateChanged(async (user) => {
         }
         if (membershipStatusContainer) {
             membershipStatusContainer.innerHTML = '';
+        }
+
+        if (!window.location.pathname.includes('sign in beta.html') && window.location.pathname !== '/' && !window.location.pathname.includes('index.html')) {
+            // We shouldn't force redirect all pages in auth.js. Each page should handle its own auth routing.
         }
     }
 });
@@ -127,7 +142,7 @@ if (document.getElementById('auth-form')) {
                 sessionStorage.setItem('newUser', 'true');
                 window.location.replace('index.html');
             } catch (error) {
-                console.error("Manager Troubleshooting: Sign up error for email:", email, error);
+                logManagerError("Sign up error for email:", email, error);
                 if (error.code === 'auth/network-request-failed' || error.code === 'unavailable') {
                     showMessage("Network error: Please check your connection or whitelist our domain.");
                 } else {
@@ -149,7 +164,7 @@ if (document.getElementById('auth-form')) {
                     submitBtn.disabled = false;
                 }
             } catch (error) {
-                console.error("Manager Troubleshooting: Sign in error for email:", email, error);
+                logManagerError("Sign in error for email:", email, error);
                 if (error.code === 'auth/network-request-failed' || error.code === 'unavailable') {
                     showMessage("Network error: Please check your connection or whitelist our domain.");
                 } else {

@@ -1,3 +1,4 @@
+import { logManagerError } from './utils.js';
 
 import { auth, db } from './auth.js';
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
@@ -121,7 +122,8 @@ async function updateCartState(mutationFn, errorMessage) {
         renderCart();
         await saveCart();
     } catch (error) {
-        console.error(`Manager Troubleshooting: ${errorMessage}:`, error);
+        logManagerError("Error adding item to cart for productId:", productId, error);
+        logManagerError(`${errorMessage}:`, error);
         cart = originalCart;
         renderCart();
     }
@@ -135,12 +137,11 @@ async function handleAddToCart(productId) {
 
 async function handleUpdateQuantity(productId, quantity) {
     if (quantity <= 0) {
-        await handleRemoveFromCart(productId);
-    } else {
-        await updateCartState(() => {
-            cart[productId] = parseInt(quantity, 10);
-        }, "Error updating item quantity");
+        return handleRemoveFromCart(productId);
     }
+    await updateCartState(() => {
+        cart[productId] = parseInt(quantity, 10);
+    }, "Error updating item quantity");
 }
 
 async function handleRemoveFromCart(productId) {
@@ -155,7 +156,8 @@ async function saveCart() {
             const userCartRef = doc(db, 'carts', currentUser.uid);
             await setDoc(userCartRef, { items: cart });
         } catch (error) {
-            console.error("Manager Troubleshooting: Error saving cart to Firestore:", error);
+            logManagerError("Error saving cart to Firestore for uid:", currentUser.uid, error);
+            logManagerError("Error saving cart to Firestore:", error);
         }
     } else {
         localStorage.setItem('localCart', JSON.stringify(cart));
@@ -236,7 +238,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 await saveCart();
                 localStorage.removeItem('localCart');
             } catch (error) {
-                console.error("Manager Troubleshooting: Error loading cart:", error);
+                logManagerError("Error loading cart during auth state change:", error);
+                logManagerError("Error loading cart:", error);
                 cart = localCart;
             }
         } else {

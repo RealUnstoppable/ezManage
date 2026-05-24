@@ -1,9 +1,9 @@
 const functions = require("firebase-functions");
-const { onRequest } = require("firebase-functions/v2/https");
+const {onRequest} = require("firebase-functions/v2/https");
 const HttpsError = functions.https.HttpsError;
 const admin = require("firebase-admin");
 const cors = require("cors")({ origin: true });
-const { adaptGen2Params } = require("./utils");
+const { adaptGen2Params, logManagerError } = require("./utils");
 
 admin.initializeApp();
 
@@ -15,7 +15,7 @@ const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET ||
 const stripe = require("stripe")(stripeKey);
 
 // 🔹 Create Checkout Session
-exports.createCheckoutSession = onRequest({ invoker: "public" }, (req, res) => {
+exports.createCheckoutSession = onRequest({invoker: "public"}, (req, res) => {
   cors(req, res, async () => {
     if (req.method !== "POST") {
       return res.status(405).send("Method Not Allowed");
@@ -76,14 +76,14 @@ exports.createCheckoutSession = onRequest({ invoker: "public" }, (req, res) => {
 
       res.status(200).json({url: session.url});
     } catch (err) {
-      console.error("Manager Troubleshooting: Checkout Error for uid: " + uid, err);
+      logManagerError(`Checkout Error for uid: ${uid}`, err);
       res.status(500).json({error: err.message});
     }
   });
 });
 
 // 🔐 STRIPE WEBHOOK (SECURE)
-exports.stripeWebhook = onRequest({ invoker: "public" }, async (req, res) => {
+exports.stripeWebhook = onRequest({invoker: "public"}, async (req, res) => {
   const sig = req.headers["stripe-signature"];
   let event;
 
@@ -91,6 +91,7 @@ exports.stripeWebhook = onRequest({ invoker: "public" }, async (req, res) => {
     event = stripe.webhooks.constructEvent(req.rawBody, sig, endpointSecret);
   } catch (err) {
     console.error("Manager Troubleshooting: Webhook Error:", err);
+    logManagerError("Webhook Error:", err);
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
 
@@ -114,7 +115,7 @@ exports.stripeWebhook = onRequest({ invoker: "public" }, async (req, res) => {
         }, {merge: true});
         console.log(`✅ Successfully upgraded user ${uid} to ${planName}`);
       } catch (error) {
-        console.error("Manager Troubleshooting: Error updating user subscription status:", error);
+        logManagerError("Error updating user subscription status:", error);
       }
     }
   }
@@ -138,7 +139,7 @@ exports.stripeWebhook = onRequest({ invoker: "public" }, async (req, res) => {
         });
         console.log(`❌ Reverted user ${doc.id} back to Free plan.`);
       } catch (err) {
-        console.error(`Manager Troubleshooting: Error reverting user ${doc.id} back to Free plan:`, err);
+        logManagerError(`Error reverting user ${doc.id} back to Free plan:`, err);
       }
     }
   }
@@ -147,7 +148,7 @@ exports.stripeWebhook = onRequest({ invoker: "public" }, async (req, res) => {
 });
 
 // 🔻 Cancel Subscription Manually
-exports.cancelSubscription = onRequest({ invoker: "public" }, (req, res) => {
+exports.cancelSubscription = onRequest({invoker: "public"}, (req, res) => {
   cors(req, res, async () => {
     if (req.method !== "POST") {
       return res.status(405).send("Method Not Allowed");
@@ -162,7 +163,7 @@ exports.cancelSubscription = onRequest({ invoker: "public" }, (req, res) => {
       );
       res.status(200).json({success: true});
     } catch (err) {
-      console.error("Manager Troubleshooting: Cancel Error for customerId: " + customerId, err);
+      logManagerError(`Cancel Error for customerId: ${customerId}`, err);
       res.status(500).json({error: err.message});
     }
   });
@@ -197,10 +198,10 @@ exports.manageShiftNotes = functions.https.onCall(async (data, context) => {
     if (!userDoc.exists) {
       throw new HttpsError("not-found", "User not found");
     }
-    const actualOrgId = userDoc.data().orgId || null;
+    const actualOrgId = payload.orgId || userDoc.data().orgId || null;
 
     if (action === "create") {
-      const {authorName, content, priority} = payload;
+      const {authorId, orgId, authorName, content, priority} = payload;
 
       if (!content) {
         throw new HttpsError(
@@ -212,12 +213,12 @@ exports.manageShiftNotes = functions.https.onCall(async (data, context) => {
         priority : "Normal";
 
       const newNote = {
-        authorId: uid,
+        authorId: authorId || uid,
         authorName: authorName || "Anonymous",
         content,
         priority: notePriority,
         status: "Active",
-        orgId: actualOrgId,
+        orgId: orgId || actualOrgId,
         timestamp: admin.firestore.FieldValue.serverTimestamp(),
       };
 
@@ -261,7 +262,8 @@ exports.manageShiftNotes = functions.https.onCall(async (data, context) => {
     throw new HttpsError(
         "invalid-argument", "Invalid action");
   } catch (error) {
-    console.error("Manager Troubleshooting: Shift Note Error:", error);
+    logManagerError("Shift Note Error for uid:", uid, error);
+    logManagerError("Shift Note Error:", error);
     throw new HttpsError("internal", error.message);
   }
 });
@@ -380,7 +382,7 @@ exports.manageEmployees = functions.https.onCall(async (data, context) => {
 
     throw new HttpsError("invalid-argument", "Invalid action");
   } catch (error) {
-    console.error("Manage Employees Error:", error);
+    logManagerError(`Manage Employees Error for uid: ${uid}`, error);
     if (error instanceof HttpsError) {
       throw error;
     }
@@ -413,7 +415,7 @@ exports.manageShiftGroups = functions.https.onCall(async (data, context) => {
   try {
     // Create a new group
     if (action === "create") {
-      const {ownerName, groupName, password} = payload;
+      const {authorId, orgId, ownerName, groupName, password} = payload;
 
       if (!groupName || !password) {
         throw new HttpsError(
@@ -421,7 +423,8 @@ exports.manageShiftGroups = functions.https.onCall(async (data, context) => {
       }
 
       const newGroup = {
-        ownerId: uid,
+        ownerId: authorId || uid,
+        orgId: orgId || uid,
         ownerName: ownerName || "Anonymous",
         groupName,
         password, // Basic password for joining (in a real app, hash this)
@@ -481,15 +484,15 @@ exports.manageShiftGroups = functions.https.onCall(async (data, context) => {
       }
       const requestDocRef = admin.firestore().collection("shift_group_requests").doc(requestId);
       const requestDoc = await requestDocRef.get();
-      
+
       if (!requestDoc.exists) {
         throw new HttpsError("not-found", "Request not found");
       }
-      
+
       if (requestDoc.data().userId !== uid) {
         throw new HttpsError("permission-denied", "You can only retract your own requests.");
       }
-      
+
       await requestDocRef.delete();
       return {success: true};
     }
@@ -562,7 +565,8 @@ exports.manageShiftGroups = functions.https.onCall(async (data, context) => {
 
     throw new HttpsError("invalid-argument", "Invalid action");
   } catch (error) {
-    console.error("Manager Troubleshooting: Shift Groups Error:", error);
+    logManagerError("Shift Groups Error for uid:", uid, error);
+    logManagerError("Shift Groups Error:", error);
     if (error instanceof HttpsError) {
       throw error;
     }
