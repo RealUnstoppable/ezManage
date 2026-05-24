@@ -457,12 +457,12 @@
                       return;
                   }
                   
-                  let html = '';
-                  snap.forEach(doc => {
+                  // ⚡ Bolt Optimization: Replace O(n²) string concatenation inside loop with array map().join('')
+                  container.innerHTML = snap.docs.map(doc => {
                       const data = doc.data();
                       const isUrgent = data.priority === 'Urgent';
                       const color = isUrgent ? 'red' : 'indigo';
-                      html += `
+                      return `
                         <div class="p-4 bg-white dark:bg-slate-900 rounded-xl border border-${color}-100 dark:border-${color}-900/50 shadow-sm flex items-start gap-4">
                             <div class="w-10 h-10 rounded-full bg-${color}-100 dark:bg-${color}-900/30 flex items-center justify-center text-${color}-500 flex-shrink-0 mt-1">
                                 <i data-lucide="${isUrgent ? 'alert-triangle' : 'message-square'}"></i>
@@ -473,8 +473,7 @@
                             </div>
                         </div>
                       `;
-                  });
-                  container.innerHTML = html;
+                  }).join('');
                   lucide.createIcons();
               });
 
@@ -493,11 +492,11 @@
                       tbody.innerHTML = `<tr><td colspan="4" class="px-6 py-8 text-center text-slate-400 font-bold">No managers found.</td></tr>`;
                       return;
                   }
-                  let html = '';
-                  snap.forEach(doc => {
+                  // ⚡ Bolt Optimization: Replace O(n²) string concatenation inside loop with array map().join('')
+                  tbody.innerHTML = snap.docs.map(doc => {
                       const d = doc.data();
                       const isOwner = doc.id === currentUser.uid;
-                      html += `
+                      return `
                         <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
                             <td class="px-6 py-4 font-black">${d.name || d.email.split('@')[0]} ${isOwner ? '<span class="ml-2 text-[10px] bg-indigo-100 text-indigo-700 px-2 py-1 rounded-full uppercase tracking-widest">Admin</span>' : ''}</td>
                             <td class="px-6 py-4 text-slate-500">${d.email || 'N/A'}</td>
@@ -507,8 +506,7 @@
                             </td>
                         </tr>
                       `;
-                  });
-                  tbody.innerHTML = html;
+                  }).join('');
               });
         }
 
@@ -523,9 +521,9 @@
                       return;
                   }
                   section.classList.remove('hidden');
-                  let html = '';
-                  snap.forEach(doc => {
-                      html += `
+                  // ⚡ Bolt Optimization: Replace O(n²) string concatenation inside loop with array map().join('')
+                  container.innerHTML = snap.docs.map(doc => {
+                      return `
                         <div class="flex justify-between items-center p-4 bg-white dark:bg-slate-900 border border-amber-200 dark:border-amber-900/50 rounded-xl">
                             <div>
                                 <div class="font-black text-slate-900 dark:text-white">${doc.data().userName}</div>
@@ -534,8 +532,7 @@
                             <button onclick="approveRequest('${doc.id}')" class="btn btn-accent btn-sm px-6">Approve</button>
                         </div>
                       `;
-                  });
-                  container.innerHTML = html;
+                  }).join('');
               });
         }
 
