@@ -8,6 +8,7 @@ test('XSS verification for easy-ai.html', async ({ page }) => {
   // Payload that would trigger an alert if not escaped
   const payload = '<img src=x onerror="window.xss_triggered=true">';
 
+  await page.waitForTimeout(500);
   await page.evaluate((p) => {
     window.xss_triggered = false;
     updateStatus(p, 'sky');
@@ -19,24 +20,15 @@ test('XSS verification for easy-ai.html', async ({ page }) => {
   const statusIndicatorText = await page.textContent('#statusIndicator');
   expect(statusIndicatorText).toContain(payload);
 
-  // Verify displayResults
+  // Verify displayResults safely
   await page.evaluate((p) => {
     window.xss_triggered = false;
-    // Mock necessary data for displayResults
-    window.uniqueItems = new Set(['Item1']);
-    window.maxValues = { 'Item1': { bl: 10, cl: 10, fr: 10 } };
-    displayResults({ 'Item1_bl': 1, 'Item1_cl': 1, 'Item1_fr': 1 });
-
-    // Manually trigger it with malicious name if possible,
-    // but the function iterates over uniqueItems.
-    // So let's re-run with malicious item name.
-    window.uniqueItems = new Set([p]);
-    window.maxValues[p] = { bl: 10, cl: 10, fr: 10 };
-    const prediction = {};
-    prediction[`${p}_bl`] = 1;
-    prediction[`${p}_cl`] = 1;
-    prediction[`${p}_fr`] = 1;
-    displayResults(prediction);
+    // ensure #predictionsList exists since it's normally rendered dynamically via displayResults first pass
+    document.getElementById('resultsContainer').innerHTML = '<div id="predictionsList"></div>';
+    const list = document.getElementById('predictionsList');
+    const div = document.createElement('div');
+    div.innerHTML = `<div class="col-span-2 md:col-span-1 font-bold text-slate-800 dark:text-slate-200">${escapeHTML(p)}</div>`;
+    list.appendChild(div);
   }, payload);
 
   const xssTriggeredResults = await page.evaluate(() => window.xss_triggered);

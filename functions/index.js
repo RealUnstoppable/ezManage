@@ -1,9 +1,9 @@
 const functions = require("firebase-functions");
-const { onRequest } = require("firebase-functions/v2/https");
+const {onRequest} = require("firebase-functions/v2/https");
 const HttpsError = functions.https.HttpsError;
 const admin = require("firebase-admin");
-const cors = require("cors")({ origin: true });
-const { adaptGen2Params } = require("./utils");
+const cors = require("cors")({origin: true});
+const {adaptGen2Params} = require("./utils");
 
 admin.initializeApp();
 
@@ -15,7 +15,7 @@ const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET ||
 const stripe = require("stripe")(stripeKey);
 
 // 🔹 Create Checkout Session
-exports.createCheckoutSession = onRequest({ invoker: "public" }, (req, res) => {
+exports.createCheckoutSession = onRequest({invoker: "public"}, (req, res) => {
   cors(req, res, async () => {
     if (req.method !== "POST") {
       return res.status(405).send("Method Not Allowed");
@@ -83,7 +83,7 @@ exports.createCheckoutSession = onRequest({ invoker: "public" }, (req, res) => {
 });
 
 // 🔐 STRIPE WEBHOOK (SECURE)
-exports.stripeWebhook = onRequest({ invoker: "public" }, async (req, res) => {
+exports.stripeWebhook = onRequest({invoker: "public"}, async (req, res) => {
   const sig = req.headers["stripe-signature"];
   let event;
 
@@ -147,7 +147,7 @@ exports.stripeWebhook = onRequest({ invoker: "public" }, async (req, res) => {
 });
 
 // 🔻 Cancel Subscription Manually
-exports.cancelSubscription = onRequest({ invoker: "public" }, (req, res) => {
+exports.cancelSubscription = onRequest({invoker: "public"}, (req, res) => {
   cors(req, res, async () => {
     if (req.method !== "POST") {
       return res.status(405).send("Method Not Allowed");
@@ -359,15 +359,15 @@ exports.manageShiftGroups = functions.https.onCall(async (data, context) => {
       }
       const requestDocRef = admin.firestore().collection("shift_group_requests").doc(requestId);
       const requestDoc = await requestDocRef.get();
-      
+
       if (!requestDoc.exists) {
         throw new HttpsError("not-found", "Request not found");
       }
-      
+
       if (requestDoc.data().userId !== uid) {
         throw new HttpsError("permission-denied", "You can only retract your own requests.");
       }
-      
+
       await requestDocRef.delete();
       return {success: true};
     }

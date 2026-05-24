@@ -649,7 +649,7 @@
                             aria-label="Export JSON"><i data-lucide="download" class="w-4"></i></button>
                         <input type="file" id="jsonImportInput" accept=".json" class="hidden"
                             onchange="importDataJSON(event)">
-                        <button onclick="navTo('presets')" class="btn btn-outline btn-sm"><i data-lucide="layout"
+                        <button aria-label="Templates" onclick="navTo('presets')" class="btn btn-outline btn-sm"><i data-lucide="layout"
                                 class="w-4"></i> Templates</button>
                         <button onclick="clearData()"
                             class="btn btn-outline btn-sm text-red-500 border-red-200 hover:bg-red-50"><i
@@ -2934,8 +2934,8 @@
             if (!currentUserData || !currentUserData.orgId) {
                 // Not in an org
                 controls.innerHTML = `
-                    <button onclick="document.getElementById('createGroupModal').classList.remove('hidden')" class="btn btn-outline btn-sm"><i data-lucide="plus" class="w-4 h-4"></i> Create Group</button>
-                    <button onclick="document.getElementById('joinGroupModal').classList.remove('hidden')" class="btn btn-outline btn-sm"><i data-lucide="log-in" class="w-4 h-4"></i> Join Group</button>
+                    <button aria-label="Create Group" onclick="document.getElementById('createGroupModal').classList.remove('hidden')" class="btn btn-outline btn-sm"><i data-lucide="plus" class="w-4 h-4"></i> Create Group</button>
+                    <button aria-label="Join Group" onclick="document.getElementById('joinGroupModal').classList.remove('hidden')" class="btn btn-outline btn-sm"><i data-lucide="log-in" class="w-4 h-4"></i> Join Group</button>
                 `;
                 postArea.classList.add('hidden');
                 lucide.createIcons();
