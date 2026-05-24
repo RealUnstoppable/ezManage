@@ -2102,7 +2102,7 @@
                 const groupHeader = document.createElement('div');
                 groupHeader.className = "px-6 py-4 flex justify-between items-center cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors";
                 groupHeader.innerHTML = `
-                    <div class="font-black text-lg text-slate-800 dark:text-slate-200"><i data-lucide="calendar" class="inline-block w-5 h-5 mr-2 text-sky-500"></i>${key}</div>
+                    <div class="font-black text-lg text-slate-800 dark:text-slate-200"><i data-lucide="calendar" class="inline-block w-5 h-5 mr-2 text-sky-500"></i>${escapeHTML(key)}</div>
                     <div class="flex items-center gap-3">
                         <span class="text-xs font-bold bg-sky-100 text-sky-700 px-2 py-1 rounded-md">${grouped[key].length} shifts</span>
                         <i data-lucide="chevron-down" class="w-5 h-5 text-slate-400 transition-transform duration-200"></i>
@@ -2127,8 +2127,8 @@
                     div.className = "flex justify-between items-center p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl hover:bg-sky-50 dark:hover:bg-sky-900/20 transition-colors group";
                     div.innerHTML = `
                         <div>
-                            <div class="font-black text-md text-slate-700 dark:text-slate-300">Manager: ${data.manager || 'N/A'}</div>
-                            <div class="text-[10px] font-bold uppercase tracking-widest text-slate-400 mt-1">Duration: ${data.durationMins || 0}m • Saved at ${data.timeSaved || 'N/A'}</div>
+                            <div class="font-black text-md text-slate-700 dark:text-slate-300">Manager: ${escapeHTML(data.manager || 'N/A')}</div>
+                            <div class="text-[10px] font-bold uppercase tracking-widest text-slate-400 mt-1">Duration: ${escapeHTML(data.durationMins || 0)}m • Saved at ${escapeHTML(data.timeSaved || 'N/A')}</div>
                         </div>
                         <div class="flex gap-2">
                             <button class="btn btn-outline btn-sm bg-white dark:bg-slate-900 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity history-load">
