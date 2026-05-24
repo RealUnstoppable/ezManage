@@ -1,14 +1,16 @@
 import { jest } from "@jest/globals";
-import { loadNavbar } from '../../js/navbar.js';
-import * as authModule from '../../js/auth.js';
-import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
-import { getDoc } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
 
-jest.mock('../../js/auth.js', () => ({
+// The gstatic URLs are mocked by moduleNameMapper pointing to __mocks__/firebase.js
+import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js';
+import { getDoc, doc } from 'https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js';
+
+jest.unstable_mockModule('../../js/auth.js', () => ({
   auth: {},
   db: {},
   getUserRedirectPath: (userData) => userData && userData.isAdmin ? 'admin.html' : 'index.html'
 }));
+
+const { loadNavbar } = await import('../../js/navbar.js');
 
 describe('loadNavbar', () => {
   beforeEach(() => {

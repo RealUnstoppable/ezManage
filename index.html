@@ -1359,6 +1359,7 @@
         db.enablePersistence({ synchronizeTabs: true }).catch(err => console.error("Offline sync error:", err));
 
         let currentUser = null;
+        let isInitializingAuth = true;
         function escapeHTML(str) {
             if (!str && str !== 0) return "";
             return String(str)
@@ -1403,8 +1404,15 @@
 
                 unsubscribeUser = db.collection("users").doc(user.uid).onSnapshot(async doc => {
                     isInitializingAuth = false;
-                    if (doc.exists && doc.data().name) {
+                    if (doc.exists) {
                         currentUserData = doc.data();
+
+                        if (!currentUserData.name) {
+                            const defaultName = user.displayName || (user.email ? user.email.split('@')[0] : "Manager");
+                            currentUserData.name = defaultName;
+                            // Only update locally if we shouldn't trigger another snapshot write loop immediately
+                            // Wait until the user saves their profile to commit this
+                        }
 
                         // Enforce Opt-In Cloud Policy
                         cloudSyncEnabled = !!currentUserData.cloudSyncEnabled;
@@ -1435,12 +1443,18 @@
                             initialDraftLoaded = true;
                         }
 
-                        const activeView = document.querySelector('.view-section.active');
-                        if (activeView && activeView.id === 'view-auth') navTo('tracker');
+                        const pendingNavTo = localStorage.getItem('navTo');
+                        if (pendingNavTo) {
+                            localStorage.removeItem('navTo');
+                            navTo(pendingNavTo);
+                        } else {
+                            const activeView = document.querySelector('.view-section.active');
+                            if (activeView && activeView.id === 'view-auth') navTo('tracker');
+                        }
                         runAIPatternLogic();
                     } else {
 
-                        if (!doc.exists || !doc.data().name) {
+                        if (!doc.exists) {
                             const activeView = document.querySelector('.view-section.active');
                             if (activeView && activeView.id !== 'view-setup') {
                                 try {
@@ -1462,11 +1476,21 @@
                     }
                 });
             } else {
+                isInitializingAuth = false;
                 navStatus.innerText = "Login / Sign Up";
                 currentUserData = null;
                 initialDraftLoaded = false;
                 cloudSyncEnabled = false;
                 updateCloudSyncUI();
+
+                const pendingNavTo = localStorage.getItem('navTo');
+                if (pendingNavTo) {
+                    localStorage.removeItem('navTo');
+                    navTo(pendingNavTo);
+                } else {
+                    const activeView = document.querySelector('.view-section.active');
+                    if (activeView && activeView.id !== 'view-auth' && activeView.id !== 'view-tracker') navTo('auth');
+                }
             }
         });
 
@@ -1669,6 +1693,10 @@
         function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); }
 
         function navTo(viewId) {
+            if (isInitializingAuth) {
+                localStorage.setItem('navTo', viewId);
+                return;
+            }
             if (!currentUser && (['history', 'presets', 'performance', 'request', 'profile', 'shiftNotes'].includes(viewId))) {
                 viewId = 'auth';
             }
@@ -3121,11 +3149,6 @@
         }
 
         window.onload = () => {
-            const redirect = localStorage.getItem('navTo');
-            if (redirect) {
-                navTo(redirect);
-                localStorage.removeItem('navTo');
-            }
             if (localStorage.getItem('managerProTheme') === 'dark') {
                 document.body.classList.add('dark-mode');
                 document.getElementById('themeToggle').checked = true;
