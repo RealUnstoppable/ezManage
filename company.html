@@ -1416,7 +1416,9 @@
 
         async function removeManager(userId) {
             if (!confirm("Remove this manager from the organization?")) return;
-            alert("Removing managers requires backend Cloud Function support which is coming in v2!");
+            try {
+                await callFunction('manageShiftGroups', { action: "remove_manager", payload: { userId, groupId: activeOrgId } });
+            } catch (e) { alert("Failed: " + e.message); }
         }
 
         function renderGlobalPerformanceChart(allShifts) {

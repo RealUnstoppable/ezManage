@@ -1,25 +1,9 @@
 import { getFirebaseErrorMessage } from './utils/errorUtils.js';
 
-import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
-import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, sendEmailVerification } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
-import { getFirestore, doc, setDoc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
-import { getFirebaseErrorMessage } from './utils.js';
-
-const firebaseConfig = {
-  apiKey: "AIzaSyBgrI9HwJPSc5b4pu2Egsv4DE7shNwptSw",
-  authDomain: "dts-hub-website.firebaseapp.com",
-  projectId: "dts-hub-website",
-  storageBucket: "dts-hub-website.firebasestorage.app",
-  messagingSenderId: "48345990988",
-  appId: "1:48345990988:web:e3662c9b508168546471e9",
-  measurementId: "G-ZN3YJPHVGX"
-};
-
 if (!window.firebase) { console.error("Firebase Compat SDK must be loaded before auth.js"); }
-if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
 
-export const auth = firebase.auth();
-export const db = firebase.firestore();
+export const auth = window.firebase ? window.firebase.auth() : {};
+export const db = window.firebase ? window.firebase.firestore() : {};
 
 export function getUserRedirectPath(userData) {
     return userData && userData.isAdmin ? 'admin.html' : 'index.html';
@@ -27,6 +11,7 @@ export function getUserRedirectPath(userData) {
 
 const ADMIN_EMAIL = null;
 
+if (auth.onAuthStateChanged) {
 auth.onAuthStateChanged(async (user) => {
     const authLink = document.getElementById('auth-link');
     const membershipStatusContainer = document.getElementById('membership-status-container');
@@ -34,10 +19,10 @@ auth.onAuthStateChanged(async (user) => {
     if (user) {
 
         try {
-            const userDocRef = doc(db, "users", user.uid);
-            const userDoc = await getDoc(userDocRef);
+            const userDocRef = db.collection("users").doc(user.uid);
+            const userDoc = await userDocRef.get();
 
-            if (userDoc.exists()) {
+            if (userDoc.exists) {
                 const userData = userDoc.data();
                 const destination = getUserRedirectPath(userData);
 
@@ -66,6 +51,7 @@ auth.onAuthStateChanged(async (user) => {
         }
     }
 });
+}
 
 if (document.getElementById('auth-form')) {
     const form = document.getElementById('auth-form');

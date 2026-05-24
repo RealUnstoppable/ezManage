@@ -75,7 +75,7 @@ exports.createCheckoutSession = onRequest({ invoker: "public" }, (req, res) => {
 
       res.status(200).json({url: session.url});
     } catch (err) {
-      console.error("Manager Troubleshooting: Checkout Error for uid: " + uid, err);
+      console.error("Checkout Error:", err);
       res.status(500).json({error: err.message});
     }
   });
@@ -161,7 +161,7 @@ exports.cancelSubscription = onRequest({ invoker: "public" }, (req, res) => {
       );
       res.status(200).json({success: true});
     } catch (err) {
-      console.error("Manager Troubleshooting: Cancel Error for customerId: " + customerId, err);
+      console.error("Cancel Error:", err);
       res.status(500).json({error: err.message});
     }
   });
@@ -412,6 +412,30 @@ exports.manageShiftGroups = functions.https.onCall(async (data, context) => {
       await requestDocRef.update({
         status: "Approved",
         approvedAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+
+      return {success: true};
+    }
+
+    // Remove a manager from a group
+    if (action === "remove_manager") {
+      const {userId, groupId} = payload;
+
+      if (!userId || !groupId) {
+        throw new HttpsError(
+            "invalid-argument", "Missing required fields");
+      }
+
+      const groupDoc = await admin.firestore()
+          .collection("shift_groups").doc(groupId).get();
+
+      if (!groupDoc.exists || groupDoc.data().ownerId !== uid) {
+        throw new HttpsError(
+            "permission-denied", "Unauthorized");
+      }
+
+      await admin.firestore().collection("users").doc(userId).update({
+        orgId: null,
       });
 
       return {success: true};
