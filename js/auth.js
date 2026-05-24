@@ -1,10 +1,5 @@
 import { getFirebaseErrorMessage } from './utils/errorUtils.js';
 
-import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
-import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, sendEmailVerification } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
-import { getFirestore, doc, setDoc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
-import { getFirebaseErrorMessage } from './utils.js';
-
 const firebaseConfig = {
   apiKey: "AIzaSyBgrI9HwJPSc5b4pu2Egsv4DE7shNwptSw",
   authDomain: "dts-hub-website.firebaseapp.com",
@@ -34,10 +29,10 @@ auth.onAuthStateChanged(async (user) => {
     if (user) {
 
         try {
-            const userDocRef = doc(db, "users", user.uid);
-            const userDoc = await getDoc(userDocRef);
+            const userDocRef = db.collection("users").doc(user.uid);
+            const userDoc = await userDocRef.get();
 
-            if (userDoc.exists()) {
+            if (userDoc.exists) {
                 const userData = userDoc.data();
                 const destination = getUserRedirectPath(userData);
 
@@ -63,6 +58,10 @@ auth.onAuthStateChanged(async (user) => {
 
         if (membershipStatusContainer) {
             membershipStatusContainer.innerHTML = '';
+        }
+
+        if (!window.location.pathname.includes('sign in beta.html') && window.location.pathname !== '/' && !window.location.pathname.includes('index.html')) {
+            // We shouldn't force redirect all pages in auth.js. Each page should handle its own auth routing.
         }
     }
 });

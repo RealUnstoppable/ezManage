@@ -137,12 +137,24 @@
                         const data = docSnap.data();
                         document.getElementById('acc-username').textContent = data.username || "User";
                         document.getElementById('acc-membership').textContent = data.membershipLevel || "Free Tier";
+                    } else {
+                        // Create a default user document if it doesn't exist
+                        await docRef.set({
+                            email: user.email,
+                            username: "User",
+                            membershipLevel: "Free Tier",
+                            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                        }, { merge: true });
+                        document.getElementById('acc-username').textContent = "User";
+                        document.getElementById('acc-membership').textContent = "Free Tier";
                     }
                 } catch (e) {
                     console.error("Error fetching user data:", e);
                 }
             } else {
-                window.location.replace('sign in beta.html');
+                if (!window.location.pathname.includes('sign in beta.html')) {
+                    window.location.replace('sign in beta.html');
+                }
             }
         });
 

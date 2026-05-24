@@ -2407,11 +2407,16 @@
 
         function saveProfileToFirebase() {
             if (!currentUser) return;
+
+            const cloudToggle = document.getElementById('profileCloudSyncToggle').checked;
+            cloudSyncEnabled = cloudToggle;
+
             const data = {
                 name: document.getElementById('profName').value,
                 role: document.getElementById('profRole').value,
                 phone: document.getElementById('profPhone').value,
-                aiTrainingEnabled: document.getElementById('profileAIToggle').checked
+                aiTrainingEnabled: document.getElementById('profileAIToggle').checked,
+                cloudSyncEnabled: cloudToggle
             };
 
             if (profileDebounceTimeout) clearTimeout(profileDebounceTimeout);
