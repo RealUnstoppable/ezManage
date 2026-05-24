@@ -128,9 +128,10 @@ service cloud.firestore {
           (resource.data.get('orgId', null) != null && resource.data.get('orgId', null) == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('orgId', null)) ||
           isAdmin()
       );
-      // Removed "allow write: if false;" to allow clients to create/update
+      // 🛡️ Sentinel: Enforce strict combined verification for authorId and orgId to prevent spoofing
       allow create: if request.auth != null
-                    && request.resource.data.get('authorId', null) == request.auth.uid;
+                    && request.resource.data.get('authorId', null) == request.auth.uid
+                    && request.resource.data.get('orgId', null) == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('orgId', null);
       allow update: if request.auth != null && (
           resource.data.get('authorId', null) == request.auth.uid ||
           (resource.data.get('orgId', null) != null && resource.data.get('orgId', null) == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('orgId', null)) ||
@@ -138,11 +139,7 @@ service cloud.firestore {
           resource.data.authorId == request.auth.uid || 
           (resource.data.orgId != null && resource.data.orgId == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.orgId) ||
           isAdmin()
-      );
-      // Removed allow write: if false to permit client-side testing/usage since Cloud functions alone weren't handling all needs properly per bug report.
-      // But adding user/org verification for creation to be safe.
-      allow create: if request.auth != null && request.resource.data.orgId == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.orgId;
-      allow update: if request.auth != null && resource.data.orgId == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.orgId;
+      ) && request.resource.data.get('orgId', resource.data.get('orgId', null)) == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('orgId', null);
     }
 
     // SHIFT GROUPS
