@@ -1593,6 +1593,11 @@
         let unsubscribeUser = null;
         let initialDraftLoaded = false;
 
+        async function callCloudFunction(functionName, payload) {
+            const func = firebase.functions().httpsCallable(functionName);
+            return await func(payload);
+        }
+
         // Legal & Privacy Settings
         let cloudSyncEnabled = false;
 
@@ -3001,10 +3006,8 @@ async function submitMaintenanceTicket() {
                     orgId: currentUserData.orgId
                 });
                 // Optimistic UI update already handled by changing the select value
-                // but refreshing guarantees sync
-                fetchMaintenanceTickets();
             } catch (error) {
-                console.error("Error updating ticket:", error);
+                console.error("Manager Troubleshooting: Error updating ticket:", error);
                 alert("Failed to update status. " + error.message);
                 fetchMaintenanceTickets(); // revert
             }
@@ -3806,8 +3809,12 @@ function checkAndRenderOrgControls() {
                     action: "resolve",
                     payload: { noteId: noteId, resolvedBy: currentUser.email.split('@')[0] }
                 });
-                if (result.data.success) fetchShiftNotes();
+                if (result.data.success && noteDiv) {
+                    noteDiv.remove();
+                }
             } catch (err) {
+                if (noteDiv) noteDiv.style.display = originalDisplay; // Revert optimistic hide
+                console.error("Manager Troubleshooting: Error resolving shift note:", err);
                 alert("Failed to resolve note: " + err.message);
             }
         }
@@ -3837,6 +3844,7 @@ function checkAndRenderOrgControls() {
                     window.location.reload();
                 }
             } catch (e) {
+                console.error("Manager Troubleshooting: Error creating shift group:", e);
                 alert("Failed to create group: " + e.message);
             }
         }
@@ -3862,6 +3870,7 @@ function checkAndRenderOrgControls() {
                     document.getElementById('joinGroupModal').classList.add('hidden');
                 }
             } catch (e) {
+                console.error("Manager Troubleshooting: Error requesting to join shift group:", e);
                 alert("Failed to request join: " + e.message);
             }
         }
@@ -3954,6 +3963,7 @@ function checkAndRenderOrgControls() {
                 });
                 if (result.data.success) alert("Approved!");
             } catch (e) {
+                console.error("Manager Troubleshooting: Error approving group request:", e);
                 alert("Failed to approve: " + e.message);
             }
         }
