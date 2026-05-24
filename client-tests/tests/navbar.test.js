@@ -29,6 +29,8 @@ jest.unstable_mockModule('../../js/auth.js', () => ({
   getUserRedirectPath: (userData) => userData && userData.isAdmin ? 'admin.html' : 'index.html'
 }));
 
+const authModule = await import('../../js/auth.js');
+const { loadNavbar } = await import('../../js/navbar.js');
 const { loadNavbar } = await import('../../js/navbar.js');
 const { onAuthStateChanged } = await import("https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js");
 const { getDoc } = await import("https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js");

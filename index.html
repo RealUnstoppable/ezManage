@@ -1188,7 +1188,7 @@
                     <button class="btn btn-outline btn-sm" onclick="exportPerformanceCSV()">Export CSV</button>
                 </div>
 
-                <div class="grid md:grid-cols-3 gap-6 mb-12">
+                <div class="grid md:grid-cols-4 gap-6 mb-12">
                     <div class="card text-center">
                         <div class="text-4xl font-black text-sky-500 mb-2" id="statShifts">0</div>
                         <div class="text-[10px] font-black uppercase tracking-widest text-slate-400">Shifts Logged</div>
@@ -1200,6 +1200,10 @@
                     <div class="card text-center">
                         <div class="text-4xl font-black text-emerald-500 mb-2" id="statRoutines">0%</div>
                         <div class="text-[10px] font-black uppercase tracking-widest text-slate-400">Routine Score</div>
+                    </div>
+                    <div class="card text-center">
+                        <div class="text-4xl font-black text-indigo-500 mb-2" id="statTotalTime">0m</div>
+                        <div class="text-[10px] font-black uppercase tracking-widest text-slate-400">Total Duration</div>
                     </div>
                 </div>
 
@@ -2181,20 +2185,34 @@
                     <div class="font-black text-lg text-slate-800 dark:text-slate-200"><i data-lucide="calendar" class="inline-block w-5 h-5 mr-2 text-sky-500"></i>${escapeHTML(key)}</div>
                     <div class="flex items-center gap-3">
                         <span class="text-xs font-bold bg-sky-100 text-sky-700 px-2 py-1 rounded-md">${grouped[key].length} shifts</span>
-                        <i data-lucide="chevron-down" class="w-5 h-5 text-slate-400 transition-transform duration-200"></i>
+                        <i data-lucide="chevron-down" class="history-group-icon w-5 h-5 text-slate-400 transition-transform duration-200"></i>
                     </div>
                 `;
 
                 const groupContent = document.createElement('div');
+                groupContent.className = "history-group-content hidden px-6 pb-4 pt-2 border-t border-slate-100 dark:border-slate-800 space-y-3";
+                
                 groupContent.className = "hidden px-6 pb-4 pt-2 border-t border-slate-100 dark:border-slate-800 space-y-3";
 
                 groupHeader.onclick = () => {
-                    groupContent.classList.toggle('hidden');
+                    const isCurrentlyHidden = groupContent.classList.contains('hidden');
+
+                    // Close all other groups
+                    document.querySelectorAll('.history-group-content').forEach(el => {
+                        el.classList.add('hidden');
+                    });
+                    document.querySelectorAll('.history-group-icon').forEach(el => {
+                        el.style.transform = 'rotate(0deg)';
+                    });
+
+                    // Toggle the clicked one
                     const icon = groupHeader.querySelector('[data-lucide="chevron-down"]');
-                    if (groupContent.classList.contains('hidden')) {
-                        icon.style.transform = 'rotate(0deg)';
-                    } else {
+                    if (isCurrentlyHidden) {
+                        groupContent.classList.remove('hidden');
                         icon.style.transform = 'rotate(180deg)';
+                    } else {
+                        groupContent.classList.add('hidden');
+                        icon.style.transform = 'rotate(0deg)';
                     }
                 };
 
@@ -2312,6 +2330,7 @@
             document.getElementById('statAvgTime').innerText = history.length > 0 ? Math.round(totalTime / history.length) + "m" : "0m";
             const score = totalRoutines === 0 ? 0 : Math.round((checkedRoutines / totalRoutines) * 100);
             document.getElementById('statRoutines').innerText = score + "%";
+            document.getElementById('statTotalTime').innerText = totalTime + "m";
 
             const tips = document.getElementById('performanceTips');
             if (score < 70) tips.innerText = "Focus: Your routine score is low. Try completing ServSafe temps and lobby checks immediately after the rush.";
@@ -2367,6 +2386,14 @@
                             borderDash: [5, 5],
                             tension: 0.4,
                             yAxisID: 'y1'
+                        },
+                        {
+                            label: 'Shift Count Trend',
+                            data: sorted.map((_, i) => i + 1),
+                            borderColor: '#6366f1',
+                            borderDash: [2, 2],
+                            tension: 0.4,
+                            yAxisID: 'y'
                         }
                     ]
                 },

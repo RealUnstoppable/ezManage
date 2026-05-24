@@ -691,6 +691,7 @@
         const auth = firebase.auth();
         const db = firebase.firestore();
         db.settings({ experimentalForceLongPolling: true });
+        
 
         function escapeHTML(str) {
             if (!str && str !== 0) return "";
@@ -993,6 +994,8 @@
                 });
 
                 // For a Corporate Workspace, we create a shift_group and make them the owner
+                const manageShiftGroups = firebase.functions().httpsCallable('manageShiftGroups');
+                await manageShiftGroups({
                 const result = await callFunction('manageShiftGroups', {
                     action: "create",
                     payload: {
@@ -1503,6 +1506,13 @@
 
         async function approveRequest(requestId) {
             try {
+                const manageShiftGroups = firebase.functions().httpsCallable('manageShiftGroups');
+                await manageShiftGroups({
+                    action: "approve_join",
+                    payload: { requestId: requestId }
+                });
+                alert("Manager Approved!");
+            } catch(e) { alert("Failed: " + e.message); }
                 await callFunction('manageShiftGroups', { action: "approve_join", payload: { requestId } });
             } catch (e) { alert("Failed: " + e.message); }
         }
@@ -1510,6 +1520,12 @@
         async function removeManager(userId) {
             if (!confirm("Remove this manager from the organization?")) return;
             try {
+                await db.collection('users').doc(userId).update({ orgId: null });
+                alert("Manager removed successfully.");
+            } catch(e) {
+                console.error(e);
+                alert("Failed to remove manager: " + e.message);
+            }
                 await callFunction('manageShiftGroups', { action: "remove_manager", payload: { userId, groupId: activeOrgId } });
             } catch (e) { alert("Failed: " + e.message); }
         }
