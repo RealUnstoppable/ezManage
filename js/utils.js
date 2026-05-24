@@ -58,3 +58,7 @@ export function getFirebaseErrorMessage(error) {
             return 'An unexpected error occurred. Please try again.';
     }
 }
+
+export function logManagerError(actionMessage, error) {
+    console.error("Manager Troubleshooting: " + actionMessage, error);
+}
