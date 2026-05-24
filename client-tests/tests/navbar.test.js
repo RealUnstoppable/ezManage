@@ -1,9 +1,18 @@
 import { jest } from "@jest/globals";
-window.firebase = { apps: [], auth: jest.fn(), firestore: jest.fn(), initializeApp: jest.fn() };
+window.firebase = {
+  apps: [],
+  auth: jest.fn(),
+  firestore: () => ({
+    collection: jest.fn(),
+    settings: jest.fn()
+  }),
+  initializeApp: jest.fn()
+};
 global.firebase = window.firebase;
+
 jest.unstable_mockModule('../../js/auth.js', () => ({
   auth: {},
-  db: {},
+  db: { settings: jest.fn(), collection: jest.fn() },
   getUserRedirectPath: (userData) => userData && userData.isAdmin ? 'admin.html' : 'index.html'
 }));
 
@@ -17,7 +26,7 @@ describe('loadNavbar', () => {
         apps: [],
         initializeApp: jest.fn(),
         auth: () => ({ onAuthStateChanged: jest.fn() }),
-        firestore: () => ({})
+        firestore: () => ({ settings: jest.fn(), collection: jest.fn() })
     };
     global.firebase = window.firebase;
   });
