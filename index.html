@@ -2,6 +2,11 @@
 <html lang="en">
 
 <head>
+  <script type="module">
+    import { escapeHTML } from '/js/utils.js';
+    window.escapeHTML = escapeHTML;
+  </script>
+
     <link rel="manifest" href="manifest.json">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -1528,6 +1533,8 @@
 
         db.enablePersistence().catch(err => console.error("Offline sync error:", err));
 
+        let currentUser = null;
+let currentUserData = null;
         window.currentUser = null;
         function escapeHTML(str) {
             if (!str && str !== 0) return "";
@@ -1552,6 +1559,7 @@
         let cloudSyncEnabled = false;
         let isInitializingAuth = true;
 
+auth.onAuthStateChanged((user) => {
 
 
         auth.onAuthStateChanged((user) => {
@@ -2737,6 +2745,7 @@
 
 
 
+async function submitMaintenanceTicket() {
 
 
         async function submitMaintenanceTicket() {
@@ -3271,6 +3280,7 @@
                 });
         }
 
+function checkAndRenderOrgControls() {
 
 
         function checkAndRenderOrgControls() {

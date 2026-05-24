@@ -63,6 +63,7 @@ auth.onAuthStateChanged(async (user) => {
                 }
             }
         } catch (error) {
+            console.error("Manager Troubleshooting: Error fetching user document in auth state change for uid:", user.uid, error);
             console.error("Manager Troubleshooting: Error fetching user document in auth state change:", error);
         }
     } else {

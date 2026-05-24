@@ -409,12 +409,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 renderSongTable(userFavorites);
             }
         } catch (e) {
+            console.error("Manager Troubleshooting: Error toggling favorite for songId:", songId, e);
             console.error("Manager Troubleshooting: Error toggling favorite:", e);
             if (e.code === 'not-found') {
                 try {
                     await setDoc(userRef, { musicFavorites: [songId] }, { merge: true });
                     userFavorites.push(song);
                 } catch (innerError) {
+                    console.error("Manager Troubleshooting: Error setting initial favorite document for songId:", songId, innerError);
+                }
+            } else {
+                console.error("Manager Troubleshooting: Error toggling favorite for songId:", songId, e);
                     console.error("Manager Troubleshooting: Error setting initial favorite document:", innerError);
                 }
             } else {
@@ -433,6 +438,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     const favIds = docSnap.data().musicFavorites;
                     userFavorites = librarySongs.filter(song => favIds.includes(song.id));
                 }
+            } catch (e) { console.error("Manager Troubleshooting: Error loading user favorites for uid:", user.uid, e); }
             } catch (e) { console.error("Manager Troubleshooting: Error loading user favorites:", e); }
 
             const hour = new Date().getHours();

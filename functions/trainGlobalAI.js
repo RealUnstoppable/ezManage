@@ -104,6 +104,7 @@ exports.trainGlobalAI = onSchedule("every 24 hours", async (event) => {
   console.log("Global AI Training completed and saved.");
   return true;
   } catch (err) {
+    console.error("Manager Troubleshooting: Global AI Training error:", err);
     console.error("Manager Troubleshooting: Training error:", err);
     return null;
   }

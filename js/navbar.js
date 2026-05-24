@@ -54,6 +54,7 @@ function updateAuthLink() {
                 authLink.href = destination;
                 authLink.textContent = "My Account";
             } catch (e) {
+                console.error("Manager Troubleshooting: Navbar auth state error for uid:", user.uid, e);
                 console.error("Manager Troubleshooting: Navbar auth state error:", e);
             }
         } else {
