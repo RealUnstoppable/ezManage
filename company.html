@@ -733,6 +733,7 @@
         const auth = firebase.auth();
         const db = firebase.firestore();
         db.settings({ experimentalForceLongPolling: true });
+
         
 
         function escapeHTML(str) {
@@ -1294,6 +1295,7 @@
         // --- Data Fetching ---
         async function fetchGlobalData() {
             if(!activeOrgId) return;
+
             
             // 1. Fetch active notes
             db.collection('shift_notes').where('orgId', '==', activeOrgId).where('status', '==', 'Active')
@@ -1304,6 +1306,7 @@
                       container.innerHTML = `<div class="text-center py-8 bg-white dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-800 text-slate-400 font-bold">No active notes across stores.</div>`;
                       return;
                   }
+
                   
                   // ⚡ Bolt Optimization: Replace O(n²) string concatenation inside loop with array map().join('')
                   container.innerHTML = snap.docs.map(doc => {

@@ -796,6 +796,9 @@ function initializeAdminPage(adminUser) {
       if (subscribers.length === 0) {
         newsletterListBody.innerHTML = `<tr><td colspan="2" style="text-align:center; color:var(--text-secondary);">No subscribers yet.</td></tr>`; return;
       }
+      // ⚡ Bolt Optimization: Replace O(N^2) appendChild loop with O(1) batched string map/join
+      newsletterListBody.innerHTML = subscribers.map(subscriber => {
+        const subscriptionDate = subscriber.subscribedAt?.toDate().toLocaleDateString() || 'N/A';
       // ⚡ Bolt Optimization: Use DocumentFragment to batch DOM insertions and reduce layout thrashing
       const fragment = document.createDocumentFragment();
       subscribers.forEach(subscriber => {
