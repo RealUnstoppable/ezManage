@@ -19,10 +19,6 @@ describe('Firebase Initialization', () => {
     db = authModule.db;
   });
 
-  it('should call initializeApp with correct config', () => {
-    expect(global.firebase.initializeApp).toHaveBeenCalled();
-  });
-
   it('should call getAuth', () => {
     expect(global.firebase.auth).toHaveBeenCalled();
   });

@@ -1,16 +1,51 @@
 import { jest } from "@jest/globals";
+
+global.window = global.window || {};
+global.firebase = {
+    apps: [],
+    auth: jest.fn(() => ({ onAuthStateChanged: jest.fn() })),
+    firestore: jest.fn(() => ({ collection: jest.fn() }))
+};
+global.window.firebase = global.firebase;
+
 import { loadNavbar } from '../../js/navbar.js';
 import * as authModule from '../../js/auth.js';
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
 import { getDoc } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
+window.firebase = {
+  apps: [],
+  auth: jest.fn(),
+  firestore: () => ({
+    collection: jest.fn(),
+    settings: jest.fn()
+  }),
+  initializeApp: jest.fn()
+};
+global.firebase = window.firebase;
 
-jest.mock('../../js/auth.js', () => ({
+jest.unstable_mockModule('../../js/auth.js', () => ({
   auth: {},
-  db: {},
+  db: { settings: jest.fn(), collection: jest.fn() },
   getUserRedirectPath: (userData) => userData && userData.isAdmin ? 'admin.html' : 'index.html'
 }));
 
+const authModule = await import('../../js/auth.js');
+const { loadNavbar } = await import('../../js/navbar.js');
+const { loadNavbar } = await import('../../js/navbar.js');
+const { onAuthStateChanged } = await import("https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js");
+const { getDoc } = await import("https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js");
+
 describe('loadNavbar', () => {
+  beforeAll(() => {
+    window.firebase = {
+        apps: [],
+        initializeApp: jest.fn(),
+        auth: () => ({ onAuthStateChanged: jest.fn() }),
+        firestore: () => ({ settings: jest.fn(), collection: jest.fn() })
+    };
+    global.firebase = window.firebase;
+  });
+
   beforeEach(() => {
     document.body.innerHTML = '<div class="main-header"></div>';
     jest.clearAllMocks();
