@@ -463,6 +463,11 @@
             <a href="#" onclick="navTo('pricing')"
                 class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="credit-card"></i>
                 Pricing & Plans</a>
+
+            <a href="#" onclick="navTo('timeoff')"
+                class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="calendar-clock"></i>
+                Time Off</a>
+
             <a href="#" onclick="navTo('request')"
                 class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="lightbulb"></i>
                 Feature Request</a>
@@ -1448,6 +1453,39 @@
             </div>
         </div>
 
+        <div id="view-timeoff" class="view-section px-6 py-12 hidden">
+            <div class="max-w-4xl mx-auto">
+                <div class="card shadow-2xl mb-12">
+                    <h1 class="text-3xl font-black mb-4">Request Time Off</h1>
+                    <p class="text-slate-500 mb-8">Submit your availability requests for manager approval.</p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <label class="block text-sm font-bold mb-2">Start Date</label>
+                            <input type="date" id="timeoffStartDate" class="w-full">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-bold mb-2">End Date</label>
+                            <input type="date" id="timeoffEndDate" class="w-full">
+                        </div>
+                    </div>
+                    <label class="block text-sm font-bold mb-2">Reason</label>
+                    <textarea id="timeoffReason" class="h-24 mb-6" placeholder="e.g. Vacation, Medical appointment..."></textarea>
+                    <button id="btnSubmitTimeOff" onclick="submitTimeOffRequest()" class="btn btn-accent w-full py-4">Submit Request</button>
+                </div>
+
+                <div class="mb-12">
+                    <h3 class="text-xl font-black mb-6 border-b border-slate-200 dark:border-slate-800 pb-2">My Requests</h3>
+                    <div id="myTimeOffRequests" class="space-y-4"></div>
+                </div>
+
+                <div id="managerTimeOffSection" style="display: none;">
+                    <h3 class="text-xl font-black mb-6 border-b border-slate-200 dark:border-slate-800 pb-2 text-purple-600"><i data-lucide="shield" class="inline w-5 h-5 mr-2"></i>Manager Review</h3>
+                    <div id="managerTimeOffRequests" class="space-y-4"></div>
+                </div>
+            </div>
+        </div>
+
+
     </main>
 
     <div id="print-wrapper" class="hidden print:block absolute top-0 left-0 w-full bg-white z-50 p-8 text-black">
@@ -1627,6 +1665,7 @@
                         }
                         // Always fetch employees to populate the schedule dropdown
                         fetchEmployees();
+                        fetchTimeOffRequests();
 
                         if (!initialDraftLoaded) {
                             syncDraftFromServer();
@@ -1896,7 +1935,7 @@
             }
             if (!currentUser && (['history', 'presets', 'performance', 'request', 'profile', 'shiftNotes'].includes(viewId))) {
             if (!currentUser && (['history', 'presets', 'performance', 'request', 'profile', 'shiftNotes', 'team'].includes(viewId))) {
-            if (!currentUser && (['history', 'presets', 'performance', 'request', 'profile', 'shiftNotes', 'employees'].includes(viewId))) {
+            if (!currentUser && (['history', 'presets', 'performance', 'request', 'profile', 'shiftNotes', 'employees', 'timeoff'].includes(viewId))) {
                 viewId = 'auth';
             }
             if (viewId === 'maintenance' && currentUser) {
@@ -3025,6 +3064,7 @@ async function submitMaintenanceTicket() {
 
                 alert("Employee added successfully.");
                 fetchEmployees();
+                        fetchTimeOffRequests();
                 populateScheduleDropdown();
             } catch (err) {
                 console.error("Error adding employee:", err);
@@ -3036,7 +3076,153 @@ async function submitMaintenanceTicket() {
             }
         }
 
+
         let unsubscribeEmployees = null;
+        let unsubscribeTimeOff = null;
+
+
+
+        async function submitTimeOffRequest() {
+            if (!currentUser || !currentUserData || !currentUserData.orgId) {
+                alert("You must be part of an organization to request time off.");
+                return;
+            }
+            const startDate = document.getElementById('timeoffStartDate').value;
+            const endDate = document.getElementById('timeoffEndDate').value;
+            const reason = document.getElementById('timeoffReason').value.trim();
+
+            if (!startDate || !endDate || !reason) {
+                alert("Please fill in all fields.");
+                return;
+            }
+            if (startDate > endDate) {
+                 alert("Start date must be before end date.");
+                 return;
+            }
+
+            const btn = document.getElementById('btnSubmitTimeOff');
+            const originalText = btn.innerText;
+            btn.innerText = 'Submitting...';
+            btn.disabled = true;
+
+            try {
+                await db.collection('time_off_requests').add({
+                    uid: currentUser.uid,
+                    employeeName: currentUserData.username || currentUser.email,
+                    orgId: currentUserData.orgId,
+                    startDate: startDate,
+                    endDate: endDate,
+                    reason: reason,
+                    status: 'Pending',
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                alert("Time off request submitted successfully.");
+                document.getElementById('timeoffStartDate').value = '';
+                document.getElementById('timeoffEndDate').value = '';
+                document.getElementById('timeoffReason').value = '';
+            } catch (err) {
+                console.error("Error submitting time off request", err);
+                alert("Error submitting request. Please try again.");
+            } finally {
+                btn.innerText = originalText;
+                btn.disabled = false;
+            }
+        }
+
+        function fetchTimeOffRequests() {
+             if (!currentUser || !currentUserData) return;
+             if (unsubscribeTimeOff) unsubscribeTimeOff();
+
+             let query = db.collection('time_off_requests');
+
+             // If manager/admin (assuming they have an orgId and are not just a base user, or using some flag. We will check if they own the org or just use orgId)
+             // For simplicity, we fetch all for the org if they are an org owner, otherwise just their own.
+             // Wait, let's look at how employees are fetched.
+             // Employees are fetched if user is admin or org owner.
+             // Let's just fetch for the user's org, and then filter locally to show manager view vs employee view
+
+             query = query.where('orgId', '==', currentUserData.orgId || currentUser.uid);
+
+             unsubscribeTimeOff = query.onSnapshot(snap => {
+                 const employeeContainer = document.getElementById('myTimeOffRequests');
+                 const managerContainer = document.getElementById('managerTimeOffRequests');
+
+                 let myRequestsHtml = '';
+                 let managerRequestsHtml = '';
+
+                 let requests = [];
+                 snap.forEach(doc => requests.push({ id: doc.id, ...doc.data() }));
+
+                 // Sort locally by createdAt desc
+                 requests.sort((a, b) => {
+                     let aTime = a.createdAt ? a.createdAt.toMillis() : 0;
+                     let bTime = b.createdAt ? b.createdAt.toMillis() : 0;
+                     return bTime - aTime;
+                 });
+
+                 const isManager = currentUserData.orgId === currentUser.uid;
+
+                 requests.forEach(req => {
+                     let statusColor = req.status === 'Approved' ? 'bg-green-100 text-green-800' : (req.status === 'Rejected' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800');
+
+                     let reqCard = `
+                        <div class="card p-4 border border-slate-200 dark:border-slate-800 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                            <div>
+                                <div class="font-bold">${escapeHTML(req.employeeName)}</div>
+                                <div class="text-sm text-slate-500">${escapeHTML(req.startDate)} to ${escapeHTML(req.endDate)}</div>
+                                <div class="text-sm italic mt-1">"${escapeHTML(req.reason)}"</div>
+                            </div>
+                            <div class="flex items-center gap-4">
+                                <span class="px-3 py-1 rounded-full text-xs font-bold ${statusColor}">${escapeHTML(req.status)}</span>
+                     `;
+
+                     if (req.uid === currentUser.uid) {
+                          let cancelBtn = req.status === 'Pending' ? `<button onclick="deleteTimeOffRequest('${req.id}')" class="btn btn-sm btn-outline text-red-500 hover:bg-red-50">Cancel</button>` : '';
+                          myRequestsHtml += reqCard + cancelBtn + `</div></div>`;
+                     }
+
+                     if (isManager && req.status === 'Pending') {
+                          managerRequestsHtml += reqCard + `
+                                <button onclick="updateTimeOffStatus('${req.id}', 'Approved')" class="btn btn-sm bg-green-500 text-white hover:bg-green-600">Approve</button>
+                                <button onclick="updateTimeOffStatus('${req.id}', 'Rejected')" class="btn btn-sm bg-red-500 text-white hover:bg-red-600">Deny</button>
+                          </div></div>`;
+                     } else if (isManager) {
+                          managerRequestsHtml += reqCard + `</div></div>`;
+                     }
+                 });
+
+                 if (employeeContainer) employeeContainer.innerHTML = myRequestsHtml || '<p class="text-slate-500">No time off requests found.</p>';
+                 if (managerContainer) {
+                     if (isManager) {
+                         managerContainer.innerHTML = managerRequestsHtml || '<p class="text-slate-500">No requests to manage.</p>';
+                         document.getElementById('managerTimeOffSection').style.display = 'block';
+                     } else {
+                         document.getElementById('managerTimeOffSection').style.display = 'none';
+                     }
+                 }
+             }, err => {
+                 console.error("Error fetching time off requests:", err);
+             });
+        }
+
+        async function updateTimeOffStatus(id, status) {
+            try {
+                await db.collection('time_off_requests').doc(id).update({ status: status });
+            } catch (err) {
+                console.error("Error updating time off status", err);
+                alert("Error updating status.");
+            }
+        }
+
+        async function deleteTimeOffRequest(id) {
+            if (!confirm("Are you sure you want to cancel this request?")) return;
+            try {
+                await db.collection('time_off_requests').doc(id).delete();
+            } catch (err) {
+                console.error("Error deleting time off request", err);
+                alert("Error cancelling request.");
+            }
+        }
 
         function fetchEmployees() {
             if (!currentUser || !currentUserData) return;
