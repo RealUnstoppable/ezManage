@@ -3483,10 +3483,11 @@ function checkAndRenderOrgControls() {
                 const result = await manageShiftNotes({
                     action: "create",
                     payload: {
+                        authorId: currentUser.uid,
+                        orgId: currentUserData.orgId || currentUser.uid,
                         authorName: currentUser.email.split('@')[0],
                         content: content,
-                        priority: priority,
-                        orgId: currentUserData.orgId
+                        priority: priority
                     }
                 await db.collection('shift_notes').add({
                     authorId: currentUser.uid,
@@ -3564,6 +3565,8 @@ function checkAndRenderOrgControls() {
                 const result = await manageShiftGroups({
                     action: "create",
                     payload: {
+                        authorId: currentUser.uid,
+                        orgId: currentUserData.orgId || currentUser.uid,
                         ownerName: currentUser.email.split('@')[0],
                         groupName: name,
                         password: pass

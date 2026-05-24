@@ -198,10 +198,10 @@ exports.manageShiftNotes = functions.https.onCall(async (data, context) => {
     if (!userDoc.exists) {
       throw new HttpsError("not-found", "User not found");
     }
-    const actualOrgId = userDoc.data().orgId || null;
+    const actualOrgId = payload.orgId || userDoc.data().orgId || null;
 
     if (action === "create") {
-      const {authorName, content, priority} = payload;
+      const {authorId, orgId, authorName, content, priority} = payload;
 
       if (!content) {
         throw new HttpsError(
@@ -213,12 +213,12 @@ exports.manageShiftNotes = functions.https.onCall(async (data, context) => {
         priority : "Normal";
 
       const newNote = {
-        authorId: uid,
+        authorId: authorId || uid,
         authorName: authorName || "Anonymous",
         content,
         priority: notePriority,
         status: "Active",
-        orgId: actualOrgId,
+        orgId: orgId || actualOrgId,
         timestamp: admin.firestore.FieldValue.serverTimestamp(),
       };
 
@@ -415,7 +415,7 @@ exports.manageShiftGroups = functions.https.onCall(async (data, context) => {
   try {
     // Create a new group
     if (action === "create") {
-      const {ownerName, groupName, password} = payload;
+      const {authorId, orgId, ownerName, groupName, password} = payload;
 
       if (!groupName || !password) {
         throw new HttpsError(
@@ -423,7 +423,8 @@ exports.manageShiftGroups = functions.https.onCall(async (data, context) => {
       }
 
       const newGroup = {
-        ownerId: uid,
+        ownerId: authorId || uid,
+        orgId: orgId || uid,
         ownerName: ownerName || "Anonymous",
         groupName,
         password, // Basic password for joining (in a real app, hash this)
