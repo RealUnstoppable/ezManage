@@ -1,4 +1,4 @@
-const {getDayOfWeek, parseNum} = require("./utils");
+const {getDayOfWeek, parseNum, logManagerError} = require("./utils");
 const {onSchedule} = require("firebase-functions/v2/scheduler");
 const admin = require("firebase-admin");
 
@@ -104,8 +104,8 @@ exports.trainGlobalAI = onSchedule("every 24 hours", async (event) => {
     console.log("Global AI Training completed and saved.");
     return true;
   } catch (err) {
-    console.error("Manager Troubleshooting: Global AI Training error:", err);
-    console.error("Manager Troubleshooting: Training error:", err);
+    logManagerError("Global AI Training error:", err);
+    logManagerError("Training error:", err);
     return null;
   }
 });

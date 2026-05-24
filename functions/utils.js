@@ -59,7 +59,12 @@ function adaptGen2Params(data, context) {
   return {data, context};
 }
 
+function logManagerError(actionMessage, error) {
+  console.error("Manager Troubleshooting: " + actionMessage, error);
+}
+
 module.exports = {
+  logManagerError,
   parseNum,
   getDayOfWeek,
   escapeHTML,
