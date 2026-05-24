@@ -268,6 +268,128 @@ exports.manageShiftNotes = functions.https.onCall(async (data, context) => {
 });
 
 /**
+ * Manage Employees API
+ * Handles creation, updating, and deletion of employees.
+ */
+exports.manageEmployees = functions.https.onCall(async (data, context) => {
+  if (data && typeof data === "object" && "rawRequest" in data && "auth" in data) {
+    context = data;
+    data = data.data;
+  }
+
+  if (!context || !context.auth) {
+    throw new HttpsError("unauthenticated", "User must be logged in.");
+  }
+
+  const {action, payload} = data;
+  const uid = context.auth.uid;
+
+  if (!action || !payload) {
+    throw new HttpsError("invalid-argument", "Missing action or payload");
+  }
+
+  try {
+    const userDoc = await admin.firestore().collection("users").doc(uid).get();
+    if (!userDoc.exists) {
+      throw new HttpsError("not-found", "User not found");
+    }
+    const actualOrgId = userDoc.data().orgId || null;
+
+    if (!actualOrgId) {
+       throw new HttpsError("permission-denied", "User must be part of an organization.");
+    }
+
+    if (action === "create") {
+      const {name, role, phone} = payload;
+
+      if (!name || !role) {
+        throw new HttpsError("invalid-argument", "Missing required employee details");
+      }
+
+      const newEmployee = {
+        name,
+        role,
+        phone: phone || "",
+        status: "Active",
+        orgId: actualOrgId,
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      };
+
+      const docRef = await admin.firestore().collection("employees").add(newEmployee);
+      return {success: true, id: docRef.id};
+    }
+
+    if (action === "get") {
+      const snapshot = await admin.firestore().collection("employees")
+        .where("orgId", "==", actualOrgId)
+        .where("status", "==", "Active")
+        .get();
+
+      const employees = [];
+      snapshot.forEach(doc => employees.push({id: doc.id, ...doc.data()}));
+      return {success: true, employees};
+    }
+
+    if (action === "update") {
+       const {empId, name, role, phone, status} = payload;
+       if (!empId) {
+          throw new HttpsError("invalid-argument", "Missing employee ID");
+       }
+
+       const empRef = admin.firestore().collection("employees").doc(empId);
+       const empDoc = await empRef.get();
+
+       if (!empDoc.exists) {
+          throw new HttpsError("not-found", "Employee not found");
+       }
+
+       if (empDoc.data().orgId !== actualOrgId) {
+          throw new HttpsError("permission-denied", "Unauthorized to update this employee");
+       }
+
+       const updates = {};
+       if (name !== undefined) updates.name = name;
+       if (role !== undefined) updates.role = role;
+       if (phone !== undefined) updates.phone = phone;
+       if (status !== undefined) updates.status = status;
+
+       await empRef.update(updates);
+       return {success: true};
+    }
+
+    if (action === "delete") {
+       const {empId} = payload;
+       if (!empId) {
+          throw new HttpsError("invalid-argument", "Missing employee ID");
+       }
+
+       const empRef = admin.firestore().collection("employees").doc(empId);
+       const empDoc = await empRef.get();
+
+       if (!empDoc.exists) {
+          throw new HttpsError("not-found", "Employee not found");
+       }
+
+       if (empDoc.data().orgId !== actualOrgId) {
+          throw new HttpsError("permission-denied", "Unauthorized to delete this employee");
+       }
+
+       // Soft delete
+       await empRef.update({ status: "Inactive" });
+       return {success: true};
+    }
+
+    throw new HttpsError("invalid-argument", "Invalid action");
+  } catch (error) {
+    console.error("Manage Employees Error:", error);
+    if (error instanceof HttpsError) {
+      throw error;
+    }
+    throw new HttpsError("internal", error.message);
+  }
+});
+
+/**
  * Manage Shift Groups API
  * Handles creating groups, joining groups, and approving joins.
  */
