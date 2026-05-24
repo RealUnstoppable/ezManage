@@ -1492,10 +1492,27 @@
                 navStatus.innerText = "Manager: " + (user.displayName || "Online");
                 document.getElementById('profEmail').value = user.email;
 
+                const cached = sessionStorage.getItem('ezManage_userData');
+                if (cached) {
+                    try {
+                        currentUserData = JSON.parse(cached);
+                        loadProfileUI(currentUserData);
+                    } catch (e) {
+                        console.error("Cache parsing error", e);
+                    }
+                }
+
                 unsubscribeUser = db.collection("users").doc(user.uid).onSnapshot(async doc => {
                     isInitializingAuth = false;
                     if (doc.exists && doc.data().name) {
                         currentUserData = doc.data();
+                        sessionStorage.setItem('ezManage_userData', JSON.stringify(currentUserData));
+
+                        const pendingNav = localStorage.getItem('navTo');
+                        if (pendingNav) {
+                            localStorage.removeItem('navTo');
+                            setTimeout(() => navTo(pendingNav), 100);
+                        }
 
                         // Enforce Opt-In Cloud Policy
                         cloudSyncEnabled = !!currentUserData.cloudSyncEnabled;
@@ -1535,18 +1552,11 @@
                     } else {
 
                         if (!doc.exists || !doc.data().name) {
-                            const activeView = document.querySelector('.view-section.active');
-                            if (activeView && activeView.id !== 'view-setup') {
-                                try {
-                                    const emailDoc = await db.collection("users").doc(user.email).get();
-                                    if (emailDoc.exists) {
-                                        await db.collection("users").doc(user.uid).set(emailDoc.data(), { merge: true });
-                                        return;
-                                    } else {
-                                        navTo('setup');
-                                    }
-                                } catch (e) { console.warn("Email recovery check skipped", e); navTo('setup'); }
-                            }
+                            await db.collection("users").doc(user.uid).set({
+                                name: user.displayName || "Manager",
+                                email: user.email
+                            }, { merge: true });
+                            navTo('tracker');
                         }
 
                         const activeView = document.querySelector('.view-section.active');
