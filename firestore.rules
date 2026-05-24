@@ -186,6 +186,15 @@ service cloud.firestore {
       allow delete: if request.auth != null && (resource.data.get('reportedByUid', null) == request.auth.uid || isAdmin());
     }
 
+    // EMPLOYEES
+    match /employees/{empId} {
+      allow read: if request.auth != null && (
+          (resource.data.orgId != null && resource.data.orgId == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.orgId) ||
+          isAdmin()
+      );
+      allow write: if false; // All creation and resolution must happen via secure Cloud Functions
+    }
+
     // SCHEDULES
     match /schedules/{scheduleId} {
       allow read: if request.auth != null && (

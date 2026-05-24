@@ -438,6 +438,9 @@
                 class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i
                     data-lucide="clipboard-list"></i>
                 Shift Notes</a>
+            <a href="#" onclick="navTo('team')"
+                class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="users"></i>
+                Team Directory</a>
             <a href="#" onclick="navTo('employees')"
                 class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i
                     data-lucide="users"></i>
@@ -852,6 +855,59 @@
             </div>
         </div>
 
+        <div id="view-team" class="view-section px-6 py-12 hidden">
+            <div class="max-w-4xl mx-auto">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+                    <h1 class="text-4xl font-black">Team Directory</h1>
+                    <button onclick="document.getElementById('addEmployeeModal').classList.remove('hidden')"
+                        class="btn btn-primary flex items-center gap-2 px-6">
+                        <i data-lucide="user-plus" class="w-5 h-5"></i> Add Employee
+                    </button>
+                </div>
+
+                <div id="addEmployeeModal"
+                    class="hidden bg-white dark:bg-slate-900 rounded-3xl p-6 md:p-8 shadow-sm border border-slate-100 dark:border-slate-800 mb-12">
+                    <h2 class="text-xl font-bold mb-4" id="employeeModalTitle">Add New Employee</h2>
+                    <input type="hidden" id="empModalId" value="">
+                    <div class="space-y-4">
+                        <input type="text" id="empName" placeholder="Employee Full Name"
+                            class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
+                        <div class="flex flex-col md:flex-row gap-4">
+                            <select id="empRole"
+                                class="flex-1 bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
+                                <option value="Cashier">Cashier</option>
+                                <option value="Cook">Cook</option>
+                                <option value="Shift Leader">Shift Leader</option>
+                                <option value="Manager">Manager</option>
+                                <option value="Driver">Driver</option>
+                                <option value="Other">Other</option>
+                            </select>
+                            <input type="text" id="empPhone" placeholder="Phone Number (Optional)"
+                                class="flex-1 bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
+                        </div>
+
+                        <div class="flex justify-end gap-3 pt-2">
+                            <button onclick="closeEmployeeModal()"
+                                class="btn btn-outline px-6 py-2">Cancel</button>
+                            <button onclick="submitEmployee()" class="btn btn-accent px-6 py-2" id="submitEmpBtn">Save Employee</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-black">Active Roster</h2>
+                    <button onclick="fetchTeamDirectory()"
+                        class="text-sm font-bold text-sky-500 hover:text-sky-600 flex items-center gap-2">
+                        <i data-lucide="refresh-cw" class="w-4 h-4"></i> Refresh
+                    </button>
+                </div>
+
+                <div id="teamContainer" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Employees populated via JS -->
+                </div>
+            </div>
+        </div>
+
         <div id="view-schedule" class="view-section px-6 py-12">
             <div class="max-w-4xl mx-auto">
                 <h1 class="text-4xl font-black mb-8">Employee Schedule</h1>
@@ -864,6 +920,14 @@
                             <input type="date" id="scheduleDate" class="w-full" onchange="fetchSchedules(this.value)">
                         </div>
                         <div>
+                            <label class="block text-sm font-bold mb-1">Employee Name</label>
+                            <select id="shiftEmpName" class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
+                                <option value="">Select Employee...</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-bold mb-1">Role</label>
+                            <select id="shiftRole" class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
                             <label for="shiftEmpName" class="block text-sm font-bold mb-1">Employee Name</label>
                             <input type="text" id="shiftEmpName" class="w-full" placeholder="John Doe">
                             <label class="block text-sm font-bold mb-1">Employee Name</label>
@@ -876,8 +940,10 @@
                             <select id="shiftRole" class="w-full">
                                 <option value="Cashier">Cashier</option>
                                 <option value="Cook">Cook</option>
+                                <option value="Shift Leader">Shift Leader</option>
                                 <option value="Manager">Manager</option>
                                 <option value="Driver">Driver</option>
+                                <option value="Other">Other</option>
                             </select>
                         </div>
                         <div class="grid grid-cols-2 gap-2">
@@ -1540,6 +1606,10 @@
                             checkAndRenderOrgControls();
                         }
 
+                        // Load team directory in background so schedule dropdown works
+                        if (currentUserData.orgId) {
+                           fetchTeamDirectory();
+                        }
                         // Always fetch employees to populate the schedule dropdown
                         fetchEmployees();
 
@@ -1776,11 +1846,15 @@
         function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); }
 
         function navTo(viewId) {
+            if (!currentUser && (['history', 'presets', 'performance', 'request', 'profile', 'shiftNotes', 'team'].includes(viewId))) {
             if (!currentUser && (['history', 'presets', 'performance', 'request', 'profile', 'shiftNotes', 'employees'].includes(viewId))) {
                 viewId = 'auth';
             }
             if (viewId === 'maintenance' && currentUser) {
                 fetchMaintenanceTickets();
+            }
+            if (viewId === 'team' && currentUser) {
+                fetchTeamDirectory();
             }
             document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
             document.getElementById('view-' + viewId).classList.add('active');
@@ -3572,6 +3646,188 @@
                 alert("Failed to approve: " + e.message);
             }
         }
+
+        // --- TEAM DIRECTORY LOGIC ---
+
+        let activeEmployeesList = [];
+
+        function closeEmployeeModal() {
+            document.getElementById('addEmployeeModal').classList.add('hidden');
+            document.getElementById('empModalId').value = "";
+            document.getElementById('empName').value = "";
+            document.getElementById('empRole').value = "Cashier";
+            document.getElementById('empPhone').value = "";
+            document.getElementById('employeeModalTitle').innerText = "Add New Employee";
+            document.getElementById('submitEmpBtn').innerText = "Save Employee";
+        }
+
+        function openEditEmployeeModal(empId) {
+            const emp = activeEmployeesList.find(e => e.id === empId);
+            if (!emp) return;
+
+            document.getElementById('empModalId').value = emp.id;
+            document.getElementById('empName').value = emp.name;
+            document.getElementById('empRole').value = emp.role;
+            document.getElementById('empPhone').value = emp.phone || "";
+            document.getElementById('employeeModalTitle').innerText = "Edit Employee";
+            document.getElementById('submitEmpBtn').innerText = "Update Employee";
+
+            document.getElementById('addEmployeeModal').classList.remove('hidden');
+        }
+
+        async function submitEmployee() {
+            if (!currentUser || !currentUserData || !currentUserData.orgId) {
+                alert("You must be part of a group to manage employees.");
+                return;
+            }
+
+            const empId = document.getElementById('empModalId').value;
+            const name = document.getElementById('empName').value.trim();
+            const role = document.getElementById('empRole').value;
+            const phone = document.getElementById('empPhone').value.trim();
+
+            if (!name) {
+                alert("Employee name is required.");
+                return;
+            }
+
+            const btn = document.getElementById('submitEmpBtn');
+            const ogText = btn.innerText;
+            btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Saving...`;
+            btn.disabled = true;
+            lucide.createIcons();
+
+            try {
+                const manageEmployees = firebase.functions().httpsCallable('manageEmployees');
+                if (empId) {
+                    await manageEmployees({
+                        action: "update",
+                        payload: { empId, name, role, phone }
+                    });
+                } else {
+                    await manageEmployees({
+                        action: "create",
+                        payload: { name, role, phone }
+                    });
+                }
+
+                closeEmployeeModal();
+                fetchTeamDirectory();
+            } catch (error) {
+                alert("Failed to save employee: " + error.message);
+            } finally {
+                btn.innerText = ogText;
+                btn.disabled = false;
+            }
+        }
+
+        async function deleteEmployee(empId) {
+            if (!currentUser || !confirm("Are you sure you want to remove this employee from the active roster?")) return;
+
+            try {
+                const manageEmployees = firebase.functions().httpsCallable('manageEmployees');
+                await manageEmployees({
+                    action: "delete",
+                    payload: { empId }
+                });
+                fetchTeamDirectory();
+            } catch (error) {
+                alert("Failed to remove employee: " + error.message);
+            }
+        }
+
+        async function fetchTeamDirectory() {
+            if (!currentUser || !currentUserData || !currentUserData.orgId) {
+                document.getElementById('teamContainer').innerHTML = `
+                    <div class="col-span-1 md:col-span-2 text-center py-16 bg-slate-50 dark:bg-slate-900 rounded-3xl border-2 border-dashed border-slate-200 dark:border-slate-800">
+                        <i data-lucide="users" class="w-12 h-12 text-slate-400 mx-auto mb-4"></i>
+                        <h3 class="text-xl font-bold mb-2">Join or Create a Group</h3>
+                        <p class="text-slate-500">You must be in a Management Group to access the Team Directory.</p>
+                    </div>
+                `;
+                lucide.createIcons();
+                return;
+            }
+
+            const container = document.getElementById('teamContainer');
+            container.innerHTML = '<div class="col-span-1 md:col-span-2 text-center py-8"><i data-lucide="loader-2" class="w-8 h-8 animate-spin mx-auto text-sky-500 mb-4"></i><p class="text-slate-500">Loading roster...</p></div>';
+            lucide.createIcons();
+
+            try {
+                const manageEmployees = firebase.functions().httpsCallable('manageEmployees');
+                const result = await manageEmployees({ action: "get", payload: {} });
+
+                if (result.data.success) {
+                    activeEmployeesList = result.data.employees || [];
+
+                    // Populate schedule dropdown
+                    updateScheduleEmployeeDropdown();
+
+                    container.innerHTML = '';
+
+                    if (activeEmployeesList.length === 0) {
+                        container.innerHTML = `
+                            <div class="col-span-1 md:col-span-2 text-center py-16 bg-slate-50 dark:bg-slate-900 rounded-3xl border-2 border-dashed border-slate-200 dark:border-slate-800">
+                                <i data-lucide="users" class="w-12 h-12 text-slate-300 mx-auto mb-4"></i>
+                                <h3 class="text-xl font-bold mb-2">No Employees Yet</h3>
+                                <p class="text-slate-500 mb-4">Add your first employee to populate the roster and scheduling dropdown.</p>
+                                <button onclick="document.getElementById('addEmployeeModal').classList.remove('hidden')" class="btn btn-outline">Add Employee</button>
+                            </div>
+                        `;
+                        lucide.createIcons();
+                        return;
+                    }
+
+                    activeEmployeesList.forEach(emp => {
+                        const div = document.createElement('div');
+                        div.className = "card p-6 flex flex-col justify-between";
+
+                        const phoneDisplay = emp.phone ? `<a href="tel:${escapeHTML(emp.phone)}" class="text-sky-500 hover:underline text-sm flex items-center gap-1"><i data-lucide="phone" class="w-3 h-3"></i> ${escapeHTML(emp.phone)}</a>` : '<span class="text-slate-400 text-sm">No phone</span>';
+
+                        div.innerHTML = `
+                            <div>
+                                <div class="flex justify-between items-start mb-2">
+                                    <h3 class="text-lg font-bold">${escapeHTML(emp.name)}</h3>
+                                    <span class="text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">${escapeHTML(emp.role)}</span>
+                                </div>
+                                <div class="mb-4">
+                                    ${phoneDisplay}
+                                </div>
+                            </div>
+                            <div class="flex gap-2 border-t border-slate-100 dark:border-slate-800 pt-4 mt-2">
+                                <button onclick="openEditEmployeeModal('${escapeHTML(emp.id)}')" class="btn btn-outline btn-sm flex-1"><i data-lucide="edit-2" class="w-3 h-3"></i> Edit</button>
+                                <button onclick="deleteEmployee('${escapeHTML(emp.id)}')" class="btn btn-outline btn-sm text-red-500 hover:bg-red-50 flex-1"><i data-lucide="user-minus" class="w-3 h-3"></i> Remove</button>
+                            </div>
+                        `;
+                        container.appendChild(div);
+                    });
+                    lucide.createIcons();
+                }
+            } catch (error) {
+                container.innerHTML = `<div class="col-span-1 md:col-span-2 text-red-500 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl text-center">Failed to load roster: ${error.message}</div>`;
+            }
+        }
+
+        function updateScheduleEmployeeDropdown() {
+            const select = document.getElementById('shiftEmpName');
+            if (!select) return;
+
+            const currentVal = select.value;
+            select.innerHTML = '<option value="">Select Employee...</option>';
+
+            activeEmployeesList.forEach(emp => {
+                const opt = document.createElement('option');
+                opt.value = emp.name;
+                opt.textContent = emp.name + " (" + emp.role + ")";
+                select.appendChild(opt);
+            });
+
+            if (currentVal && Array.from(select.options).some(o => o.value === currentVal)) {
+                select.value = currentVal;
+            }
+        }
+
+        // We will fetch the team directory when the view is opened or during org check
 
         window.onload = () => {
             const redirect = localStorage.getItem('navTo');
