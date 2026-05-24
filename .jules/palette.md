@@ -23,3 +23,6 @@
 ## 2024-05-21 - Icon-only buttons in template literals missing aria-labels
 **Learning:** When generating HTML dynamically via template literals (e.g., iterating through items in `company.html`), icon-only buttons (like remove buttons using Lucide icons) are frequently missing `aria-label` attributes because standard linting doesn't catch them in JS template strings. This significantly impacts screen reader accessibility for dynamic lists.
 **Action:** When reviewing dynamic list generation (like onboarding roles or manager lists), explicitly verify that any action buttons containing only icons include an appropriate `aria-label`.
+## 2024-05-24 - ARIA labels for placeholder-only inputs
+**Learning:** Inputs that rely solely on `placeholder` attributes without an explicit `<label>` element or an `aria-label` are inaccessible to screen readers. For example, dynamically generated inputs or those in tight UI spaces like `customPresetName` or `featureReqText`.
+**Action:** Always provide an explicit `aria-label` attribute on form inputs if screen space prohibits a visible `<label>` to ensure the input’s purpose is clearly announced.

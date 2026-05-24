@@ -269,7 +269,7 @@ document.addEventListener('DOMContentLoaded', () => {
             isPlaying = true;
             playIcon.style.display = 'none';
             pauseIcon.style.display = 'block';
-        }).catch(e => console.error("Error playing audio:", e));
+        }).catch(e => console.error("Manager Troubleshooting: Error playing audio:", e));
     }
 
     function pauseSong() {
@@ -406,16 +406,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 renderSongTable(userFavorites);
             }
         } catch (e) {
-            console.error("Error toggling favorite:", e);
+            console.error("Manager Troubleshooting: Error toggling favorite:", e);
             if (e.code === 'not-found') {
                 try {
                     await setDoc(userRef, { musicFavorites: [songId] }, { merge: true });
                     userFavorites.push(song);
                 } catch (innerError) {
-                    console.error("Error setting initial favorite document:", innerError);
+                    console.error("Manager Troubleshooting: Error setting initial favorite document:", innerError);
                 }
             } else {
-                console.error("Error toggling favorite:", e);
+                console.error("Manager Troubleshooting: Error toggling favorite:", e);
             }
         }
     }
@@ -430,7 +430,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     const favIds = docSnap.data().musicFavorites;
                     userFavorites = librarySongs.filter(song => favIds.includes(song.id));
                 }
-            } catch (e) { console.error("Error loading user favorites:", e); }
+            } catch (e) { console.error("Manager Troubleshooting: Error loading user favorites:", e); }
 
             const hour = new Date().getHours();
             const timeGreeting = hour < 12 ? "Good Morning" : hour < 18 ? "Good Afternoon" : "Good Evening";

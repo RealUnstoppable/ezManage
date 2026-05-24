@@ -57,7 +57,7 @@ auth.onAuthStateChanged(async (user) => {
                 }
             }
         } catch (error) {
-            console.error("Error fetching user document in auth state change:", error);
+            console.error("Manager Troubleshooting: Error fetching user document in auth state change:", error);
         }
     } else {
         if (authLink) {

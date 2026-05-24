@@ -90,7 +90,7 @@ exports.stripeWebhook = onRequest({ invoker: "public" }, async (req, res) => {
   try {
     event = stripe.webhooks.constructEvent(req.rawBody, sig, endpointSecret);
   } catch (err) {
-    console.error("Webhook Error:", err);
+    console.error("Manager Troubleshooting: Webhook Error:", err);
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
 
@@ -114,7 +114,7 @@ exports.stripeWebhook = onRequest({ invoker: "public" }, async (req, res) => {
         }, {merge: true});
         console.log(`✅ Successfully upgraded user ${uid} to ${planName}`);
       } catch (error) {
-        console.error("Error updating user subscription status:", error);
+        console.error("Manager Troubleshooting: Error updating user subscription status:", error);
       }
     }
   }
