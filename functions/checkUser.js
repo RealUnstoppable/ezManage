@@ -19,7 +19,7 @@ async function run() {
       console.log("No document in Firestore for UID:", userRecord.uid);
     }
   } catch (e) {
-    console.error("Error:", e.message);
+    console.error("Manager Troubleshooting: Error:", e.message);
   }
 }
 
