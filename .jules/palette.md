@@ -26,3 +26,6 @@
 ## 2024-05-24 - ARIA labels for placeholder-only inputs
 **Learning:** Inputs that rely solely on `placeholder` attributes without an explicit `<label>` element or an `aria-label` are inaccessible to screen readers. For example, dynamically generated inputs or those in tight UI spaces like `customPresetName` or `featureReqText`.
 **Action:** Always provide an explicit `aria-label` attribute on form inputs if screen space prohibits a visible `<label>` to ensure the input’s purpose is clearly announced.
+## 2024-05-24 - ARIA labels for dynamic inputs and textareas lacking visible labels
+**Learning:** Inputs (`<input>`) and textareas (`<textarea>`) that lack a visible `<label>` but use a `placeholder` attribute are inaccessible for screen readers. This applies to UI components like `newRoutineTask`, `customPresetName`, `featureReqText`, and `shiftNoteContent` in `index.html`. Placeholders do not replace explicit labels.
+**Action:** Always provide an explicit `aria-label` attribute on form inputs and textareas if screen space prohibits a visible `<label>`. This ensures the purpose of the input is clearly communicated to screen reader users.
