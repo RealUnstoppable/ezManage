@@ -2,6 +2,11 @@
 <html lang="en">
 
 <head>
+  <script type="module">
+    import { escapeHTML } from '/js/utils.js';
+    window.escapeHTML = escapeHTML;
+  </script>
+
     <link rel="manifest" href="manifest.json">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -1382,17 +1387,7 @@
         db.enablePersistence().catch(err => console.error("Offline sync error:", err));
 
         let currentUser = null;
-        function escapeHTML(str) {
-            if (!str && str !== 0) return "";
-            return String(str)
-                .replace(/&/g, "&amp;")
-                .replace(/</g, "&lt;")
-                .replace(/>/g, "&gt;")
-                .replace(/"/g, "&quot;")
-                .replace(/'/g, "&#039;");
-        }
-
-        let currentUserData = null;
+let currentUserData = null;
         let isRegisterMode = false;
         let shiftStartTime = null;
         let timerInterval = null;
@@ -1405,17 +1400,7 @@
         let cloudSyncEnabled = false;
         let isInitializingAuth = true;
 
-        function escapeHTML(str) {
-            if (!str && str !== 0) return "";
-            return String(str)
-                .replace(/&/g, "&amp;")
-                .replace(/</g, "&lt;")
-                .replace(/>/g, "&gt;")
-                .replace(/"/g, "&quot;")
-                .replace(/'/g, "&#039;");
-        }
-
-        auth.onAuthStateChanged((user) => {
+auth.onAuthStateChanged((user) => {
             currentUser = user;
             const navStatus = document.getElementById('navUserStatus');
 
@@ -2540,17 +2525,7 @@
 
 
 
-        function escapeHTML(str) {
-            if (!str && str !== 0) return "";
-            return String(str)
-                .replace(/&/g, "&amp;")
-                .replace(/</g, "&lt;")
-                .replace(/>/g, "&gt;")
-                .replace(/"/g, "&quot;")
-                .replace(/'/g, "&#039;");
-        }
-
-        async function submitMaintenanceTicket() {
+async function submitMaintenanceTicket() {
             if (!currentUser || !currentUserData || !currentUserData.orgId) {
                 alert("You must be part of an organization to report issues.");
                 return;
@@ -2877,17 +2852,7 @@
                 });
         }
 
-        function escapeHTML(str) {
-            if (str === null || str === undefined) return '';
-            return String(str)
-                .replace(/&/g, "&amp;")
-                .replace(/</g, "&lt;")
-                .replace(/>/g, "&gt;")
-                .replace(/"/g, "&quot;")
-                .replace(/'/g, "&#039;");
-        }
-
-        function checkAndRenderOrgControls() {
+function checkAndRenderOrgControls() {
             if (!currentUser) return false;
 
             const controls = document.getElementById('shiftNotesGroupControls');

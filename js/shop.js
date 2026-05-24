@@ -121,33 +121,25 @@ async function handleAddToCart(productId) {
         renderCart();
         await saveCart();
     } catch (error) {
-        console.error("Error adding item to cart:", error);
+        console.error("Manager Troubleshooting: Error adding item to cart for productId:", productId, error);
         cart = originalCart;
         renderCart();
     }
 }
 
 async function handleUpdateQuantity(productId, quantity) {
+    if (quantity <= 0) {
+        return handleRemoveFromCart(productId);
+    }
     const originalCart = { ...cart };
     try {
-        if (quantity <= 0) {
-            await handleRemoveFromCart(productId);
-        } else {
-            cart[productId] = parseInt(quantity, 10);
-            renderCart();
-            await saveCart();
-        }
+        cart[productId] = parseInt(quantity, 10);
+        renderCart();
+        await saveCart();
     } catch (error) {
-        console.error("Error updating item quantity:", error);
+        console.error("Manager Troubleshooting: Error updating item quantity for productId:", productId, error);
         cart = originalCart;
         renderCart();
-        try {
-            await saveCart();
-        } catch (e) {
-            cart = prevCart;
-            renderCart();
-            console.error("Rollback handleUpdateQuantity:", e);
-        }
     }
 }
 
@@ -158,7 +150,7 @@ async function handleRemoveFromCart(productId) {
         renderCart();
         await saveCart();
     } catch (error) {
-        console.error("Error removing item from cart:", error);
+        console.error("Manager Troubleshooting: Error removing item from cart for productId:", productId, error);
         cart = originalCart;
         renderCart();
     }
@@ -170,7 +162,7 @@ async function saveCart() {
             const userCartRef = doc(db, 'carts', currentUser.uid);
             await setDoc(userCartRef, { items: cart });
         } catch (error) {
-            console.error("Error saving cart to Firestore:", error);
+            console.error("Manager Troubleshooting: Error saving cart to Firestore for uid:", currentUser.uid, error);
         }
     } else {
         localStorage.setItem('localCart', JSON.stringify(cart));
@@ -251,7 +243,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 await saveCart();
                 localStorage.removeItem('localCart');
             } catch (error) {
-                console.error("Error loading cart:", error);
+                console.error("Manager Troubleshooting: Error loading cart during auth state change:", error);
                 cart = localCart;
             }
         } else {

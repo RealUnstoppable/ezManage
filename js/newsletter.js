@@ -29,7 +29,7 @@ document.querySelectorAll('.signup-form').forEach(form => {
                     messageEl.style.display = 'none';
                 }, 5000);
             } catch (error) {
-                console.error("Newsletter subscription error:", error);
+                console.error("Manager Troubleshooting: Newsletter subscription error for email:", email, error);
                 alert("There was an error subscribing. Please try again later.");
             }
         }

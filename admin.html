@@ -549,17 +549,7 @@
       }
     });
 
-    function escapeHTML(str) {
-      if (!str && str !== 0) return "";
-      return String(str)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
-    }
-
-    function initializeAdminPage(adminUser) {
+function initializeAdminPage(adminUser) {
       document.getElementById('user-email-sidebar').textContent = adminUser.email;
       loadAdminData();
       setupEventListeners();

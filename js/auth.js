@@ -1,5 +1,3 @@
-import { getFirebaseErrorMessage } from './utils/errorUtils.js';
-
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
 import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, sendEmailVerification } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
 import { getFirestore, doc, setDoc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
@@ -52,7 +50,7 @@ auth.onAuthStateChanged(async (user) => {
                 }
             }
         } catch (error) {
-            console.error("Error fetching user document in auth state change:", error);
+            console.error("Manager Troubleshooting: Error fetching user document in auth state change for uid:", user.uid, error);
         }
     } else {
 
