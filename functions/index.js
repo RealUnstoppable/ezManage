@@ -3,6 +3,7 @@ const {onRequest} = require("firebase-functions/v2/https");
 const HttpsError = functions.https.HttpsError;
 const admin = require("firebase-admin");
 const cors = require("cors")({origin: true});
+const {adaptGen2Params} = require("./utils");
 const cors = require("cors")({ origin: true });
 const { adaptGen2Params } = require("./utils");
 

@@ -1,5 +1,16 @@
 import { jest } from "@jest/globals";
 
+const mockFirebase = {
+  apps: [],
+  initializeApp: jest.fn(() => ({ name: '[DEFAULT]' })),
+  auth: jest.fn(() => ({ onAuthStateChanged: jest.fn() })),
+  firestore: jest.fn(() => ({ collection: jest.fn(), settings: jest.fn() }))
+};
+
+global.window = global.window || {};
+global.firebase = mockFirebase;
+global.window.firebase = mockFirebase;
+globalThis.firebase = mockFirebase;
 global.window = global.window || {};
 global.firebase = {
     apps: [],
