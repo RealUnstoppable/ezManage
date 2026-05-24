@@ -666,6 +666,7 @@ function initializeAdminPage(adminUser) {
       if (bookings.length === 0) {
         tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">No bookings found.</td></tr>'; return;
       }
+
       // ⚡ Bolt Optimization: Use DocumentFragment to batch DOM insertions and reduce layout thrashing
       const fragment = document.createDocumentFragment();
       bookings.forEach(b => {
@@ -762,6 +763,8 @@ function initializeAdminPage(adminUser) {
       // ⚡ Bolt Optimization: Use DocumentFragment to batch DOM insertions and reduce layout thrashing
       const fragment = document.createDocumentFragment();
       requests.sort((a, b) => new Date(b.timestamp || 0) - new Date(a.timestamp || 0));
+
+      const fragment = document.createDocumentFragment();
       requests.forEach(req => {
         const row = document.createElement('tr');
       // ⚡ Bolt Optimization: Replace O(N^2) appendChild loop with O(1) batched string map/join

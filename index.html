@@ -2568,19 +2568,24 @@
             const printRoutines = document.getElementById('printRoutines');
             printRoutines.innerHTML = '';
             if (state.routines && state.routines.length > 0) {
+                const fragment = document.createDocumentFragment();
                 state.routines.forEach(r => {
                     const tr = document.createElement('tr');
                     const tdCheck = document.createElement('td');
                     tdCheck.style.textAlign = 'center';
                     const divCheck = document.createElement('div');
-                    divCheck.className = `print-checkbox ${r.checked ? "print-checked" : ""}`;
+                    divCheck.className = 'print-checkbox';
+                    if (r.checked) divCheck.classList.add('print-checked');
                     tdCheck.appendChild(divCheck);
+
                     const tdName = document.createElement('td');
                     tdName.textContent = r.name;
+
                     tr.appendChild(tdCheck);
                     tr.appendChild(tdName);
-                    printRoutines.appendChild(tr);
+                    fragment.appendChild(tr);
                 });
+                printRoutines.appendChild(fragment);
             } else {
                 printRoutines.innerHTML = "<tr><td colspan='2'>No routines logged</td></tr>";
             }
@@ -2588,19 +2593,21 @@
             const printDrawers = document.getElementById('printDrawers');
             printDrawers.innerHTML = '';
             if (state.drawers && state.drawers.length > 0) {
+                const fragment = document.createDocumentFragment();
                 state.drawers.forEach(d => {
                     const tr = document.createElement('tr');
                     const tdName = document.createElement('td');
                     tdName.textContent = d.name;
                     const tdVal = document.createElement('td');
-                    tdVal.textContent = `$${d.val}`;
+                    tdVal.textContent = "\$" + d.val;
                     const tdRes = document.createElement('td');
                     tdRes.textContent = d.res;
                     tr.appendChild(tdName);
                     tr.appendChild(tdVal);
                     tr.appendChild(tdRes);
-                    printDrawers.appendChild(tr);
+                    fragment.appendChild(tr);
                 });
+                printDrawers.appendChild(fragment);
             } else {
                 printDrawers.innerHTML = "<tr><td colspan='3'>No drawers logged</td></tr>";
             }
@@ -2611,6 +2618,7 @@
             const printInventory = document.getElementById('printInventoryList');
             printInventory.innerHTML = '';
             if (state.inventory && state.inventory.length > 0) {
+                const fragment = document.createDocumentFragment();
                 state.inventory.forEach(i => {
                     const tr = document.createElement('tr');
                     const tdName = document.createElement('td');
@@ -2625,8 +2633,9 @@
                     tr.appendChild(tdBl);
                     tr.appendChild(tdCl);
                     tr.appendChild(tdFr);
-                    printInventory.appendChild(tr);
+                    fragment.appendChild(tr);
                 });
+                printInventory.appendChild(fragment);
             } else {
                 printInventory.innerHTML = "<tr><td colspan='4'>No inventory logged</td></tr>";
             }
@@ -3314,6 +3323,7 @@ async function submitMaintenanceTicket() {
                         return;
                     }
 
+                    const fragment = document.createDocumentFragment();
                     snap.forEach(doc => {
                         const data = doc.data();
                         const status = data.status || 'In Progress';
@@ -3332,8 +3342,9 @@ async function submitMaintenanceTicket() {
                           <p class="text-sm font-medium text-slate-700 dark:text-slate-300 feature-request-message"></p>
                       `;
                         div.querySelector('.feature-request-message').textContent = `"${data.message}"`;
-                        container.appendChild(div);
+                        fragment.appendChild(div);
                     });
+                    container.appendChild(fragment);
                 });
         }
 
@@ -3683,6 +3694,7 @@ function checkAndRenderOrgControls() {
                     }
                     panel.classList.remove('hidden');
                     container.innerHTML = '';
+                    const fragment = document.createDocumentFragment();
                     snap.forEach(doc => {
                         const data = doc.data();
                         const div = document.createElement('div');
@@ -3694,8 +3706,9 @@ function checkAndRenderOrgControls() {
                             </div>
                             <button onclick="approveGroupRequest('${escapeHTML(doc.id)}')" class="btn btn-primary btn-sm px-4" aria-label="Approve Group Request">Approve</button>
                         `;
-                        container.appendChild(div);
+                        fragment.appendChild(div);
                     });
+                    container.appendChild(fragment);
                 });
         }
 
@@ -3715,6 +3728,7 @@ function checkAndRenderOrgControls() {
                     }
                     panel.classList.remove('hidden');
                     container.innerHTML = '';
+                    const fragment = document.createDocumentFragment();
                     snap.forEach(doc => {
                         const data = doc.data();
                         const div = document.createElement('div');
@@ -3726,8 +3740,9 @@ function checkAndRenderOrgControls() {
                             </div>
                             <button onclick="retractGroupRequest('${escapeHTML(doc.id)}')" class="btn btn-outline btn-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20" aria-label="Retract Group Request">Retract</button>
                         `;
-                        container.appendChild(div);
+                        fragment.appendChild(div);
                     });
+                    container.appendChild(fragment);
                 });
         }
 

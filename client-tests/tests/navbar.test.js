@@ -48,6 +48,8 @@ jest.unstable_mockModule('../../js/auth.js', () => ({
   getUserRedirectPath: (userData) => userData && userData.isAdmin ? 'admin.html' : 'index.html'
 }));
 
+const { loadNavbar } = await import('../../js/navbar.js');
+
 describe('loadNavbar', () => {
   let loadNavbar;
   beforeAll(async () => {
