@@ -4,6 +4,8 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebas
 import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, sendEmailVerification } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
 import { getFirestore, doc, setDoc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
 
+import { getFirebaseErrorMessage } from './utils/errorUtils.js';
+import { getFirebaseErrorMessage } from './utils.js';
 
 const firebaseConfig = {
   apiKey: "AIzaSyBgrI9HwJPSc5b4pu2Egsv4DE7shNwptSw",
@@ -19,8 +21,13 @@ if (!window.firebase) { console.error("Firebase Compat SDK must be loaded before
 
 export const auth = firebase.auth();
 export const db = firebase.firestore();
+export const auth = window.firebase ? window.firebase.auth() : {};
+export const db = window.firebase ? window.firebase.firestore() : {};
+
 // Fallback for network reliability to bypass CORS/network errors
-db.settings({ experimentalForceLongPolling: true });
+if (db.settings) {
+    db.settings({ experimentalForceLongPolling: true });
+}
 
 export function getUserRedirectPath(userData) {
     return userData && userData.isAdmin ? 'admin.html' : 'index.html';
@@ -62,6 +69,7 @@ auth.onAuthStateChanged(async (user) => {
         } catch (error) {
             logManagerError("Error fetching user document in auth state change for uid:", user.uid, error);
             logManagerError("Error fetching user document in auth state change:", error);
+            console.error("Manager Troubleshooting: Error fetching user document in auth state change for uid:", user.uid, error);
         }
     } else {
         if (authLink) {
@@ -70,6 +78,10 @@ auth.onAuthStateChanged(async (user) => {
         }
         if (membershipStatusContainer) {
             membershipStatusContainer.innerHTML = '';
+        }
+
+        if (!window.location.pathname.includes('sign in beta.html') && window.location.pathname !== '/' && !window.location.pathname.includes('index.html')) {
+            // We shouldn't force redirect all pages in auth.js. Each page should handle its own auth routing.
         }
     }
 });

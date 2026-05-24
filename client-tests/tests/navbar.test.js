@@ -1,7 +1,31 @@
 import { jest } from "@jest/globals";
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
+import { getDoc } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
+
+global.window = Object.create(window);
+global.window.firebase = {
+    apps: [],
+    initializeApp: jest.fn(),
+    auth: jest.fn(() => ({
+        onAuthStateChanged: jest.fn()
+    })),
+    firestore: jest.fn(() => ({
+        collection: jest.fn(() => ({
+            doc: jest.fn(() => ({
+                get: jest.fn()
+            }))
+        }))
+    }))
+};
+global.firebase = global.window.firebase;
 
 global.window = global.window || {};
 global.firebase = {
+// The gstatic URLs are mocked by moduleNameMapper pointing to __mocks__/firebase.js
+import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js';
+import { getDoc, doc } from 'https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js';
+
+const mockFirebase = {
   apps: [],
   initializeApp: jest.fn(() => ({ name: '[DEFAULT]' })),
   auth: jest.fn(() => ({ onAuthStateChanged: jest.fn() })),
@@ -14,6 +38,10 @@ globalThis.firebase = global.firebase;
 import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js';
 import { getDoc } from 'https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js';
 
+global.window = global.window || {};
+global.window.firebase = mockFirebase;
+globalThis.firebase = mockFirebase;
+
 jest.unstable_mockModule('../../js/auth.js', () => ({
   auth: {},
   db: { settings: jest.fn(), collection: jest.fn() },
@@ -25,6 +53,14 @@ describe('loadNavbar', () => {
   beforeAll(async () => {
     const navbarModule = await import('../../js/navbar.js');
     loadNavbar = navbarModule.loadNavbar;
+  beforeAll(() => {
+    window.firebase = {
+        apps: [],
+        initializeApp: jest.fn(),
+        auth: () => ({ onAuthStateChanged: jest.fn() }),
+        firestore: () => ({ settings: jest.fn(), collection: jest.fn() })
+    };
+    global.firebase = window.firebase;
   });
 
   beforeEach(() => {
