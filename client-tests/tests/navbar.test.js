@@ -1,5 +1,6 @@
 import { jest } from "@jest/globals";
 
+// import * as authModule from '../../js/auth.js';
 const mockFirebase = {
   apps: [],
   initializeApp: jest.fn(() => ({ name: '[DEFAULT]' })),
@@ -40,6 +41,12 @@ jest.unstable_mockModule('../../js/auth.js', () => ({
   getUserRedirectPath: (userData) => userData && userData.isAdmin ? 'admin.html' : 'index.html'
 }));
 
+
+describe('loadNavbar', () => {
+  let loadNavbar;
+  beforeAll(async () => {
+    const navbarModule = await import('../../js/navbar.js');
+    loadNavbar = navbarModule.loadNavbar;
 const authModule = await import('../../js/auth.js');
 const { loadNavbar } = await import('../../js/navbar.js');
 const { loadNavbar } = await import('../../js/navbar.js');

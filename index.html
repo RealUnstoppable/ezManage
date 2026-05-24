@@ -2907,7 +2907,8 @@ async function submitMaintenanceTicket() {
             try {
                 await db.collection('maintenance_logs').doc(ticketId).update({
                     status: newStatus,
-                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    orgId: currentUserData.orgId
                 });
                 // Optimistic UI update already handled by changing the select value
                 // but refreshing guarantees sync
@@ -3157,6 +3158,7 @@ async function submitMaintenanceTicket() {
                 await scheduleRef.set({
                     uid: currentUser.uid,
                     authorId: currentUser.uid,
+                    orgId: currentUserData.orgId,
                     orgId: currentUserData?.orgId || null,
                     date: date,
                     shifts: shifts,
@@ -3364,7 +3366,6 @@ function checkAndRenderOrgControls() {
             lucide.createIcons();
 
             db.collection('shift_notes')
-                .where('status', '==', 'Active')
                 .where('orgId', '==', currentUserData.orgId)
                 .get() // orderBy timestamp desc requires composite index if where filters are used
                 .then(snap => {
@@ -3383,7 +3384,7 @@ function checkAndRenderOrgControls() {
 
                     // Sort manually since composite index might not exist
                     let docs = [];
-                    snap.forEach(doc => docs.push({ id: doc.id, data: doc.data() }));
+                    snap.forEach(doc => { if (doc.data().status === 'Active') docs.push({ id: doc.id, data: doc.data() }) });
                     docs.sort((a, b) => b.data.timestamp - a.data.timestamp);
 
                     // ⚡ Bolt Optimization: Use DocumentFragment to batch DOM insertions and reduce layout thrashing
@@ -3495,6 +3496,7 @@ function checkAndRenderOrgControls() {
             document.getElementById('shiftNoteContent').value = "";
 
             try {
+                const manageShiftNotes = cloudFunctions.httpsCallable('manageShiftNotes');
                 // To allow client-side writes since cloud functions were failing for some users
                 const manageShiftNotes = firebase.functions().httpsCallable('manageShiftNotes');
                 const result = await manageShiftNotes({
@@ -3560,7 +3562,7 @@ function checkAndRenderOrgControls() {
             }
 
             try {
-                const manageShiftNotes = firebase.functions().httpsCallable('manageShiftNotes');
+                const manageShiftNotes = cloudFunctions.httpsCallable('manageShiftNotes');
                 const result = await manageShiftNotes({
                     action: "resolve",
                     payload: { noteId: noteId, resolvedBy: currentUser.email.split('@')[0] }
@@ -3578,7 +3580,7 @@ function checkAndRenderOrgControls() {
             if (!name || !pass) return alert("All fields required");
 
             try {
-                const manageShiftGroups = firebase.functions().httpsCallable('manageShiftGroups');
+                const manageShiftGroups = cloudFunctions.httpsCallable('manageShiftGroups');
                 const result = await manageShiftGroups({
                     action: "create",
                     payload: {
@@ -3607,7 +3609,7 @@ function checkAndRenderOrgControls() {
             if (!groupId || !pass) return alert("All fields required");
 
             try {
-                const manageShiftGroups = firebase.functions().httpsCallable('manageShiftGroups');
+                const manageShiftGroups = cloudFunctions.httpsCallable('manageShiftGroups');
                 const result = await manageShiftGroups({
                     action: "request_join",
                     payload: {
@@ -3689,7 +3691,7 @@ function checkAndRenderOrgControls() {
 
         async function retractGroupRequest(requestId) {
             try {
-                const manageShiftGroups = firebase.functions().httpsCallable('manageShiftGroups');
+                const manageShiftGroups = cloudFunctions.httpsCallable('manageShiftGroups');
                 await manageShiftGroups({
                     action: "retract_join",
                     payload: { requestId: requestId }
@@ -3702,7 +3704,7 @@ function checkAndRenderOrgControls() {
 
         async function approveGroupRequest(requestId) {
             try {
-                const manageShiftGroups = firebase.functions().httpsCallable('manageShiftGroups');
+                const manageShiftGroups = cloudFunctions.httpsCallable('manageShiftGroups');
                 const result = await manageShiftGroups({
                     action: "approve_join",
                     payload: { requestId: requestId }
