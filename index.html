@@ -2180,6 +2180,7 @@ auth.onAuthStateChanged((user) => {
                 grouped[groupKey].push(data);
             });
 
+            // ⚡ Bolt Optimization: Use DocumentFragment to batch DOM insertions and reduce layout thrashing
             // ⚡ Bolt Optimization: Batch DOM insertions using a DocumentFragment
             const fragment = document.createDocumentFragment();
 
@@ -2224,6 +2225,8 @@ auth.onAuthStateChanged((user) => {
                     }
                 };
 
+                const groupContentFragment = document.createDocumentFragment();
+
                 grouped[key].forEach(data => {
                     const div = document.createElement('div');
                     div.className = "flex justify-between items-center p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl hover:bg-sky-50 dark:hover:bg-sky-900/20 transition-colors group";
@@ -2243,9 +2246,10 @@ auth.onAuthStateChanged((user) => {
                     `;
                     div.querySelector('.history-load').onclick = (e) => { e.stopPropagation(); loadHistoryShift(data.id); };
                     div.querySelector('.history-delete').onclick = (e) => { e.stopPropagation(); deleteHistoryShift(data.id); };
-                    groupContent.appendChild(div);
+                    groupContentFragment.appendChild(div);
                 });
 
+                groupContent.appendChild(groupContentFragment);
                 groupContainer.appendChild(groupHeader);
                 groupContainer.appendChild(groupContent);
                 fragment.appendChild(groupContainer);
@@ -2474,6 +2478,10 @@ auth.onAuthStateChanged((user) => {
             const container = document.getElementById('customPresetsContainer');
             container.innerHTML = "";
             const cp = currentUserData.customPresets || [];
+
+            // ⚡ Bolt Optimization: Use DocumentFragment to batch DOM insertions and reduce layout thrashing
+            const fragment = document.createDocumentFragment();
+
             cp.forEach(p => {
                 const div = document.createElement('div');
                 div.className = "flex justify-between items-center p-4 bg-slate-50 dark:bg-slate-900 rounded-xl group border border-slate-100 dark:border-slate-800";
@@ -2487,8 +2495,9 @@ auth.onAuthStateChanged((user) => {
                 div.querySelector('.preset-name').textContent = p.name;
                 div.querySelector('.load-btn').onclick = () => applyCustomPreset(p.id);
                 div.querySelector('.delete-btn').onclick = () => deleteCustomPreset(p.id);
-                container.appendChild(div);
+                fragment.appendChild(div);
             });
+            container.appendChild(fragment);
             lucide.createIcons();
         }
 
@@ -3194,6 +3203,9 @@ async function submitMaintenanceTicket() {
                             return;
                         }
 
+                        // ⚡ Bolt Optimization: Use DocumentFragment to batch DOM insertions and reduce layout thrashing
+                        const fragment = document.createDocumentFragment();
+
                         shifts.forEach((shift, index) => {
                             const div = document.createElement('div');
                             div.className = "flex justify-between items-center p-4 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800";
@@ -3207,8 +3219,9 @@ async function submitMaintenanceTicket() {
                                     <button onclick="removeShift(${index})" class="text-red-500 text-xs mt-2 hover:underline">Remove</button>
                                 </div>
                             `;
-                            listContainer.appendChild(div);
+                            fragment.appendChild(div);
                         });
+                        listContainer.appendChild(fragment);
                     }
                 }, error => {
                     console.error("Error fetching schedules: ", error);
@@ -3373,6 +3386,9 @@ function checkAndRenderOrgControls() {
                     snap.forEach(doc => docs.push({ id: doc.id, data: doc.data() }));
                     docs.sort((a, b) => b.data.timestamp - a.data.timestamp);
 
+                    // ⚡ Bolt Optimization: Use DocumentFragment to batch DOM insertions and reduce layout thrashing
+                    const fragment = document.createDocumentFragment();
+
                     docs.forEach(docObj => {
                         const data = docObj.data;
                         const docId = docObj.id;
@@ -3413,8 +3429,9 @@ function checkAndRenderOrgControls() {
                             </div>
                         `;
                         noteDiv.querySelector('.shift-note-text').textContent = data.content;
-                        container.appendChild(noteDiv);
+                        fragment.appendChild(noteDiv);
                     });
+                    container.appendChild(fragment);
                     lucide.createIcons();
                 })
                 .catch(err => {
