@@ -51,8 +51,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const heroSection = document.querySelector('.hero');
 
     if (greetingElement && heroSection) {
+        let lastGreeting = "";
+        let lastShouldPlay = null;
 
         const manageVideoBackground = (shouldPlay) => {
+            if (shouldPlay === lastShouldPlay) return;
+            lastShouldPlay = shouldPlay;
+
             let videoBg = document.getElementById('new-year-video');
 
             if (shouldPlay) {
@@ -85,20 +90,22 @@ document.addEventListener('DOMContentLoaded', () => {
             const endOfCelebration = new Date('January 1, 2026 23:59:59');
             const revertDate = new Date('January 2, 2026 00:00:00');
 
+            let currentGreeting = "";
+
             if (now >= revertDate) {
                  const currentHour = now.getHours();
                  if (currentHour < 12) {
-                     greetingElement.textContent = "Good Morning.";
+                     currentGreeting = "Good Morning.";
                  } else if (currentHour < 18) {
-                     greetingElement.textContent = "Good Afternoon.";
+                     currentGreeting = "Good Afternoon.";
                  } else {
-                     greetingElement.textContent = "Good Evening.";
+                     currentGreeting = "Good Evening.";
                  }
                  manageVideoBackground(false);
             }
 
             else if (now >= newYear2026 && now <= endOfCelebration) {
-                greetingElement.textContent = "Happy New Year!";
+                currentGreeting = "Happy New Year!";
                 manageVideoBackground(true);
             }
 
@@ -111,9 +118,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
                     const seconds = Math.floor((diff % (1000 * 60)) / 1000);
 
-                    greetingElement.textContent = `New Years Countdown: ${days}d ${hours}h ${minutes}m ${seconds}s`;
+                    currentGreeting = `New Years Countdown: ${days}d ${hours}h ${minutes}m ${seconds}s`;
                 }
                 manageVideoBackground(false);
+            }
+
+            if (currentGreeting !== lastGreeting) {
+                greetingElement.textContent = currentGreeting;
+                lastGreeting = currentGreeting;
             }
         };
 
