@@ -1,3 +1,4 @@
+const { logManagerError } = require("./utils");
 const admin = require("firebase-admin");
 
 admin.initializeApp({
@@ -19,7 +20,7 @@ async function run() {
       console.log("No document in Firestore for UID:", userRecord.uid);
     }
   } catch (e) {
-    console.error("Error:", e.message);
+    logManagerError("Error:", e.message);
   }
 }
 

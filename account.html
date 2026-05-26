@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Account | ezManage</title>
+    <link rel="icon" type="image/jpeg" href="ManagerPro.jpg">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/themes.css">
+    <style>
+        :root {
+            --accent-blue: #2563EB;
+            --accent-red: #DC2626;
+            --font-main: 'Inter', sans-serif;
+        }
+        body {
+            font-family: var(--font-main);
+            background-color: var(--bg-color, #0f172a);
+            color: var(--text-primary, #f8fafc);
+            margin: 0;
+            padding: 40px 20px;
+            display: flex;
+            justify-content: center;
+        }
+        .account-container {
+            background-color: var(--primary-card-color, #1e293b);
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 600px;
+            border: 1px solid var(--border-color, #334155);
+        }
+        .account-container h2 {
+            margin-top: 0;
+            color: var(--accent-blue);
+            margin-bottom: 30px;
+            border-bottom: 1px solid var(--border-color, #334155);
+            padding-bottom: 10px;
+        }
+        .info-group {
+            margin-bottom: 20px;
+        }
+        .info-group label {
+            display: block;
+            font-weight: 600;
+            color: var(--text-secondary, #cbd5e1);
+            margin-bottom: 5px;
+        }
+        .info-group .value {
+            font-size: 1.1rem;
+            color: var(--text-primary, #f8fafc);
+        }
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: var(--accent-blue);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            text-decoration: none;
+            transition: background-color 0.2s;
+        }
+        .btn:hover {
+            background-color: #1d4ed8;
+        }
+        .btn-danger {
+            background-color: var(--accent-red);
+        }
+        .btn-danger:hover {
+            background-color: #b91c1c;
+        }
+        .actions {
+            margin-top: 40px;
+            display: flex;
+            gap: 15px;
+        }
+        .back-link {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+        .back-link:hover {
+            color: var(--text-primary);
+        }
+    </style>
+</head>
+<body style="display: none;">
+    <div class="account-container">
+        <a href="index.html" class="back-link">← Back to Home</a>
+        <h2>My Account</h2>
+        
+        <div class="info-group">
+            <label>Username</label>
+            <div class="value" id="acc-username">Loading...</div>
+        </div>
+        
+        <div class="info-group">
+            <label>Email</label>
+            <div class="value" id="acc-email">Loading...</div>
+        </div>
+        
+        <div class="info-group">
+            <label>Membership Level</label>
+            <div class="value" id="acc-membership">Loading...</div>
+        </div>
+
+        <div class="actions">
+            <button id="sign-out-btn" class="btn btn-danger">Sign Out</button>
+            <a href="index.html" class="btn">Return to App</a>
+        </div>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+    <script type="module" src="/js/auth.js"></script>
+    <script type="module" src="/js/theme-loader.js"></script>
+    <script type="module">
+        import { auth, db } from '/js/auth.js';
+        
+        auth.onAuthStateChanged(async (user) => {
+            if (user) {
+                document.body.style.display = 'block';
+                document.getElementById('acc-email').textContent = user.email;
+                
+                try {
+                    const docRef = db.collection("users").doc(user.uid);
+                    const docSnap = await docRef.get();
+                    if (docSnap.exists) {
+                        const data = docSnap.data();
+                        document.getElementById('acc-username').textContent = data.username || "User";
+                        document.getElementById('acc-membership').textContent = data.membershipLevel || "Free Tier";
+                    } else {
+                        // Create a default user document if it doesn't exist
+                        await docRef.set({
+                            email: user.email,
+                            username: "User",
+                            membershipLevel: "Free Tier",
+                            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                        }, { merge: true });
+                        document.getElementById('acc-username').textContent = "User";
+                        document.getElementById('acc-membership').textContent = "Free Tier";
+                    }
+                } catch (e) {
+                    console.error("Error fetching user data:", e);
+                }
+            } else {
+                if (!window.location.pathname.includes('sign in beta.html')) {
+                    window.location.replace('sign in beta.html');
+                }
+            }
+        });
+
+        document.getElementById('sign-out-btn').addEventListener('click', () => {
+            auth.signOut().then(() => {
+                window.location.replace('index.html');
+            });
+        });
+    </script>
+</body>
+</html>

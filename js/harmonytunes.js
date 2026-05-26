@@ -1,6 +1,8 @@
+import { logManagerError } from './utils.js';
 import { auth, db } from './auth.js';
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
 import { doc, getDoc, setDoc, updateDoc, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
+import { showToast } from './utils.js';
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -205,6 +207,8 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
+        // ⚡ Bolt Optimization: Replace O(N) DOM manipulations in loop with a DocumentFragment
+        const fragment = document.createDocumentFragment();
         songs.forEach((song, index) => {
             const row = document.createElement('tr');
 
@@ -225,8 +229,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 playContext(songs, index);
             });
 
-            songListBody.appendChild(row);
+            fragment.appendChild(row);
         });
+        songListBody.appendChild(fragment);
     }
 
     function playContext(newQueue, startIndex) {
@@ -268,7 +273,7 @@ document.addEventListener('DOMContentLoaded', () => {
             isPlaying = true;
             playIcon.style.display = 'none';
             pauseIcon.style.display = 'block';
-        }).catch(e => console.error("Error playing audio:", e));
+        }).catch(e => logManagerError("Error playing audio:", e));
     }
 
     function pauseSong() {
@@ -377,17 +382,6 @@ document.addEventListener('DOMContentLoaded', () => {
         return `${min}:${sec < 10 ? '0' : ''}${sec}`;
     }
 
-    function showToast(message) {
-        const toast = document.createElement('div');
-        toast.className = 'toast-notification';
-        toast.textContent = message;
-        document.body.appendChild(toast);
-        setTimeout(() => {
-            toast.classList.add('fade-out');
-            setTimeout(() => toast.remove(), 300);
-        }, 3000);
-    }
-
     async function toggleFavorite(songId) {
         if (!currentUser) {
             showToast("Please sign in to save favorites.");
@@ -416,9 +410,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 renderSongTable(userFavorites);
             }
         } catch (e) {
+            logManagerError("Error toggling favorite for songId:", songId, e);
+            logManagerError("Error toggling favorite:", e);
             if (e.code === 'not-found') {
-                await setDoc(userRef, { musicFavorites: [songId] }, { merge: true });
-                userFavorites.push(song);
+                try {
+                    await setDoc(userRef, { musicFavorites: [songId] }, { merge: true });
+                    userFavorites.push(song);
+                } catch (innerError) {
+                    logManagerError("Error setting initial favorite document for songId:", songId, innerError);
+                }
+            } else {
+                logManagerError("Error toggling favorite for songId:", songId, e);
             }
         }
     }
@@ -433,7 +435,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     const favIds = docSnap.data().musicFavorites;
                     userFavorites = librarySongs.filter(song => favIds.includes(song.id));
                 }
-            } catch (e) { console.error("Error loading user favorites:", e); }
+            } catch (e) { logManagerError("Error loading user favorites for uid:", user.uid, e); }
 
             const hour = new Date().getHours();
             const timeGreeting = hour < 12 ? "Good Morning" : hour < 18 ? "Good Afternoon" : "Good Evening";

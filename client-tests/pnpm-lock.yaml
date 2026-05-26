@@ -8,20 +8,17 @@ importers:
 
   .:
     devDependencies:
-      '@babel/core':
-        specifier: ^7.29.0
-        version: 7.29.0
       '@babel/preset-env':
-        specifier: ^7.29.2
+        specifier: ^7.29.5
         version: 7.29.5(@babel/core@7.29.0)
       babel-jest:
-        specifier: ^30.3.0
+        specifier: ^30.4.1
         version: 30.4.1(@babel/core@7.29.0)
       jest:
         specifier: ^30.3.0
         version: 30.4.2(@types/node@25.7.0)
       jest-environment-jsdom:
-        specifier: ^30.3.0
+        specifier: ^30.4.1
         version: 30.4.1
 
 packages:
