@@ -23,3 +23,6 @@
 ## 2024-05-24 - [DOM Append Bottleneck in Admin Dashboard]
 **Learning:** Sequential `appendChild` calls within loops (e.g., rendering table rows in `admin.html` and `harmonytunes.js`) create performance bottlenecks by causing repetitive DOM layout recalculations.
 **Action:** Replace sequential `appendChild` inside loops with a single `innerHTML` assignment using array `.map().join('')` for faster, batched string insertions. When event listeners need to be attached programmatically to each node, use a `DocumentFragment` to batch the DOM insertions instead.
+## 2026-05-26 - [Firebase Singleton Initialization]
+**Learning:** Initializing Firebase using `initializeApp` directly without checking if an app instance already exists can cause token mismatches and crashes during hot-module reloading or consecutive imports. Furthermore, `initializeFirestore` will throw an error if Firestore is already initialized on an existing app instance.
+**Action:** Always wrap initialization logic as a singleton: `const app = !getApps().length ? initializeApp(config) : getApp()`. Wrap `initializeFirestore` in a `try/catch` and fallback to `getFirestore(app)` if it throws.

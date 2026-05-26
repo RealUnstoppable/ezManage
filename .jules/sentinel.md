@@ -57,3 +57,7 @@
 **Vulnerability:** The `shift_notes` collection in `firestore.rules` had duplicate `allow create` blocks—one checking `authorId` and another checking `orgId`. Because Firestore evaluates rules as a logical OR, this allowed users to bypass the `authorId` check entirely by merely providing a valid `orgId`, leading to identity spoofing (IDOR).
 **Learning:** Duplicate rule blocks for the same operation (`create`, `read`, etc.) are OR'd together by Firestore. Adding a "safer" verification rule as a separate block does not override the previous one; it creates an alternative, often less restrictive, pathway.
 **Prevention:** Always combine security constraints (like ownership and organization checks) into a single logical condition within the same operation block using `&&`.
+## 2026-05-26 - [Bypassing Firestore Author Checks via Duplicate Rules]
+**Vulnerability:** Adding a "more strict" duplicate `allow create` rule block (e.g., checking both `authorId` and `orgId`) does not override an existing, less strict block (e.g., checking only `authorId` or only `orgId`). Firestore evaluates multiple blocks with a logical OR, meaning an attacker only needs to satisfy the weakest rule.
+**Learning:** Duplicate rule definitions create alternative pathways, not combined restrictions.
+**Prevention:** Remove duplicate rule blocks. Combine all multi-factor security constraints within a single `allow` block using a logical AND (`&&`).
