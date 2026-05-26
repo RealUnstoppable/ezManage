@@ -3304,6 +3304,9 @@ async function submitMaintenanceTicket() {
                     // Sort by name
                     employees.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
 
+                    // ⚡ Bolt Optimization: Use DocumentFragment to batch DOM insertions and reduce layout thrashing
+                    const fragment = document.createDocumentFragment();
+
                     employees.forEach(emp => {
                         const div = document.createElement('div');
                         div.className = "flex flex-col sm:flex-row justify-between sm:items-center p-4 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 gap-4";
@@ -3329,8 +3332,9 @@ async function submitMaintenanceTicket() {
                                 <button onclick="deleteEmployee('${emp.id}')" class="btn btn-outline btn-sm text-red-500 hover:bg-red-50" aria-label="Delete Employee"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
                             </div>
                         `;
-                        if (container) container.appendChild(div);
+                        fragment.appendChild(div);
                     });
+                    if (container) container.appendChild(fragment);
                     lucide.createIcons();
                     populateScheduleDropdown();
                 }, err => {
@@ -4142,6 +4146,9 @@ function checkAndRenderOrgControls() {
                         return;
                     }
 
+                    // ⚡ Bolt Optimization: Use DocumentFragment to batch DOM insertions and reduce layout thrashing
+                    const fragment = document.createDocumentFragment();
+
                     activeEmployeesList.forEach(emp => {
                         const div = document.createElement('div');
                         div.className = "card p-6 flex flex-col justify-between";
@@ -4163,8 +4170,9 @@ function checkAndRenderOrgControls() {
                                 <button onclick="deleteEmployee('${escapeHTML(emp.id)}')" class="btn btn-outline btn-sm text-red-500 hover:bg-red-50 flex-1" aria-label="Remove Employee"><i data-lucide="user-minus" class="w-3 h-3"></i> Remove</button>
                             </div>
                         `;
-                        container.appendChild(div);
+                        fragment.appendChild(div);
                     });
+                    container.appendChild(fragment);
                     lucide.createIcons();
                 }
             } catch (error) {

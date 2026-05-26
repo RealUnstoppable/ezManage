@@ -23,3 +23,6 @@
 ## 2024-05-24 - [DOM Append Bottleneck in Admin Dashboard]
 **Learning:** Sequential `appendChild` calls within loops (e.g., rendering table rows in `admin.html` and `harmonytunes.js`) create performance bottlenecks by causing repetitive DOM layout recalculations.
 **Action:** Replace sequential `appendChild` inside loops with a single `innerHTML` assignment using array `.map().join('')` for faster, batched string insertions. When event listeners need to be attached programmatically to each node, use a `DocumentFragment` to batch the DOM insertions instead.
+## 2026-05-13 - [DOM Insertions Bottleneck]
+**Learning:** Sequential calls to `appendChild()` inside loops cause expensive layout thrashing and repaint cycles on the main thread, leading to perceived UI jank during rendering.
+**Action:** Always batch DOM insertions using a `DocumentFragment` (`document.createDocumentFragment()`) before appending the entire batch to the live DOM in a single operation.
