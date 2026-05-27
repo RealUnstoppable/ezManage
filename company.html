@@ -1663,6 +1663,9 @@
                 if(tbody) tbody.innerHTML = '<tr><td colspan="3" class="p-4 text-center">No managers found in this organization.</td></tr>';
             }
 
+            // ⚡ Bolt Optimization: Batch DOM insertions using a DocumentFragment to prevent layout thrashing
+            const fragment = document.createDocumentFragment();
+
             snap.forEach(doc => {
                 const data = doc.data();
                 const history = data.shiftHistory || [];
@@ -1687,9 +1690,11 @@
                             <button onclick="removeManager('${escapeHTML(doc.id)}')" class="btn btn-outline btn-sm text-red-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
                         </td>
                     `;
-                    tbody.appendChild(tr);
+                    fragment.appendChild(tr);
                 }
             });
+
+            if (tbody) tbody.appendChild(fragment);
 
             document.getElementById('globalShifts').innerText = totalShifts;
             document.getElementById('globalRoutineScore').innerText = totalLogsWithScores > 0 ? Math.round(totalScore / totalLogsWithScores) + "%" : "0%";
