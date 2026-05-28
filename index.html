@@ -1687,7 +1687,6 @@
                         }
                         runAIPatternLogic();
                     } else {
-
                         if (!doc.exists) {
                             const activeView = document.querySelector('.view-section.active');
                             if (activeView && activeView.id !== 'view-setup') {
@@ -1701,6 +1700,7 @@
                                     }
                                 } catch (e) { console.warn("Email recovery check skipped", e); navTo('setup'); }
                             }
+                        }
                         if (!doc.exists || !doc.data().name) {
                             await db.collection("users").doc(user.uid).set({
                                 name: user.displayName || "Manager",
@@ -1709,9 +1709,9 @@
                             navTo('tracker');
                         }
 
-                        const activeView = document.querySelector('.view-section.active');
+                        const activeView2 = document.querySelector('.view-section.active');
                         if (!navigator.onLine) {
-                            if (activeView && activeView.id !== 'view-tracker') navTo('tracker');
+                            if (activeView2 && activeView2.id !== 'view-tracker') navTo('tracker');
                         }
                     }
                 });
@@ -1735,14 +1735,7 @@
             }
         });
 
-        function escapeHTML(str) {
-            return String(str)
-                .replace(/&/g, "&amp;")
-                .replace(/</g, "&lt;")
-                .replace(/>/g, "&gt;")
-                .replace(/"/g, "&quot;")
-                .replace(/'/g, "&#039;");
-        }
+
 
         function runAIPatternLogic() {
             const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -2890,9 +2883,6 @@
 
 
 
-async function submitMaintenanceTicket() {
-
-
         async function submitMaintenanceTicket() {
             if (!currentUser || !currentUserData || !currentUserData.orgId) {
                 alert("You must be part of an organization to report issues.");
@@ -3525,7 +3515,6 @@ async function submitMaintenanceTicket() {
 
             try {
                 const doc = await scheduleRef.get();
-            scheduleRef.get().then(async doc => {
                 if (doc.exists) {
                     const data = doc.data();
                     let shifts = data.shifts || [];
@@ -3783,18 +3772,7 @@ function checkAndRenderOrgControls() {
             document.getElementById('shiftNoteContent').value = "";
 
             try {
-                const manageShiftNotes = cloudFunctions.httpsCallable('manageShiftNotes');
                 // To allow client-side writes since cloud functions were failing for some users
-                const manageShiftNotes = firebase.functions().httpsCallable('manageShiftNotes');
-                const result = await manageShiftNotes({
-                    action: "create",
-                    payload: {
-                        authorId: currentUser.uid,
-                        orgId: currentUserData.orgId || currentUser.uid,
-                        authorName: currentUser.email.split('@')[0],
-                        content: content,
-                        priority: priority
-                    }
                 await db.collection('shift_notes').add({
                     authorId: currentUser.uid,
                     authorName: currentUser.email.split('@')[0],
@@ -3807,7 +3785,6 @@ function checkAndRenderOrgControls() {
 
                 document.getElementById('shiftNoteContent').value = "";
                 fetchShiftNotes();
-
             } catch (err) {
                 console.error("Error posting note", err);
                 if (err.code === 'unavailable' || err.code === 'auth/network-request-failed') {
@@ -3815,19 +3792,9 @@ function checkAndRenderOrgControls() {
                 } else {
                     alert("Failed to post note: " + err.message);
                 }
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                });
-                document.getElementById('shiftNoteContent').value = "";
-                fetchShiftNotes();
-            } catch (err) {
-                console.error(err);
-                if (err.code === 'unavailable' || err.code === 'auth/network-request-failed') {
-                    alert("Network error: Could not submit shift note.");
-                } else {
-                    alert("Failed to submit shift note. " + err.message);
-                }
                 noteDiv.remove(); // revert optimistic UI
             }
+        }
         }
 
         async function resolveShiftNote(noteId) {
@@ -4087,20 +4054,7 @@ function checkAndRenderOrgControls() {
             }
         }
 
-        async function deleteEmployee(empId) {
-            if (!currentUser || !confirm("Are you sure you want to remove this employee from the active roster?")) return;
 
-            try {
-                const manageEmployees = firebase.functions().httpsCallable('manageEmployees');
-                await manageEmployees({
-                    action: "delete",
-                    payload: { empId }
-                });
-                fetchTeamDirectory();
-            } catch (error) {
-                alert("Failed to remove employee: " + error.message);
-            }
-        }
 
         async function fetchTeamDirectory() {
             if (!currentUser || !currentUserData || !currentUserData.orgId) {
