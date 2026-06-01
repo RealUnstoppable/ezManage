@@ -1,732 +1,4 @@
-<!DOCTYPE html>
-<html lang="en">
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ezManage | Corporate Portal</title>
-
-    <link rel="icon" type="image/jpeg" href="ManagerPro.jpg">
-    <link rel="apple-touch-icon" href="ManagerPro.jpg">
-
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        function escapeHTML(str) {
-            if (!str && str !== 0) return "";
-            return String(str)
-                .replace(/&/g, "&amp;")
-                .replace(/</g, "&lt;")
-                .replace(/>/g, "&gt;")
-                .replace(/"/g, "&quot;")
-                .replace(/'/g, "&#039;");
-        }
-        tailwind.config = { darkMode: ['class', '.dark-mode'], }
-    </script>
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@400;500;600;700;800;900&display=swap"
-        rel="stylesheet">
-
-    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-functions-compat.js"></script>
-
-    <style>
-        :root {
-            --brand-sky: #87ceeb;
-            --brand-dark: #0f172a;
-        }
-
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f8fafc;
-            color: #0f172a;
-            overscroll-behavior-y: none;
-        }
-
-        h1, h2, h3, h4, h5, h6, .outfit {
-            font-family: 'Outfit', sans-serif;
-        }
-
-        .dark-mode body {
-            background-color: #020617;
-            color: #f8fafc;
-        }
-
-        .card {
-            background: rgba(255, 255, 255, 0.75);
-            backdrop-filter: blur(24px);
-            -webkit-backdrop-filter: blur(24px);
-            border: 1px solid rgba(255, 255, 255, 0.8);
-            border-radius: 1.5rem;
-            padding: 2rem;
-            box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.05), 0 2px 10px -2px rgba(0, 0, 0, 0.02);
-            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-
-        .card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.08), 0 4px 10px -2px rgba(0, 0, 0, 0.03);
-        }
-
-        .dark-mode .card {
-            background: rgba(15, 23, 42, 0.65);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.4);
-        }
-
-        .btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.5rem;
-            font-weight: 700;
-            border-radius: 9999px;
-            transition: all 0.2s;
-            cursor: pointer;
-        }
-
-        .btn-primary {
-            background: linear-gradient(135deg, #0ea5e9, #3b82f6);
-            color: white;
-            box-shadow: 0 4px 14px 0 rgba(14, 165, 233, 0.39);
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 6px 20px rgba(14, 165, 233, 0.5);
-        }
-
-        .btn-accent {
-            background: #10b981;
-            color: white;
-            box-shadow: 0 4px 14px 0 rgba(16, 185, 129, 0.39);
-        }
-
-        .btn-outline {
-            border: 2px solid #e2e8f0;
-            background: transparent;
-            color: #475569;
-        }
-
-        .dark-mode .btn-outline {
-            border-color: #334155;
-            color: #cbd5e1;
-        }
-
-        .view-section {
-            display: none;
-            animation: fadeIn 0.3s ease forwards;
-        }
-
-        .view-section.active {
-            display: block;
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(5px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        /* Autofill Styling */
-        input:-webkit-autofill,
-        input:-webkit-autofill:hover,
-        input:-webkit-autofill:focus,
-        input:-webkit-autofill:active {
-            -webkit-box-shadow: 0 0 0 30px white inset !important;
-        }
-
-        .dark-mode input:-webkit-autofill,
-        .dark-mode input:-webkit-autofill:hover,
-        .dark-mode input:-webkit-autofill:focus,
-        .dark-mode input:-webkit-autofill:active {
-            -webkit-box-shadow: 0 0 0 30px #1e293b inset !important;
-            -webkit-text-fill-color: white !important;
-        }
-    </style>
-</head>
-
-<body class="min-h-screen relative">
-    <!-- Navbar -->
-    <nav
-        class="fixed top-0 w-full z-50 bg-white/80 dark:bg-slate-950/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 transition-colors">
-        <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
-            <div class="flex items-center gap-3">
-                <div
-                    class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white shadow-lg">
-                    <i data-lucide="building-2" class="w-6 h-6"></i>
-                </div>
-                <div>
-                    <h1 class="font-black text-xl tracking-tight leading-none text-slate-900 dark:text-white">ezManage
-                    </h1>
-                    <div class="text-[10px] font-black uppercase tracking-widest text-indigo-500">Corporate Portal</div>
-                </div>
-            </div>
-            <div class="flex items-center gap-4">
-                <button onclick="toggleTheme()" aria-label="Toggle theme" class="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
-                <button onclick="toggleTheme()" aria-label="Toggle Theme"
-                    class="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
-                    <i data-lucide="moon" id="themeIcon"></i>
-                </button>
-                <div id="authContainer">
-                    <!-- Auth UI populated here -->
-                </div>
-            </div>
-        </div>
-    </nav>
-
-    <!-- Main Content -->
-    <main class="pt-28 pb-20 max-w-[1400px] mx-auto min-h-screen px-4 sm:px-6 lg:px-8">
-
-        <!-- LOGIN VIEW -->
-        <div id="view-login" class="view-section px-4 active">
-            <div class="max-w-md mx-auto mt-20">
-                <div class="text-center mb-10">
-                    <h2 class="text-3xl font-black mb-2">Corporate Login</h2>
-                    <p class="text-slate-500">Manage your stores, managers, and insights from one central dashboard.</p>
-                </div>
-                <form onsubmit="handleLogin(event)" class="card space-y-4 p-8">
-                    <input type="email" id="loginEmail" required placeholder="Corporate Email"
-                        class="w-full bg-slate-50 dark:bg-slate-800 p-4 rounded-xl border-none focus:ring-2 focus:ring-indigo-500">
-                    <input type="password" id="loginPass" required placeholder="Password"
-                        class="w-full bg-slate-50 dark:bg-slate-800 p-4 rounded-xl border-none focus:ring-2 focus:ring-indigo-500">
-                    <button type="submit" class="btn btn-primary w-full py-4 text-lg">Sign In</button>
-                    <div class="text-center pt-4">
-                        <button onclick="navTo('register')"
-                            class="text-sm font-bold text-indigo-500 hover:text-indigo-600">Need a corporate account?
-                            Create Organization</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-
-        <!-- REGISTER VIEW (ONBOARDING) -->
-        <div id="view-register" class="view-section px-4 h-[80vh] flex flex-col justify-center">
-            <div class="max-w-xl mx-auto w-full relative">
-                <!-- Progress Bar -->
-                <div id="onboardingProgressContainer"
-                    class="w-full bg-slate-200 dark:bg-slate-800 rounded-full h-3 mb-12 hidden shadow-inner">
-                    <div id="onboardingProgressBar"
-                        class="bg-indigo-500 h-3 rounded-full transition-all duration-500 ease-out relative overflow-hidden"
-                        style="width: 0%">
-                        <div class="absolute inset-0 bg-white/20"
-                            style="transform: skewX(-20deg); animation: shimmer 2s infinite;"></div>
-                    </div>
-                </div>
-
-                <div id="onboardingSteps" class="relative overflow-hidden min-h-[400px]">
-                    <!-- Step 1: Welcome -->
-                    <div id="step-1" class="onboarding-step transition-all duration-500 ease-in-out transform w-full">
-                        <div class="text-center">
-                            <div
-                                class="w-24 h-24 bg-indigo-100 dark:bg-indigo-900/50 rounded-full flex items-center justify-center mx-auto mb-8 shadow-inner border border-indigo-200 dark:border-indigo-800">
-                                <i data-lucide="rocket" class="w-12 h-12 text-indigo-500"></i>
-                            </div>
-                            <h2 class="text-4xl md:text-5xl font-black mb-6">Let's build your workspace.</h2>
-                            <p class="text-lg text-slate-500 dark:text-slate-400 mb-10">We'll set up your corporate
-                                organization in just a few quick steps.</p>
-                            <button type="button" onclick="nextOnboardingStep(2)"
-                                class="btn btn-primary w-full py-5 text-xl rounded-2xl shadow-[0_8px_30px_rgba(99,102,241,0.3)] animate-[pulse_2s_infinite] hover:animate-none">Get
-                                Started</button>
-                            <button onclick="navTo('login')"
-                                class="mt-6 text-sm font-bold text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300">Already
-                                have an account? Login</button>
-                        </div>
-                    </div>
-
-                    <!-- Step 2: Org Name -->
-                    <div id="step-2"
-                        class="onboarding-step hidden opacity-0 translate-x-full transition-all duration-500 ease-in-out absolute top-0 w-full">
-                        <h2 class="text-3xl font-black mb-8 text-center">What should we call your workspace?</h2>
-                        <input type="text" id="regOrgName" required placeholder="e.g. Acme Corp"
-                            class="w-full bg-white dark:bg-slate-900 text-center text-3xl font-black p-6 rounded-2xl border-4 border-slate-100 dark:border-slate-800 focus:border-indigo-500 focus:ring-0 transition-colors shadow-sm mb-8 placeholder:text-slate-300 dark:placeholder:text-slate-700"
-                            onkeydown="handleEnterKey(event, 3)">
-                        <button type="button" onclick="nextOnboardingStep(3)"
-                            class="btn btn-primary w-full py-5 text-xl rounded-2xl shadow-lg border-b-4 border-indigo-700 active:border-b-0 active:mt-1">Continue</button>
-                    </div>
-
-                    <!-- Step 3: Admin Email -->
-                    <div id="step-3"
-                        class="onboarding-step hidden opacity-0 translate-x-full transition-all duration-500 ease-in-out absolute top-0 w-full">
-                        <h2 class="text-3xl font-black mb-8 text-center">What is your admin email?</h2>
-                        <input type="email" id="regEmail" required placeholder="admin@example.com"
-                            class="w-full bg-white dark:bg-slate-900 text-center text-3xl font-black p-6 rounded-2xl border-4 border-slate-100 dark:border-slate-800 focus:border-indigo-500 focus:ring-0 transition-colors shadow-sm mb-8 placeholder:text-slate-300 dark:placeholder:text-slate-700"
-                            onkeydown="handleEnterKey(event, 4)">
-                        <button type="button" onclick="nextOnboardingStep(4)"
-                            class="btn btn-primary w-full py-5 text-xl rounded-2xl shadow-lg border-b-4 border-indigo-700 active:border-b-0 active:mt-1">Continue</button>
-                    </div>
-
-                    <!-- Step 4: Password -->
-                    <div id="step-4"
-                        class="onboarding-step hidden opacity-0 translate-x-full transition-all duration-500 ease-in-out absolute top-0 w-full">
-                        <h2 class="text-3xl font-black mb-8 text-center">Secure your workspace.</h2>
-                        <input type="password" id="regPass" required placeholder="Password (Min 6 chars)"
-                            class="w-full bg-white dark:bg-slate-900 text-center text-3xl font-black p-6 rounded-2xl border-4 border-slate-100 dark:border-slate-800 focus:border-indigo-500 focus:ring-0 transition-colors shadow-sm mb-8 placeholder:text-slate-300 dark:placeholder:text-slate-700"
-                            onkeydown="handleEnterKey(event, 5)">
-                        <button type="button" onclick="nextOnboardingStep(5)"
-                            class="btn btn-primary w-full py-5 text-xl rounded-2xl shadow-lg border-b-4 border-indigo-700 active:border-b-0 active:mt-1"
-                            id="btnFinishOnboarding">Create Workspace</button>
-                    </div>
-
-                    <!-- Step 5: Creation/Celebration -->
-                    <div id="step-5"
-                        class="onboarding-step hidden opacity-0 translate-x-full transition-all duration-500 ease-in-out absolute top-0 w-full">
-                        <div class="text-center" id="onboardingLoadingState">
-                            <i data-lucide="loader-2" class="w-16 h-16 animate-spin text-indigo-500 mx-auto mb-8"></i>
-                            <h2 class="text-3xl font-black mb-4">Creating your organization...</h2>
-                            <p class="text-slate-500">Setting up your secure environment.</p>
-                        </div>
-                        <div class="text-center hidden" id="onboardingSuccessState">
-                            <div
-                                class="w-24 h-24 bg-emerald-100 dark:bg-emerald-900/50 rounded-full flex items-center justify-center mx-auto mb-8 shadow-inner border border-emerald-200 dark:border-emerald-800">
-                                <i data-lucide="check" class="w-12 h-12 text-emerald-500"></i>
-                            </div>
-                            <h2 class="text-4xl font-black mb-4 text-emerald-600 dark:text-emerald-400">Workspace
-                                Created!</h2>
-                            <p class="text-slate-500 mb-8">You are all set. Let's head to your dashboard.</p>
-                            <div class="animate-pulse flex items-center justify-center gap-2 text-indigo-500 font-bold">
-                                <span>Redirecting</span>
-                                <i data-lucide="arrow-right" class="w-4 h-4"></i>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- NEW: Step Workers -->
-                    <div id="step-workers"
-                        class="onboarding-step hidden opacity-0 translate-x-full transition-all duration-500 ease-in-out absolute top-0 w-full">
-                        <h2 class="text-3xl font-black mb-8 text-center">How large is your team?</h2>
-                        <select id="regWorkers"
-                            class="w-full bg-white dark:bg-slate-900 text-center text-3xl font-black p-6 rounded-2xl border-4 border-slate-100 dark:border-slate-800 focus:border-indigo-500 focus:ring-0 transition-colors shadow-sm mb-8">
-                            <option value="">Select Team Size</option>
-                            <option value="1-10">1-10 Employees</option>
-                            <option value="11-50">11-50 Employees</option>
-                            <option value="51-200">51-200 Employees</option>
-                            <option value="200+">200+ Employees</option>
-                        </select>
-                        <button type="button" onclick="advanceOnboarding()"
-                            class="btn btn-primary w-full py-5 text-xl rounded-2xl shadow-lg border-b-4 border-indigo-700 active:border-b-0 active:mt-1">Continue</button>
-                    </div>
-
-                    <!-- NEW: Step Plan -->
-                    <div id="step-plan"
-                        class="onboarding-step hidden opacity-0 translate-x-full transition-all duration-500 ease-in-out absolute top-0 w-full">
-                        <h2 class="text-3xl font-black mb-8 text-center">Select your plan.</h2>
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-                            <!-- Free -->
-                            <div onclick="selectPlan('Free')" id="plan-Free"
-                                class="plan-card border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20 cursor-pointer border-4 rounded-2xl p-6 text-center hover:border-indigo-300 transition-colors">
-                                <h3 class="font-black text-xl mb-2">Free</h3>
-                                <p class="text-3xl font-black text-indigo-500 mb-4">$0<span
-                                        class="text-sm text-slate-500">/mo</span></p>
-                                <p class="text-xs text-slate-500 font-bold uppercase tracking-widest">Basic Features</p>
-                            </div>
-                            <!-- Business Individual -->
-                            <div onclick="selectPlan('Business Individual')" id="plan-Business Individual"
-                                class="plan-card border-slate-100 dark:border-slate-800 cursor-pointer bg-white dark:bg-slate-900 border-4 rounded-2xl p-6 text-center hover:border-indigo-300 transition-colors">
-                                <h3 class="font-black text-xl mb-2">Business Indv.</h3>
-                                <p class="text-3xl font-black text-indigo-500 mb-4">$29<span
-                                        class="text-sm text-slate-500">/mo</span></p>
-                                <p class="text-xs text-slate-500 font-bold uppercase tracking-widest">Advanced Tools</p>
-                            </div>
-                            <!-- Business Pro -->
-                            <div onclick="selectPlan('Business Pro')" id="plan-Business Pro"
-                                class="plan-card relative border-slate-100 dark:border-slate-800 cursor-pointer bg-white dark:bg-slate-900 border-4 rounded-2xl p-6 text-center hover:border-indigo-300 transition-colors">
-                                <div
-                                    class="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-indigo-500 text-white text-[10px] font-black uppercase px-3 py-1 rounded-full whitespace-nowrap">
-                                    Most Popular</div>
-                                <h3 class="font-black text-xl mb-2">Business Pro</h3>
-                                <p class="text-3xl font-black text-indigo-500 mb-4">$99<span
-                                        class="text-sm text-slate-500">/mo</span></p>
-                                <p class="text-xs text-slate-500 font-bold uppercase tracking-widest">Unlimited
-                                    Everything</p>
-                            </div>
-                        </div>
-                        <button type="button" onclick="advanceOnboarding()"
-                            class="btn btn-primary w-full py-5 text-xl rounded-2xl shadow-lg border-b-4 border-indigo-700 active:border-b-0 active:mt-1">Continue</button>
-                    </div>
-
-                    <!-- NEW: Step Roles -->
-                    <div id="step-roles"
-                        class="onboarding-step hidden opacity-0 translate-x-full transition-all duration-500 ease-in-out absolute top-0 w-full">
-                        <h2 class="text-3xl font-black mb-4 text-center">Add your managers.</h2>
-                        <p class="text-center text-slate-500 mb-8 font-bold">You can always do this later in the
-                            dashboard.</p>
-
-                        <div class="bg-slate-50 dark:bg-slate-800 p-6 rounded-2xl mb-8 space-y-4">
-                            <div class="flex gap-4">
-                                <input type="email" id="roleEmail" placeholder="Manager Email"
-                                    class="flex-1 w-full bg-white dark:bg-slate-900 p-3 rounded-xl border-none focus:ring-2 focus:ring-indigo-500 shadow-sm">
-                                <select id="rolePriority"
-                                    class="w-1/3 bg-white dark:bg-slate-900 p-3 rounded-xl border-none focus:ring-2 focus:ring-indigo-500 shadow-sm">
-                                    <option value="Normal">Normal</option>
-                                    <option value="Urgent">Urgent</option>
-                                    <option value="Low">Low</option>
-                                </select>
-                                <button type="button" onclick="addOnboardingRole()"
-                                    class="btn btn-outline bg-white dark:bg-slate-900"><i data-lucide="plus"
-                                        class="w-5 h-5"></i></button>
-                            </div>
-                            <div id="onboardingRoleList"
-                                class="space-y-2 mt-4 max-h-[150px] overflow-y-auto custom-scrollbar pr-2 text-left">
-                                <!-- Roles added here -->
-                            </div>
-                        </div>
-
-                        <button type="button" onclick="advanceOnboarding()"
-                            class="btn btn-primary w-full py-5 text-xl rounded-2xl shadow-lg border-b-4 border-indigo-700 active:border-b-0 active:mt-1">Continue</button>
-                    </div>
-
-                    <!-- NEW: Step Config -->
-                    <div id="step-config"
-                        class="onboarding-step hidden opacity-0 translate-x-full transition-all duration-500 ease-in-out absolute top-0 w-full">
-                        <h2 class="text-3xl font-black mb-8 text-center">Final Settings.</h2>
-
-                        <div class="space-y-4 mb-8 text-left">
-                            <label
-                                class="flex items-center gap-4 bg-slate-50 dark:bg-slate-800 p-4 rounded-xl cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
-                                <input type="checkbox" id="configAi" checked
-                                    class="w-6 h-6 text-indigo-500 rounded focus:ring-0">
-                                <div>
-                                    <div class="font-black text-lg">Enable AI Features</div>
-                                    <div class="text-sm text-slate-500">Use ezManage AI to summarize shift notes and
-                                        detect trends.</div>
-                                </div>
-                            </label>
-
-                            <label
-                                class="flex items-center gap-4 bg-slate-50 dark:bg-slate-800 p-4 rounded-xl cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
-                                <input type="checkbox" id="configSync" checked
-                                    class="w-6 h-6 text-indigo-500 rounded focus:ring-0">
-                                <div>
-                                    <div class="font-black text-lg">Cloud Sync</div>
-                                    <div class="text-sm text-slate-500">Automatically sync changes across all your
-                                        devices in real-time.</div>
-                                </div>
-                            </label>
-
-                            <label
-                                class="flex items-center gap-4 bg-slate-50 dark:bg-slate-800 p-4 rounded-xl cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors border-2 border-transparent">
-                                <input type="checkbox" id="termsCheck"
-                                    class="w-6 h-6 text-indigo-500 rounded focus:ring-0">
-                                <div>
-                                    <div class="font-black text-lg">Accept Terms</div>
-                                    <div class="text-sm text-slate-500">I agree to the Terms of Service and Privacy
-                                        Policy.</div>
-                                </div>
-                            </label>
-                        </div>
-
-                        <button type="button" onclick="advanceOnboarding()"
-                            class="btn btn-primary w-full py-5 text-xl rounded-2xl shadow-lg border-b-4 border-indigo-700 active:border-b-0 active:mt-1">Complete
-                            Setup</button>
-                    </div>
-
-                    <!-- NEW: Step Loading -->
-                    <div id="step-loading"
-                        class="onboarding-step hidden opacity-0 translate-x-full transition-all duration-500 ease-in-out absolute top-0 w-full h-full flex flex-col items-center justify-center min-h-[400px]">
-                        <div class="text-center w-full">
-                            <div
-                                class="w-24 h-24 bg-yellow-100 dark:bg-yellow-900/50 rounded-full flex items-center justify-center mx-auto mb-8 shadow-inner border border-yellow-200 dark:border-yellow-800 animate-pulse">
-                                <i data-lucide="zap" class="w-12 h-12 text-yellow-500"></i>
-                            </div>
-                            <h2 class="text-3xl font-black mb-4">Get ready to ditch the clipboard.</h2>
-                            <p class="text-slate-500 mb-8 font-bold">Provisioning your organization...</p>
-
-                            <div
-                                class="w-full max-w-md mx-auto bg-slate-200 dark:bg-slate-800 rounded-full h-4 shadow-inner overflow-hidden relative">
-                                <div id="tutorialProgressBar"
-                                    class="bg-indigo-500 h-4 rounded-full transition-all ease-linear"
-                                    style="width: 0%; transition-duration: 200ms;">
-                                    <div class="absolute inset-0 bg-white/20"
-                                        style="transform: skewX(-20deg); animation: shimmer 2s infinite;"></div>
-                                </div>
-                            </div>
-                            <div id="loadingStatusText"
-                                class="text-xs uppercase tracking-widest font-bold text-slate-400 mt-4">Initializing
-                                database...</div>
-                        </div>
-                    </div>
-
-                    <!-- NEW: Step Tutorial -->
-                    <div id="step-tutorial"
-                        class="onboarding-step hidden opacity-0 translate-x-full transition-all duration-500 ease-in-out absolute top-0 w-full min-h-[400px] flex flex-col justify-center">
-                        <div class="text-center">
-                            <div id="tutorialIcon"
-                                class="w-24 h-24 bg-sky-100 dark:bg-sky-900/50 rounded-full flex items-center justify-center mx-auto mb-8 shadow-inner border border-sky-200 dark:border-sky-800 transition-all duration-300 transform scale-90">
-                                <i data-lucide="layout-dashboard" class="w-12 h-12 text-sky-500"></i>
-                            </div>
-                            <h2 id="tutorialTitle" class="text-3xl font-black mb-4 transition-opacity duration-300">
-                                Welcome to your Bento Dashboard.</h2>
-                            <p id="tutorialText"
-                                class="text-lg text-slate-500 dark:text-slate-400 mb-10 transition-opacity duration-300 px-4">
-                                Everything you need to manage your business is now accessible in one beautiful, unified
-                                view.</p>
-                            <button type="button" onclick="finishTutorial()"
-                                class="btn btn-primary w-full py-5 text-xl rounded-2xl shadow-[0_8px_30px_rgba(99,102,241,0.3)] hover:scale-[1.02] transition-transform">Enter
-                                Dashboard</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <style>
-            @keyframes shimmer {
-                0% {
-                    left: -100%;
-                }
-
-                100% {
-                    left: 100%;
-                }
-            }
-
-            .bento-grid {
-                opacity: 0;
-                animation: fadeInGrid 0.1s forwards;
-            }
-
-            .bento-item {
-                opacity: 0;
-                transform: translateY(20px) scale(0.95);
-                animation: bentoFadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-            }
-
-            @keyframes bentoFadeIn {
-                0% {
-                    opacity: 0;
-                    transform: translateY(20px) scale(0.95);
-                }
-
-                100% {
-                    opacity: 1;
-                    transform: translateY(0) scale(1);
-                }
-            }
-
-            @keyframes fadeInGrid {
-                to {
-                    opacity: 1;
-                }
-            }
-
-            .custom-scrollbar::-webkit-scrollbar {
-                width: 6px;
-            }
-
-            .custom-scrollbar::-webkit-scrollbar-track {
-                background: transparent;
-            }
-
-            .custom-scrollbar::-webkit-scrollbar-thumb {
-                background-color: #cbd5e1;
-                border-radius: 20px;
-            }
-
-            .dark-mode .custom-scrollbar::-webkit-scrollbar-thumb {
-                background-color: #334155;
-            }
-        </style>
-
-        <!-- DASHBOARD SHELL (Requires Auth) -->
-        <div id="dashboard-shell" class="hidden max-w-7xl mx-auto w-full">
-
-
-                    <div id="globalMetrics" class="grid md:grid-cols-2 gap-6 mb-8 mt-8 px-4">
-                        <div class="card bg-sky-50 dark:bg-sky-900/20 border-sky-100 p-6 rounded-2xl text-center">
-                            <p class="text-xs font-black uppercase tracking-widest text-sky-500 mb-2">Global Shifts Logged</p>
-                            <h3 id="globalShifts" class="text-4xl font-black text-slate-800 dark:text-slate-100">0</h3>
-                        </div>
-                        <div class="card bg-emerald-50 dark:bg-emerald-900/20 border-emerald-100 p-6 rounded-2xl text-center">
-                            <p class="text-xs font-black uppercase tracking-widest text-emerald-500 mb-2">Global Routine Avg</p>
-                            <h3 id="globalRoutineScore" class="text-4xl font-black text-slate-800 dark:text-slate-100">0%</h3>
-                        </div>
-                    </div>
-
-<div class="px-4">
-
-                    <div id="managerAdmin" class="card bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-2xl mb-8">
-                        <h2 class="text-xl font-bold mb-4"><i data-lucide="users" class="inline w-5 h-5 mr-2 text-sky-500"></i> Manager Administration</h2>
-                        <form id="createManagerForm" class="flex gap-4 mb-6">
-                            <input type="email" id="newManagerEmail" placeholder="Manager Email" class="input input-bordered flex-1" required>
-                            <button type="submit" class="btn btn-primary"><i data-lucide="user-plus" class="w-4 h-4 mr-2"></i> Add Manager</button>
-                        </form>
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-left text-sm text-slate-600 dark:text-slate-400">
-                                <thead class="bg-slate-50 dark:bg-slate-800/50">
-                                    <tr><th class="p-3">Email</th><th class="p-3">Role</th><th class="p-3 text-right">Actions</th></tr>
-                                </thead>
-                                <tbody id="managerTableBody">
-                                    <tr><td colspan="3" class="p-4 text-center">Loading managers...</td></tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-
-</div>
-<!-- Dashboard Header -->
-            <div class="mb-8 flex flex-col md:flex-row justify-between items-center px-4 gap-4 bento-item"
-                style="animation-delay: 0.05s;">
-                <div>
-                    <h2 class="text-3xl font-black" id="orgNameDisplayBento">Organization Dashboard</h2>
-                    <p class="text-slate-500 font-bold uppercase tracking-widest text-xs" id="orgIdDisplayBento">Loading
-                        ID...</p>
-                </div>
-                <div class="flex items-center gap-4">
-                    <div
-                        class="bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-800 rounded-xl px-4 py-2 flex items-center shadow-sm">
-                        <i data-lucide="calendar" class="w-4 h-4 text-indigo-500 mr-2"></i>
-                        <input type="date" id="dashboardDatePicker"
-                            class="bg-transparent font-bold focus:ring-0 focus:outline-none text-slate-700 dark:text-slate-300 border-none p-0"
-                            onchange="fetchDashboardData()">
-                    </div>
-                    <button onclick="firebase.auth().signOut()"
-                        class="btn btn-outline text-red-500 border-red-200 hover:bg-red-50 dark:border-red-900/30 dark:hover:bg-red-900/20"><i
-                            data-lucide="log-out" class="w-4 h-4"></i></button>
-                </div>
-            </div>
-
-            <!-- Bento Grid -->
-            <div id="view-overview" class="view-section active">
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 bento-grid">
-
-                    <!-- 1. Org Access Details (Small) -->
-                    <div class="card p-6 flex flex-col justify-between bento-item" style="animation-delay: 0.1s;">
-                        <div>
-                            <h3
-                                class="font-black text-slate-400 text-xs uppercase tracking-widest mb-4 flex items-center">
-                                <i data-lucide="key" class="w-3 h-3 mr-1"></i> Workspace Access
-                            </h3>
-                            <div class="space-y-4">
-                                <div>
-                                    <div class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1">
-                                        Group ID</div>
-                                    <div class="font-mono font-black text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30 p-2 rounded-lg"
-                                        id="shareGroupId">...</div>
-                                </div>
-                                <div>
-                                    <div class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1">
-                                        Password</div>
-                                    <div class="font-mono font-black text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/30 p-2 rounded-lg"
-                                        id="shareGroupPass">...</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- 2. Labor Saved (Small) -->
-                    <div class="card p-6 bg-gradient-to-br from-indigo-500 to-purple-600 text-white border-none shadow-lg bento-item flex flex-col"
-                        style="animation-delay: 0.2s;">
-                        <h3 class="font-black text-indigo-100 text-xs uppercase tracking-widest mb-2 flex items-center">
-                            <i data-lucide="clock" class="w-3 h-3 mr-1"></i> Labor Saved Today
-                        </h3>
-                        <div class="flex-grow flex items-center justify-center flex-col">
-                            <div class="text-6xl font-black mb-1 drop-shadow-md" id="laborSavedCount">0h</div>
-                            <div class="text-indigo-200 font-bold text-sm bg-indigo-900/20 px-3 py-1 rounded-full">
-                                approx. time saved</div>
-                        </div>
-                    </div>
-
-                    <!-- 3. Global Performance (Medium/Large - Col Span 2) -->
-                    <div class="card p-6 col-span-1 md:col-span-2 lg:col-span-2 bento-item flex flex-col"
-                        style="animation-delay: 0.3s;">
-                        <div class="flex justify-between items-center mb-4">
-                            <h3 class="font-black text-slate-400 text-xs uppercase tracking-widest flex items-center"><i
-                                    data-lucide="trending-up" class="w-3 h-3 mr-1"></i> Performance Overview</h3>
-                            <div class="text-right">
-                                <div class="text-3xl font-black text-emerald-500" id="statAvgScore">0%</div>
-                                <div class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Avg
-                                    Completion</div>
-                            </div>
-                        </div>
-                        <div class="flex-grow w-full relative min-h-[120px]">
-                            <canvas id="globalPerformanceChart" class="absolute inset-0 w-full h-full"></canvas>
-                        </div>
-                    </div>
-
-                    <!-- 4. Reports Submitted (Large - Row Span 2, Col Span 2) -->
-                    <div class="card p-6 col-span-1 md:col-span-2 lg:col-span-2 lg:row-span-2 flex flex-col bento-item"
-                        style="animation-delay: 0.4s;">
-                        <div class="flex justify-between items-center mb-6">
-                            <h3 class="font-black text-slate-400 text-xs uppercase tracking-widest flex items-center"><i
-                                    data-lucide="file-text" class="w-3 h-3 mr-1"></i> Submitted Reports</h3>
-                            <div class="text-xs font-bold bg-indigo-100 dark:bg-indigo-900/30 px-3 py-1 rounded-full text-indigo-600 dark:text-indigo-400"
-                                id="statNotesCount">0 notes</div>
-                        </div>
-                        <div id="globalNotesContainer"
-                            class="flex-grow overflow-y-auto space-y-3 max-h-[400px] lg:max-h-[500px] pr-2 custom-scrollbar">
-                            <div class="text-center py-8 text-slate-400 font-bold">Loading notes...</div>
-                        </div>
-                    </div>
-
-                    <!-- 5. Active Managers / Directory (Medium - Col Span 2) -->
-                    <div class="card p-0 col-span-1 md:col-span-2 lg:col-span-2 flex flex-col overflow-hidden bento-item"
-                        style="animation-delay: 0.5s;">
-                        <div
-                            class="p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50/50 dark:bg-slate-900/50">
-                            <h3 class="font-black text-slate-400 text-xs uppercase tracking-widest flex items-center"><i
-                                    data-lucide="users" class="w-3 h-3 mr-1"></i> Manager Directory</h3>
-                            <div class="flex gap-2">
-                                <button onclick="togglePendingRequests()"
-                                    class="btn btn-outline btn-sm relative bg-white dark:bg-slate-800">
-                                    Requests <span id="pendingRequestsBadge"
-                                        class="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] w-5 h-5 rounded-full flex items-center justify-center hidden shadow-sm">0</span>
-                                </button>
-                                <button onclick="showInviteModal()" class="btn btn-primary btn-sm"><i
-                                        data-lucide="user-plus" class="w-4 h-4"></i> Invite</button>
-                            </div>
-                        </div>
-                        <div id="pendingRequestsSection"
-                            class="hidden p-4 bg-amber-50 dark:bg-amber-900/10 border-b border-amber-100 dark:border-amber-900/30">
-                            <h4
-                                class="text-xs font-black text-amber-600 dark:text-amber-500 uppercase tracking-widest mb-3">
-                                Pending Join Requests</h4>
-                            <div id="pendingRequestsContainer"
-                                class="space-y-2 max-h-[150px] overflow-y-auto custom-scrollbar pr-2"></div>
-                        </div>
-                        <div class="overflow-y-auto max-h-[250px] lg:max-h-[300px] custom-scrollbar">
-                            <table class="w-full text-left text-sm">
-                                <tbody id="managersTableBody" class="divide-y divide-slate-100 dark:divide-slate-800">
-                                    <tr>
-                                        <td colspan="4" class="px-6 py-8 text-center text-slate-400 font-bold">Loading
-                                            managers...</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                    <!-- 6. Schedule / Individual Performance (Medium - Col Span 2) -->
-                    <div class="card p-6 col-span-1 md:col-span-2 lg:col-span-4 bento-item"
-                        style="animation-delay: 0.6s;">
-                        <h3 class="font-black text-slate-400 text-xs uppercase tracking-widest mb-4 flex items-center">
-                            <i data-lucide="award" class="w-3 h-3 mr-1"></i> Individual Performance Leaderboard
-                        </h3>
-                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
-                            id="individualPerformanceContainer">
-                            <div class="col-span-full text-center py-8 text-slate-400 font-bold">No performance data
-                                yet.</div>
-                        </div>
-                    </div>
-
-                </div>
-            </div>
-        </div>
-
-    </main>
-
-    <script>
         // --- Firebase Configuration ---
         const firebaseConfig = {
             apiKey: "AIzaSyBgrI9HwJPSc5b4pu2Egsv4DE7shNwptSw",
@@ -803,7 +75,15 @@
         document.getElementById('themeIcon').setAttribute('data-lucide', document.documentElement.classList.contains('dark-mode') ? 'sun' : 'moon');
         lucide.createIcons();
 
-
+        function escapeHTML(str) {
+            if (!str && str !== 0) return "";
+            return String(str)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
 
         // --- Navigation ---
         function navTo(viewId) {
@@ -1038,6 +318,8 @@
                 });
 
                 // For a Corporate Workspace, we create a shift_group and make them the owner
+                const manageShiftGroups = firebase.functions().httpsCallable('manageShiftGroups');
+                await manageShiftGroups({
                 const result = await callFunction('manageShiftGroups', {
                     action: "create",
                     payload: {
@@ -1316,26 +598,6 @@
                         <div class="p-4 bg-white dark:bg-slate-900 rounded-xl border border-${color}-100 dark:border-${color}-900/50 shadow-sm flex items-start gap-4">
                             <div class="w-10 h-10 rounded-full bg-${color}-100 dark:bg-${color}-900/30 flex items-center justify-center text-${color}-500 flex-shrink-0 mt-1">
                                 <i data-lucide="${isUrgent ? 'alert-triangle' : 'message-square'}"></i>
-                            </div>
-                            <div class="flex-grow">
-                                <div class="flex justify-between items-start mb-1">
-                                    <div class="font-black text-slate-900 dark:text-white text-sm">${escapeHTML(data.authorName)}</div>
-                                    ${isUrgent ? `<span class="bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400 text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full flex items-center"><i data-lucide="alert-triangle" class="w-3 h-3 mr-1"></i> Urgent</span>` : ''}
-                                </div>
-                                <div class="text-sm text-slate-600 dark:text-slate-400 mb-2">${escapeHTML(data.content)}</div>
-                                <div class="text-[10px] font-bold uppercase tracking-widest text-slate-400">Status: ${escapeHTML(data.status)}</div>
-                            </div>
-                        </div>`;
-                  }).join('');
-                  lucide.createIcons();
-              });
-
-            // 2. Count Managers
-            db.collection('users').where('orgId', '==', activeOrgId).get().then(snap => {
-                document.getElementById('statManagersCount').innerText = snap.size;
-            });
-        }
-
         // --- Bento Dashboard Logic ---
 
         // Helper: Generate consistent colors from names/emails
@@ -1398,6 +660,7 @@
                             </select>
                         </td>
                         <td class="px-6 py-3 text-right">
+                            ${!isOwner ? `<button onclick="removeManager('${escapeHTML(doc.id)}')" class="text-slate-400 hover:text-red-500 transition-colors"><i data-lucide="trash-2" class="w-4 h-4"></i></button>` : `<span class="text-slate-300">-</span>`}
                             ${!isOwner ? `<button onclick="removeManager('${doc.id}')" aria-label="Remove manager" class="text-slate-400 hover:text-red-500 transition-colors"><i data-lucide="trash-2" class="w-4 h-4"></i></button>` : `<span class="text-slate-300">-</span>`}
                         </td>
                     </tr>`;
@@ -1422,6 +685,14 @@
                             </div>
                             <div class="font-black text-sm">${escapeHTML(displayName)}</div>
                         </div>
+                      `;
+                  }).join('');
+                  lucide.createIcons();
+              });
+
+            // 2. Count Managers
+            db.collection('users').where('orgId', '==', activeOrgId).get().then(snap => {
+                document.getElementById('statManagersCount').innerText = snap.size;
                         <div class="text-right">
                             <div class="text-xl font-black ${score === 100 ? 'text-emerald-500' : (score > 0 ? 'text-indigo-500' : 'text-slate-400')}">${score}%</div>
                             <div class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Completion</div>
@@ -1433,11 +704,8 @@
                 indivContainer.innerHTML = htmlIndiv;
                 lucide.createIcons();
 
-                if (typeof renderGlobalPerformanceChart === 'function') {
-                    renderGlobalPerformanceChart(allShifts);
-                }
+                renderGlobalPerformanceChart(allShifts);
             });
-        }
 
         function fetchManagers() {
             if(!activeOrgId) return;
@@ -1510,6 +778,18 @@
 
             // Fetch Pending Requests
             db.collection('shift_group_requests').where('groupId', '==', activeOrgId).where('status', '==', 'Pending')
+              .onSnapshot(snap => {
+                  const section = document.getElementById('pendingRequestsSection');
+                  const container = document.getElementById('pendingRequestsContainer');
+                  if(snap.empty) {
+                      section.classList.add('hidden');
+                      return;
+                  }
+                  section.classList.remove('hidden');
+                  // ⚡ Bolt Optimization: Replace O(n²) string concatenation inside loop with array map().join('')
+                  container.innerHTML = snap.docs.map(doc => {
+                      return `
+                        <div class="flex justify-between items-center p-4 bg-white dark:bg-slate-900 border border-amber-200 dark:border-amber-900/50 rounded-xl">
                 .onSnapshot(snap => {
                     const section = document.getElementById('pendingRequestsSection');
                     const container = document.getElementById('pendingRequestsContainer');
@@ -1517,17 +797,16 @@
 
                     if (snap.empty) {
                         section.classList.add('hidden');
-                        if (badge) badge.classList.add('hidden');
+                        badge.classList.add('hidden');
                         return;
                     }
 
-                    section.classList.remove('hidden');
-                    if (badge) {
-                        badge.innerText = snap.size;
-                        badge.classList.remove('hidden');
-                    }
+                    badge.innerText = snap.size;
+                    badge.classList.remove('hidden');
 
-                    container.innerHTML = snap.docs.map(doc => `
+                    let html = '';
+                    snap.forEach(doc => {
+                        html += `
                         <div class="flex justify-between items-center p-3 bg-white dark:bg-slate-800 border border-amber-200 dark:border-amber-900/50 rounded-xl shadow-sm">
                             <div>
                                 <div class="font-black text-slate-900 dark:text-white text-sm">${escapeHTML(doc.data().userName)}</div>
@@ -1535,8 +814,13 @@
                             </div>
                             <button onclick="approveRequest('${escapeHTML(doc.id)}')" class="btn btn-accent btn-sm py-1 px-4 text-xs">Approve</button>
                         </div>
-                    `).join('');
+                      `;
+                  }).join('');
+              });
+                    });
+                    container.innerHTML = html;
                 });
+        }
 
         function togglePendingRequests() {
             document.getElementById('pendingRequestsSection').classList.toggle('hidden');
@@ -1548,20 +832,28 @@
 
         async function approveRequest(requestId) {
             try {
-                await callFunction('manageShiftGroups', { action: "approve_join", payload: { requestId } });
+                const manageShiftGroups = firebase.functions().httpsCallable('manageShiftGroups');
+                await manageShiftGroups({
+                    action: "approve_join",
+                    payload: { requestId: requestId }
+                });
                 alert("Manager Approved!");
+            } catch(e) { alert("Failed: " + e.message); }
+                await callFunction('manageShiftGroups', { action: "approve_join", payload: { requestId } });
             } catch (e) { alert("Failed: " + e.message); }
         }
 
         async function removeManager(userId) {
             if (!confirm("Remove this manager from the organization?")) return;
             try {
-                await callFunction('manageShiftGroups', { action: "remove_manager", payload: { userId, groupId: activeOrgId } });
+                await db.collection('users').doc(userId).update({ orgId: null });
                 alert("Manager removed successfully.");
-            } catch (e) {
+            } catch(e) {
                 console.error(e);
                 alert("Failed to remove manager: " + e.message);
             }
+                await callFunction('manageShiftGroups', { action: "remove_manager", payload: { userId, groupId: activeOrgId } });
+            } catch (e) { alert("Failed: " + e.message); }
         }
 
         function renderGlobalPerformanceChart(allShifts) {
@@ -1685,7 +977,15 @@
             if(window.lucide) lucide.createIcons();
         }
 
-
+        async function removeManager(uid) {
+            if(!confirm("Are you sure you want to remove this manager from your organization?")) return;
+            try {
+                await db.collection('users').doc(uid).update({ orgId: firebase.firestore.FieldValue.delete() });
+                window.fetchGlobalMetrics();
+            } catch(e) {
+                alert("Error removing manager: " + e.message);
+            }
+        }
 
         document.addEventListener('DOMContentLoaded', () => {
             const form = document.getElementById('createManagerForm');
@@ -1712,7 +1012,3 @@
             }
         });
 
-</script>
-</body>
-
-</html>
