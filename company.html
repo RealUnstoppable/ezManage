@@ -1661,35 +1661,38 @@
 
             if (snap.empty) {
                 if(tbody) tbody.innerHTML = '<tr><td colspan="3" class="p-4 text-center">No managers found in this organization.</td></tr>';
-            }
+            } else {
+                snap.forEach(doc => {
+                    const data = doc.data();
+                    const history = data.shiftHistory || [];
+                    totalShifts += history.length;
 
-            snap.forEach(doc => {
-                const data = doc.data();
-                const history = data.shiftHistory || [];
-                totalShifts += history.length;
-
-                history.forEach(h => {
-                    let rTotal = 0, rChecked = 0;
-                    (h.routines || []).forEach(r => { rTotal++; if (r.checked) rChecked++; });
-                    if (rTotal > 0) {
-                        totalScore += (rChecked / rTotal) * 100;
-                        totalLogsWithScores++;
-                    }
+                    history.forEach(h => {
+                        let rTotal = 0, rChecked = 0;
+                        (h.routines || []).forEach(r => { rTotal++; if (r.checked) rChecked++; });
+                        if (rTotal > 0) {
+                            totalScore += (rChecked / rTotal) * 100;
+                            totalLogsWithScores++;
+                        }
+                    });
                 });
 
                 if(tbody) {
-                    const tr = document.createElement('tr');
-                    tr.className = 'border-b border-slate-100 dark:border-slate-800';
-                    tr.innerHTML = `
-                        <td class="p-3 font-medium">${escapeHTML(data.email || 'Unknown')}</td>
-                        <td class="p-3">${escapeHTML(data.role || 'Manager')}</td>
-                        <td class="p-3 text-right">
-                            <button onclick="removeManager('${escapeHTML(doc.id)}')" class="btn btn-outline btn-sm text-red-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
-                        </td>
-                    `;
-                    tbody.appendChild(tr);
+                    // ⚡ Bolt Optimization: Replace O(N) appendChild loop with O(1) batched string map/join to prevent layout thrashing
+                    tbody.innerHTML = snap.docs.map(doc => {
+                        const data = doc.data();
+                        return `
+                            <tr class="border-b border-slate-100 dark:border-slate-800">
+                                <td class="p-3 font-medium">${escapeHTML(data.email || 'Unknown')}</td>
+                                <td class="p-3">${escapeHTML(data.role || 'Manager')}</td>
+                                <td class="p-3 text-right">
+                                    <button onclick="removeManager('${escapeHTML(doc.id)}')" class="btn btn-outline btn-sm text-red-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                                </td>
+                            </tr>
+                        `;
+                    }).join('');
                 }
-            });
+            }
 
             document.getElementById('globalShifts').innerText = totalShifts;
             document.getElementById('globalRoutineScore').innerText = totalLogsWithScores > 0 ? Math.round(totalScore / totalLogsWithScores) + "%" : "0%";
