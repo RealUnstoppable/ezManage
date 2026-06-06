@@ -930,24 +930,14 @@
                             <input type="date" id="scheduleDate" class="w-full" onchange="fetchSchedules(this.value)">
                         </div>
                         <div>
-                            <label class="block text-sm font-bold mb-1">Employee Name</label>
+                            <label for="shiftEmpName" class="block text-sm font-bold mb-1">Employee Name</label>
                             <select id="shiftEmpName" class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
                                 <option value="">Select Employee...</option>
                             </select>
                         </div>
                         <div>
-                            <label class="block text-sm font-bold mb-1">Role</label>
-                            <select id="shiftRole" class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
-                            <label for="shiftEmpName" class="block text-sm font-bold mb-1">Employee Name</label>
-                            <input type="text" id="shiftEmpName" class="w-full" placeholder="John Doe">
-                            <label class="block text-sm font-bold mb-1">Employee Name</label>
-                            <select id="shiftEmpName" class="w-full">
-                                <option value="" disabled selected>Select Employee</option>
-                            </select>
-                        </div>
-                        <div>
                             <label for="shiftRole" class="block text-sm font-bold mb-1">Role</label>
-                            <select id="shiftRole" class="w-full">
+                            <select id="shiftRole" class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
                                 <option value="Cashier">Cashier</option>
                                 <option value="Cook">Cook</option>
                                 <option value="Shift Leader">Shift Leader</option>
@@ -1460,15 +1450,15 @@
                     <p class="text-slate-500 mb-8">Submit your availability requests for manager approval.</p>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                         <div>
-                            <label class="block text-sm font-bold mb-2">Start Date</label>
+                            <label for="timeoffStartDate" class="block text-sm font-bold mb-2">Start Date</label>
                             <input type="date" id="timeoffStartDate" class="w-full">
                         </div>
                         <div>
-                            <label class="block text-sm font-bold mb-2">End Date</label>
+                            <label for="timeoffEndDate" class="block text-sm font-bold mb-2">End Date</label>
                             <input type="date" id="timeoffEndDate" class="w-full">
                         </div>
                     </div>
-                    <label class="block text-sm font-bold mb-2">Reason</label>
+                    <label for="timeoffReason" class="block text-sm font-bold mb-2">Reason</label>
                     <textarea id="timeoffReason" class="h-24 mb-6" placeholder="e.g. Vacation, Medical appointment..."></textarea>
                     <button id="btnSubmitTimeOff" onclick="submitTimeOffRequest()" class="btn btn-accent w-full py-4">Submit Request</button>
                 </div>
