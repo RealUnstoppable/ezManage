@@ -21,12 +21,30 @@ exports.createCheckoutSession = onRequest({invoker: "public"}, (req, res) => {
       return res.status(405).send("Method Not Allowed");
     }
 
-    const {uid, email, plan, amount, successUrl, cancelUrl} = req.body;
+    const {uid, email, plan, successUrl, cancelUrl} = req.body;
 
     let lineItems;
 
-    // If the frontend passed a specific discounted amount (Sale or Referral)
-    if (amount) {
+    // Calculate final prices and discounts strictly server-side
+    let finalPrice = plan === "Business Pro" ? 207 : 61;
+    let userData = {};
+
+    if (uid) {
+      try {
+        const userDoc = await admin.firestore().collection("users").doc(uid).get();
+        if (userDoc.exists) userData = userDoc.data();
+      } catch (err) {
+        logManagerError("Error fetching user data for checkout", err);
+      }
+    }
+
+    if (userData.hasPromoCode) {
+      finalPrice *= 0.9;
+    }
+    finalPrice = Math.floor(finalPrice);
+
+    // If a discount was applied, we must build price_data dynamically
+    if (finalPrice !== (plan === "Business Pro" ? 207 : 61)) {
       const productId = plan === "Business Pro" ?
         "prod_UFnBrTwFCgb54A" :
         "prod_UFn8zqZ0mwyy5r";
@@ -36,7 +54,7 @@ exports.createCheckoutSession = onRequest({invoker: "public"}, (req, res) => {
           product: productId,
           recurring: {interval: "year"},
           // Stripe requires amounts in cents
-          unit_amount: Math.round(amount * 100),
+          unit_amount: Math.round(finalPrice * 100),
         },
         quantity: 1,
       }];
