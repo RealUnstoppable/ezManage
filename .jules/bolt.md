@@ -26,3 +26,7 @@
 ## 2026-05-13 - [DOM Insertions Bottleneck]
 **Learning:** Sequential calls to `appendChild()` inside loops cause expensive layout thrashing and repaint cycles on the main thread, leading to perceived UI jank during rendering.
 **Action:** Always batch DOM insertions using a `DocumentFragment` (`document.createDocumentFragment()`) before appending the entire batch to the live DOM in a single operation.
+
+## 2024-05-24 - [Avoid Unnecessary DOM Text Updates]
+**Learning:** Updating an element's `.textContent` unconditionally within a high-frequency `setInterval` loop (like a clock or greeting timer) forces the browser to needlessly recalculate layout and repaint, even when the text string hasn't changed.
+**Action:** Always introduce a state variable (e.g., `lastGreeting`) to cache the rendered text and wrap the DOM assignment in a conditional check (`if (newGreeting !== lastGreeting)`), ensuring the DOM is only touched when the visual state actually updates.
