@@ -836,14 +836,14 @@
                                     </button>
                                     
                                     <div x-show="dropdownOpen" @click.outside="dropdownOpen = false" x-transition class="absolute right-0 mt-2 w-48 bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700 overflow-hidden z-50 py-1" x-cloak>
-                                        <button @click="sortInventory('recent'); dropdownOpen = false" class="w-full text-left px-4 py-3 text-sm font-bold hover:bg-slate-50 dark:hover:bg-slate-700/50 flex items-center gap-2">
+                                        <button type="button" @click="sortInventory('recent'); dropdownOpen = false" class="w-full text-left px-4 py-3 text-sm font-bold hover:bg-slate-50 dark:hover:bg-slate-700/50 flex items-center gap-2">
                                             <i data-lucide="clock" class="w-4 h-4"></i> Most Recent
                                         </button>
-                                        <button @click="sortInventory('alpha'); dropdownOpen = false" class="w-full text-left px-4 py-3 text-sm font-bold hover:bg-slate-50 dark:hover:bg-slate-700/50 flex items-center gap-2">
+                                        <button type="button" @click="sortInventory('alpha'); dropdownOpen = false" class="w-full text-left px-4 py-3 text-sm font-bold hover:bg-slate-50 dark:hover:bg-slate-700/50 flex items-center gap-2">
                                             <i data-lucide="arrow-down-a-z" class="w-4 h-4"></i> Alphabetical
                                         </button>
                                         <div class="h-px bg-slate-200 dark:bg-slate-700 my-1"></div>
-                                        <button @click="expanded = !expanded; dropdownOpen = false" class="w-full text-left px-4 py-3 text-sm font-bold hover:bg-slate-50 dark:hover:bg-slate-700/50 flex items-center gap-2">
+                                        <button type="button" @click="expanded = !expanded; dropdownOpen = false" class="w-full text-left px-4 py-3 text-sm font-bold hover:bg-slate-50 dark:hover:bg-slate-700/50 flex items-center gap-2">
                                             <i data-lucide="panel-top-close" class="w-4 h-4" x-show="expanded"></i>
                                             <i data-lucide="panel-top-open" class="w-4 h-4" x-show="!expanded" x-cloak></i>
                                             <span x-text="expanded ? 'Close Section' : 'Open Section'"></span>
