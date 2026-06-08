@@ -78,6 +78,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         };
 
+        let lastGreeting = ""; // ⚡ Bolt Optimization: Cache to prevent layout thrashing
+
         const updateGreeting = () => {
             const now = new Date();
 
@@ -85,21 +87,24 @@ document.addEventListener('DOMContentLoaded', () => {
             const endOfCelebration = new Date('January 1, 2026 23:59:59');
             const revertDate = new Date('January 2, 2026 00:00:00');
 
+            let newGreeting = "";
+            let shouldPlayVideo = false;
+
             if (now >= revertDate) {
                  const currentHour = now.getHours();
                  if (currentHour < 12) {
-                     greetingElement.textContent = "Good Morning.";
+                     newGreeting = "Good Morning.";
                  } else if (currentHour < 18) {
-                     greetingElement.textContent = "Good Afternoon.";
+                     newGreeting = "Good Afternoon.";
                  } else {
-                     greetingElement.textContent = "Good Evening.";
+                     newGreeting = "Good Evening.";
                  }
-                 manageVideoBackground(false);
+                 shouldPlayVideo = false;
             }
 
             else if (now >= newYear2026 && now <= endOfCelebration) {
-                greetingElement.textContent = "Happy New Year!";
-                manageVideoBackground(true);
+                newGreeting = "Happy New Year!";
+                shouldPlayVideo = true;
             }
 
             else {
@@ -111,10 +116,17 @@ document.addEventListener('DOMContentLoaded', () => {
                     const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
                     const seconds = Math.floor((diff % (1000 * 60)) / 1000);
 
-                    greetingElement.textContent = `New Years Countdown: ${days}d ${hours}h ${minutes}m ${seconds}s`;
+                    newGreeting = `New Years Countdown: ${days}d ${hours}h ${minutes}m ${seconds}s`;
                 }
-                manageVideoBackground(false);
+                shouldPlayVideo = false;
             }
+
+            // ⚡ Bolt Optimization: Only update DOM if state actually changed
+            if (newGreeting !== lastGreeting) {
+                greetingElement.textContent = newGreeting;
+                lastGreeting = newGreeting;
+            }
+            manageVideoBackground(shouldPlayVideo);
         };
 
         updateGreeting();
