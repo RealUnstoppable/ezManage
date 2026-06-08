@@ -827,16 +827,31 @@
 
                     <div id="section-inventory" class="card" x-data="{ expanded: true }">
                         <div class="flex justify-between items-center mb-6">
-                            <h3 class="text-xl font-black w-full">
-                                <button @click="expanded = !expanded" :aria-expanded="expanded" type="button"
-                                    class="w-full flex items-center gap-3 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 rounded-lg">
-                                    <div class="flex items-center gap-3"><i data-lucide="package"
-                                            class="text-purple-500"></i> Inventory Count</div>
-                                    <i data-lucide="chevron-down" class="transition-transform no-print ml-auto mr-4"
-                                        :class="expanded ? 'rotate-180' : ''"></i>
-                                </button>
-                            </h3>
-                            <button type="button" onclick="addInventoryItem()"
+                            <div class="text-xl font-black w-full flex items-center justify-between">
+                                <div class="flex items-center gap-3"><i data-lucide="package" class="text-purple-500"></i> Inventory Count</div>
+                                
+                                <div class="relative no-print ml-auto mr-4" x-data="{ dropdownOpen: false }">
+                                    <button @click="dropdownOpen = !dropdownOpen" type="button" class="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors" aria-label="Inventory Options">
+                                        <i data-lucide="chevron-down" class="transition-transform" :class="dropdownOpen ? 'rotate-180' : ''"></i>
+                                    </button>
+                                    
+                                    <div x-show="dropdownOpen" @click.outside="dropdownOpen = false" x-transition class="absolute right-0 mt-2 w-48 bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700 overflow-hidden z-50 py-1" x-cloak>
+                                        <button @click="sortInventory('recent'); dropdownOpen = false" class="w-full text-left px-4 py-3 text-sm font-bold hover:bg-slate-50 dark:hover:bg-slate-700/50 flex items-center gap-2">
+                                            <i data-lucide="clock" class="w-4 h-4"></i> Most Recent
+                                        </button>
+                                        <button @click="sortInventory('alpha'); dropdownOpen = false" class="w-full text-left px-4 py-3 text-sm font-bold hover:bg-slate-50 dark:hover:bg-slate-700/50 flex items-center gap-2">
+                                            <i data-lucide="arrow-down-a-z" class="w-4 h-4"></i> Alphabetical
+                                        </button>
+                                        <div class="h-px bg-slate-200 dark:bg-slate-700 my-1"></div>
+                                        <button @click="expanded = !expanded; dropdownOpen = false" class="w-full text-left px-4 py-3 text-sm font-bold hover:bg-slate-50 dark:hover:bg-slate-700/50 flex items-center gap-2">
+                                            <i data-lucide="panel-top-close" class="w-4 h-4" x-show="expanded"></i>
+                                            <i data-lucide="panel-top-open" class="w-4 h-4" x-show="!expanded" x-cloak></i>
+                                            <span x-text="expanded ? 'Close Section' : 'Open Section'"></span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <button type="button" onclick="addInventoryItem('', '', '', '', true)"
                                 class="btn btn-outline btn-sm no-print whitespace-nowrap">+ Add Item</button>
                         </div>
                         <div x-show="expanded" x-transition>
@@ -2045,14 +2060,10 @@
             const div = document.createElement('div');
             div.className = "flex gap-4 items-center bg-slate-50 dark:bg-slate-800 p-3 rounded-xl animate-fadeIn";
             div.innerHTML = `
-                <input type="text" placeholder="Amount" class="dep-val" style="flex:1;" aria-label="Deposit Amount">
-                <label class="flex items-center gap-1 text-[10px] font-bold"><input type="checkbox" class="dep-ver accent-sky-500 w-4 h-4"> VER</label>
-                <label class="flex items-center gap-1 text-[10px] font-bold"><input type="checkbox" class="dep-val-chk accent-sky-500 w-4 h-4"> VAL</label>
-                <button type="button" class="text-red-400 delete-deposit-btn" aria-label="Remove deposit"><i data-lucide="x" class="w-4"></i></button>
                 <input type="text" placeholder="Amount" class="dep-val" style="flex:1;" aria-label="Deposit Amount" oninput="triggerDraftSync()">
                 <label class="flex items-center gap-1 text-[10px] font-bold"><input type="checkbox" class="dep-ver accent-sky-500 w-4 h-4" onchange="triggerDraftSync()" aria-label="Verify Deposit"> VER</label>
                 <label class="flex items-center gap-1 text-[10px] font-bold"><input type="checkbox" class="dep-val-chk accent-sky-500 w-4 h-4" onchange="triggerDraftSync()" aria-label="Validate Deposit"> VAL</label>
-                <button type="button" onclick="if(confirm('Are you sure you want to delete this deposit? This action cannot be undone.')) { this.parentElement.remove(); triggerDraftSync(); }" class="text-red-400" aria-label="Remove deposit"><i data-lucide="x" class="w-4"></i></button>
+                <button type="button" class="text-red-400 delete-deposit-btn" aria-label="Remove deposit"><i data-lucide="x" class="w-4"></i></button>
             `;
 
             div.querySelector('.dep-val').oninput = triggerDraftSync;
@@ -2105,9 +2116,11 @@
             if (initialDraftLoaded) triggerDraftSync();
         }
 
-        function addInventoryItem(name = "", bl = "", cl = "", fr = "") {
+        let _invLoadTime = Date.now();
+        function addInventoryItem(name = "", bl = "", cl = "", fr = "", prepend = false, timestamp = null) {
             const div = document.createElement('div');
             div.className = 'inventory-item animate-fadeIn border-slate-200 dark:border-slate-800';
+            div.dataset.timestamp = timestamp || (prepend ? Date.now() : _invLoadTime--);
             div.innerHTML = `
                 <input type="text" placeholder="Item Name" class="inv-name" aria-label="Item Name">
                 <input type="text" placeholder="Backline" class="inv-backline" aria-label="Backline Count">
@@ -2131,9 +2144,31 @@
             div.querySelector('.inv-cooler').value = cl;
             div.querySelector('.inv-freezer').value = fr;
             const container = document.getElementById('inventoryContainer');
-            container.appendChild(div);
+            if (prepend && container.firstChild) {
+                container.insertBefore(div, container.firstChild);
+            } else {
+                container.appendChild(div);
+            }
             lucide.createIcons();
             if (initialDraftLoaded) triggerDraftSync();
+        }
+
+        function sortInventory(type) {
+            const container = document.getElementById('inventoryContainer');
+            const items = Array.from(container.children);
+            
+            if (type === 'alpha') {
+                items.sort((a, b) => {
+                    const nameA = a.querySelector('.inv-name').value.toLowerCase() || 'zzzz';
+                    const nameB = b.querySelector('.inv-name').value.toLowerCase() || 'zzzz';
+                    return nameA.localeCompare(nameB);
+                });
+            } else if (type === 'recent') {
+                items.sort((a, b) => Number(b.dataset.timestamp) - Number(a.dataset.timestamp));
+            }
+            
+            items.forEach(item => container.appendChild(item));
+            triggerDraftSync();
         }
 
         function getTrackerState() {
@@ -2162,7 +2197,7 @@
                 state.deposits.push({ val: el.querySelector('.dep-val').value, ver: el.querySelector('.dep-ver').checked, valCheck: el.querySelector('.dep-val-chk').checked });
             });
             document.querySelectorAll('.inventory-item').forEach(el => {
-                state.inventory.push({ name: el.querySelector('.inv-name').value, bl: el.querySelector('.inv-backline').value, cl: el.querySelector('.inv-cooler').value, fr: el.querySelector('.inv-freezer').value });
+                state.inventory.push({ name: el.querySelector('.inv-name').value, bl: el.querySelector('.inv-backline').value, cl: el.querySelector('.inv-cooler').value, fr: el.querySelector('.inv-freezer').value, timestamp: el.dataset.timestamp });
             });
             return state;
         }
@@ -2200,7 +2235,7 @@
             if (draft.routines) draft.routines.forEach(r => addRoutineTask(r.name, r.checked));
 
             document.getElementById('inventoryContainer').innerHTML = '';
-            if (draft.inventory) draft.inventory.forEach(i => addInventoryItem(i.name, i.bl, i.cl, i.fr));
+            if (draft.inventory) draft.inventory.forEach(i => addInventoryItem(i.name, i.bl, i.cl, i.fr, false, i.timestamp));
 
             document.getElementById('drawersContainer').innerHTML = '';
             if (draft.drawers) draft.drawers.forEach(d => addDrawerItem(d.val, d.name));
@@ -2632,7 +2667,7 @@
                     document.getElementById('inventoryContainer').innerHTML = '';
                     preset.items.forEach(i => {
                         if (typeof i === 'string') addInventoryItem(i);
-                        else addInventoryItem(i.name, i.bl, i.cl, i.fr);
+                        else addInventoryItem(i.name, i.bl, i.cl, i.fr, false, i.timestamp);
                     });
                 } else {
                     populateTrackerFromState(preset);
