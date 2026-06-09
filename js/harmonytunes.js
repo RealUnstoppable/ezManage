@@ -410,17 +410,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 renderSongTable(userFavorites);
             }
         } catch (e) {
-            logManagerError("Error toggling favorite for songId:", songId, e);
-            logManagerError("Error toggling favorite:", e);
+            logManagerError(`Error toggling favorite for songId: ${songId}`, e);
             if (e.code === 'not-found') {
                 try {
                     await setDoc(userRef, { musicFavorites: [songId] }, { merge: true });
                     userFavorites.push(song);
                 } catch (innerError) {
-                    logManagerError("Error setting initial favorite document for songId:", songId, innerError);
+                    logManagerError(`Error setting initial favorite document for songId: ${songId}`, innerError);
                 }
-            } else {
-                logManagerError("Error toggling favorite for songId:", songId, e);
             }
         }
     }
