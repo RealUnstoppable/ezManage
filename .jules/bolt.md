@@ -26,3 +26,6 @@
 ## 2026-05-13 - [DOM Insertions Bottleneck]
 **Learning:** Sequential calls to `appendChild()` inside loops cause expensive layout thrashing and repaint cycles on the main thread, leading to perceived UI jank during rendering.
 **Action:** Always batch DOM insertions using a `DocumentFragment` (`document.createDocumentFragment()`) before appending the entire batch to the live DOM in a single operation.
+## 2024-05-24 - [DOM Insertions Bottleneck in company.html]
+**Learning:** Sequential calls to `appendChild()` inside loops cause expensive layout thrashing and repaint cycles on the main thread, leading to perceived UI jank during rendering.
+**Action:** Always batch DOM insertions using a `DocumentFragment` (`document.createDocumentFragment()`) before appending the entire batch to the live DOM in a single operation.
