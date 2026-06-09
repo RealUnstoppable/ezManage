@@ -29,3 +29,6 @@
 ## 2024-05-24 - ARIA labels for dynamic inputs and textareas lacking visible labels
 **Learning:** Inputs (`<input>`) and textareas (`<textarea>`) that lack a visible `<label>` but use a `placeholder` attribute are inaccessible for screen readers. This applies to UI components like `newRoutineTask`, `customPresetName`, `featureReqText`, and `shiftNoteContent` in `index.html`. Placeholders do not replace explicit labels.
 **Action:** Always provide an explicit `aria-label` attribute on form inputs and textareas if screen space prohibits a visible `<label>`. This ensures the purpose of the input is clearly communicated to screen reader users.
+## 2024-06-09 - Alpine.js dynamic binding for accessibility attributes
+**Learning:** When using Alpine.js (`x-data`, `x-show`), static aria attributes won't update when the state changes.
+**Action:** Use Alpine's dynamic binding (`:aria-label="expanded ? 'Close' : 'Open'"`) to ensure screen readers get the current state description.

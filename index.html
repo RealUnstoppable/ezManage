@@ -843,7 +843,7 @@
                                             <i data-lucide="arrow-down-a-z" class="w-4 h-4"></i> Alphabetical
                                         </button>
                                         <div class="h-px bg-slate-200 dark:bg-slate-700 my-1"></div>
-                                        <button type="button" @click="expanded = !expanded; dropdownOpen = false" class="w-full text-left px-4 py-3 text-sm font-bold hover:bg-slate-50 dark:hover:bg-slate-700/50 flex items-center gap-2">
+                                        <button type="button" @click="expanded = !expanded; dropdownOpen = false" class="w-full text-left px-4 py-3 text-sm font-bold hover:bg-slate-50 dark:hover:bg-slate-700/50 flex items-center gap-2" :aria-label="expanded ? 'Close Section' : 'Open Section'">
                                             <i data-lucide="panel-top-close" class="w-4 h-4" x-show="expanded"></i>
                                             <i data-lucide="panel-top-open" class="w-4 h-4" x-show="!expanded" x-cloak></i>
                                             <span x-text="expanded ? 'Close Section' : 'Open Section'"></span>
