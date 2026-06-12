@@ -29,3 +29,10 @@
 ## 2024-05-24 - ARIA labels for dynamic inputs and textareas lacking visible labels
 **Learning:** Inputs (`<input>`) and textareas (`<textarea>`) that lack a visible `<label>` but use a `placeholder` attribute are inaccessible for screen readers. This applies to UI components like `newRoutineTask`, `customPresetName`, `featureReqText`, and `shiftNoteContent` in `index.html`. Placeholders do not replace explicit labels.
 **Action:** Always provide an explicit `aria-label` attribute on form inputs and textareas if screen space prohibits a visible `<label>`. This ensures the purpose of the input is clearly communicated to screen reader users.
+## 2026-06-12 - ARIA labels for dynamic inputs and textareas lacking visible labels
+**Learning:** Inputs (`<input>`) and textareas (`<textarea>`) that lack a visible `<label>` but use a `placeholder` attribute are inaccessible for screen readers. This applies to UI components like `newRoutineTask`, `customPresetName`, `featureReqText`, and `shiftNoteContent` in `index.html`. Placeholders do not replace explicit labels.
+**Action:** Always provide an explicit `aria-label` attribute on form inputs and textareas if screen space prohibits a visible `<label>`. This ensures the purpose of the input is clearly communicated to screen reader users.
+
+## 2026-06-12 - Form accessibility enhancements
+**Learning:** Adding correct explicit `for` attributes to decoupled `<label>` elements mapped to `<input>` or `<select>` IDs significantly improves screen reader navigation and mouse hit targets in ezManage's Schedule and Time Off forms.
+**Action:** Next time, always ensure that decoupled `<label>` elements have an explicit `for` attribute pointing to their respective `<input>` or `<select>` ID. Do not rely merely on proximity or visually surrounding elements.
