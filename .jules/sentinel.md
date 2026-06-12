@@ -61,3 +61,7 @@
 **Vulnerability:** The `shift_notes` collection in `firestore.rules` had duplicate `allow create` blocks—one checking `authorId` and another checking `orgId`. Because Firestore evaluates rules as a logical OR, this allowed users to bypass the `authorId` check entirely by merely providing a valid `orgId`, leading to identity spoofing (IDOR).
 **Learning:** Duplicate rule blocks for the same operation (`create`, `read`, etc.) are OR'd together by Firestore. Adding a "safer" verification rule as a separate block does not override the previous one; it creates an alternative, often less restrictive, pathway.
 **Prevention:** Always combine security constraints (like ownership and organization checks) into a single logical condition within the same operation block using `&&`.
+## 2025-06-12 - Inline Event Handler XSS with escapeHTML()
+**Vulnerability:** Inline `onclick` handlers in `index.html` contained variable interpolations (e.g. `onclick="resolveShiftNote('${escapeHTML(docId)}')"`).
+**Learning:** Even if a string is escaped using `escapeHTML()`, placing it inside an inline HTML attribute like `onclick` exposes it to XSS because the browser decodes HTML entities before evaluating the JavaScript string context.
+**Prevention:** Avoid inline event handlers entirely when interpolating variables. Use `data-` attributes combined with programmatic event delegation (e.g., `document.addEventListener('click', ...)`), or build elements via `document.createElement()` and assign `onclick` directly as a function.
