@@ -1578,11 +1578,8 @@
             measurementId: "G-ZN3YJPHVGX"
         };
 
-        if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
+        const app = !window.firebase.apps.length ? window.firebase.initializeApp(firebaseConfig) : window.firebase.app();
         const auth = firebase.auth();
-        firebase.firestore().settings({
-            experimentalForceLongPolling: true
-        });
         const db = firebase.firestore();
         db.settings({ experimentalForceLongPolling: true });
         const cloudFunctions = firebase.functions();
@@ -2969,9 +2966,8 @@
                 fetchMaintenanceTickets();
             } catch (error) {
                 console.error("Error submitting ticket:", error);
-                if (error.code === 'unavailable' || error.code === 'auth/network-request-failed') {
+                if (error.code === 'unavailable' || error.code === 'auth/network-request-failed' || error.code === 'firestore/unavailable') {
                     alert("Network error: Could not connect to the server. Please check your connection.");
-                    alert("Network error: Could not submit maintenance ticket.");
                 } else {
                     alert("Failed to submit ticket. " + error.message);
                 }
@@ -3476,7 +3472,6 @@
                 await scheduleRef.set({
                     uid: currentUser.uid,
                     authorId: currentUser.uid,
-                    orgId: currentUserData.orgId,
                     orgId: currentUserData?.orgId || null,
                     date: date,
                     shifts: shifts,
@@ -3488,7 +3483,7 @@
                 endTime.value = '';
             } catch(err) {
                 console.error("Error saving shift", err);
-                if (err.code === 'unavailable' || err.code === 'auth/network-request-failed') {
+                if (err.code === 'unavailable' || err.code === 'auth/network-request-failed' || err.code === 'firestore/unavailable') {
                     alert("Network error: Could not connect to the server. Please check your connection.");
                 } else {
                     alert("Failed to save shift: " + err.message);
@@ -3615,9 +3610,6 @@
         }
 
 function checkAndRenderOrgControls() {
-
-
-        function checkAndRenderOrgControls() {
             if (!currentUser) return false;
 
             const controls = document.getElementById('shiftNotesGroupControls');
@@ -3830,14 +3822,13 @@ function checkAndRenderOrgControls() {
                 fetchShiftNotes();
             } catch (err) {
                 console.error("Error posting note", err);
-                if (err.code === 'unavailable' || err.code === 'auth/network-request-failed') {
+                if (err.code === 'unavailable' || err.code === 'auth/network-request-failed' || err.code === 'firestore/unavailable') {
                     alert("Network error: Could not connect to the server. Please check your connection.");
                 } else {
                     alert("Failed to post note: " + err.message);
                 }
                 noteDiv.remove(); // revert optimistic UI
             }
-        }
         }
 
         async function resolveShiftNote(noteId) {
