@@ -455,6 +455,9 @@
             <a href="#" onclick="navTo('maintenance')"
                 class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="wrench"></i>
                 Maintenance</a>
+            <a href="#" onclick="navTo('waste')"
+                class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="trash-2"></i>
+                Waste Tracker</a>
             <a href="#" onclick="navTo('performance')"
                 class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="bar-chart-3"></i>
                 Performance</a>
@@ -1154,6 +1157,59 @@
                         </div>
                     </div>
                 </div>
+
+        <div id="view-waste" class="view-section px-6 py-12 hidden">
+            <div class="max-w-4xl mx-auto">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+                    <h1 class="text-4xl font-black">Waste & Spoilage Tracker</h1>
+                    <button onclick="document.getElementById('addWasteModal').classList.toggle('hidden')"
+                        class="btn btn-primary flex items-center gap-2 px-6">
+                        <i data-lucide="plus-circle" class="w-5 h-5"></i> Log Waste
+                    </button>
+                </div>
+
+                <div id="addWasteModal"
+                    class="hidden bg-white dark:bg-slate-900 rounded-3xl p-6 md:p-8 shadow-sm border border-slate-100 dark:border-slate-800 mb-12">
+                    <h2 class="text-xl font-bold mb-4">Log New Waste Entry</h2>
+                    <div class="space-y-4">
+                        <input type="text" id="wasteItemName" placeholder="Item Name (e.g. Tomatoes)"
+                            class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
+                        <div class="grid md:grid-cols-2 gap-4">
+                            <input type="number" id="wasteQuantity" placeholder="Quantity (e.g. 5)"
+                                class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
+                            <input type="number" step="0.01" id="wasteCost" placeholder="Estimated Cost ($)"
+                                class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
+                        </div>
+                        <select id="wasteReason" class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
+                            <option value="Expired">Expired</option>
+                            <option value="Spoiled/Damaged">Spoiled/Damaged</option>
+                            <option value="Dropped/Spilled">Dropped/Spilled</option>
+                            <option value="Over-prepped">Over-prepped</option>
+                            <option value="Other">Other</option>
+                        </select>
+
+                        <div class="flex justify-end gap-3 pt-2">
+                            <button onclick="document.getElementById('addWasteModal').classList.add('hidden')"
+                                class="btn btn-outline px-6 py-2">Cancel</button>
+                            <button onclick="submitWasteLog()" class="btn btn-accent px-6 py-2">Save Entry</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-black">Recent Waste Logs</h2>
+                    <button onclick="fetchWasteLogs()"
+                        class="text-sm font-bold text-sky-500 hover:text-sky-600 flex items-center gap-2">
+                        <i data-lucide="refresh-cw" class="w-4 h-4"></i> Refresh
+                    </button>
+                </div>
+
+                <div id="wasteLogsContainer" class="space-y-4">
+                    <!-- Waste logs populated via JS -->
+                </div>
+            </div>
+        </div>
+
 
                 <div class="flex justify-between items-center mb-6">
                     <h2 class="text-2xl font-black">Active Tickets</h2>
@@ -1971,6 +2027,11 @@
             if (viewId === 'team' && currentUser) {
                 fetchTeamDirectory();
             }
+
+            if (viewId === 'waste' && currentUser) {
+                fetchWasteLogs();
+            }
+
             document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
             document.getElementById('view-' + viewId).classList.add('active');
             document.getElementById('sidebar').classList.remove('open');
@@ -4023,7 +4084,141 @@ function checkAndRenderOrgControls() {
             }
         }
 
-        // --- TEAM DIRECTORY LOGIC ---
+
+
+        async function submitWasteLog() {
+            if (!currentUser || !currentUserData || !currentUserData.orgId) {
+                alert("You must be part of an organization to log waste.");
+                return;
+            }
+
+            const itemName = document.getElementById('wasteItemName').value.trim();
+            const quantity = document.getElementById('wasteQuantity').value;
+            const cost = document.getElementById('wasteCost').value;
+            const reason = document.getElementById('wasteReason').value;
+
+            if (!itemName || !quantity || !cost) {
+                alert("Please fill in all required fields (Item Name, Quantity, Cost).");
+                return;
+            }
+
+            const submitBtn = document.querySelector('#addWasteModal .btn-accent');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> Saving...';
+            submitBtn.disabled = true;
+            lucide.createIcons();
+
+            try {
+                const manageWaste = cloudFunctions.httpsCallable('manageWaste');
+                await manageWaste({
+                    action: "create",
+                    payload: { itemName, quantity, cost, reason }
+                });
+
+                document.getElementById('wasteItemName').value = '';
+                document.getElementById('wasteQuantity').value = '';
+                document.getElementById('wasteCost').value = '';
+                document.getElementById('wasteReason').value = 'Expired';
+                document.getElementById('addWasteModal').classList.add('hidden');
+
+                alert("Waste entry logged successfully.");
+                fetchWasteLogs();
+            } catch (error) {
+                console.error("Error logging waste:", error);
+                alert("Failed to log waste. " + error.message);
+            } finally {
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+                lucide.createIcons();
+            }
+        }
+
+        async function fetchWasteLogs() {
+            if (!currentUser || !currentUserData || !currentUserData.orgId) {
+                const container = document.getElementById('wasteLogsContainer');
+                if (container) {
+                    container.innerHTML = `
+                        <div class="text-center py-16 bg-slate-50 dark:bg-slate-900 rounded-3xl border-2 border-dashed border-slate-200 dark:border-slate-800">
+                            <i data-lucide="users" class="w-12 h-12 text-slate-400 mx-auto mb-4"></i>
+                            <h3 class="text-xl font-bold mb-2">Join or Create a Group</h3>
+                            <p class="text-slate-500">You must be in a Management Group to view waste logs.</p>
+                        </div>
+                    `;
+                    lucide.createIcons();
+                }
+                return;
+            }
+
+            const container = document.getElementById('wasteLogsContainer');
+            container.innerHTML = '<div class="text-center py-8"><i data-lucide="loader-2" class="w-8 h-8 animate-spin mx-auto text-sky-500 mb-4"></i><p class="text-slate-500">Loading waste logs...</p></div>';
+            lucide.createIcons();
+
+            try {
+                const manageWaste = cloudFunctions.httpsCallable('manageWaste');
+                const result = await manageWaste({ action: "get", payload: {} });
+
+                if (result.data.success) {
+                    const logs = result.data.logs || [];
+                    container.innerHTML = '';
+
+                    if (logs.length === 0) {
+                        container.innerHTML = `
+                            <div class="text-center py-16 bg-slate-50 dark:bg-slate-900 rounded-3xl border-2 border-dashed border-slate-200 dark:border-slate-800">
+                                <i data-lucide="check-circle-2" class="w-12 h-12 text-emerald-400 mx-auto mb-4"></i>
+                                <h3 class="text-xl font-bold mb-2">No Waste Logged!</h3>
+                                <p class="text-slate-500">There are no recent waste or spoilage entries.</p>
+                            </div>
+                        `;
+                        lucide.createIcons();
+                        return;
+                    }
+
+                    const fragment = document.createDocumentFragment();
+
+                    logs.forEach(log => {
+                        const div = document.createElement('div');
+                        div.className = "card p-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4";
+
+                        const dateStr = log.timestamp ? new Date(log.timestamp._seconds * 1000).toLocaleString() : 'Just now';
+
+                        div.innerHTML = `
+                            <div>
+                                <h3 class="text-lg font-bold">${escapeHTML(log.itemName)} <span class="text-sm font-normal text-slate-500">(x${escapeHTML(log.quantity)})</span></h3>
+                                <p class="text-sm text-slate-500">Logged by ${escapeHTML(log.loggedByName)} • ${dateStr}</p>
+                                <div class="mt-2 flex gap-2 items-center">
+                                    <span class="px-2 py-1 bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-400 rounded-lg text-xs font-bold font-mono">$${Number(log.cost).toFixed(2)} Lost</span>
+                                    <span class="px-2 py-1 bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 rounded-lg text-xs font-bold">${escapeHTML(log.reason)}</span>
+                                </div>
+                            </div>
+                            <button onclick="deleteWasteLog('${escapeHTML(log.id)}')" class="btn btn-outline btn-sm text-red-500 hover:bg-red-50" aria-label="Delete Waste Log">
+                                <i data-lucide="trash-2" class="w-4 h-4"></i> Remove
+                            </button>
+                        `;
+                        fragment.appendChild(div);
+                    });
+                    container.appendChild(fragment);
+                    lucide.createIcons();
+                }
+            } catch (error) {
+                console.error("Error fetching waste logs:", error);
+                container.innerHTML = `<div class="text-red-500 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl text-center">Failed to load waste logs: ${error.message}</div>`;
+            }
+        }
+
+        async function deleteWasteLog(logId) {
+            if (!confirm("Are you sure you want to permanently delete this waste log entry?")) return;
+            try {
+                const manageWaste = cloudFunctions.httpsCallable('manageWaste');
+                await manageWaste({ action: "delete", payload: { logId } });
+                fetchWasteLogs();
+            } catch (err) {
+                console.error("Error deleting waste log:", err);
+                alert("Failed to delete log.");
+            }
+        }
+
+
+// --- TEAM DIRECTORY LOGIC ---
 
         let activeEmployeesList = [];
 

@@ -176,6 +176,28 @@ service cloud.firestore {
       allow update, delete: if request.auth != null && get(/databases/$(database)/documents/shift_groups/$(resource.data.groupId)).data.ownerId == request.auth.uid;
     }
 
+
+    // WASTE LOGS
+    match /waste_logs/{logId} {
+      allow read: if request.auth != null && (
+          resource.data.get('loggedByUid', null) == request.auth.uid ||
+          (resource.data.get('orgId', null) != null && resource.data.get('orgId', null) == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('orgId', null)) ||
+          resource == null ||
+          resource.data.loggedByUid == request.auth.uid ||
+          (resource.data.orgId != null && resource.data.orgId == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.orgId) ||
+          isAdmin()
+      );
+      allow create: if request.auth != null
+                    && request.resource.data.loggedByUid == request.auth.uid
+                    && request.resource.data.get('orgId', null) == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('orgId', null);
+      allow update: if request.auth != null && (
+          resource.data.get('loggedByUid', null) == request.auth.uid ||
+          (resource.data.get('orgId', null) != null && resource.data.get('orgId', null) == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('orgId', null)) ||
+          isAdmin()
+      ) && request.resource.data.get('orgId', null) == resource.data.get('orgId', null);
+      allow delete: if request.auth != null && (resource.data.get('loggedByUid', null) == request.auth.uid || isAdmin());
+    }
+
     // MAINTENANCE LOGS
     match /maintenance_logs/{logId} {
       allow read: if request.auth != null && (
