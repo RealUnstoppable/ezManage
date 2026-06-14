@@ -8,91 +8,16 @@ global.firebase = {
 };
 global.window.firebase = global.firebase;
 
-import { loadNavbar } from '../../js/navbar.js';
-import * as authModule from '../../js/auth.js';
-import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
-import { getDoc } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
-window.firebase = {
-  apps: [],
-  auth: jest.fn(),
-  firestore: () => ({
-    collection: jest.fn(),
-    settings: jest.fn()
-  }),
-  initializeApp: jest.fn()
-};
-global.firebase = window.firebase;
-
-global.window = Object.create(window);
-global.window.firebase = {
-    apps: [],
-    initializeApp: jest.fn(),
-    auth: jest.fn(() => ({
-        onAuthStateChanged: jest.fn()
-    })),
-    firestore: jest.fn(() => ({
-        collection: jest.fn(() => ({
-            doc: jest.fn(() => ({
-                get: jest.fn()
-            }))
-        }))
-    }))
-};
-global.firebase = global.window.firebase;
-
-global.window = global.window || {};
-global.firebase = {
-// The gstatic URLs are mocked by moduleNameMapper pointing to __mocks__/firebase.js
-import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js';
-import { getDoc, doc } from 'https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js';
-
-const mockFirebase = {
-  apps: [],
-  initializeApp: jest.fn(() => ({ name: '[DEFAULT]' })),
-  auth: jest.fn(() => ({ onAuthStateChanged: jest.fn() })),
-  firestore: jest.fn(() => ({ collection: jest.fn(), settings: jest.fn() }))
-};
-global.window.firebase = global.firebase;
-globalThis.firebase = global.firebase;
-
-// The gstatic URLs are mocked by moduleNameMapper pointing to __mocks__/firebase.js
-import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js';
-import { getDoc } from 'https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js';
-
-global.window = global.window || {};
-global.window.firebase = mockFirebase;
-globalThis.firebase = mockFirebase;
-
 jest.unstable_mockModule('../../js/auth.js', () => ({
-  auth: {},
-  db: { settings: jest.fn(), collection: jest.fn() },
+  auth: { onAuthStateChanged: jest.fn() },
+  db: { collection: jest.fn(() => ({ doc: jest.fn(() => ({ get: jest.fn() })) })) },
   getUserRedirectPath: (userData) => userData && userData.isAdmin ? 'admin.html' : 'index.html'
 }));
 
-const authModule = await import('../../js/auth.js');
 const { loadNavbar } = await import('../../js/navbar.js');
-const { loadNavbar } = await import('../../js/navbar.js');
-const { onAuthStateChanged } = await import("https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js");
-const { getDoc } = await import("https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js");
+const { auth, db } = await import('../../js/auth.js');
 
 describe('loadNavbar', () => {
-const { loadNavbar } = await import('../../js/navbar.js');
-
-describe('loadNavbar', () => {
-  let loadNavbar;
-  beforeAll(async () => {
-    const navbarModule = await import('../../js/navbar.js');
-    loadNavbar = navbarModule.loadNavbar;
-  beforeAll(() => {
-    window.firebase = {
-        apps: [],
-        initializeApp: jest.fn(),
-        auth: () => ({ onAuthStateChanged: jest.fn() }),
-        firestore: () => ({ settings: jest.fn(), collection: jest.fn() })
-    };
-    global.firebase = window.firebase;
-  });
-
   beforeEach(() => {
     document.body.innerHTML = '<div class="main-header"></div>';
     jest.clearAllMocks();
@@ -106,11 +31,17 @@ describe('loadNavbar', () => {
   it('should set auth link to index.html if user is logged in but not admin', async () => {
     await loadNavbar();
     const mockUser = { uid: '123' };
-    const authCallback = onAuthStateChanged.mock.calls[0][1];
+    const authCallback = auth.onAuthStateChanged.mock.calls[0][0];
 
-    getDoc.mockResolvedValueOnce({
-      exists: () => true,
+    const mockGet = jest.fn().mockResolvedValueOnce({
+      exists: true,
       data: () => ({ isAdmin: false })
+    });
+
+    db.collection.mockReturnValueOnce({
+      doc: jest.fn().mockReturnValueOnce({
+        get: mockGet
+      })
     });
 
     await authCallback(mockUser);
