@@ -26,3 +26,6 @@
 ## 2026-05-13 - [DOM Insertions Bottleneck]
 **Learning:** Sequential calls to `appendChild()` inside loops cause expensive layout thrashing and repaint cycles on the main thread, leading to perceived UI jank during rendering.
 **Action:** Always batch DOM insertions using a `DocumentFragment` (`document.createDocumentFragment()`) before appending the entire batch to the live DOM in a single operation.
+## 2026-06-14 - [DOM Sorting Bottleneck]
+**Learning:** When sorting and reordering DOM elements, calling `appendChild()` on existing nodes individually inside a loop triggers layout recalculation (thrashing) for every single node move.
+**Action:** Always batch DOM node re-insertions by first appending the sorted items to a `DocumentFragment`, and then appending the single fragment back to the container.
