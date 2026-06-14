@@ -1,3 +1,4 @@
+import { getFirebaseErrorMessage, logManagerError } from './utils.js';
 import { getFirebaseErrorMessage, logManagerError } from "./utils.js";
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
