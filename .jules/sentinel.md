@@ -61,3 +61,18 @@
 **Vulnerability:** The `shift_notes` collection in `firestore.rules` had duplicate `allow create` blocks—one checking `authorId` and another checking `orgId`. Because Firestore evaluates rules as a logical OR, this allowed users to bypass the `authorId` check entirely by merely providing a valid `orgId`, leading to identity spoofing (IDOR).
 **Learning:** Duplicate rule blocks for the same operation (`create`, `read`, etc.) are OR'd together by Firestore. Adding a "safer" verification rule as a separate block does not override the previous one; it creates an alternative, often less restrictive, pathway.
 **Prevention:** Always combine security constraints (like ownership and organization checks) into a single logical condition within the same operation block using `&&`.
+
+## 2026-06-14 - XSS via Inline Event Handler Interpolation
+**Vulnerability:** User-controlled inputs injected into inline event handlers via `innerHTML`.
+**Learning:** Escaping variables used in inline event handlers is not sufficient to prevent XSS. The browser's HTML parser decodes HTML entities back to raw characters before the JavaScript engine executes the attribute content.
+**Prevention:** Use programmatic event listeners attached dynamically (like `.onclick = ...`) to isolate execution context.
+
+## 2026-06-14 - Unvalidated Price Override in Stripe Checkout
+**Vulnerability:** Stripe Checkout logic relying on client-supplied amounts for pricing rather than calculating entirely on the backend based on chosen plan identifiers.
+**Learning:** Trusting client payloads for financial data calculation invites arbitrary price manipulation.
+**Prevention:** Rely strictly on verified IDs and enforce price lookups/calculations securely on the backend.
+
+## 2026-06-14 - Duplicate Firestore Rules Bypassing Security Constraints
+**Vulnerability:** Redundant `allow create` blocks in Firestore rules, allowing less restrictive rules to be evaluated successfully, resulting in IDOR/security bypass.
+**Learning:** Firestore evaluates rules using a logical `OR`. Providing multiple blocks for the same operation doesn't enforce the strictest rule, but rather any one that evaluates to true.
+**Prevention:** Consolidate required checks into a single block linked with `&&`.
