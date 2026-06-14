@@ -29,3 +29,6 @@
 ## 2024-05-24 - ARIA labels for dynamic inputs and textareas lacking visible labels
 **Learning:** Inputs (`<input>`) and textareas (`<textarea>`) that lack a visible `<label>` but use a `placeholder` attribute are inaccessible for screen readers. This applies to UI components like `newRoutineTask`, `customPresetName`, `featureReqText`, and `shiftNoteContent` in `index.html`. Placeholders do not replace explicit labels.
 **Action:** Always provide an explicit `aria-label` attribute on form inputs and textareas if screen space prohibits a visible `<label>`. This ensures the purpose of the input is clearly communicated to screen reader users.
+## 2024-05-14 - HTML Form Structure Impacts Accessibility
+**Learning:** Malformed HTML (like unclosed `<select>` tags or duplicate IDs) in forms completely breaks screen reader accessibility by breaking the mapping between `for` and `id` attributes. Fixing the fundamental HTML structure is a prerequisite for any meaningful UX/a11y improvements.
+**Action:** Always verify basic HTML validity and duplicate IDs before trying to improve form accessibility.
