@@ -5,6 +5,8 @@ import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWith
 import { getFirestore, doc, setDoc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
 
 
+import { getFirebaseErrorMessage, logManagerError } from './utils.js';
+
 const firebaseConfig = {
   apiKey: "AIzaSyBgrI9HwJPSc5b4pu2Egsv4DE7shNwptSw",
   authDomain: "ezmanage.realunstoppable.store",

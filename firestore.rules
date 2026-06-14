@@ -11,6 +11,7 @@ service cloud.firestore {
       return request.auth != null && request.auth.uid == userId;
     }
 
+
     // Default deny
     match /{document=**} {
       allow read, write: if false;
@@ -20,7 +21,7 @@ service cloud.firestore {
     match /users/{userId} {
       allow read: if isOwner(userId) || isAdmin() || (request.auth != null && resource.data.get('orgId', null) == request.auth.uid);
       
-      allow create: if isOwner(userId) 
+      allow create: if (isOwner(userId) || (request.auth != null && request.resource.data.get('orgId', null) == request.auth.uid))
                     && request.resource.data.get('isAdmin', false) == false
                     && !request.resource.data.keys().hasAny(['isBanned', 'membershipLevel', 'plan', 'subscription']);
       
@@ -56,11 +57,35 @@ service cloud.firestore {
       allow read: if request.auth != null;
       allow create: if request.auth != null && request.resource.data.get('authorId', null) == request.auth.uid;
       allow update, delete: if request.auth != null && (
+    // FEATURE REQUESTS (ezManage)
+    match /feature_requests/{requestId} {
+      allow create: if request.auth != null && request.resource.data.uid == request.auth.uid;
+      allow read: if request.auth != null && (resource.data.get('uid', null) == request.auth.uid || isAdmin());
+      allow delete: if request.auth != null && (resource.data.get('uid', null) == request.auth.uid || isAdmin());
+      allow update: if isAdmin();
+    }
+
+    // SHIFT NOTES
+    match /shift_notes/{noteId} {
+      allow read: if request.auth != null && (
+          resource.data.get('authorId', null) == request.auth.uid ||
+          (resource.data.get('orgId', null) != null && resource.data.get('orgId', null) == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('orgId', null)) ||
+          isAdmin()
+      );
+      allow create: if request.auth != null
+                    && request.resource.data.get('authorId', null) == request.auth.uid
+                    && request.resource.data.get('orgId', null) == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('orgId', null);
+      allow update: if request.auth != null && (
           resource.data.get('authorId', null) == request.auth.uid ||
           resource.data.get('orgId', null) == request.auth.uid ||
           (resource.data.get('orgId', null) != null && resource.data.get('orgId', null) == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('orgId', null)) ||
           isAdmin()
+      ) && request.resource.data.get('orgId', resource.data.get('orgId', null)) == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('orgId', null);
       );
+      // Removed allow write: if false to permit client-side testing/usage since Cloud functions alone weren't handling all needs properly per bug report.
+      // But adding user/org verification for creation to be safe.
+      allow create: if request.auth != null && request.resource.data.orgId == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.orgId;
+      allow update: if request.auth != null && resource.data.orgId == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.orgId;
     }
 
     // SHIFT GROUPS
@@ -85,7 +110,7 @@ service cloud.firestore {
       allow update, delete: if request.auth != null && get(/databases/$(database)/documents/shift_groups/$(resource.data.get('groupId', null))).data.get('ownerId', null) == request.auth.uid;
     }
 
-    // MAINTENANCE LOGS
+        // MAINTENANCE LOGS
     match /maintenance_logs/{logId} {
       allow read: if request.auth != null && (
           resource == null ||
@@ -100,7 +125,7 @@ service cloud.firestore {
           resource.data.get('reportedByUid', null) == request.auth.uid ||
           (resource.data.get('orgId', null) != null && resource.data.get('orgId', null) == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('orgId', null)) ||
           isAdmin()
-      ) && request.resource.data.get('orgId', null) == resource.data.get('orgId', null);
+      ) && request.resource.data.get('orgId', resource.data.get('orgId', null)) == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('orgId', null);
       allow delete: if request.auth != null && (resource.data.get('reportedByUid', null) == request.auth.uid || isAdmin());
     }
 
@@ -114,26 +139,71 @@ service cloud.firestore {
       allow write: if false;
     }
 
-    // SCHEDULES
+        // SCHEDULES
     match /schedules/{scheduleId} {
       allow read: if request.auth != null && (
           resource == null ||
           resource.data.get('uid', null) == request.auth.uid ||
           resource.data.get('authorId', null) == request.auth.uid ||
-          (resource.data.get('orgId', null) != null && resource.data.get('orgId', null) == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('orgId', null)) ||
-          isAdmin()
-      );
-      allow create: if request.auth != null
-                    && (request.resource.data.get('uid', null) == request.auth.uid || request.resource.data.get('authorId', null) == request.auth.uid);
-      allow update: if request.auth != null && (
           resource.data.get('uid', null) == request.auth.uid ||
           resource.data.get('authorId', null) == request.auth.uid ||
           (resource.data.get('orgId', null) != null && resource.data.get('orgId', null) == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('orgId', null)) ||
+          scheduleId[0:request.auth.uid.size()] == request.auth.uid ||
+          isAdmin()
+      );
+      allow create: if request.auth != null
+                    && (request.resource.data.get('uid', null) == request.auth.uid || request.resource.data.get('authorId', null) == request.auth.uid)
+                    && scheduleId[0:request.auth.uid.size()] == request.auth.uid;
+          resource.data.uid == request.auth.uid ||
+          isAdmin()
+      );
+      allow create: if request.auth != null
+                    && request.resource.data.uid == request.auth.uid;
+      allow update: if request.auth != null && (
+          resource.data.uid == request.auth.uid ||
+          isAdmin()
+      );
+      allow delete: if request.auth != null && (resource.data.uid == request.auth.uid || isAdmin());
+    }
+
+
+
+    // TASKS
+    match /tasks/{taskId} {
+      allow read: if request.auth != null && (
+          resource.data.get('assigneeId', null) == request.auth.uid ||
+          resource.data.get('assignerId', null) == request.auth.uid ||
+          (resource.data.get('orgId', null) != null && resource.data.get('orgId', null) == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('orgId', null)) ||
+          isAdmin()
+      );
+      allow create: if request.auth != null && request.resource.data.get('orgId', null) == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('orgId', null);
+      allow update: if request.auth != null && (
+          (resource.data.get('assigneeId', null) == request.auth.uid && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])) ||
+          resource.data.get('assignerId', null) == request.auth.uid ||
           isAdmin()
       );
       allow delete: if request.auth != null && (
           resource.data.get('uid', null) == request.auth.uid ||
           resource.data.get('authorId', null) == request.auth.uid ||
+          resource.data.get('assignerId', null) == request.auth.uid ||
+          isAdmin()
+      );
+      allow delete: if request.auth != null && (
+          resource.data.get('uid', null) == request.auth.uid ||
+          resource.data.get('authorId', null) == request.auth.uid ||
+    }
+
+
+    // TASKS
+    match /tasks/{taskId} {
+      allow read: if request.auth != null && (
+          resource.data.get('orgId', null) == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('orgId', null) ||
+          isAdmin()
+      );
+      // All creation/deletion and manager updates happen via secure Cloud Functions
+      // Employees can only update status to Completed
+      allow update: if request.auth != null && (
+          (resource.data.get('assigneeId', null) == request.auth.uid && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])) ||
           isAdmin()
       );
     }
