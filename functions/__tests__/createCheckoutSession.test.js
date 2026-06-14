@@ -7,7 +7,7 @@ jest.mock("firebase-admin", () => {
     where: jest.fn().mockReturnThis(),
     get: jest.fn().mockResolvedValue({
       exists: true,
-      data: () => ({email: "test@example.com"}),
+      data: () => ({email: "test@example.com", hasPromoCode: true}),
       docs: [],
     }),
     update: jest.fn().mockResolvedValue({}),
@@ -96,7 +96,6 @@ describe("createCheckoutSession", () => {
       uid: "test-uid",
       email: "test@example.com",
       plan: "Business Pro",
-      amount: 50,
     };
 
     mockCreateSession.mockResolvedValueOnce({url: "http://stripe.checkout.url"});
@@ -111,7 +110,7 @@ describe("createCheckoutSession", () => {
           currency: "usd",
           product: "prod_UFnBrTwFCgb54A",
           recurring: {interval: "year"},
-          unit_amount: 5000,
+          unit_amount: 18600,
         },
         quantity: 1,
       },
