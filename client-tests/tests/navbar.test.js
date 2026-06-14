@@ -10,6 +10,10 @@ global.firebase = {
 };
 global.window.firebase = global.firebase;
 
+import { loadNavbar } from '../../js/navbar.js';
+import * as authModule from '../../js/auth.js';
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
+import { getDoc } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
 window.firebase = {
   apps: [],
   auth: jest.fn(),
@@ -84,6 +88,8 @@ jest.unstable_mockModule('../../js/auth.js', () => ({
   fetchUserDoc: jest.fn()
 }));
 
+describe('loadNavbar', () => {
+  beforeAll(() => {
 const authModule = await import('../../js/auth.js');
 const { loadNavbar } = await import('../../js/navbar.js');
 const { onAuthStateChanged } = await import("https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js");
