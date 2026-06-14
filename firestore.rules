@@ -245,6 +245,20 @@ service cloud.firestore {
     }
 
 
+    // TASKS
+    match /tasks/{taskId} {
+      allow read: if request.auth != null && (
+          resource.data.get('orgId', null) == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('orgId', null) ||
+          isAdmin()
+      );
+      // All creation/deletion and manager updates happen via secure Cloud Functions
+      // Employees can only update status to Completed
+      allow update: if request.auth != null && (
+          (resource.data.get('assigneeId', null) == request.auth.uid && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])) ||
+          isAdmin()
+      );
+    }
+
     // TIME OFF REQUESTS
     match /time_off_requests/{requestId} {
       allow read: if request.auth != null && (
