@@ -2988,7 +2988,7 @@
                     <div class="text-center py-16 bg-slate-50 dark:bg-slate-900 rounded-3xl border-2 border-dashed border-slate-200 dark:border-slate-800">
                         <i data-lucide="users" class="w-12 h-12 text-slate-400 mx-auto mb-4"></i>
                         <h3 class="text-xl font-bold mb-2">Join or Create a Group</h3>
-                        <p class="text-slate-500">You must be in a Management Group to view and report maintenance issues.</p>
+                        <p class="text-slate-500 mb-4">You must be in a Management Group to view and report maintenance issues.</p><button onclick="document.getElementById('orgTutorialModal').classList.remove('hidden')" class="btn btn-sm btn-outline text-sky-500 border-sky-200">How do I connect?</button>
                     </div>
                 `;
                 lucide.createIcons();
@@ -3674,7 +3674,7 @@ function checkAndRenderOrgControls() {
                     <div class="text-center py-16 bg-slate-50 dark:bg-slate-900 rounded-3xl border-2 border-dashed border-slate-200 dark:border-slate-800">
                         <i data-lucide="users" class="w-12 h-12 text-slate-400 mx-auto mb-4"></i>
                         <h3 class="text-xl font-bold mb-2">Join or Create a Group</h3>
-                        <p class="text-slate-500">You must be in a Management Group to post and view shift notes.</p>
+                        <p class="text-slate-500 mb-4">You must be in a Management Group to post and view shift notes.</p><button onclick="document.getElementById('orgTutorialModal').classList.remove('hidden')" class="btn btn-sm btn-outline text-sky-500 border-sky-200">How do I connect?</button>
                     </div>
                 `;
                 lucide.createIcons();
@@ -4105,7 +4105,7 @@ function checkAndRenderOrgControls() {
                     <div class="col-span-1 md:col-span-2 text-center py-16 bg-slate-50 dark:bg-slate-900 rounded-3xl border-2 border-dashed border-slate-200 dark:border-slate-800">
                         <i data-lucide="users" class="w-12 h-12 text-slate-400 mx-auto mb-4"></i>
                         <h3 class="text-xl font-bold mb-2">Join or Create a Group</h3>
-                        <p class="text-slate-500">You must be in a Management Group to access the Team Directory.</p>
+                        <p class="text-slate-500 mb-4">You must be in a Management Group to access the Team Directory.</p><button onclick="document.getElementById('orgTutorialModal').classList.remove('hidden')" class="btn btn-sm btn-outline text-sky-500 border-sky-200">How do I connect?</button>
                     </div>
                 `;
                 lucide.createIcons();
@@ -4230,6 +4230,56 @@ function checkAndRenderOrgControls() {
         }
 
     </script>
+
+    <!-- Organization Tutorial Modal -->
+    <div id="orgTutorialModal"
+        class="hidden fixed inset-0 z-[100] bg-black/80 flex items-center justify-center p-6 backdrop-blur-sm no-print">
+        <div class="bg-white dark:bg-slate-900 w-full max-w-2xl rounded-2xl p-8 shadow-2xl relative border border-slate-200 dark:border-slate-800">
+            <button onclick="document.getElementById('orgTutorialModal').classList.add('hidden')" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:hover:text-white">
+                <i data-lucide="x"></i>
+            </button>
+            <h2 class="text-2xl font-black mb-6 text-sky-600 flex items-center gap-2"><i data-lucide="info"></i> How to Connect with Your Store</h2>
+
+            <div class="space-y-6 text-slate-600 dark:text-slate-400 font-medium">
+                <div class="flex gap-4">
+                    <div class="w-8 h-8 rounded-full bg-sky-100 dark:bg-sky-900/50 text-sky-600 flex items-center justify-center font-black shrink-0">1</div>
+                    <div>
+                        <h3 class="text-slate-900 dark:text-white font-bold text-lg mb-1">Store Owner/General Manager Creates a Group</h3>
+                        <p class="text-sm">The highest ranking manager must first create a Management Group. Go to <strong>Shift Notes</strong>, click <strong>Create Group</strong>, and enter a store name and secure password.</p>
+                    </div>
+                </div>
+
+                <div class="flex gap-4">
+                    <div class="w-8 h-8 rounded-full bg-sky-100 dark:bg-sky-900/50 text-sky-600 flex items-center justify-center font-black shrink-0">2</div>
+                    <div>
+                        <h3 class="text-slate-900 dark:text-white font-bold text-lg mb-1">Share the Group ID</h3>
+                        <p class="text-sm">Once created, the owner receives a unique <strong>Group ID</strong>. Share this ID and password privately with your management team.</p>
+                    </div>
+                </div>
+
+                <div class="flex gap-4">
+                    <div class="w-8 h-8 rounded-full bg-sky-100 dark:bg-sky-900/50 text-sky-600 flex items-center justify-center font-black shrink-0">3</div>
+                    <div>
+                        <h3 class="text-slate-900 dark:text-white font-bold text-lg mb-1">Shift Managers Join</h3>
+                        <p class="text-sm">Other managers must click <strong>Join Group</strong> and enter the Group ID and password to submit a request.</p>
+                    </div>
+                </div>
+
+                <div class="flex gap-4">
+                    <div class="w-8 h-8 rounded-full bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600 flex items-center justify-center font-black shrink-0">4</div>
+                    <div>
+                        <h3 class="text-slate-900 dark:text-white font-bold text-lg mb-1">Owner Approves the Request</h3>
+                        <p class="text-sm">The owner will see pending requests in their Shift Notes panel and must click <strong>Approve</strong>. Once approved, the manager will have full access to Schedules, Employees, and Maintenance for that store.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-8">
+                <button onclick="document.getElementById('orgTutorialModal').classList.add('hidden')" class="btn btn-accent w-full py-3">Got it!</button>
+            </div>
+        </div>
+    </div>
+
 </body>
 
 </html>
