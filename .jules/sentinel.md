@@ -28,6 +28,10 @@
 **Vulnerability:** The `/users/{userId}` `allow create` rule in `firestore.rules` prevented injection of `isBanned` and `membershipLevel` keys but failed to prevent injection of `plan` and `subscription` keys. This allowed an unauthenticated attacker creating a new user document to elevate their privileges to a paid tier immediately.
 **Learning:** Security controls on document creation must mirror the strictness of document updates. When using `request.resource.data.keys().hasAny()`, it is critical to perform an exhaustive review of all sensitive fields present in the schema to ensure no privileged attributes can be injected via mass assignment.
 **Prevention:** Ensure that the forbidden key lists in `hasAny()` for `create` rules are synchronized with the `hasAny()` lists for `update` rules, comprehensively covering all fields related to roles, billing, and system flags.
+## 2026-05-24 - XSS via Inline Event Handler Interpolation
+**Vulnerability:** User-controlled data (like item names) was interpolated directly into inline event handlers (e.g., `onclick="func('${name}')"`) using template literals.
+**Learning:** Applying `escapeHTML` to variables inside inline event handlers does NOT prevent XSS. The browser's HTML parser decodes HTML entities back to their raw characters *before* the JavaScript engine executes the attribute content, allowing an attacker to break out of the string context (e.g., using `', alert(1), '`).
+**Prevention:** Avoid interpolating user-controlled variables directly into inline event handlers. Instead, attach event listeners programmatically in JavaScript (e.g., using `element.onclick = () => func(name)`) so the variables remain safely isolated in the closure scope rather than being serialized to DOM attributes.
 
 ## 2026-05-13 - DOM-based and Attribute-based XSS in easy-ai.html
 **Vulnerability:** DOM-based XSS via unescaped user input (status messages and inventory item names) interpolated into `innerHTML` sinks and `onclick` attribute literals in `easy-ai.html`.
@@ -61,3 +65,18 @@
 **Vulnerability:** In `index.html`, error messages caught from promises (`err.message` and `error.message`) were interpolated directly into `innerHTML` strings (e.g. `Failed to load tickets: ${err.message}`).
 **Learning:** Even error messages originating from external libraries or backend systems can sometimes contain unescaped, potentially malicious payloads or reflect user-controlled input, acting as a DOM-based XSS vector when injected into `innerHTML`.
 **Prevention:** Always wrap dynamically rendered variables in `escapeHTML()`, even if they represent standard error strings (`err.message`), to guarantee XSS protection against unexpected backend responses or payload reflection.
+
+## 2026-06-14 - XSS via Inline Event Handler Interpolation
+**Vulnerability:** User-controlled inputs injected into inline event handlers via `innerHTML`.
+**Learning:** Escaping variables used in inline event handlers is not sufficient to prevent XSS. The browser's HTML parser decodes HTML entities back to raw characters before the JavaScript engine executes the attribute content.
+**Prevention:** Use programmatic event listeners attached dynamically (like `.onclick = ...`) to isolate execution context.
+
+## 2026-06-14 - Unvalidated Price Override in Stripe Checkout
+**Vulnerability:** Stripe Checkout logic relying on client-supplied amounts for pricing rather than calculating entirely on the backend based on chosen plan identifiers.
+**Learning:** Trusting client payloads for financial data calculation invites arbitrary price manipulation.
+**Prevention:** Rely strictly on verified IDs and enforce price lookups/calculations securely on the backend.
+
+## 2026-06-14 - Duplicate Firestore Rules Bypassing Security Constraints
+**Vulnerability:** Redundant `allow create` blocks in Firestore rules, allowing less restrictive rules to be evaluated successfully, resulting in IDOR/security bypass.
+**Learning:** Firestore evaluates rules using a logical `OR`. Providing multiple blocks for the same operation doesn't enforce the strictest rule, but rather any one that evaluates to true.
+**Prevention:** Consolidate required checks into a single block linked with `&&`.
