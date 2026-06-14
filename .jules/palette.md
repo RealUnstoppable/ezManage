@@ -34,3 +34,6 @@
 **Learning:** Various input elements, especially form fields and selects across modals (like adding employees, shift notes, maintenance tickets), lack explicit `for` attribute linkages or `aria-label`s, which compromises accessibility. `id` and `for` linkages are preferred when visible text exists, while `aria-label` provides a fallback where a visible label is missing or less strictly associated.
 
 **Action:** Consistently add `aria-label`s or correctly link `label` elements to their target `id` using the `for` attribute when introducing or modifying form fields.
+## 2026-05-26 - [Diagnosing Global UI Breakages]
+**Learning:** A single syntax error (like an unclosed brace) inside an inline HTML `<script>` block will halt execution of the entire script. This can cause unrelated features (like loading a Navbar or setting up event listeners) to completely fail, resulting in a broken UI.
+**Action:** When diagnosing complete UI failures in Vanilla JS, check for syntax errors using strict parsers like Acorn on extracted script contents, as standard linters often ignore inline HTML scripts.

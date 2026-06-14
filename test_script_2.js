@@ -1,1682 +1,8 @@
-<!DOCTYPE html>
-<html lang="en">
 
-<head>
-  <script type="module">
-    import { escapeHTML } from '/js/utils.js';
-    import { loadNavbar } from '/js/navbar.js';
-    import { loadFooter } from '/js/footer.js';
-
-    document.addEventListener('DOMContentLoaded', () => {
-        loadNavbar();
-        loadFooter();
-    });
-
-    window.escapeHTML = escapeHTML;
-  </script>
-
-    <link rel="manifest" href="manifest.json">
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ezManage | Elevate Your Store Management</title>
-
-    <link rel="icon" type="image/jpeg" href="ManagerPro.jpg">
-    <link rel="apple-touch-icon" href="ManagerPro.jpg">
-
-
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="ezManage">
-
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            darkMode: ['class', '.dark-mode'],
-        }
-    </script>
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
-
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
-        rel="stylesheet">
-
-    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-messaging-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-functions-compat.js"></script>
-
-    <style>
-        :root {
-            --brand-sky: #87ceeb;
-            --brand-dark: #0f172a;
-            --bg-color: #f8fafc;
-            --card-bg: #ffffff;
-            --primary: #0f172a;
-            --accent: #0ea5e9;
-            --accent-hover: #0284c7;
-            --text-main: #1e293b;
-            --text-muted: #64748b;
-            --border: #e2e8f0;
-            --radius: 24px;
-            --nav-height: 80px;
-        }
-
-        body.dark-mode {
-            --bg-color: #000000;
-            --card-bg: #0a0a0a;
-            --primary: #ffffff;
-            --text-main: #f1f5f9;
-            --text-muted: #94a3b8;
-            --border: #1a1a1a;
-            --input-bg: #111111;
-        }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-main);
-            transition: background-color 0.3s, color 0.3s;
-            -webkit-font-smoothing: antialiased;
-        }
-
-        [x-cloak] {
-            display: none !important;
-        }
-
-        .glass-nav {
-            background: rgba(255, 255, 255, 0.7);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-        }
-
-        .dark-mode .glass-nav {
-            background: rgba(0, 0, 0, 0.7);
-        }
-
-        .view-section {
-            display: none;
-            width: 100%;
-        }
-
-        .view-section.active {
-            display: block;
-            animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .card {
-            background: var(--card-bg);
-            border-radius: var(--radius);
-            padding: 2rem;
-            margin-bottom: 1.5rem;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
-            border: 1px solid var(--border);
-        }
-
-        .btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            padding: 0.8rem 1.8rem;
-            border-radius: 9999px;
-            /* Pill-shaped aesthetic mandate */
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            font-size: 0.95rem;
-            gap: 0.5rem;
-        }
-
-        .btn-accent {
-            background: var(--accent);
-            color: white;
-            border: 2px solid var(--accent);
-        }
-
-        .btn-accent:hover {
-            background: var(--accent-hover);
-            border-color: var(--accent-hover);
-            transform: translateY(-1px);
-        }
-
-        .btn-dark {
-            background: var(--primary);
-            color: var(--card-bg);
-            border: 2px solid var(--primary);
-        }
-
-        .btn-outline {
-            background: transparent;
-            border: 2px solid var(--border);
-            color: var(--text-main);
-        }
-
-        .btn-outline:hover {
-            border-color: var(--text-main);
-        }
-
-        .btn-danger {
-            background: #ef4444;
-            color: white;
-            border: 2px solid #ef4444;
-        }
-
-        .btn-success {
-            background: #10b981;
-            color: white;
-            border: 2px solid #10b981;
-        }
-
-        .btn-sm {
-            padding: 0.5rem 1rem;
-            font-size: 0.8rem;
-        }
-
-        input[type="text"],
-        input[type="number"],
-        input[type="date"],
-        input[type="time"],
-        input[type="password"],
-        input[type="email"],
-        textarea,
-        select {
-            padding: 0.85rem 1.2rem;
-            border: 1px solid var(--border);
-            border-radius: 9999px;
-            /* Pill-shaped aesthetic mandate */
-            outline: none;
-            width: 100%;
-            background-color: var(--card-bg);
-            color: var(--text-main);
-            font-size: 1rem;
-            transition: border-color 0.2s, box-shadow 0.2s;
-        }
-
-        textarea {
-            border-radius: 20px;
-            resize: vertical;
-        }
-
-        /* Exceptions for textareas */
-        input:focus,
-        textarea:focus {
-            border-color: var(--accent);
-            box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1);
-        }
-
-        .inventory-item {
-            display: grid;
-            grid-template-columns: 2fr 1fr 1fr 1fr 40px;
-            gap: 0.75rem;
-            align-items: center;
-            padding: 1rem;
-            background: var(--bg-color);
-            border-radius: 16px;
-            border: 1px solid var(--border);
-            margin-bottom: 0.5rem;
-        }
-
-        @media (max-width: 768px) {
-            .inventory-item {
-                grid-template-columns: 1fr 1fr;
-            }
-
-            .inv-name {
-                grid-column: 1 / -1;
-            }
-        }
-
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: var(--bg-color);
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: var(--border);
-            border-radius: 10px;
-        }
-
-        #sidebar {
-            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            transform: translateX(-100%) !important;
-        }
-
-        #sidebar.open {
-            transform: translateX(0) !important;
-        }
-
-        @media print {
-            body {
-                background: white;
-                color: black;
-                font-family: 'Times New Roman', serif;
-            }
-
-            main,
-            nav,
-            aside,
-            .no-print {
-                display: none !important;
-            }
-
-            #print-wrapper {
-                display: block !important;
-            }
-
-            .print-table {
-                width: 100%;
-                border-collapse: collapse;
-                margin-bottom: 24px;
-                font-size: 12pt;
-            }
-
-            .print-table th,
-            .print-table td {
-                border: 1px solid #000;
-                padding: 8px 12px;
-                text-align: left;
-            }
-
-            .print-table th {
-                background-color: #f3f4f6 !important;
-                font-weight: bold;
-                -webkit-print-color-adjust: exact;
-            }
-
-            .print-header-info {
-                display: grid;
-                grid-template-columns: 1fr 1fr;
-                gap: 20px;
-                margin-bottom: 30px;
-            }
-
-            .print-checkbox {
-                width: 14px;
-                height: 14px;
-                border: 1px solid black;
-                display: inline-block;
-                margin-right: 8px;
-                vertical-align: middle;
-            }
-
-            .print-checked {
-                background-color: black;
-                -webkit-print-color-adjust: exact;
-            }
-        }
-    </style>
-</head>
-
-<body x-data="{ annual: true, mobileMenu: false }">
-    <header class="main-header"></header>
-
-
-    <div id="tosModal"
-        class="hidden fixed inset-0 z-[100] bg-black/80 flex items-center justify-center p-6 backdrop-blur-sm no-print"
-        x-data>
-        <div
-            class="bg-white dark:bg-slate-900 w-full max-w-3xl rounded-2xl p-8 max-h-[90vh] overflow-y-auto border border-slate-200 dark:border-slate-700 shadow-2xl relative">
-            <h2 class="text-3xl font-black mb-6">Terms of Service & Enterprise Cloud Sync Policy</h2>
-
-            <div class="space-y-6 text-sm text-slate-600 dark:text-slate-400 font-medium mb-8">
-                <div>
-                    <h3 class="text-slate-900 dark:text-white font-bold text-lg mb-2">1. The "Shadow IT" & Corporate
-                        Policy Clause</h3>
-                    <p>ezManage is a personal productivity and efficiency tool. You, the individual user (or the
-                        authorizing business entity), bear 100% of the responsibility for ensuring that entering your
-                        floor data, counts, or operational metrics into this application complies with your employer’s
-                        Non-Disclosure Agreements (NDAs) and corporate IT security policies.</p>
-                </div>
-                <div>
-                    <h3 class="text-slate-900 dark:text-white font-bold text-lg mb-2">2. Data Controller vs. Data
-                        Processor</h3>
-                    <p>By opting into Enterprise Cloud Sync, you or your business explicitly acts as the "Data
-                        Controller." You accept all legal responsibility for storing proprietary daily operations data
-                        on third-party cloud servers. ezManage acts strictly as a "Data Processor" and facilitates the
-                        requested cloud backup architecture.</p>
-                </div>
-                <div>
-                    <h3 class="text-slate-900 dark:text-white font-bold text-lg mb-2">3. The FLSA / Wage Liability
-                        Shield</h3>
-                    <p>The timer and stopwatch functions within ezManage are strictly provided as "task efficiency
-                        stopwatches." They are NOT official payroll time clocks. ezManage is completely shielded from
-                        and not liable for wage disputes, miscalculated overtime, FLSA claims, or labor law violations.
-                    </p>
-                </div>
-                <div>
-                    <h3 class="text-slate-900 dark:text-white font-bold text-lg mb-2">4. Health & Safety / AI Compliance
-                    </h3>
-                    <p>This application is a digital notepad, not a compliance auditor. Users are fully responsible for
-                        physically verifying ServSafe temperatures, line checks, and cleanliness standards. ezManage
-                        does not auto-fill compliance data and accepts zero liability for health code violations or
-                        audit failures.</p>
-                </div>
-                <div>
-                    <h3 class="text-slate-900 dark:text-white font-bold text-lg mb-2">5. "As-Is" Software Warranty &
-                        Right to Forget</h3>
-                    <p>The software is provided strictly "as-is." ezManage is not liable for disciplinary actions,
-                        financial losses, or downtime resulting from bugs or outages. We collect minimal PII
-                        (email/phone), and you may permanently delete your account and all associated cloud data at any
-                        time in the settings menu.</p>
-                </div>
-            </div>
-
-            <div class="flex flex-col sm:flex-row gap-4 border-t border-slate-200 dark:border-slate-800 pt-6">
-                <button onclick="acceptToSAndEnableCloud()" class="btn btn-accent flex-1 py-4">I Accept & Enable Cloud
-                    Sync</button>
-                <button onclick="declineToS()"
-                    class="btn btn-outline flex-1 py-4 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20">Decline
-                    (Keep Data Local Only)</button>
-            </div>
-        </div>
-    </div>
-
-    <nav class="fixed w-full z-50 glass-nav border-b border-slate-200/50 top-0 no-print">
-        <div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-            <div class="flex items-center space-x-3 cursor-pointer" onclick="navTo('welcome')">
-                <div class="relative group">
-                    <img src="ManagerPro.jpg" alt="ezManage Logo"
-                        class="w-10 h-10 rounded-xl shadow-sm border border-white transform transition-transform group-hover:rotate-6">
-                </div>
-                <span
-                    class="text-xl font-black tracking-tighter text-slate-900 dark:text-white uppercase">ezManage</span>
-            </div>
-
-            <div class="hidden md:flex space-x-10 text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">
-                <a href="#" onclick="navTo('welcome')" class="hover:text-sky-600 transition-colors">Home</a>
-                <a href="#" onclick="navTo('tracker')" class="hover:text-sky-600 transition-colors">App</a>
-                <a href="#" onclick="navTo('schedule')" class="hover:text-sky-600 transition-colors">Schedule</a>
-            <a href="#" onclick="navTo('tasks')"
-                <a href="#" onclick="navTo('tasks')" class="hover:text-sky-600 transition-colors">Tasks</a>
-                <a href="easy-ai.html" class="hover:text-sky-600 transition-colors text-sky-500">AI Predictor</a>
-                <a href="#" onclick="navTo('pricing')" class="hover:text-sky-600 transition-colors">Pricing</a>
-            </div>
-
-            <div class="flex items-center space-x-4">
-                <div id="navUserStatus"
-                    class="hidden sm:block text-[10px] font-black uppercase tracking-widest text-sky-600 cursor-pointer"
-                    onclick="handleNavAccountClick()">
-                    Login / Sign Up
-                </div>
-                <button onclick="toggleSidebar()" class="p-2 text-black dark:text-white"
-                    aria-label="Toggle Menu">
-                    <i data-lucide="menu"></i>
-                </button>
-            </div>
-        </div>
-    </nav>
-
-    <aside id="sidebar"
-        class="fixed inset-y-0 left-0 w-80 bg-white dark:bg-slate-950 z-[60] shadow-2xl border-r border-slate-100 dark:border-slate-800 no-print flex flex-col">
-        
-        <div class="flex justify-between items-center p-8 pb-4 shrink-0">
-            <span class="font-black uppercase tracking-widest text-xs">Menu</span>
-            <button onclick="toggleSidebar()" class="p-2 text-black dark:text-white hover:text-sky-500" aria-label="Close menu"><i data-lucide="x"></i></button>
-        </div>
-
-        <div class="flex-1 overflow-y-auto overscroll-contain px-8 py-4 custom-scrollbar">
-            <nav class="space-y-6">
-            <a href="#" onclick="navTo('tracker')"
-                class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="edit-3"></i> Active
-                Tracker</a>
-            <a href="#" onclick="navTo('schedule')"
-                class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="calendar"></i>
-                Schedule</a>
-            <a href="easy-ai.html" class="flex items-center gap-4 font-bold text-lg text-sky-500 hover:text-sky-600"><i
-                    data-lucide="brain"></i> AI Predictor</a>
-            <a href="#" onclick="navTo('presets')"
-                class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="layout"></i>
-                Templates</a>
-            <a href="#" onclick="navTo('history')"
-                class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="clock"></i>
-                History</a>
-            <a href="#" onclick="navTo('shiftNotes')"
-                class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i
-                    data-lucide="clipboard-list"></i>
-                Shift Notes</a>
-            <a href="#" onclick="navTo('team')"
-                class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="users"></i>
-                Team Directory</a>
-            <a href="#" onclick="navTo('employees')"
-                class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i
-                    data-lucide="users"></i>
-                Team Roster</a>
-            <a href="#" onclick="navTo('maintenance')"
-                class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="wrench"></i>
-                Maintenance</a>
-            <a href="#" onclick="navTo('performance')"
-                class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="bar-chart-3"></i>
-                Performance</a>
-            <div class="h-px bg-slate-100 dark:bg-slate-800 my-8"></div>
-            <a href="#" onclick="handleNavAccountClick()"
-                class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="user"></i> My
-                Profile</a>
-            <a href="#" onclick="navTo('pricing')"
-                class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="credit-card"></i>
-                Pricing & Plans</a>
-
-            <a href="#" onclick="navTo('tasks')"
-                class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="check-square"></i>
-                Tasks</a>
-
-            <a href="#" onclick="navTo('timeoff')"
-                class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="calendar-clock"></i>
-                Time Off</a>
-
-            <a href="#" onclick="navTo('request')"
-                class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="lightbulb"></i>
-                Feature Request</a>
-            </nav>
-        </div>
-
-        <div class="p-8 pt-4 border-t border-slate-100 dark:border-slate-800 shrink-0 bg-white dark:bg-slate-950">
-            <div
-                class="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800">
-                <span class="text-xs font-bold uppercase tracking-widest">AMOLED Dark</span>
-                <label class="relative inline-flex items-center cursor-pointer">
-                    <input type="checkbox" id="themeToggle" class="sr-only peer" aria-label="Toggle theme" onchange="toggleTheme()">
-                    <div
-                        class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:bg-sky-500 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all">
-                    </div>
-                </label>
-            </div>
-            <button onclick="signOut()"
-                class="w-full mt-4 text-xs font-black uppercase tracking-[0.2em] text-red-500 hover:text-red-600">Sign
-                Out</button>
-        </div>
-    </aside>
-
-    <main class="pt-[var(--nav-height)] min-h-screen">
-
-        <div id="view-welcome" class="view-section active">
-            <section
-                class="pt-24 pb-32 px-6 relative overflow-hidden bg-white dark:bg-[#050505] transition-colors duration-300">
-                <div class="absolute inset-0 -z-10">
-                    <div
-                        class="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-sky-50/50 dark:from-sky-900/10 to-transparent">
-                    </div>
-                </div>
-
-                <div class="max-w-6xl mx-auto flex flex-col items-center text-center">
-                    <div class="relative mb-12">
-                        <div class="absolute inset-0 bg-sky-200 blur-2xl opacity-40 rounded-full scale-110"></div>
-                        <img src="ManagerPro.jpg"
-                            class="relative w-28 h-28 rounded-[2.5rem] shadow-2xl ring-1 ring-slate-200">
-                    </div>
-
-                    <span
-                        class="inline-flex items-center px-4 py-1.5 mb-8 text-[10px] font-black tracking-[0.2em] text-sky-700 uppercase bg-sky-50 rounded-full">
-                        For Retail & Fast Food Leaders
-                    </span>
-
-                    <h1
-                        class="text-6xl md:text-8xl font-black tracking-tight text-slate-950 dark:text-white mb-8 leading-[0.95]">
-                        Less Admin.<br><span class="text-sky-500">More Leadership.</span>
-                    </h1>
-
-                    <p
-                        class="text-xl md:text-2xl text-slate-500 dark:text-slate-400 mb-12 max-w-3xl mx-auto leading-relaxed font-medium">
-                        The strategic toolkit for modern managers. Track statistics in real-time, monitor floor
-                        performance, and unlock improvement insights instantly.
-                    </p>
-
-                    <div class="flex flex-col sm:flex-row justify-center gap-6 w-full sm:w-auto mb-6">
-                        <button onclick="navTo('auth'); isRegisterMode = true; toggleAuthModeUI();"
-                            class="btn btn-dark text-lg px-12 py-5 shadow-2xl">
-                            Get Started Free
-                        </button>
-                        <button onclick="navTo('tracker')" class="btn btn-outline text-lg px-12 py-5">
-                            Explore App <i data-lucide="arrow-right"></i>
-                        </button>
-                    </div>
-
-                    <div class="download-section mt-8 flex flex-col items-center">
-                        <p class="text-sm text-slate-500 dark:text-slate-400 mb-4 font-medium">Prefer a native desktop
-                            experience?</p>
-                        <a href="https://github.com/RealUnstoppable/ezManage/raw/main/downloads/ezManage-1.0.0.dmg"
-                            download="ezManage-Mac.dmg"
-                            class="btn btn-outline text-sm px-8 py-3 border-sky-500 text-sky-600 dark:text-sky-400 hover:bg-sky-50 dark:hover:bg-sky-900/20">
-                            <i data-lucide="download"></i> Download for macOS
-                        </a>
-                    </div>
-                </div>
-            </section>
-        </div>
-
-        <div id="view-auth" class="view-section px-6 py-20">
-            <div class="max-w-md mx-auto card text-center shadow-2xl border-0">
-                <h2 id="authTitle" class="text-3xl font-black mb-8">Sign In</h2>
-                <form id="authForm" onsubmit="handleAuth(event)" class="space-y-4 text-left">
-                    <div class="space-y-2">
-                        <label for="authEmail" class="text-xs font-black uppercase tracking-widest text-slate-400">Email
-                            Address</label>
-                        <input type="email" id="authEmail" placeholder="manager@ezmanage.com" required>
-                    </div>
-                    <div class="space-y-2">
-                        <label for="authPass"
-                            class="text-xs font-black uppercase tracking-widest text-slate-400">Password</label>
-                        <input type="password" id="authPass" placeholder="••••••••" required>
-                    </div>
-                    <button type="submit" id="authBtn"
-                        class="btn btn-accent w-full py-4 mt-4 disabled:opacity-70 disabled:cursor-not-allowed">Sign
-                        In</button>
-                </form>
-
-                <div class="relative my-8">
-                    <div class="absolute inset-0 flex items-center">
-                        <div class="w-full border-t border-slate-100 dark:border-slate-800"></div>
-                    </div>
-                    <div class="relative flex justify-center text-xs uppercase"><span
-                            class="bg-white dark:bg-[#0a0a0a] px-2 text-slate-400">Or continue with</span></div>
-                </div>
-
-                <button onclick="signInWithGoogle()"
-                    class="btn btn-outline w-full py-4 font-bold flex items-center justify-center gap-3">
-                    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-5"> Google
-                </button>
-
-                <p class="mt-8 text-sm text-slate-500">
-                    <span id="authToggleText">Don't have an account?</span>
-                    <a href="#" onclick="toggleAuthMode(event)" id="authToggleLink"
-                        class="text-sky-600 font-bold">Create one</a>
-                </p>
-            </div>
-        </div>
-
-        <div id="view-setup" class="view-section px-6 py-20">
-            <div class="max-w-2xl mx-auto card shadow-2xl border-0">
-                <h2 class="text-3xl font-black mb-4">Complete Profile</h2>
-                <p class="text-slate-500 mb-8 font-medium">Customize your management dashboard.</p>
-
-                <div class="grid md:grid-cols-2 gap-6 text-left">
-                    <div class="space-y-2">
-                        <label for="setupName" class="text-xs font-black uppercase tracking-widest text-slate-400">Full
-                            Name</label>
-                        <input type="text" id="setupName" placeholder="Catalin Andrian">
-                    </div>
-                    <div class="space-y-2">
-                        <label for="setupPhone"
-                            class="text-xs font-black uppercase tracking-widest text-slate-400">Phone</label>
-                        <input type="text" id="setupPhone" placeholder="(555) 000-0000">
-                    </div>
-                    <div class="space-y-2">
-                        <label for="setupRole" class="text-xs font-black uppercase tracking-widest text-slate-400">Your
-                            Role</label>
-                        <input type="text" id="setupRole" placeholder="Shift Manager">
-                    </div>
-                    <div class="space-y-2">
-                        <label for="setupStore"
-                            class="text-xs font-black uppercase tracking-widest text-slate-400">Store / Brand</label>
-                        <select id="setupStore">
-                            <option value="arbys">Arby's</option>
-                            <option value="mcdonalds">McDonald's</option>
-                            <option value="tacobell">Taco Bell</option>
-                            <option value="chickfila">Chick-fil-A</option>
-                            <option value="other">Other</option>
-                        </select>
-                    </div>
-                    <div class="space-y-2 md:col-span-2">
-                        <label for="setupLocation"
-                            class="text-xs font-black uppercase tracking-widest text-slate-400">Location</label>
-                        <input type="text" id="setupLocation" placeholder="Buford, GA">
-                    </div>
-                </div>
-                <button onclick="completeSetup()" class="btn btn-accent w-full py-5 mt-8 text-lg">Finish Setup</button>
-            </div>
-        </div>
-
-        <div id="view-tracker" class="view-section pb-32 relative">
-
-            <div
-                class="sticky top-[80px] z-40 bg-white/90 dark:bg-black/90 backdrop-blur pb-4 pt-4 border-b border-slate-200 dark:border-slate-800 mb-8 overflow-x-auto no-print px-6">
-                <div class="flex gap-4 max-w-5xl mx-auto">
-                    <button
-                        onclick="document.getElementById('section-routine').scrollIntoView({behavior: 'smooth', block: 'center'})"
-                        class="btn btn-sm btn-outline whitespace-nowrap bg-white dark:bg-black">Routine</button>
-                    <button
-                        onclick="document.getElementById('section-stats').scrollIntoView({behavior: 'smooth', block: 'center'})"
-                        class="btn btn-sm btn-outline whitespace-nowrap bg-white dark:bg-black">Stats</button>
-                    <button
-                        onclick="document.getElementById('section-cash').scrollIntoView({behavior: 'smooth', block: 'center'})"
-                        class="btn btn-sm btn-outline whitespace-nowrap bg-white dark:bg-black">Cash</button>
-                    <button
-                        onclick="document.getElementById('section-inventory').scrollIntoView({behavior: 'smooth', block: 'center'})"
-                        class="btn btn-sm btn-outline whitespace-nowrap bg-white dark:bg-black">Inventory</button>
-                </div>
-            </div>
-
-            <div class="max-w-5xl mx-auto px-6">
-                <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12 no-print">
-                    <div>
-                        <h1 class="text-4xl font-black tracking-tight">Shift Tracker</h1>
-                        <p class="text-slate-500 font-medium flex items-center gap-2">
-                            <span id="cloudSyncStatus" class="w-2 h-2 rounded-full bg-slate-300"></span>
-                            <span id="cloudSyncText">Local Mode Only (Opt-In for Cloud)</span>
-                        </p>
-                    </div>
-                    <div class="flex items-center gap-3">
-                        <button onclick="document.getElementById('jsonImportInput').click()"
-                            class="btn btn-outline btn-sm" title="Import JSON" aria-label="Import JSON"><i
-                                data-lucide="upload" class="w-4"></i></button>
-                        <button onclick="exportDataJSON()" class="btn btn-outline btn-sm" title="Export JSON"
-                            aria-label="Export JSON"><i data-lucide="download" class="w-4"></i></button>
-                        <input type="file" id="jsonImportInput" accept=".json" class="hidden" aria-label="Import JSON File"
-                            onchange="importDataJSON(event)">
-                        <button aria-label="Templates" onclick="navTo('presets')" class="btn btn-outline btn-sm"><i data-lucide="layout"
-                                class="w-4"></i> Templates</button>
-                        <button onclick="clearData()"
-                            class="btn btn-outline btn-sm text-red-500 border-red-200 hover:bg-red-50"><i
-                                data-lucide="trash-2" class="w-4"></i> Reset</button>
-                    </div>
-                </div>
-
-                <form id="trackerForm" class="space-y-6">
-                    <div class="card grid md:grid-cols-3 gap-6">
-                        <div class="space-y-2">
-                            <label for="shiftManager"
-                                class="text-[10px] font-black uppercase tracking-widest text-slate-400">Shift
-                                Manager</label>
-                            <input type="text" id="shiftManager" placeholder="Enter Name">
-                        </div>
-                        <div class="space-y-2">
-                            <label for="shiftDate"
-                                class="text-[10px] font-black uppercase tracking-widest text-slate-400">Date &
-                                Time</label>
-                            <div class="flex gap-2">
-                                <input type="date" id="shiftDate">
-                                <input type="time" id="shiftTime" aria-label="Shift Time">
-                            </div>
-                        </div>
-                        <div class="space-y-2 no-print">
-                            <label id="timerLabel"
-                                class="text-[10px] font-black uppercase tracking-widest text-slate-400">Task Efficiency
-                                Timer</label>
-                            <div class="flex gap-2 items-center">
-                                <button type="button" id="timerBtn" aria-describedby="timerLabel"
-                                    onclick="toggleShiftTimer()" class="btn btn-success flex-1 py-3"><i
-                                        data-lucide="play" class="w-4"></i> Start</button>
-                                <span id="timerDisplay"
-                                    class="font-mono font-bold bg-slate-50 dark:bg-slate-800 px-4 py-3 rounded-full border border-slate-100 dark:border-slate-700">00:00</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div id="section-routine" class="card" x-data="{ expanded: true }">
-                        <h3 class="text-xl font-black mb-2">
-                            <button @click="expanded = !expanded" :aria-expanded="expanded" type="button"
-                                class="w-full flex items-center justify-between cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 rounded-lg">
-                                <div class="flex items-center gap-3"><i data-lucide="list-checks"
-                                        class="text-sky-500"></i>
-                                    Routine & ServSafe</div>
-                                <i data-lucide="chevron-down" class="transition-transform no-print"
-                                    :class="expanded ? 'rotate-180' : ''"></i>
-                            </button>
-                        </h3>
-                        <div x-show="expanded" x-transition>
-                            <div id="routineContainer" class="grid sm:grid-cols-2 gap-4 mt-4"></div>
-                            <div class="mt-8 flex gap-3 no-print">
-                                <input type="text" id="newRoutineTask" placeholder="Add custom daily task..."
-                                    class="flex-1" aria-label="New Routine Task">
-                                <button type="button" onclick="addRoutineTask()" class="btn btn-outline">Add</button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div id="section-stats" class="card" x-data="{ expanded: true }">
-                        <h3 class="text-xl font-black mb-2">
-                            <button @click="expanded = !expanded" :aria-expanded="expanded" type="button"
-                                class="w-full flex items-center justify-between cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 rounded-lg">
-                                <div class="flex items-center gap-3"><i data-lucide="beef" class="text-amber-600"></i>
-                                    Prep
-                                    & Labor Stats</div>
-                                <i data-lucide="chevron-down" class="transition-transform no-print"
-                                    :class="expanded ? 'rotate-180' : ''"></i>
-                            </button>
-                        </h3>
-                        <div x-show="expanded" x-transition class="mt-4">
-                            <div class="grid md:grid-cols-2 gap-8">
-                                <div class="space-y-4">
-                                    <div class="space-y-2">
-                                        <label for="prepNotes"
-                                            class="text-[10px] font-black uppercase tracking-widest text-slate-400">Prep
-                                            Notes</label>
-                                        <textarea id="prepNotes" placeholder="e.g. Prepped 8 pans of lettuce..."
-                                            class="h-32"></textarea>
-                                    </div>
-                                </div>
-                                <div class="grid grid-cols-1 gap-4">
-                                    <div class="space-y-2">
-                                        <label for="beefCook"
-                                            class="text-[10px] font-black uppercase tracking-widest text-slate-400">Main
-                                            Prep Count (Beef/Protein)</label>
-                                        <input type="text" id="beefCook" placeholder="Cooked Count">
-                                    </div>
-                                    <div class="space-y-2">
-                                        <label for="beefTempered"
-                                            class="text-[10px] font-black uppercase tracking-widest text-slate-400">Tempered
-                                            / Thawed</label>
-                                        <input type="text" id="beefTempered" placeholder="Tempered Count">
-                                    </div>
-                                    <div class="space-y-2">
-                                        <label for="laborVariance"
-                                            class="text-[10px] font-black uppercase tracking-widest text-slate-400">Labor
-                                            Variance %</label>
-                                        <input type="text" id="laborVariance" placeholder="e.g. -2.5%">
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div id="section-cash" class="card" x-data="{ expanded: true }">
-                        <h3 class="text-xl font-black mb-2">
-                            <button @click="expanded = !expanded" :aria-expanded="expanded" type="button"
-                                class="w-full flex items-center justify-between cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 rounded-lg">
-                                <div class="flex items-center gap-3"><i data-lucide="banknote"
-                                        class="text-emerald-500"></i>
-                                    Cash & Registers</div>
-                                <i data-lucide="chevron-down" class="transition-transform no-print"
-                                    :class="expanded ? 'rotate-180' : ''"></i>
-                            </button>
-                        </h3>
-                        <div x-show="expanded" x-transition class="mt-4">
-                            <div class="grid lg:grid-cols-2 gap-12">
-                                <div>
-                                    <label
-                                        class="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-4 block">Register
-                                        Variance Tracker</label>
-                                    <div id="drawersContainer" class="space-y-3 mb-4"></div>
-                                    <button type="button" onclick="addDrawerItem()"
-                                        class="text-sky-600 font-black text-xs uppercase tracking-widest hover:text-sky-700 no-print">+
-                                        Add Drawer</button>
-                                </div>
-                                <div class="space-y-6">
-                                    <div class="space-y-2">
-                                        <label for="safeCount"
-                                            class="text-[10px] font-black uppercase tracking-widest text-slate-400">Safe
-                                            Count ($)</label>
-                                        <input type="text" id="safeCount" placeholder="$1,100.00">
-                                    </div>
-                                    <div class="space-y-2">
-                                        <label
-                                            class="text-[10px] font-black uppercase tracking-widest text-slate-400">Verified
-                                            Deposits</label>
-                                        <div id="depositsContainer" class="space-y-3 mb-2"></div>
-                                        <button type="button" onclick="addDepositItem()"
-                                            class="text-sky-600 font-black text-xs uppercase tracking-widest no-print">+
-                                            Add Deposit</button>
-                                    </div>
-                                    <div class="space-y-2">
-                                        <label for="changeNeeded"
-                                            class="text-[10px] font-black uppercase tracking-widest text-slate-400">Change
-                                            Needed</label>
-                                        <textarea id="changeNeeded" placeholder="List bills/coins needed from bank..."
-                                            class="h-20"></textarea>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div id="section-inventory" class="card" x-data="{ expanded: true }">
-                        <div class="flex justify-between items-center mb-6">
-                            <div class="text-xl font-black w-full flex items-center justify-between">
-                                <div class="flex items-center gap-3"><i data-lucide="package" class="text-purple-500"></i> Inventory Count</div>
-                                
-                                <div class="relative no-print ml-auto mr-4" x-data="{ dropdownOpen: false }">
-                                    <button @click="dropdownOpen = !dropdownOpen" type="button" class="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors" aria-label="Inventory Options">
-                                        <i data-lucide="chevron-down" class="transition-transform" :class="dropdownOpen ? 'rotate-180' : ''"></i>
-                                    </button>
-                                    
-                                    <div x-show="dropdownOpen" @click.outside="dropdownOpen = false" x-transition class="absolute right-0 mt-2 w-48 bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700 overflow-hidden z-50 py-1" x-cloak>
-                                        <button type="button" @click="sortInventory('recent'); dropdownOpen = false" class="w-full text-left px-4 py-3 text-sm font-bold hover:bg-slate-50 dark:hover:bg-slate-700/50 flex items-center gap-2">
-                                            <i data-lucide="clock" class="w-4 h-4"></i> Most Recent
-                                        </button>
-                                        <button type="button" @click="sortInventory('alpha'); dropdownOpen = false" class="w-full text-left px-4 py-3 text-sm font-bold hover:bg-slate-50 dark:hover:bg-slate-700/50 flex items-center gap-2">
-                                            <i data-lucide="arrow-down-a-z" class="w-4 h-4"></i> Alphabetical
-                                        </button>
-                                        <div class="h-px bg-slate-200 dark:bg-slate-700 my-1"></div>
-                                        <button type="button" @click="expanded = !expanded; dropdownOpen = false" class="w-full text-left px-4 py-3 text-sm font-bold hover:bg-slate-50 dark:hover:bg-slate-700/50 flex items-center gap-2">
-                                            <i data-lucide="panel-top-close" class="w-4 h-4" x-show="expanded"></i>
-                                            <i data-lucide="panel-top-open" class="w-4 h-4" x-show="!expanded" x-cloak></i>
-                                            <span x-text="expanded ? 'Close Section' : 'Open Section'"></span>
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                            <button type="button" onclick="addInventoryItem('', '', '', '', true)"
-                                class="btn btn-outline btn-sm no-print whitespace-nowrap">+ Add Item</button>
-                        </div>
-                        <div x-show="expanded" x-transition>
-                            <div
-                                class="hidden md:grid grid-cols-5 gap-4 px-4 mb-4 text-[10px] font-black uppercase tracking-widest text-slate-400">
-                                <div class="col-span-1">Item Name</div>
-                                <div>Front/Backline</div>
-                                <div>Cooler</div>
-                                <div>Freezer</div>
-                                <div class="text-right no-print">Action</div>
-                            </div>
-                            <div id="inventoryContainer"></div>
-                        </div>
-                    </div>
-
-                    <div class="grid md:grid-cols-3 gap-4 pt-8 no-print">
-                        <button type="button" onclick="exportDataJSON()" class="btn btn-outline py-5">
-                            <i data-lucide="download"></i> Save to Files (.json)
-                        </button>
-                        <button type="button" onclick="manualSaveHistory()" class="btn btn-outline py-5"
-                            id="btnCloudSave" disabled>
-                            <i data-lucide="cloud-off" id="iconCloudSave"></i> Save to Cloud
-                        </button>
-                        <button type="button" onclick="generateReport()" class="btn btn-dark py-5 shadow-2xl">
-                            <i data-lucide="printer"></i> End Shift & Print PDF
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-
-        <div id="view-team" class="view-section px-6 py-12 hidden">
-            <div class="max-w-4xl mx-auto">
-                <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-                    <h1 class="text-4xl font-black">Team Directory</h1>
-                    <button onclick="document.getElementById('addEmployeeModal').classList.remove('hidden')"
-                        class="btn btn-primary flex items-center gap-2 px-6">
-                        <i data-lucide="user-plus" class="w-5 h-5"></i> Add Employee
-                    </button>
-                </div>
-
-                <div id="addEmployeeModal"
-                    class="hidden bg-white dark:bg-slate-900 rounded-3xl p-6 md:p-8 shadow-sm border border-slate-100 dark:border-slate-800 mb-12">
-                    <h2 class="text-xl font-bold mb-4" id="employeeModalTitle">Add New Employee</h2>
-                    <input type="hidden" id="empModalId" value="">
-                    <div class="space-y-4">
-                        <input type="text" id="empName" placeholder="Employee Full Name" aria-label="Employee Full Name"
-                            class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
-                        <div class="flex flex-col md:flex-row gap-4">
-                            <select id="empRole" aria-label="Employee Role"
-                                class="flex-1 bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
-                                <option value="Cashier">Cashier</option>
-                                <option value="Cook">Cook</option>
-                                <option value="Shift Leader">Shift Leader</option>
-                                <option value="Manager">Manager</option>
-                                <option value="Driver">Driver</option>
-                                <option value="Other">Other</option>
-                            </select>
-                            <input type="text" id="empPhone" placeholder="Phone Number (Optional)" aria-label="Employee Phone Number"
-                                class="flex-1 bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
-                        </div>
-
-                        <div class="flex justify-end gap-3 pt-2">
-                            <button onclick="closeEmployeeModal()"
-                                class="btn btn-outline px-6 py-2">Cancel</button>
-                            <button onclick="submitEmployee()" class="btn btn-accent px-6 py-2" id="submitEmpBtn">Save Employee</button>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="flex justify-between items-center mb-6">
-                    <h2 class="text-2xl font-black">Active Roster</h2>
-                    <button onclick="fetchTeamDirectory()"
-                        class="text-sm font-bold text-sky-500 hover:text-sky-600 flex items-center gap-2">
-                        <i data-lucide="refresh-cw" class="w-4 h-4"></i> Refresh
-                    </button>
-                </div>
-
-                <div id="teamContainer" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <!-- Employees populated via JS -->
-                </div>
-            </div>
-        </div>
-
-
-        <!-- View: Tasks -->
-        <div id="view-tasks" class="view-section px-6 py-12 hidden max-w-4xl mx-auto">
-            <h2 class="text-3xl font-bold mb-6 text-slate-800 dark:text-white flex items-center gap-2">
-                <i data-lucide="check-square" class="w-8 h-8 text-sky-500"></i>
-                Task Management
-            </h2>
-
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <!-- Task Creation Form -->
-                <div class="lg:col-span-1 card">
-                    <h3 class="text-xl font-semibold mb-4 text-slate-800 dark:text-white border-b border-slate-200 dark:border-slate-700 pb-2">Assign New Task</h3>
-                    <form id="createTaskForm" class="space-y-4" onsubmit="event.preventDefault(); createTask();">
-                        <div>
-                            <label for="taskTitle" class="block text-sm font-medium mb-1">Task Title</label>
-                            <input type="text" id="taskTitle" class="w-full" placeholder="e.g. Clean fryers" required>
-                        </div>
-                        <div>
-                            <label for="taskDesc" class="block text-sm font-medium mb-1">Description (Optional)</label>
-                            <textarea id="taskDesc" class="w-full h-24" placeholder="Task details..."></textarea>
-                        </div>
-                        <div>
-                            <label for="taskAssignee" class="block text-sm font-medium mb-1">Assign To</label>
-                            <select id="taskAssignee" class="w-full" required>
-                                <option value="">Select Employee...</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label for="taskDueDate" class="block text-sm font-medium mb-1">Due Date</label>
-                            <input type="date" id="taskDueDate" class="w-full" required>
-                        </div>
-                        <button type="submit" class="btn btn-primary w-full">Assign Task</button>
-                    </form>
-                </div>
-
-                <!-- Task List -->
-                <div class="lg:col-span-2">
-                    <div class="flex justify-between items-center mb-4">
-                        <h3 class="text-xl font-semibold text-slate-800 dark:text-white">Assigned Tasks</h3>
-                        <select id="taskFilterStatus" class="text-sm p-1 border rounded" onchange="fetchTasks()">
-                            <option value="All">All Tasks</option>
-                            <option value="Pending">Pending</option>
-                            <option value="In Progress">In Progress</option>
-                            <option value="Completed">Completed</option>
-                        </select>
-                    </div>
-                    <div id="taskList" class="space-y-4">
-                        <p class="text-sm text-slate-500">Loading tasks...</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div id="view-schedule" class="view-section px-6 py-12">
-            <div class="max-w-4xl mx-auto">
-                <h1 class="text-4xl font-black mb-8">Employee Schedule</h1>
-
-                <div class="card mb-8">
-                    <h3 class="text-xl font-black mb-4">Add Shift</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label for="scheduleDate" class="block text-sm font-bold mb-1">Date</label>
-                            <input type="date" id="scheduleDate" class="w-full" onchange="fetchSchedules(this.value)">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-bold mb-1">Employee Name</label>
-                            <select id="shiftEmpName" class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
-                                <option value="">Select Employee...</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-bold mb-1">Role</label>
-                            <select id="shiftRole" class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
-                            <label for="shiftEmpName" class="block text-sm font-bold mb-1">Employee Name</label>
-                            <input type="text" id="shiftEmpName" class="w-full" placeholder="John Doe">
-                            <label class="block text-sm font-bold mb-1">Employee Name</label>
-                            <select id="shiftEmpName" class="w-full">
-                                <option value="" disabled selected>Select Employee</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label for="shiftRole" class="block text-sm font-bold mb-1">Role</label>
-                            <select id="shiftRole" class="w-full">
-                                <option value="Cashier">Cashier</option>
-                                <option value="Cook">Cook</option>
-                                <option value="Shift Leader">Shift Leader</option>
-                                <option value="Manager">Manager</option>
-                                <option value="Driver">Driver</option>
-                                <option value="Other">Other</option>
-                            </select>
-                        </div>
-                        <div class="grid grid-cols-2 gap-2">
-                            <div>
-                                <label for="shiftStart" class="block text-sm font-bold mb-1">Start Time</label>
-                                <input type="time" id="shiftStart" class="w-full">
-                            </div>
-                            <div>
-                                <label for="shiftEnd" class="block text-sm font-bold mb-1">End Time</label>
-                                <input type="time" id="shiftEnd" class="w-full">
-                            </div>
-                        </div>
-                    </div>
-                    <button type="button" onclick="addShiftToSchedule()" class="btn btn-accent w-full mt-6">Add
-                        Shift</button>
-                </div>
-
-                <div class="card">
-                    <h3 class="text-xl font-black mb-4">Scheduled Shifts</h3>
-                    <div id="scheduleList" class="space-y-4">
-                        <p class="text-sm text-slate-500">Select a date to view shifts.</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div id="view-history" class="view-section px-6 py-12">
-            <div class="max-w-4xl mx-auto">
-                <div class="card bg-slate-50 dark:bg-slate-900 border-none mb-8">
-                    <h3 class="text-lg font-black mb-2 flex items-center gap-2"><i data-lucide="database"
-                            class="text-sky-500"></i> Cloud Storage Capacity</h3>
-                    <div class="w-full bg-slate-200 dark:bg-slate-800 rounded-full h-3 mb-2 overflow-hidden">
-                        <div id="storageProgressBar" class="bg-sky-500 h-3 rounded-full transition-all duration-500"
-                            style="width: 0%"></div>
-                    </div>
-                    <div class="flex justify-between text-xs font-bold text-slate-500 uppercase tracking-widest">
-                        <span id="storageUsedTxt">0 MB Used</span>
-                        <span id="storageMaxTxt">1 GB Limit</span>
-                    </div>
-                </div>
-
-                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-                    <h1 class="text-4xl font-black">Shift History</h1>
-                    <div class="relative w-full md:w-64">
-                        <i data-lucide="search" class="absolute left-3 top-3 w-4 h-4 text-slate-400"></i>
-                        <input type="text" id="historySearch" aria-label="Search History"
-                            placeholder="Search by manager, date..." class="pl-10 text-sm"
-                            oninput="debouncedRenderHistory()">
-                    </div>
-                </div>
-
-                <div id="historyListContainer" class="space-y-6"></div>
-            </div>
-        </div>
-
-        <div id="view-shiftNotes" class="view-section px-6 py-12">
-            <div class="max-w-4xl mx-auto">
-                <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-                    <h1 class="text-4xl font-black">Shift Notes</h1>
-
-                    <div id="shiftNotesGroupControls" class="flex flex-wrap items-center gap-3 w-full md:w-auto">
-                        <!-- Populated by JS based on user's orgId status -->
-                    </div>
-                </div>
-
-                <div id="mySentRequestsPanel" class="hidden mb-8">
-                    <h3 class="text-sm font-black text-slate-500 uppercase tracking-widest mb-3">My Pending Join
-                        Requests</h3>
-                    <div id="mySentRequestsContainer" class="space-y-2"></div>
-                </div>
-
-                <div id="createGroupModal"
-                    class="hidden bg-white dark:bg-slate-900 rounded-3xl p-6 md:p-8 shadow-sm border border-slate-100 dark:border-slate-800 mb-12">
-                    <h2 class="text-xl font-bold mb-4">Create a Management Group</h2>
-                    <p class="text-sm text-slate-500 mb-6">Create a group to share shift notes with other managers
-                        securely.</p>
-                    <div class="space-y-4">
-                        <input type="text" id="newGroupName" placeholder="Group Name (e.g. Store #1234)" aria-label="New Group Name"
-                            class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
-                        <input type="password" id="newGroupPassword" placeholder="Group Password" aria-label="New Group Password"
-                            class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
-                        <div class="flex justify-end gap-3 pt-2">
-                            <button onclick="document.getElementById('createGroupModal').classList.add('hidden')"
-                                class="btn btn-outline px-6 py-2">Cancel</button>
-                            <button onclick="createShiftGroup()" class="btn btn-primary px-6 py-2">Create Group</button>
-                        </div>
-                    </div>
-                </div>
-
-                <div id="joinGroupModal"
-                    class="hidden bg-white dark:bg-slate-900 rounded-3xl p-6 md:p-8 shadow-sm border border-slate-100 dark:border-slate-800 mb-12">
-                    <h2 class="text-xl font-bold mb-4">Join a Management Group</h2>
-                    <p class="text-sm text-slate-500 mb-6">Ask your store owner/GM for the Group ID and Password.</p>
-                    <div class="space-y-4">
-                        <input type="text" id="joinGroupId" placeholder="Group ID" aria-label="Join Group ID"
-                            class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
-                        <input type="password" id="joinGroupPassword" placeholder="Group Password" aria-label="Join Group Password"
-                            class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
-                        <div class="flex justify-end gap-3 pt-2">
-                            <button onclick="document.getElementById('joinGroupModal').classList.add('hidden')"
-                                class="btn btn-outline px-6 py-2">Cancel</button>
-                            <button onclick="requestJoinShiftGroup()" class="btn btn-primary px-6 py-2">Request
-                                Access</button>
-                        </div>
-                    </div>
-                </div>
-
-                <div id="groupRequestsPanel"
-                    class="hidden bg-amber-50 dark:bg-amber-950/20 rounded-3xl p-6 shadow-sm border border-amber-200 dark:border-amber-900/50 mb-12">
-                    <h2 class="text-lg font-bold mb-4 flex items-center gap-2"><i data-lucide="user-plus"
-                            class="text-amber-500"></i> Pending Join Requests</h2>
-                    <div id="groupRequestsContainer" class="space-y-3">
-                        <!-- Populated via JS if user is group owner -->
-                    </div>
-                </div>
-
-                <div id="shiftNotesPostArea"
-                    class="bg-white dark:bg-slate-900 rounded-3xl p-6 md:p-8 shadow-sm border border-slate-100 dark:border-slate-800 mb-12 hidden">
-                    <h2 class="text-xl font-bold mb-4">Post a Note</h2>
-                    <textarea id="shiftNoteContent" rows="3"
-                        class="w-full bg-slate-50 dark:bg-slate-800 p-4 rounded-xl border-none focus:ring-2 focus:ring-sky-500 mb-4 resize-none"
-                        placeholder="Leave a note, warning, or handover instruction..." aria-label="Shift Note Content"></textarea>
-                    <div class="flex justify-between items-center">
-                        <select id="shiftNotePriority" aria-label="Shift Note Priority"
-                            class="bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500 font-medium">
-                            <option value="Normal">Normal Priority</option>
-                            <option value="Urgent">🚨 Urgent Issue</option>
-                        </select>
-                        <button onclick="submitShiftNote()" class="btn btn-primary px-8 py-3">Post Note</button>
-                    </div>
-                </div>
-
-                <div class="flex justify-between items-center mb-6">
-                    <h2 class="text-2xl font-black">Active Notes</h2>
-                    <button onclick="fetchShiftNotes()"
-                        class="text-sm font-bold text-sky-500 hover:text-sky-600 flex items-center gap-2">
-                        <i data-lucide="refresh-cw" class="w-4 h-4"></i> Refresh
-                    </button>
-                </div>
-                <div id="shiftNotesContainer" class="space-y-6">
-                    <!-- Notes populated via JS -->
-                </div>
-            </div>
-        </div>
-
-        <div id="view-maintenance" class="view-section px-6 py-12 hidden">
-            <div class="max-w-4xl mx-auto">
-                <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-                    <h1 class="text-4xl font-black">Maintenance Tracker</h1>
-                    <button onclick="document.getElementById('reportMaintenanceModal').classList.toggle('hidden')"
-                        class="btn btn-primary flex items-center gap-2 px-6">
-                        <i data-lucide="plus-circle" class="w-5 h-5"></i> Report Issue
-                    </button>
-                </div>
-
-                <div id="reportMaintenanceModal"
-                    class="hidden bg-white dark:bg-slate-900 rounded-3xl p-6 md:p-8 shadow-sm border border-slate-100 dark:border-slate-800 mb-12">
-                    <h2 class="text-xl font-bold mb-4">Report New Issue</h2>
-                    <div class="space-y-4">
-                        <input type="text" id="maintenanceTitle" placeholder="Equipment or Issue Name" aria-label="Maintenance Title"
-                            class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
-                        <textarea id="maintenanceDesc" placeholder="Describe the problem..." aria-label="Maintenance Description" rows="3"
-                            class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500 resize-none"></textarea>
-
-                        <div class="flex flex-col md:flex-row gap-4">
-                            <select id="maintenancePriority" aria-label="Maintenance Priority"
-                                class="flex-1 bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
-                                <option value="Low">Low Priority</option>
-                                <option value="Medium">Medium Priority</option>
-                                <option value="High">High Priority</option>
-                                <option value="Critical">Critical Issue</option>
-                            </select>
-                        </div>
-
-                        <div class="flex justify-end gap-3 pt-2">
-                            <button onclick="document.getElementById('reportMaintenanceModal').classList.add('hidden')"
-                                class="btn btn-outline px-6 py-2">Cancel</button>
-                            <button onclick="submitMaintenanceTicket()" class="btn btn-accent px-6 py-2">Submit
-                                Ticket</button>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="flex justify-between items-center mb-6">
-                    <h2 class="text-2xl font-black">Active Tickets</h2>
-                    <button onclick="fetchMaintenanceTickets()"
-                        class="text-sm font-bold text-sky-500 hover:text-sky-600 flex items-center gap-2">
-                        <i data-lucide="refresh-cw" class="w-4 h-4"></i> Refresh
-                    </button>
-                </div>
-
-                <div id="maintenanceContainer" class="space-y-4">
-                    <!-- Tickets populated via JS -->
-                </div>
-            </div>
-        </div>
-
-        <div id="view-presets" class="view-section px-6 py-12">
-            <div class="max-w-4xl mx-auto">
-                <h1 class="text-4xl font-black mb-12">Templates & Presets</h1>
-
-                <div class="grid md:grid-cols-2 gap-12">
-                    <div class="space-y-8">
-                        <div class="card">
-                            <h3 class="text-xl font-black mb-2">System Layouts</h3>
-                            <p class="text-xs text-sky-500 font-bold uppercase tracking-widest mb-6"
-                                id="aiSuggestionText">AI: Loading suggestions...</p>
-                            <select id="presetSelector" aria-label="Preset Selector" class="mb-4">
-                                <option value="arbys">Arby's / Roast Beef</option>
-                                <option value="mcdonalds">McDonald's</option>
-                                <option value="tacobell">Taco Bell</option>
-                                <option value="chickfila">Chick-fil-A</option>
-                                <option value="pizza">Standard Pizza Shop</option>
-                            </select>
-                            <button onclick="loadPresetList()" class="btn btn-accent w-full">Apply System
-                                Template</button>
-                        </div>
-                    </div>
-
-                    <div class="space-y-8">
-                        <div class="card">
-                            <h3 class="text-xl font-black mb-6">Custom Presets</h3>
-                            <p class="text-sm text-slate-500 mb-4">Saves your exact current inventory layout,
-                                checklists, and register setups so you can recall them instantly.</p>
-                            <div class="flex gap-2 mb-8">
-                                <input type="text" id="customPresetName" placeholder="e.g. Closing Shift Layout"
-                                    class="flex-1" aria-label="Custom Preset Name">
-                                <button onclick="saveCustomPreset()" class="btn btn-outline whitespace-nowrap">Save
-                                    Current</button>
-                            </div>
-                            <div id="customPresetsContainer" class="space-y-3"></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div id="view-performance" class="view-section px-6 py-12">
-            <div class="max-w-4xl mx-auto">
-                <div class="flex justify-between items-center mb-12">
-                    <h1 class="text-4xl font-black">Manager Performance</h1>
-                    <button class="btn btn-outline btn-sm" onclick="exportPerformanceCSV()">Export CSV</button>
-                </div>
-
-                <div class="grid md:grid-cols-4 gap-6 mb-12">
-                    <div class="card text-center">
-                        <div class="text-4xl font-black text-sky-500 mb-2" id="statShifts">0</div>
-                        <div class="text-[10px] font-black uppercase tracking-widest text-slate-400">Shifts Logged</div>
-                    </div>
-                    <div class="card text-center">
-                        <div class="text-4xl font-black text-amber-500 mb-2" id="statAvgTime">0m</div>
-                        <div class="text-[10px] font-black uppercase tracking-widest text-slate-400">Avg Log Time</div>
-                    </div>
-                    <div class="card text-center">
-                        <div class="text-4xl font-black text-emerald-500 mb-2" id="statRoutines">0%</div>
-                        <div class="text-[10px] font-black uppercase tracking-widest text-slate-400">Routine Score</div>
-                    </div>
-                    <div class="card text-center">
-                        <div class="text-4xl font-black text-indigo-500 mb-2" id="statTotalTime">0m</div>
-                        <div class="text-[10px] font-black uppercase tracking-widest text-slate-400">Total Duration</div>
-                    </div>
-                </div>
-
-                <div class="card bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 mb-12">
-                    <canvas id="performanceChart" height="100"></canvas>
-                </div>
-
-                <div class="card bg-slate-50 dark:bg-slate-900 border-none">
-                    <h3 class="text-xl font-black mb-4 flex items-center gap-2"><i data-lucide="sparkles"
-                            class="text-amber-500"></i> Improvement Tips</h3>
-                    <div id="performanceTips" class="text-slate-600 dark:text-slate-400 leading-relaxed font-medium">
-                        Start logging shifts to see personalized insights!
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div id="view-profile" class="view-section px-6 py-12">
-            <div class="max-w-4xl mx-auto">
-                <div class="card text-center mb-12 py-16">
-                    <div id="profileAvatar"
-                        class="w-24 h-24 bg-sky-500 text-white rounded-full flex items-center justify-center text-4xl font-black mx-auto mb-6 shadow-xl shadow-sky-200 dark:shadow-none">
-                        ?</div>
-                    <h2 class="text-3xl font-black mb-2" id="profNameDisplay">User Name</h2>
-                    <span
-                        class="inline-flex items-center px-4 py-1.5 text-[10px] font-black tracking-[0.2em] text-sky-700 uppercase bg-sky-50 rounded-full"
-                        id="profSubStatus">Free Plan</span>
-                </div>
-
-                <div class="grid md:grid-cols-2 gap-8">
-                    <div class="card">
-                        <h3 class="text-xl font-black mb-6">Personal Details</h3>
-                        <div class="space-y-4 text-left">
-                            <div class="space-y-2">
-                                <label for="profName" class="text-xs font-black uppercase tracking-widest text-slate-400">Name</label>
-                                <input type="text" id="profName" placeholder="Name">
-                            </div>
-                            <div class="space-y-2">
-                                <label for="profRole" class="text-xs font-black uppercase tracking-widest text-slate-400">Role</label>
-                                <input type="text" id="profRole" placeholder="Role">
-                            </div>
-                            <div class="space-y-2">
-                                <label for="profEmail" class="text-xs font-black uppercase tracking-widest text-slate-400">Email Address</label>
-                                <input type="email" id="profEmail" readonly
-                                    class="bg-slate-50 opacity-60 dark:bg-slate-800">
-                            </div>
-                            <div class="space-y-2">
-                                <label for="profPhone" class="text-xs font-black uppercase tracking-widest text-slate-400">Phone</label>
-                                <input type="text" id="profPhone" placeholder="Phone">
-                            </div>
-                            <button onclick="saveProfileToFirebase()" class="btn btn-accent w-full mt-4">Save
-                                Changes</button>
-                        </div>
-                    </div>
-                    <div class="card">
-                        <h3 class="text-xl font-black mb-6">Data & Cloud Controls</h3>
-                        <p class="text-slate-500 mb-6 text-sm">Manage where your data is stored securely.</p>
-
-                        <div
-                            class="p-4 border border-slate-200 dark:border-slate-800 rounded-xl mb-4 bg-slate-50 dark:bg-slate-900">
-                            <label class="flex items-center gap-3 cursor-pointer">
-                                <input type="checkbox" id="profileCloudSyncToggle" onchange="triggerCloudOptIn(this)"
-                                    class="w-5 h-5 accent-sky-500">
-                                <span class="font-bold text-sm">Enable Enterprise Cloud Sync</span>
-                            </label>
-                            <p class="text-xs text-slate-400 mt-2">Requires Business Pro plan. Binds you to Data
-                                Controller ToS.</p>
-                        </div>
-
-                        <div
-                            class="p-4 border border-slate-200 dark:border-slate-800 rounded-xl mb-4 bg-slate-50 dark:bg-slate-900">
-                            <label class="flex items-center gap-3 cursor-pointer">
-                                <input type="checkbox" id="profileAIToggle" checked class="w-5 h-5 accent-sky-500">
-                                <span class="font-bold text-sm">Allow AI Training</span>
-                            </label>
-                            <p class="text-xs text-slate-400 mt-2">Allows the local neural network to train on your
-                                cloud history. Requires Cloud Sync.</p>
-                        </div>
-
-                        <button onclick="exportDataJSON()" class="btn btn-outline w-full mb-4">Export All Data to JSON
-                            File</button>
-                    </div>
-                </div>
-
-                <div class="card mt-8">
-                    <h3 class="text-xl font-black mb-6 border-b border-slate-200 dark:border-slate-800 pb-4">Account
-                        Management</h3>
-                    <div class="space-y-6">
-                        <div class="flex flex-col sm:flex-row gap-4">
-                            <button onclick="changePassword()" class="btn btn-outline flex-1 text-sm"><i
-                                    data-lucide="key" class="w-4 h-4"></i> Change Password</button>
-                            <button onclick="cancelSubscription()"
-                                class="btn btn-outline flex-1 text-sm text-amber-500 border-amber-200 hover:bg-amber-50 dark:border-amber-900/50 dark:hover:bg-amber-900/20"><i
-                                    data-lucide="x-circle" class="w-4 h-4"></i> Cancel Sub</button>
-                            <button onclick="deleteAccount()"
-                                class="btn btn-outline flex-1 text-sm text-red-500 border-red-200 hover:bg-red-50 dark:border-red-900/50 dark:hover:bg-red-900/20"><i
-                                    data-lucide="trash-2" class="w-4 h-4"></i> Delete Account</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div id="view-pricing"
-            class="view-section px-6 py-20 bg-white dark:bg-[#050505] transition-colors duration-300">
-            <div class="max-w-5xl mx-auto text-center">
-                <h2 class="text-4xl md:text-6xl font-black text-slate-900 dark:text-white mb-6 tracking-tight">
-                    Transparent Scaling</h2>
-                <div
-                    class="inline-flex items-center px-4 py-1.5 mb-8 text-[10px] font-black tracking-[0.2em] text-red-600 uppercase bg-red-50 rounded-full">
-                    🔥 Limited Time Sale 🔥
-                </div>
-                <p class="text-slate-500 dark:text-slate-400 text-xl mb-16 font-medium">Simple plans for serious growth.
-                </p>
-
-                <div class="grid md:grid-cols-2 gap-8 text-left max-w-4xl mx-auto">
-                    <div
-                        class="card bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800 p-12 relative overflow-hidden">
-                        <div
-                            class="absolute top-4 left-[-35px] bg-red-500 text-white text-[8px] font-black px-10 py-1 rotate-[-45deg] uppercase tracking-widest">
-                            Sale</div>
-                        <h3 class="text-xs font-black text-sky-500 uppercase tracking-[0.3em] mb-4">Individual Pro</h3>
-                        <div class="flex items-baseline mb-8">
-                            <span class="text-7xl font-black tracking-tighter text-slate-900 dark:text-white">$61</span>
-                            <span class="text-slate-400 text-lg line-through ml-2">$73</span>
-                            <span class="text-slate-500 text-xl font-bold ml-2">/year</span>
-                        </div>
-                        <ul class="space-y-4 mb-10 text-slate-700 dark:text-slate-300 font-medium">
-                            <li class="flex gap-3"><i data-lucide="check" class="text-sky-500"></i> Local File Save
-                                Focus</li>
-                            <li class="flex gap-3"><i data-lucide="check" class="text-sky-500"></i> 10 Custom Presets
-                            </li>
-                            <li class="flex gap-3"><i data-lucide="check" class="text-sky-500"></i> Performance History
-                            </li>
-                        </ul>
-                        <button onclick="processCheckout('Individual Pro')"
-                            class="btn btn-outline w-full border-slate-300 dark:border-slate-700 hover:bg-sky-500 hover:border-sky-500 hover:text-white transition-colors">Choose
-                            Pro</button>
-                    </div>
-                    <div
-                        class="card bg-white dark:bg-slate-800 p-12 relative overflow-hidden border-slate-200 dark:border-slate-700 shadow-xl">
-                        <div
-                            class="absolute top-4 left-[-35px] bg-red-500 text-white text-[8px] font-black px-10 py-1 rotate-[-45deg] uppercase tracking-widest">
-                            Sale</div>
-                        <div
-                            class="absolute top-0 right-0 bg-sky-500 text-white text-[10px] font-black px-6 py-2 rounded-bl-3xl uppercase tracking-widest">
-                            Most Selected</div>
-                        <h3 class="text-xs font-black text-sky-600 uppercase tracking-[0.3em] mb-4">Business Pro</h3>
-                        <div class="flex items-baseline mb-8">
-                            <span
-                                class="text-7xl font-black tracking-tighter text-slate-900 dark:text-white">$207</span>
-                            <span class="text-slate-400 text-lg line-through ml-2">$248</span>
-                            <span class="text-slate-500 dark:text-slate-400 text-xl font-bold ml-2">/year</span>
-                        </div>
-                        <ul class="space-y-4 mb-10 text-slate-700 dark:text-slate-300 font-medium">
-                            <li class="flex gap-3"><i data-lucide="check" class="text-sky-600"></i> Enterprise Cloud
-                                Sync Opt-In</li>
-                            <li class="flex gap-3"><i data-lucide="check" class="text-sky-600"></i> AI Workflow Pattern
-                                Suggestions</li>
-                            <li class="flex gap-3"><i data-lucide="check" class="text-sky-600"></i> Priority Feature
-                                Request</li>
-                        </ul>
-                        <button onclick="processCheckout('Business Pro')"
-                            class="btn btn-accent w-full shadow-2xl shadow-sky-200 dark:shadow-none">Choose
-                            Business</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div id="view-employees" class="view-section px-6 py-12">
-            <div class="max-w-4xl mx-auto">
-                <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-                    <h1 class="text-4xl font-black">Team Roster</h1>
-                    <button onclick="document.getElementById('addEmployeeModal').classList.toggle('hidden')"
-                        class="btn btn-primary flex items-center gap-2 px-6">
-                        <i data-lucide="plus-circle" class="w-5 h-5"></i> Add Employee
-                    </button>
-                </div>
-
-                <div id="addEmployeeModal"
-                    class="hidden bg-white dark:bg-slate-900 rounded-3xl p-6 md:p-8 shadow-sm border border-slate-100 dark:border-slate-800 mb-12">
-                    <h2 class="text-xl font-bold mb-4">Add New Employee</h2>
-                    <div class="space-y-4">
-                        <input type="text" id="empName" placeholder="Full Name" aria-label="Employee Full Name"
-                            class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
-                        <input type="text" id="empRole" placeholder="Role (e.g. Cashier, Cook)" aria-label="Employee Role"
-                            class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
-
-                        <div class="grid md:grid-cols-2 gap-4">
-                            <input type="tel" id="empPhone" placeholder="Phone Number" aria-label="Employee Phone Number"
-                                class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
-                            <input type="email" id="empEmail" placeholder="Email Address" aria-label="Employee Email Address"
-                                class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
-                        </div>
-
-                        <select id="empStatus" aria-label="Employee Status" class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
-                            <option value="Active">Active</option>
-                            <option value="Inactive">Inactive</option>
-                        </select>
-
-                        <div class="flex justify-end gap-3 pt-2">
-                            <button onclick="document.getElementById('addEmployeeModal').classList.add('hidden')"
-                                class="btn btn-outline px-6 py-2">Cancel</button>
-                            <button onclick="addEmployee()" class="btn btn-accent px-6 py-2">Save Employee</button>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="flex justify-between items-center mb-6">
-                    <h2 class="text-2xl font-black">Active Staff</h2>
-                    <button onclick="fetchEmployees()"
-                        class="text-sm font-bold text-sky-500 hover:text-sky-600 flex items-center gap-2">
-                        <i data-lucide="refresh-cw" class="w-4 h-4"></i> Refresh
-                    </button>
-                </div>
-
-                <div id="employeesListContainer" class="space-y-4">
-                    <!-- Employees populated via JS -->
-                </div>
-            </div>
-        </div>
-
-        <div id="view-request" class="view-section px-6 py-12">
-            <div class="max-w-4xl mx-auto">
-                <div class="card shadow-2xl mb-12">
-                    <h1 class="text-3xl font-black mb-4">Submit Request</h1>
-                    <p class="text-slate-500 mb-8">Direct line to the engineering team. Pro users receive priority.</p>
-                    <textarea id="featureReqText" class="h-32 mb-6"
-                        placeholder="I would love it if ezManage could..." aria-label="Feature Request Description"></textarea>
-                    <button onclick="submitFeatureRequest()" class="btn btn-accent w-full py-4">Send Directly to
-                        Admin</button>
-                </div>
-                <h3 class="text-xl font-black mb-6 border-b border-slate-200 dark:border-slate-800 pb-2">My Requests
-                </h3>
-                <div id="myFeatureRequests" class="space-y-4"></div>
-            </div>
-        </div>
-
-        <div id="view-tasks" class="view-section px-6 py-12 hidden">
-            <div class="max-w-4xl mx-auto">
-                <div class="card shadow-2xl mb-12" id="managerTaskCreation" style="display: none;">
-                    <h1 class="text-3xl font-black mb-4">Assign Tasks</h1>
-                    <p class="text-slate-500 mb-8">Create specific checklists and tasks for your team to complete during their shifts.</p>
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                        <div>
-                            <label class="block text-sm font-bold mb-2">Task Title</label>
-                            <input type="text" id="taskTitle" class="w-full" placeholder="e.g. Close Registers">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-bold mb-2">Assign To</label>
-                            <select id="taskAssignee" class="w-full">
-                                <option value="">Select Employee</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <label class="block text-sm font-bold mb-2">Description (Optional)</label>
-                    <textarea id="taskDescription" class="h-24 mb-6" placeholder="Provide extra details..."></textarea>
-
-                    <button id="btnSubmitTask" onclick="submitTask()" class="btn btn-accent w-full py-4">Assign Task</button>
-                </div>
-
-                <div class="mb-12">
-                    <h3 class="text-xl font-black mb-6 border-b border-slate-200 dark:border-slate-800 pb-2">My Assigned Tasks</h3>
-                    <div id="myTasksContainer" class="space-y-4"></div>
-                </div>
-
-                <div id="managerTasksSection" style="display: none;">
-                    <h3 class="text-xl font-black mb-6 border-b border-slate-200 dark:border-slate-800 pb-2 text-purple-600"><i data-lucide="shield" class="inline w-5 h-5 mr-2"></i>Organization Tasks</h3>
-                    <div id="orgTasksContainer" class="space-y-4"></div>
-                </div>
-            </div>
-        </div>
-
-        <div id="view-timeoff" class="view-section px-6 py-12 hidden">
-            <div class="max-w-4xl mx-auto">
-                <div class="card shadow-2xl mb-12">
-                    <h1 class="text-3xl font-black mb-4">Request Time Off</h1>
-                    <p class="text-slate-500 mb-8">Submit your availability requests for manager approval.</p>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                        <div>
-                            <label for="timeoffStartDate" class="block text-sm font-bold mb-2">Start Date</label>
-                            <input type="date" id="timeoffStartDate" class="w-full">
-                        </div>
-                        <div>
-                            <label for="timeoffEndDate" class="block text-sm font-bold mb-2">End Date</label>
-                            <input type="date" id="timeoffEndDate" class="w-full">
-                        </div>
-                    </div>
-                    <label for="timeoffReason" class="block text-sm font-bold mb-2">Reason</label>
-                    <textarea id="timeoffReason" class="h-24 mb-6" placeholder="e.g. Vacation, Medical appointment..."></textarea>
-                    <button id="btnSubmitTimeOff" onclick="submitTimeOffRequest()" class="btn btn-accent w-full py-4">Submit Request</button>
-                </div>
-
-                <div class="mb-12">
-                    <h3 class="text-xl font-black mb-6 border-b border-slate-200 dark:border-slate-800 pb-2">My Requests</h3>
-                    <div id="myTimeOffRequests" class="space-y-4"></div>
-                </div>
-
-                <div id="managerTimeOffSection" style="display: none;">
-                    <h3 class="text-xl font-black mb-6 border-b border-slate-200 dark:border-slate-800 pb-2 text-purple-600"><i data-lucide="shield" class="inline w-5 h-5 mr-2"></i>Manager Review</h3>
-                    <div id="managerTimeOffRequests" class="space-y-4"></div>
-                </div>
-            </div>
-        </div>
-
-
-    </main>
-
-    <div id="print-wrapper" class="hidden print:block absolute top-0 left-0 w-full bg-white z-50 p-8 text-black">
-        <h1 class="text-3xl font-black border-b-4 border-black pb-4 mb-6 uppercase tracking-wider" id="printHeader">
-            Store Shift Logbook</h1>
-
-        <div class="print-header-info font-bold text-sm">
-            <div>Manager: <span id="printMgr" class="font-normal"></span></div>
-            <div>Date: <span id="printDt" class="font-normal"></span></div>
-            <div>Time Saved: <span id="printTm" class="font-normal"></span></div>
-            <div>Log Duration: <span id="printDur" class="font-normal"></span> min</div>
-        </div>
-
-        <h2 class="font-bold uppercase text-lg border-b-2 border-black mb-4 mt-8 bg-gray-100 p-2">1. Health, Safety &
-            Routines</h2>
-        <table class="print-table">
-            <thead>
-                <tr>
-                    <th style="width:10%">Status</th>
-                    <th>Task/Routine Description</th>
-                </tr>
-            </thead>
-            <tbody id="printRoutines"></tbody>
-        </table>
-
-        <h2 class="font-bold uppercase text-lg border-b-2 border-black mb-4 mt-8 bg-gray-100 p-2">2. Cash & Drawers</h2>
-        <table class="print-table">
-            <thead>
-                <tr>
-                    <th>Drawer Label</th>
-                    <th>Expected</th>
-                    <th>Actual/Variance</th>
-                </tr>
-            </thead>
-            <tbody id="printDrawers"></tbody>
-        </table>
-        <div class="font-bold mt-2">End of Shift Safe Count: <span id="printSafe" class="font-normal"></span></div>
-        <div class="font-bold mt-2">Change Needed: <span id="printChange" class="font-normal"></span></div>
-
-        <h2 class="font-bold uppercase text-lg border-b-2 border-black mb-4 mt-8 bg-gray-100 p-2">3. Master Inventory
-            Verification</h2>
-        <table class="print-table">
-            <thead>
-                <tr>
-                    <th>Item Name</th>
-                    <th>Front/Backline</th>
-                    <th>Cooler Count</th>
-                    <th>Freezer Count</th>
-                </tr>
-            </thead>
-            <tbody id="printInventoryList"></tbody>
-        </table>
-
-        <h2 class="font-bold uppercase text-lg border-b-2 border-black mb-4 mt-8 bg-gray-100 p-2">4. Labor & Prep Notes
-        </h2>
-        <div class="border border-black p-4 min-h-[100px] mb-4" id="printNotesBlock"></div>
-        <div class="text-xs italic text-center mt-12 pt-4 border-t border-gray-300">
-            System generated by ezManage. This document is a local export and complies with Data Controller offline
-            storage protocols.
-        </div>
-    </div>
-
-    <script>
 
         const firebaseConfig = {
             apiKey: "AIzaSyBgrI9HwJPSc5b4pu2Egsv4DE7shNwptSw",
-            authDomain: "ezmanage.realunstoppable.store",
+            authDomain: "dts-hub-website.firebaseapp.com",
             projectId: "dts-hub-website",
             storageBucket: "dts-hub-website.firebasestorage.app",
             messagingSenderId: "48345990988",
@@ -1686,12 +12,11 @@
 
         if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
         const auth = firebase.auth();
-
         firebase.firestore().settings({
             experimentalForceLongPolling: true
         });
         const db = firebase.firestore();
-
+        db.settings({ experimentalForceLongPolling: true });
         const cloudFunctions = firebase.functions();
 
         db.enablePersistence().catch(err => console.error("Offline sync error:", err));
@@ -1779,8 +104,7 @@
                         // Concurrent non-blocking fetches
                         Promise.allSettled([
                             loadCustomPresets(),
-                            fetchFeatureRequests(),
-                            fetchTasks()
+                            fetchFeatureRequests()
                         ]);
 
                         // Populate shift notes if that view is already active or we just logged in
@@ -1809,13 +133,13 @@
                             localStorage.removeItem('navTo');
                             navTo(pendingNavTo);
                         } else {
-                            let activeView = document.querySelector('.view-section.active');
+                            const activeView = document.querySelector('.view-section.active');
                             if (activeView && activeView.id === 'view-auth') navTo('tracker');
                         }
                         runAIPatternLogic();
                     } else {
                         if (!doc.exists) {
-                            activeView = document.querySelector('.view-section.active');
+                            const activeView = document.querySelector('.view-section.active');
                             if (activeView && activeView.id !== 'view-setup') {
                                 try {
                                     const emailDoc = await db.collection("users").doc(user.email).get();
@@ -1836,7 +160,6 @@
                             navTo('tracker');
                         }
 
-                        activeView = document.querySelector('.view-section.active');
                         const activeView2 = document.querySelector('.view-section.active');
                         if (!navigator.onLine) {
                             if (activeView2 && activeView2.id !== 'view-tracker') navTo('tracker');
@@ -1856,7 +179,7 @@
                     localStorage.removeItem('navTo');
                     navTo(pendingNavTo);
                 } else {
-                    activeView = document.querySelector('.view-section.active');
+                    const activeView = document.querySelector('.view-section.active');
                     if (activeView && activeView.id !== 'view-auth' && activeView.id !== 'view-tracker') navTo('auth');
                 }
                 isInitializingAuth = false;
@@ -2061,17 +384,13 @@
             });
         }
 
-        function toggleSidebar() { 
-            document.getElementById('sidebar').classList.toggle('open'); 
-            document.body.classList.toggle('overflow-hidden');
-        }
+        function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); }
 
         function navTo(viewId) {
             if (isInitializingAuth) {
                 localStorage.setItem('navTo', viewId);
                 return;
             }
-            if (!currentUser && (['history', 'presets', 'performance', 'request', 'profile', 'shiftNotes', 'employees', 'timeoff', 'team'].includes(viewId))) {
             if (!currentUser && (['history', 'presets', 'performance', 'request', 'profile', 'shiftNotes', 'team', 'employees', 'timeoff'].includes(viewId))) {
                 viewId = 'auth';
             }
@@ -2084,7 +403,6 @@
             document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
             document.getElementById('view-' + viewId).classList.add('active');
             document.getElementById('sidebar').classList.remove('open');
-            document.body.classList.remove('overflow-hidden');
             window.scrollTo({ top: 0, behavior: 'smooth' });
             lucide.createIcons();
 
@@ -2170,10 +488,14 @@
             const div = document.createElement('div');
             div.className = "flex gap-4 items-center bg-slate-50 dark:bg-slate-800 p-3 rounded-xl animate-fadeIn";
             div.innerHTML = `
+                <input type="text" placeholder="Amount" class="dep-val" style="flex:1;" aria-label="Deposit Amount">
+                <label class="flex items-center gap-1 text-[10px] font-bold"><input type="checkbox" class="dep-ver accent-sky-500 w-4 h-4"> VER</label>
+                <label class="flex items-center gap-1 text-[10px] font-bold"><input type="checkbox" class="dep-val-chk accent-sky-500 w-4 h-4"> VAL</label>
+                <button type="button" class="text-red-400 delete-deposit-btn" aria-label="Remove deposit"><i data-lucide="x" class="w-4"></i></button>
                 <input type="text" placeholder="Amount" class="dep-val" style="flex:1;" aria-label="Deposit Amount" oninput="triggerDraftSync()">
                 <label class="flex items-center gap-1 text-[10px] font-bold"><input type="checkbox" class="dep-ver accent-sky-500 w-4 h-4" onchange="triggerDraftSync()" aria-label="Verify Deposit"> VER</label>
                 <label class="flex items-center gap-1 text-[10px] font-bold"><input type="checkbox" class="dep-val-chk accent-sky-500 w-4 h-4" onchange="triggerDraftSync()" aria-label="Validate Deposit"> VAL</label>
-                <button type="button" class="text-red-400 delete-deposit-btn" aria-label="Remove deposit"><i data-lucide="x" class="w-4"></i></button>
+                <button type="button" onclick="if(confirm('Are you sure you want to delete this deposit? This action cannot be undone.')) { this.parentElement.remove(); triggerDraftSync(); }" class="text-red-400" aria-label="Remove deposit"><i data-lucide="x" class="w-4"></i></button>
             `;
 
             div.querySelector('.dep-val').oninput = triggerDraftSync;
@@ -2226,11 +548,9 @@
             if (initialDraftLoaded) triggerDraftSync();
         }
 
-        let _invLoadTime = Date.now();
-        function addInventoryItem(name = "", bl = "", cl = "", fr = "", prepend = false, timestamp = null) {
+        function addInventoryItem(name = "", bl = "", cl = "", fr = "") {
             const div = document.createElement('div');
             div.className = 'inventory-item animate-fadeIn border-slate-200 dark:border-slate-800';
-            div.dataset.timestamp = timestamp || (prepend ? Date.now() : _invLoadTime--);
             div.innerHTML = `
                 <input type="text" placeholder="Item Name" class="inv-name" aria-label="Item Name">
                 <input type="text" placeholder="Backline" class="inv-backline" aria-label="Backline Count">
@@ -2254,31 +574,9 @@
             div.querySelector('.inv-cooler').value = cl;
             div.querySelector('.inv-freezer').value = fr;
             const container = document.getElementById('inventoryContainer');
-            if (prepend && container.firstChild) {
-                container.insertBefore(div, container.firstChild);
-            } else {
-                container.appendChild(div);
-            }
+            container.appendChild(div);
             lucide.createIcons();
             if (initialDraftLoaded) triggerDraftSync();
-        }
-
-        function sortInventory(type) {
-            const container = document.getElementById('inventoryContainer');
-            const items = Array.from(container.children);
-            
-            if (type === 'alpha') {
-                items.sort((a, b) => {
-                    const nameA = a.querySelector('.inv-name').value.toLowerCase() || 'zzzz';
-                    const nameB = b.querySelector('.inv-name').value.toLowerCase() || 'zzzz';
-                    return nameA.localeCompare(nameB);
-                });
-            } else if (type === 'recent') {
-                items.sort((a, b) => Number(b.dataset.timestamp) - Number(a.dataset.timestamp));
-            }
-            
-            items.forEach(item => container.appendChild(item));
-            triggerDraftSync();
         }
 
         function getTrackerState() {
@@ -2307,7 +605,7 @@
                 state.deposits.push({ val: el.querySelector('.dep-val').value, ver: el.querySelector('.dep-ver').checked, valCheck: el.querySelector('.dep-val-chk').checked });
             });
             document.querySelectorAll('.inventory-item').forEach(el => {
-                state.inventory.push({ name: el.querySelector('.inv-name').value, bl: el.querySelector('.inv-backline').value, cl: el.querySelector('.inv-cooler').value, fr: el.querySelector('.inv-freezer').value, timestamp: el.dataset.timestamp });
+                state.inventory.push({ name: el.querySelector('.inv-name').value, bl: el.querySelector('.inv-backline').value, cl: el.querySelector('.inv-cooler').value, fr: el.querySelector('.inv-freezer').value });
             });
             return state;
         }
@@ -2345,7 +643,7 @@
             if (draft.routines) draft.routines.forEach(r => addRoutineTask(r.name, r.checked));
 
             document.getElementById('inventoryContainer').innerHTML = '';
-            if (draft.inventory) draft.inventory.forEach(i => addInventoryItem(i.name, i.bl, i.cl, i.fr, false, i.timestamp));
+            if (draft.inventory) draft.inventory.forEach(i => addInventoryItem(i.name, i.bl, i.cl, i.fr));
 
             document.getElementById('drawersContainer').innerHTML = '';
             if (draft.drawers) draft.drawers.forEach(d => addDrawerItem(d.val, d.name));
@@ -2777,7 +1075,7 @@
                     document.getElementById('inventoryContainer').innerHTML = '';
                     preset.items.forEach(i => {
                         if (typeof i === 'string') addInventoryItem(i);
-                        else addInventoryItem(i.name, i.bl, i.cl, i.fr, false, i.timestamp);
+                        else addInventoryItem(i.name, i.bl, i.cl, i.fr);
                     });
                 } else {
                     populateTrackerFromState(preset);
@@ -3098,7 +1396,7 @@
                     <div class="text-center py-16 bg-slate-50 dark:bg-slate-900 rounded-3xl border-2 border-dashed border-slate-200 dark:border-slate-800">
                         <i data-lucide="users" class="w-12 h-12 text-slate-400 mx-auto mb-4"></i>
                         <h3 class="text-xl font-bold mb-2">Join or Create a Group</h3>
-                        <p class="text-slate-500 mb-4">You must be in a Management Group to view and report maintenance issues.</p><button onclick="document.getElementById('orgTutorialModal').classList.remove('hidden')" class="btn btn-sm btn-outline text-sky-500 border-sky-200">How do I connect?</button>
+                        <p class="text-slate-500">You must be in a Management Group to view and report maintenance issues.</p>
                     </div>
                 `;
                 lucide.createIcons();
@@ -3178,7 +1476,7 @@
                     }).join('');
                 }, err => {
                     console.error("Error fetching tickets:", err);
-                    container.innerHTML = `<div class="text-red-500 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl text-center">Failed to load tickets: ${escapeHTML(err.message)}</div>`;
+                    container.innerHTML = `<div class="text-red-500 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl text-center">Failed to load tickets: ${err.message}</div>`;
                 });
         }
 
@@ -3266,7 +1564,6 @@
 
         let unsubscribeEmployees = null;
         let unsubscribeTimeOff = null;
-        let unsubscribeTasks = null;
 
 
 
@@ -3315,155 +1612,6 @@
                 btn.innerText = originalText;
                 btn.disabled = false;
             }
-        }
-
-        async function submitTask() {
-            if (!currentUser || !currentUserData) return;
-
-            const title = document.getElementById('taskTitle').value.trim();
-            const assigneeId = document.getElementById('taskAssignee').value;
-            const description = document.getElementById('taskDescription').value.trim();
-
-            if (!title || !assigneeId) {
-                alert("Task Title and Assignee are required.");
-                return;
-            }
-
-            const assigneeSelect = document.getElementById('taskAssignee');
-            const assigneeName = assigneeSelect.options[assigneeSelect.selectedIndex].text;
-
-            const btn = document.getElementById('btnSubmitTask');
-            const originalText = btn.innerText;
-            btn.innerText = 'Assigning...';
-            btn.disabled = true;
-
-            try {
-                const manageTasks = firebase.functions().httpsCallable('manageTasks');
-                const result = await manageTasks({
-                    action: "create",
-                    payload: {
-                        title,
-                        description,
-                        assigneeId,
-                        assigneeName
-                    }
-                });
-
-                if (result.data.success) {
-                    alert("Task assigned successfully.");
-                    document.getElementById('taskTitle').value = '';
-                    document.getElementById('taskAssignee').value = '';
-                    document.getElementById('taskDescription').value = '';
-                }
-            } catch (err) {
-                console.error("Manager Troubleshooting: Error creating task:", err);
-                alert("Failed to assign task: " + err.message);
-            } finally {
-                btn.innerText = originalText;
-                btn.disabled = false;
-            }
-        }
-
-        async function updateTaskStatus(taskId, status) {
-            try {
-                const manageTasks = firebase.functions().httpsCallable('manageTasks');
-                await manageTasks({
-                    action: "updateStatus",
-                    payload: { taskId, status }
-                });
-            } catch (err) {
-                console.error("Manager Troubleshooting: Error updating task status:", err);
-                alert("Failed to update task status: " + err.message);
-            }
-        }
-
-        async function deleteTask(taskId) {
-            if (!confirm("Are you sure you want to delete this task?")) return;
-            try {
-                const manageTasks = firebase.functions().httpsCallable('manageTasks');
-                await manageTasks({
-                    action: "delete",
-                    payload: { taskId }
-                });
-            } catch (err) {
-                console.error("Manager Troubleshooting: Error deleting task:", err);
-                alert("Failed to delete task: " + err.message);
-            }
-        }
-
-        function fetchTasks() {
-            if (!currentUser || !currentUserData) return;
-            if (unsubscribeTasks) unsubscribeTasks();
-
-            const isManager = currentUserData.orgId === currentUser.uid;
-            const actualOrgId = currentUserData.orgId || currentUser.uid;
-
-            // Only managers can create tasks
-            if (isManager) {
-                document.getElementById('managerTaskCreation').style.display = 'block';
-                document.getElementById('managerTasksSection').style.display = 'block';
-            } else {
-                document.getElementById('managerTaskCreation').style.display = 'none';
-                document.getElementById('managerTasksSection').style.display = 'none';
-            }
-
-            unsubscribeTasks = db.collection('tasks')
-                .where('orgId', '==', actualOrgId)
-                .onSnapshot(snap => {
-                    const myContainer = document.getElementById('myTasksContainer');
-                    const orgContainer = document.getElementById('orgTasksContainer');
-
-                    let myTasksHtml = '';
-                    let orgTasksHtml = '';
-
-                    let tasks = [];
-                    snap.forEach(doc => tasks.push({ id: doc.id, ...doc.data() }));
-
-                    tasks.sort((a, b) => {
-                        let aTime = a.createdAt ? a.createdAt.toMillis() : 0;
-                        let bTime = b.createdAt ? b.createdAt.toMillis() : 0;
-                        return bTime - aTime;
-                    });
-
-                    tasks.forEach(task => {
-                        let statusColor = task.status === 'Completed' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800';
-
-                        let taskCard = `
-                            <div class="card p-4 border border-slate-200 dark:border-slate-800 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                                <div>
-                                    <div class="font-bold text-lg">${escapeHTML(task.title)}</div>
-                                    <div class="text-sm text-slate-500 mb-1">Assigned to: ${escapeHTML(task.assigneeName)}</div>
-                                    ${task.description ? `<div class="text-sm italic text-slate-600 mb-2">"${escapeHTML(task.description)}"</div>` : ''}
-                                    <span class="px-2 py-1 rounded-full text-xs font-bold ${statusColor}">${escapeHTML(task.status)}</span>
-                                </div>
-                                <div class="flex items-center gap-2 mt-4 md:mt-0">
-                        `;
-
-                        // Employee specific view (Can mark their own as complete)
-                        if (task.assigneeId === currentUser.uid && task.status === 'Pending') {
-                            myTasksHtml += taskCard + `
-                                    <button onclick="updateTaskStatus('${task.id}', 'Completed')" class="btn btn-sm bg-green-500 text-white hover:bg-green-600"><i data-lucide="check" class="w-4 h-4 mr-1"></i>Complete</button>
-                                </div></div>
-                            `;
-                        } else if (task.assigneeId === currentUser.uid) {
-                             myTasksHtml += taskCard + `</div></div>`;
-                        }
-
-                        // Manager specific view
-                        if (isManager) {
-                            let deleteBtn = `<button onclick="deleteTask('${task.id}')" class="btn btn-sm btn-outline text-red-500 hover:bg-red-50" aria-label="Delete Task"><i data-lucide="trash-2" class="w-4 h-4"></i></button>`;
-                            let revertBtn = task.status === 'Completed' ? `<button onclick="updateTaskStatus('${task.id}', 'Pending')" class="btn btn-sm btn-outline text-yellow-600" aria-label="Mark Pending"><i data-lucide="rotate-ccw" class="w-4 h-4"></i></button>` : '';
-
-                            orgTasksHtml += taskCard + revertBtn + deleteBtn + `</div></div>`;
-                        }
-                    });
-
-                    if (myContainer) myContainer.innerHTML = myTasksHtml || '<p class="text-slate-500 text-center py-4">No tasks assigned to you right now. You\'re all caught up!</p>';
-                    if (orgContainer && isManager) orgContainer.innerHTML = orgTasksHtml || '<p class="text-slate-500 text-center py-4">No active tasks in the organization.</p>';
-                    lucide.createIcons();
-                }, err => {
-                    console.error("Manager Troubleshooting: Error fetching tasks:", err);
-                });
         }
 
         function fetchTimeOffRequests() {
@@ -3644,12 +1792,19 @@
             }
         }
 
-
+        async function deleteEmployee(id) {
+            if (!confirm("Are you sure you want to permanently delete this employee?")) return;
+            try {
+                await db.collection('employees').doc(id).delete();
+            } catch (err) {
+                console.error("Error deleting employee:", err);
+                alert("Failed to delete employee.");
+            }
+        }
 
         function populateScheduleDropdown() {
             const select = document.getElementById('shiftEmpName');
-            const taskSelect = document.getElementById('taskAssignee');
-            if (!currentUserData) return;
+            if (!select || !currentUserData) return;
 
             const queryOrgId = currentUserData.orgId || currentUser.uid;
 
@@ -3660,17 +1815,8 @@
                 .then(snap => {
                     select.innerHTML = '<option value="" disabled selected>Select Employee</option>';
                     let employees = [];
-                    snap.forEach(doc => {
-                        let data = doc.data();
-                        data.docId = doc.id;
-                        employees.push(data);
-                    });
+                    snap.forEach(doc => employees.push(doc.data()));
                     employees.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
-
-                    const taskSelect = document.getElementById('taskAssignee');
-                    if (taskSelect) {
-                        taskSelect.innerHTML = '<option value="">Select Employee...</option>';
-                    }
 
                     employees.forEach(emp => {
                         const opt = document.createElement('option');
@@ -3678,13 +1824,6 @@
                         opt.textContent = `${emp.name} (${emp.role})`;
                         opt.dataset.role = emp.role;
                         select.appendChild(opt);
-
-                        if (taskSelect) {
-                            const taskOpt = document.createElement('option');
-                            taskOpt.value = emp.docId; // Use docId for tasks reference
-                            taskOpt.textContent = emp.name;
-                            taskSelect.appendChild(taskOpt);
-                        }
                     });
                 })
                 .catch(err => console.error("Error populating dropdown:", err));
@@ -3883,6 +2022,9 @@
                 });
         }
 
+function checkAndRenderOrgControls() {
+
+
         function checkAndRenderOrgControls() {
             if (!currentUser) return false;
 
@@ -3940,7 +2082,7 @@
                     <div class="text-center py-16 bg-slate-50 dark:bg-slate-900 rounded-3xl border-2 border-dashed border-slate-200 dark:border-slate-800">
                         <i data-lucide="users" class="w-12 h-12 text-slate-400 mx-auto mb-4"></i>
                         <h3 class="text-xl font-bold mb-2">Join or Create a Group</h3>
-                        <p class="text-slate-500 mb-4">You must be in a Management Group to post and view shift notes.</p><button onclick="document.getElementById('orgTutorialModal').classList.remove('hidden')" class="btn btn-sm btn-outline text-sky-500 border-sky-200">How do I connect?</button>
+                        <p class="text-slate-500">You must be in a Management Group to post and view shift notes.</p>
                     </div>
                 `;
                 lucide.createIcons();
@@ -4089,19 +2231,12 @@
                     priority: priority,
                     status: 'Active',
                     orgId: currentUserData.orgId,
-                    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
                     timestamp: firebase.firestore.FieldValue.serverTimestamp()
                 });
 
                 document.getElementById('shiftNoteContent').value = "";
                 fetchShiftNotes();
             } catch (err) {
-                console.error(err);
-                if (err.code === 'unavailable' || err.code === 'auth/network-request-failed') {
-                    alert("Network error: Could not submit shift note. Please check your connection.");
-                } else {
-                    alert("Failed to submit shift note. " + err.message);
                 console.error("Error posting note", err);
                 if (err.code === 'unavailable' || err.code === 'auth/network-request-failed') {
                     alert("Network error: Could not connect to the server. Please check your connection.");
@@ -4372,177 +2507,13 @@
 
 
 
-
-        // ==========================
-        // TASKS MANAGEMENT SYSTEM
-        // ==========================
-
-        async function createTask() {
-            if (!currentUser || !currentUserData) return;
-
-            const title = document.getElementById('taskTitle').value;
-            const desc = document.getElementById('taskDesc').value;
-            const assigneeId = document.getElementById('taskAssignee').value;
-            const dueDate = document.getElementById('taskDueDate').value;
-
-            if (!title || !assigneeId || !dueDate) {
-                showToast("Please fill all required fields.");
-                return;
-            }
-
-            try {
-                const submitBtn = document.querySelector('#createTaskForm button[type="submit"]');
-                const originalText = submitBtn.textContent;
-                submitBtn.textContent = 'Assigning...';
-                submitBtn.disabled = true;
-
-                await db.collection('tasks').add({
-                    title: title,
-                    description: desc,
-                    assigneeId: assigneeId,
-                    assignerId: currentUser.uid,
-                    orgId: currentUserData.orgId || currentUser.uid,
-                    dueDate: dueDate,
-                    status: 'Pending',
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                });
-
-                document.getElementById('createTaskForm').reset();
-                showToast("Task assigned successfully!");
-                fetchTasks();
-
-                submitBtn.textContent = originalText;
-                submitBtn.disabled = false;
-            } catch (error) {
-                logManagerError("Error creating task", error);
-                showToast("Error assigning task.");
-                document.querySelector('#createTaskForm button[type="submit"]').disabled = false;
-            }
-        }
-
-        async function fetchTasks() {
-            if (!currentUser || !currentUserData) return;
-
-            const listContainer = document.getElementById('taskList');
-            if (!listContainer) return;
-
-            const filterStatus = document.getElementById('taskFilterStatus').value;
-
-            try {
-                let query = db.collection('tasks')
-                    .where('orgId', '==', currentUserData.orgId || currentUser.uid)
-                    .orderBy('createdAt', 'desc');
-
-                const snapshot = await query.get();
-                listContainer.innerHTML = '';
-
-                if (snapshot.empty) {
-                    listContainer.innerHTML = "<p class='text-sm text-slate-500'>No tasks found.</p>";
-                    return;
-                }
-
-                let tasksCount = 0;
-
-                snapshot.forEach(doc => {
-                    const task = doc.data();
-
-                    if (filterStatus !== 'All' && task.status !== filterStatus) return;
-
-                    tasksCount++;
-
-                    const div = document.createElement('div');
-                    div.className = 'p-4 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 flex justify-between items-start';
-
-                    let statusColor = 'bg-yellow-100 text-yellow-800';
-                    if (task.status === 'In Progress') statusColor = 'bg-blue-100 text-blue-800';
-                    if (task.status === 'Completed') statusColor = 'bg-green-100 text-green-800';
-
-                    const isAssignee = task.assigneeId === currentUser.uid;
-                    const isAssigner = task.assignerId === currentUser.uid;
-                    const canEdit = isAssignee || isAssigner || currentUserData.isAdmin;
-
-                    let statusHtml = `<span class="px-2 py-1 text-xs font-semibold rounded-full ${statusColor}">${escapeHTML(task.status)}</span>`;
-
-                    if (canEdit) {
-                        statusHtml = `
-                            <select class="text-xs p-1 border rounded bg-slate-50 dark:bg-slate-900 ${statusColor}" onchange="updateTaskStatus('${doc.id}', this.value)">
-                                <option value="Pending" ${task.status === 'Pending' ? 'selected' : ''}>Pending</option>
-                                <option value="In Progress" ${task.status === 'In Progress' ? 'selected' : ''}>In Progress</option>
-                                <option value="Completed" ${task.status === 'Completed' ? 'selected' : ''}>Completed</option>
-                            </select>
-                        `;
-                    }
-
-                    let deleteBtnHtml = '';
-                    if (isAssigner || currentUserData.isAdmin) {
-                        deleteBtnHtml = `<button onclick="deleteTask('${doc.id}')" class="text-red-500 hover:text-red-700 text-sm mt-2" aria-label="Delete task"><i data-lucide="trash-2" class="w-4 h-4"></i></button>`;
-                    }
-
-                    // Look up employee name if cached
-                    let assigneeName = "Employee";
-                    const assigneeOption = document.querySelector(`#taskAssignee option[value="${task.assigneeId}"]`);
-                    if(assigneeOption) assigneeName = assigneeOption.text;
-                    else if (task.assigneeId === currentUser.uid) assigneeName = "You";
-
-                    div.innerHTML = `
-                        <div class="flex-1">
-                            <h4 class="font-bold text-slate-800 dark:text-white">${escapeHTML(task.title)}</h4>
-                            ${task.description ? `<p class="text-sm text-slate-600 dark:text-slate-400 mt-1">${escapeHTML(task.description)}</p>` : ''}
-                            <div class="flex flex-wrap gap-3 mt-3 text-xs text-slate-500">
-                                <span><i data-lucide="user" class="inline w-3 h-3 mr-1"></i>${escapeHTML(assigneeName)}</span>
-                                <span><i data-lucide="calendar" class="inline w-3 h-3 mr-1"></i>Due: ${escapeHTML(task.dueDate)}</span>
-                            </div>
-                        </div>
-                        <div class="flex flex-col items-end ml-4 space-y-2">
-                            ${statusHtml}
-                            ${deleteBtnHtml}
-                        </div>
-                    `;
-                    listContainer.appendChild(div);
-                });
-
-                if (tasksCount === 0) {
-                    listContainer.innerHTML = "<p class='text-sm text-slate-500'>No tasks match the selected filter.</p>";
-                }
-
-                lucide.createIcons();
-            } catch (error) {
-                logManagerError("Error fetching tasks", error);
-                listContainer.innerHTML = "<p class='text-sm text-red-500'>Error loading tasks.</p>";
-            }
-        }
-
-        async function updateTaskStatus(taskId, newStatus) {
-            try {
-                await db.collection('tasks').doc(taskId).update({ status: newStatus });
-                showToast("Task status updated.");
-            } catch (error) {
-                logManagerError("Error updating task status", error);
-                showToast("Error updating task.");
-                fetchTasks(); // Reload to reset dropdown
-            }
-        }
-
-        async function deleteTask(taskId) {
-            if (!confirm("Are you sure you want to delete this task?")) return;
-            try {
-                await db.collection('tasks').doc(taskId).delete();
-                showToast("Task deleted.");
-                fetchTasks();
-            } catch (error) {
-                logManagerError("Error deleting task", error);
-                showToast("Error deleting task.");
-            }
-        }
-
-
         async function fetchTeamDirectory() {
             if (!currentUser || !currentUserData || !currentUserData.orgId) {
                 document.getElementById('teamContainer').innerHTML = `
                     <div class="col-span-1 md:col-span-2 text-center py-16 bg-slate-50 dark:bg-slate-900 rounded-3xl border-2 border-dashed border-slate-200 dark:border-slate-800">
                         <i data-lucide="users" class="w-12 h-12 text-slate-400 mx-auto mb-4"></i>
                         <h3 class="text-xl font-bold mb-2">Join or Create a Group</h3>
-                        <p class="text-slate-500 mb-4">You must be in a Management Group to access the Team Directory.</p><button onclick="document.getElementById('orgTutorialModal').classList.remove('hidden')" class="btn btn-sm btn-outline text-sky-500 border-sky-200">How do I connect?</button>
+                        <p class="text-slate-500">You must be in a Management Group to access the Team Directory.</p>
                     </div>
                 `;
                 lucide.createIcons();
@@ -4608,7 +2579,7 @@
                     lucide.createIcons();
                 }
             } catch (error) {
-                container.innerHTML = `<div class="col-span-1 md:col-span-2 text-red-500 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl text-center">Failed to load roster: ${escapeHTML(error.message)}</div>`;
+                container.innerHTML = `<div class="col-span-1 md:col-span-2 text-red-500 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl text-center">Failed to load roster: ${error.message}</div>`;
             }
         }
 
@@ -4666,58 +2637,4 @@
             }
         }
 
-    </script>
-    <footer class="main-footer"></footer>
-
-    <!-- Organization Tutorial Modal -->
-    <div id="orgTutorialModal"
-        class="hidden fixed inset-0 z-[100] bg-black/80 flex items-center justify-center p-6 backdrop-blur-sm no-print">
-        <div class="bg-white dark:bg-slate-900 w-full max-w-2xl rounded-2xl p-8 shadow-2xl relative border border-slate-200 dark:border-slate-800">
-            <button onclick="document.getElementById('orgTutorialModal').classList.add('hidden')" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:hover:text-white">
-                <i data-lucide="x"></i>
-            </button>
-            <h2 class="text-2xl font-black mb-6 text-sky-600 flex items-center gap-2"><i data-lucide="info"></i> How to Connect with Your Store</h2>
-
-            <div class="space-y-6 text-slate-600 dark:text-slate-400 font-medium">
-                <div class="flex gap-4">
-                    <div class="w-8 h-8 rounded-full bg-sky-100 dark:bg-sky-900/50 text-sky-600 flex items-center justify-center font-black shrink-0">1</div>
-                    <div>
-                        <h3 class="text-slate-900 dark:text-white font-bold text-lg mb-1">Store Owner/General Manager Creates a Group</h3>
-                        <p class="text-sm">The highest ranking manager must first create a Management Group. Go to <strong>Shift Notes</strong>, click <strong>Create Group</strong>, and enter a store name and secure password.</p>
-                    </div>
-                </div>
-
-                <div class="flex gap-4">
-                    <div class="w-8 h-8 rounded-full bg-sky-100 dark:bg-sky-900/50 text-sky-600 flex items-center justify-center font-black shrink-0">2</div>
-                    <div>
-                        <h3 class="text-slate-900 dark:text-white font-bold text-lg mb-1">Share the Group ID</h3>
-                        <p class="text-sm">Once created, the owner receives a unique <strong>Group ID</strong>. Share this ID and password privately with your management team.</p>
-                    </div>
-                </div>
-
-                <div class="flex gap-4">
-                    <div class="w-8 h-8 rounded-full bg-sky-100 dark:bg-sky-900/50 text-sky-600 flex items-center justify-center font-black shrink-0">3</div>
-                    <div>
-                        <h3 class="text-slate-900 dark:text-white font-bold text-lg mb-1">Shift Managers Join</h3>
-                        <p class="text-sm">Other managers must click <strong>Join Group</strong> and enter the Group ID and password to submit a request.</p>
-                    </div>
-                </div>
-
-                <div class="flex gap-4">
-                    <div class="w-8 h-8 rounded-full bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600 flex items-center justify-center font-black shrink-0">4</div>
-                    <div>
-                        <h3 class="text-slate-900 dark:text-white font-bold text-lg mb-1">Owner Approves the Request</h3>
-                        <p class="text-sm">The owner will see pending requests in their Shift Notes panel and must click <strong>Approve</strong>. Once approved, the manager will have full access to Schedules, Employees, and Maintenance for that store.</p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="mt-8">
-                <button onclick="document.getElementById('orgTutorialModal').classList.add('hidden')" class="btn btn-accent w-full py-3">Got it!</button>
-            </div>
-        </div>
-    </div>
-
-</body>
-
-</html>
+    
