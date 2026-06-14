@@ -3068,7 +3068,7 @@
                     }).join('');
                 }, err => {
                     console.error("Error fetching tickets:", err);
-                    container.innerHTML = `<div class="text-red-500 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl text-center">Failed to load tickets: ${err.message}</div>`;
+                    container.innerHTML = `<div class="text-red-500 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl text-center">Failed to load tickets: ${escapeHTML(err.message)}</div>`;
                 });
         }
 
@@ -4171,7 +4171,7 @@ function checkAndRenderOrgControls() {
                     lucide.createIcons();
                 }
             } catch (error) {
-                container.innerHTML = `<div class="col-span-1 md:col-span-2 text-red-500 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl text-center">Failed to load roster: ${error.message}</div>`;
+                container.innerHTML = `<div class="col-span-1 md:col-span-2 text-red-500 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl text-center">Failed to load roster: ${escapeHTML(error.message)}</div>`;
             }
         }
 

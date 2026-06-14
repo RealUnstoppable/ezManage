@@ -61,6 +61,10 @@
 **Vulnerability:** The `shift_notes` collection in `firestore.rules` had duplicate `allow create` blocks—one checking `authorId` and another checking `orgId`. Because Firestore evaluates rules as a logical OR, this allowed users to bypass the `authorId` check entirely by merely providing a valid `orgId`, leading to identity spoofing (IDOR).
 **Learning:** Duplicate rule blocks for the same operation (`create`, `read`, etc.) are OR'd together by Firestore. Adding a "safer" verification rule as a separate block does not override the previous one; it creates an alternative, often less restrictive, pathway.
 **Prevention:** Always combine security constraints (like ownership and organization checks) into a single logical condition within the same operation block using `&&`.
+## 2026-05-24 - Cross-Site Scripting (XSS) via Unescaped Error Messages
+**Vulnerability:** In `index.html`, error messages caught from promises (`err.message` and `error.message`) were interpolated directly into `innerHTML` strings (e.g. `Failed to load tickets: ${err.message}`).
+**Learning:** Even error messages originating from external libraries or backend systems can sometimes contain unescaped, potentially malicious payloads or reflect user-controlled input, acting as a DOM-based XSS vector when injected into `innerHTML`.
+**Prevention:** Always wrap dynamically rendered variables in `escapeHTML()`, even if they represent standard error strings (`err.message`), to guarantee XSS protection against unexpected backend responses or payload reflection.
 
 ## 2026-06-14 - XSS via Inline Event Handler Interpolation
 **Vulnerability:** User-controlled inputs injected into inline event handlers via `innerHTML`.
