@@ -1882,14 +1882,26 @@
             if (isRegisterMode) {
                 auth.createUserWithEmailAndPassword(email, pass)
                     .then(() => navTo('setup'))
-                    .catch(err => alert(err.message))
+                    .catch(err => {
+                        if (err.code === 'auth/network-request-failed' || err.code === 'firestore/unavailable') {
+                            alert("Network error: Could not connect to the server. Please check your connection.");
+                        } else {
+                            alert(err.message);
+                        }
+                    })
                     .finally(() => {
                         btn.innerHTML = originalHTML;
                         btn.disabled = false;
                     });
             } else {
                 auth.signInWithEmailAndPassword(email, pass)
-                    .catch(err => alert(err.message))
+                    .catch(err => {
+                        if (err.code === 'auth/network-request-failed' || err.code === 'firestore/unavailable') {
+                            alert("Network error: Could not connect to the server. Please check your connection.");
+                        } else {
+                            alert(err.message);
+                        }
+                    })
                     .finally(() => {
                         btn.innerHTML = originalHTML;
                         btn.disabled = false;
@@ -3433,7 +3445,6 @@
                 await scheduleRef.set({
                     uid: currentUser.uid,
                     authorId: currentUser.uid,
-                    orgId: currentUserData.orgId,
                     orgId: currentUserData?.orgId || null,
                     date: date,
                     shifts: shifts,
@@ -3572,9 +3583,6 @@
         }
 
 function checkAndRenderOrgControls() {
-
-
-        function checkAndRenderOrgControls() {
             if (!currentUser) return false;
 
             const controls = document.getElementById('shiftNotesGroupControls');
@@ -3769,6 +3777,8 @@ function checkAndRenderOrgControls() {
 
             container.prepend(noteDiv);
             if (window.lucide) window.lucide.createIcons();
+            // Store the content so we can restore it if the write fails
+            const previousContent = document.getElementById('shiftNoteContent').value;
             document.getElementById('shiftNoteContent').value = "";
 
             try {
@@ -3793,8 +3803,8 @@ function checkAndRenderOrgControls() {
                     alert("Failed to post note: " + err.message);
                 }
                 noteDiv.remove(); // revert optimistic UI
+                document.getElementById('shiftNoteContent').value = previousContent; // Restore input
             }
-        }
         }
 
         async function resolveShiftNote(noteId) {
