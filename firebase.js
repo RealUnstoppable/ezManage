@@ -1,6 +1,6 @@
 const firebaseConfig = {
     apiKey: process.env.REACT_APP_FIREBASE_API_KEY || "AIzaSyBgrI9HwJPSc5b4pu2Egsv4DE7shNwptSw",
-    authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN || "dts-hub-website.firebaseapp.com",
+    authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN || "ezmanage.realunstoppable.store",
     projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID || "dts-hub-website",
     storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET || "dts-hub-website.firebasestorage.app",
     messagingSenderId: process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID || "48345990988",
