@@ -715,8 +715,7 @@
                                 <div class="flex items-center gap-3"><i data-lucide="list-checks"
                                         class="text-sky-500"></i>
                                     Routine & ServSafe</div>
-                                <i data-lucide="chevron-down" class="transition-transform no-print"
-                                    :class="expanded ? 'rotate-180' : ''"></i>
+                                <i data-lucide="chevron-down" class="transition-transform no-print" :class="expanded ? 'rotate-180' : ''"></i>
                             </button>
                         </h3>
                         <div x-show="expanded" x-transition>
@@ -736,8 +735,7 @@
                                 <div class="flex items-center gap-3"><i data-lucide="beef" class="text-amber-600"></i>
                                     Prep
                                     & Labor Stats</div>
-                                <i data-lucide="chevron-down" class="transition-transform no-print"
-                                    :class="expanded ? 'rotate-180' : ''"></i>
+                                <i data-lucide="chevron-down" class="transition-transform no-print" :class="expanded ? 'rotate-180' : ''"></i>
                             </button>
                         </h3>
                         <div x-show="expanded" x-transition class="mt-4">
@@ -782,8 +780,7 @@
                                 <div class="flex items-center gap-3"><i data-lucide="banknote"
                                         class="text-emerald-500"></i>
                                     Cash & Registers</div>
-                                <i data-lucide="chevron-down" class="transition-transform no-print"
-                                    :class="expanded ? 'rotate-180' : ''"></i>
+                                <i data-lucide="chevron-down" class="transition-transform no-print" :class="expanded ? 'rotate-180' : ''"></i>
                             </button>
                         </h3>
                         <div x-show="expanded" x-transition class="mt-4">
@@ -3254,14 +3251,14 @@
                      `;
 
                      if (req.uid === currentUser.uid) {
-                          let cancelBtn = req.status === 'Pending' ? `<button onclick="deleteTimeOffRequest('${req.id}')" class="btn btn-sm btn-outline text-red-500 hover:bg-red-50">Cancel</button>` : '';
+                          let cancelBtn = req.status === 'Pending' ? `<button data-request-id="${escapeHTML(req.id)}" class="delete-timeoff-btn btn btn-sm btn-outline text-red-500 hover:bg-red-50">Cancel</button>` : '';
                           myRequestsHtml += reqCard + cancelBtn + `</div></div>`;
                      }
 
                      if (isManager && req.status === 'Pending') {
                           managerRequestsHtml += reqCard + `
-                                <button onclick="updateTimeOffStatus('${req.id}', 'Approved')" class="btn btn-sm bg-green-500 text-white hover:bg-green-600">Approve</button>
-                                <button onclick="updateTimeOffStatus('${req.id}', 'Rejected')" class="btn btn-sm bg-red-500 text-white hover:bg-red-600">Deny</button>
+                                <button data-request-id="${escapeHTML(req.id)}" data-status="Approved" class="update-timeoff-btn btn btn-sm bg-green-500 text-white hover:bg-green-600">Approve</button>
+                                <button data-request-id="${escapeHTML(req.id)}" data-status="Rejected" class="update-timeoff-btn btn btn-sm bg-red-500 text-white hover:bg-red-600">Deny</button>
                           </div></div>`;
                      } else if (isManager) {
                           managerRequestsHtml += reqCard + `</div></div>`;
@@ -3359,8 +3356,8 @@
                                 </div>
                             </div>
                             <div class="flex gap-2 self-start sm:self-center">
-                                <button onclick="toggleEmployeeStatus('${emp.id}', '${emp.status}')" class="btn btn-outline btn-sm" aria-label="Toggle Employee Status">${emp.status === 'Active' ? 'Deactivate' : 'Activate'}</button>
-                                <button onclick="deleteEmployee('${emp.id}')" class="btn btn-outline btn-sm text-red-500 hover:bg-red-50" aria-label="Delete Employee"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                                <button data-employee-id="${escapeHTML(emp.id)}" data-employee-status="${escapeHTML(emp.status)}" class="toggle-employee-btn btn btn-outline btn-sm" aria-label="Toggle Employee Status">${emp.status === 'Active' ? 'Deactivate' : 'Activate'}</button>
+                                <button data-employee-id="${escapeHTML(emp.id)}" class="delete-employee-btn btn btn-outline btn-sm text-red-500 hover:bg-red-50" aria-label="Delete Employee"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
                             </div>
                         `;
                         fragment.appendChild(div);
@@ -3536,7 +3533,7 @@
                                 </div>
                                 <div class="text-right">
                                     <p class="font-mono bg-slate-50 dark:bg-slate-800 px-3 py-1 rounded-lg border border-slate-100 dark:border-slate-700">${escapeHTML(shift.startTime)} - ${escapeHTML(shift.endTime)}</p>
-                                    <button onclick="removeShift(${index})" class="text-red-500 text-xs mt-2 hover:underline" aria-label="Remove Shift">Remove</button>
+                                    <button data-shift-index="${index}" class="remove-shift-btn text-red-500 text-xs mt-2 hover:underline" aria-label="Remove Shift">Remove</button>
                                 </div>
                             `;
                             fragment.appendChild(div);
@@ -3646,7 +3643,7 @@ function checkAndRenderOrgControls() {
                         <div class="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700">
                             <span class="text-xs font-bold text-slate-500 uppercase">Group ID:</span>
                             <span class="text-sm font-mono font-bold">${currentUserData.orgId}</span>
-                            <button aria-label="Copy Group ID" onclick="navigator.clipboard.writeText('${currentUserData.orgId}'); alert('Group ID Copied!')" class="text-sky-500 hover:text-sky-600"><i data-lucide="copy" class="w-3.5 h-3.5"></i></button>
+                            <button aria-label="Copy Group ID" data-org-id="${escapeHTML(currentUserData.orgId)}" class="copy-group-id-btn text-sky-500 hover:text-sky-600"><i data-lucide="copy" class="w-3.5 h-3.5"></i></button>
                         </div>
                     `;
                     fetchGroupRequests(currentUserData.orgId);
@@ -3743,7 +3740,7 @@ function checkAndRenderOrgControls() {
                             </div>
                             <p class="text-slate-700 dark:text-slate-300 font-medium mb-6 whitespace-pre-wrap pl-1 shift-note-text"></p>
                             <div class="flex justify-end border-t border-slate-100 dark:border-slate-800 pt-4 mt-2">
-                                <button onclick="resolveShiftNote('${escapeHTML(docId)}')" class="text-sm font-bold text-slate-400 hover:text-emerald-500 flex items-center gap-2 transition-colors" aria-label="Resolve Shift Note">
+                                <button data-note-id="${escapeHTML(docId)}" class="resolve-shift-note-btn text-sm font-bold text-slate-400 hover:text-emerald-500 flex items-center gap-2 transition-colors" aria-label="Resolve Shift Note">
                                     <i data-lucide="check-circle" class="w-4 h-4"></i> Mark Resolved
                                 </button>
                             </div>
@@ -3954,7 +3951,7 @@ function checkAndRenderOrgControls() {
                                 <p class="font-bold text-sm">${escapeHTML(data.userName)}</p>
                                 <p class="text-xs text-slate-500">Wants to join your group</p>
                             </div>
-                            <button onclick="approveGroupRequest('${escapeHTML(doc.id)}')" class="btn btn-primary btn-sm px-4" aria-label="Approve Group Request">Approve</button>
+                            <button data-request-id="${escapeHTML(doc.id)}" class="approve-group-request-btn btn btn-primary btn-sm px-4" aria-label="Approve Group Request">Approve</button>
                         `;
                         fragment.appendChild(div);
                     });
@@ -3988,7 +3985,7 @@ function checkAndRenderOrgControls() {
                                 <p class="font-bold text-sm">Group ID: ${escapeHTML(data.groupId)}</p>
                                 <p class="text-xs text-slate-500">Awaiting approval</p>
                             </div>
-                            <button onclick="retractGroupRequest('${escapeHTML(doc.id)}')" class="btn btn-outline btn-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20" aria-label="Retract Group Request">Retract</button>
+                            <button data-request-id="${escapeHTML(doc.id)}" class="retract-group-request-btn btn btn-outline btn-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20" aria-label="Retract Group Request">Retract</button>
                         `;
                         fragment.appendChild(div);
                     });
@@ -4161,8 +4158,8 @@ function checkAndRenderOrgControls() {
                                 </div>
                             </div>
                             <div class="flex gap-2 border-t border-slate-100 dark:border-slate-800 pt-4 mt-2">
-                                <button onclick="openEditEmployeeModal('${escapeHTML(emp.id)}')" class="btn btn-outline btn-sm flex-1" aria-label="Edit Employee"><i data-lucide="edit-2" class="w-3 h-3"></i> Edit</button>
-                                <button onclick="deleteEmployee('${escapeHTML(emp.id)}')" class="btn btn-outline btn-sm text-red-500 hover:bg-red-50 flex-1" aria-label="Remove Employee"><i data-lucide="user-minus" class="w-3 h-3"></i> Remove</button>
+                                <button data-employee-id="${escapeHTML(emp.id)}" class="edit-employee-btn btn btn-outline btn-sm flex-1" aria-label="Edit Employee"><i data-lucide="edit-2" class="w-3 h-3"></i> Edit</button>
+                                <button data-employee-id="${escapeHTML(emp.id)}" class="delete-employee-btn btn btn-outline btn-sm text-red-500 hover:bg-red-50 flex-1" aria-label="Remove Employee"><i data-lucide="user-minus" class="w-3 h-3"></i> Remove</button>
                             </div>
                         `;
                         fragment.appendChild(div);
@@ -4210,7 +4207,82 @@ function checkAndRenderOrgControls() {
                     .catch(err => console.error("Service Worker Registration Failed:", err));
             }
 
-            window.addEventListener('offline', updateNetworkStatus);
+
+        // Event delegation for dynamically added buttons to prevent XSS
+        document.addEventListener('click', function(e) {
+            const copyGroupIdBtn = e.target.closest('.copy-group-id-btn');
+            if (copyGroupIdBtn) {
+                e.preventDefault();
+                navigator.clipboard.writeText(copyGroupIdBtn.dataset.orgId);
+                alert('Group ID Copied!');
+                return;
+            }
+
+            const deleteTimeoffBtn = e.target.closest('.delete-timeoff-btn');
+            if (deleteTimeoffBtn) {
+                e.preventDefault();
+                deleteTimeOffRequest(deleteTimeoffBtn.dataset.requestId);
+                return;
+            }
+
+            const updateTimeoffBtn = e.target.closest('.update-timeoff-btn');
+            if (updateTimeoffBtn) {
+                e.preventDefault();
+                updateTimeOffStatus(updateTimeoffBtn.dataset.requestId, updateTimeoffBtn.dataset.status);
+                return;
+            }
+
+            const toggleEmployeeBtn = e.target.closest('.toggle-employee-btn');
+            if (toggleEmployeeBtn) {
+                e.preventDefault();
+                toggleEmployeeStatus(toggleEmployeeBtn.dataset.employeeId, toggleEmployeeBtn.dataset.employeeStatus);
+                return;
+            }
+
+            const deleteEmployeeBtn = e.target.closest('.delete-employee-btn');
+            if (deleteEmployeeBtn) {
+                e.preventDefault();
+                deleteEmployee(deleteEmployeeBtn.dataset.employeeId);
+                return;
+            }
+
+            const removeShiftBtn = e.target.closest('.remove-shift-btn');
+            if (removeShiftBtn) {
+                e.preventDefault();
+                removeShift(parseInt(removeShiftBtn.dataset.shiftIndex, 10));
+                return;
+            }
+
+            const resolveShiftNoteBtn = e.target.closest('.resolve-shift-note-btn');
+            if (resolveShiftNoteBtn) {
+                e.preventDefault();
+                resolveShiftNote(resolveShiftNoteBtn.dataset.noteId);
+                return;
+            }
+
+            const approveGroupRequestBtn = e.target.closest('.approve-group-request-btn');
+            if (approveGroupRequestBtn) {
+                e.preventDefault();
+                approveGroupRequest(approveGroupRequestBtn.dataset.requestId);
+                return;
+            }
+
+            const retractGroupRequestBtn = e.target.closest('.retract-group-request-btn');
+            if (retractGroupRequestBtn) {
+                e.preventDefault();
+                retractGroupRequest(retractGroupRequestBtn.dataset.requestId);
+                return;
+            }
+
+            const editEmployeeBtn = e.target.closest('.edit-employee-btn');
+            if (editEmployeeBtn) {
+                e.preventDefault();
+                openEditEmployeeModal(editEmployeeBtn.dataset.employeeId);
+                return;
+            }
+        });
+
+        window.addEventListener('offline', updateNetworkStatus);
             window.addEventListener('online', updateNetworkStatus);
             updateNetworkStatus();
         };
