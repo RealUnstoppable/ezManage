@@ -5,6 +5,24 @@ const admin = require("firebase-admin");
 const cors = require("cors")({origin: true});
 const {adaptGen2Params, logManagerError} = require("./utils");
 
+/**
+ * Helper to get a document, verify its existence, and verify its orgId.
+ */
+async function verifyDocAndAuth(collection, docId, expectedOrgId, notFoundMessage, unauthorizedMessage) {
+  const docRef = admin.firestore().collection(collection).doc(docId);
+  const docSnap = await docRef.get();
+
+  if (!docSnap.exists) {
+    throw new HttpsError("not-found", notFoundMessage);
+  }
+
+  if (docSnap.data().orgId !== expectedOrgId) {
+    throw new HttpsError("permission-denied", unauthorizedMessage);
+  }
+
+  return { docRef, docSnap };
+}
+
 admin.initializeApp();
 
 // Fallback "placeholder" string to stop Firebase Analyzer from crashing
@@ -89,7 +107,7 @@ exports.createCheckoutSession = onRequest({invoker: "public"}, (req, res) => {
 
       res.status(200).json({url: session.url});
     } catch (err) {
-      logManagerError(`Checkout Error for uid: ${uid}`, err);
+      logManagerError("Checkout Error for uid: " + uid, err);
       res.status(500).json({error: err.message});
     }
   });
@@ -103,7 +121,7 @@ exports.stripeWebhook = onRequest({invoker: "public"}, async (req, res) => {
   try {
     event = stripe.webhooks.constructEvent(req.rawBody, sig, endpointSecret);
   } catch (err) {
-    console.error("Manager Troubleshooting: Webhook Error:", err);
+
     logManagerError("Webhook Error:", err);
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
@@ -344,17 +362,13 @@ exports.manageShiftNotes = functions.https.onCall(async (data, context) => {
       }
 
       // 🛡️ Verify the user resolving the note is in the same organization
-      const noteRef = admin.firestore().collection("shift_notes").doc(noteId);
-      const noteDoc = await noteRef.get();
-
-      if (!noteDoc.exists) {
-        throw new HttpsError("not-found", "Note not found");
-      }
-
-      if (noteDoc.data().orgId !== actualOrgId) {
-        throw new HttpsError(
-            "permission-denied", "Unauthorized to resolve this note");
-      }
+      const { docRef: noteRef } = await verifyDocAndAuth(
+        "shift_notes",
+        noteId,
+        actualOrgId,
+        "Note not found",
+        "Unauthorized to resolve this note"
+      );
 
       await noteRef.update({
         status: "Resolved",
@@ -368,8 +382,8 @@ exports.manageShiftNotes = functions.https.onCall(async (data, context) => {
     throw new HttpsError(
         "invalid-argument", "Invalid action");
   } catch (error) {
-    logManagerError("Shift Note Error for uid:", uid, error);
-    logManagerError("Shift Note Error:", error);
+    logManagerError("Shift Note Error for uid: " + uid, error);
+
     throw new HttpsError("internal", error.message);
   }
 });
@@ -438,6 +452,27 @@ exports.manageEmployees = functions.https.onCall(async (data, context) => {
     }
 
     if (action === "update") {
+       const {empId, name, role, phone, status} = payload;
+       if (!empId) {
+          throw new HttpsError("invalid-argument", "Missing employee ID");
+       }
+
+       const { docRef: empRef } = await verifyDocAndAuth(
+         "employees",
+         empId,
+         actualOrgId,
+         "Employee not found",
+         "Unauthorized to update this employee"
+       );
+
+       const updates = {};
+       if (name !== undefined) updates.name = name;
+       if (role !== undefined) updates.role = role;
+       if (phone !== undefined) updates.phone = phone;
+       if (status !== undefined) updates.status = status;
+
+       await empRef.update(updates);
+       return {success: true};
       const {empId, name, role, phone, status} = payload;
       if (!empId) {
         throw new HttpsError("invalid-argument", "Missing employee ID");
@@ -470,6 +505,13 @@ exports.manageEmployees = functions.https.onCall(async (data, context) => {
         throw new HttpsError("invalid-argument", "Missing employee ID");
       }
 
+       const { docRef: empRef } = await verifyDocAndAuth(
+         "employees",
+         empId,
+         actualOrgId,
+         "Employee not found",
+         "Unauthorized to delete this employee"
+       );
       const empRef = admin.firestore().collection("employees").doc(empId);
       const empDoc = await empRef.get();
 
@@ -488,7 +530,7 @@ exports.manageEmployees = functions.https.onCall(async (data, context) => {
 
     throw new HttpsError("invalid-argument", "Invalid action");
   } catch (error) {
-    logManagerError(`Manage Employees Error for uid: ${uid}`, error);
+    logManagerError("Manage Employees Error for uid: " + uid, error);
     if (error instanceof HttpsError) {
       throw error;
     }
@@ -671,8 +713,8 @@ exports.manageShiftGroups = functions.https.onCall(async (data, context) => {
 
     throw new HttpsError("invalid-argument", "Invalid action");
   } catch (error) {
-    logManagerError("Shift Groups Error for uid:", uid, error);
-    logManagerError("Shift Groups Error:", error);
+    logManagerError("Shift Groups Error for uid: " + uid, error);
+
     if (error instanceof HttpsError) {
       throw error;
     }

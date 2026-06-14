@@ -63,9 +63,9 @@ auth.onAuthStateChanged(async (user) => {
                 }
             }
         } catch (error) {
-            logManagerError("Error fetching user document in auth state change for uid:", user.uid, error);
-            logManagerError("Error fetching user document in auth state change:", error);
-            console.error("Manager Troubleshooting: Error fetching user document in auth state change for uid:", user.uid, error);
+            logManagerError("Error fetching user document in auth state change for uid: " + user.uid, error);
+
+
         }
     } else {
         if (authLink) {
@@ -133,7 +133,7 @@ if (document.getElementById('auth-form')) {
                 sessionStorage.setItem('newUser', 'true');
                 window.location.replace('index.html');
             } catch (error) {
-                logManagerError("Sign up error for email:", email, error);
+                logManagerError("Sign up error for email: " + email, error);
                 if (error.code === 'auth/network-request-failed' || error.code === 'unavailable') {
                     showMessage("Network error: Please check your connection or whitelist our domain.");
                 } else {
@@ -155,7 +155,7 @@ if (document.getElementById('auth-form')) {
                     submitBtn.disabled = false;
                 }
             } catch (error) {
-                logManagerError("Sign in error for email:", email, error);
+                logManagerError("Sign in error for email: " + email, error);
                 if (error.code === 'auth/network-request-failed' || error.code === 'unavailable') {
                     showMessage("Network error: Please check your connection or whitelist our domain.");
                 } else {

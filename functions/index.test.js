@@ -242,8 +242,8 @@ describe("createCheckoutSession", () => {
     });
 
     expect(mockStripeMock.checkout.sessions.create).toHaveBeenCalled();
+
     expect(consoleSpy).toHaveBeenCalledWith("Manager Troubleshooting: Checkout Error for uid: " + req.body.uid, expect.any(Error));
-    expect(consoleSpy).toHaveBeenCalledWith("Manager Troubleshooting: Checkout Error for uid: test_uid", expect.any(Error));
     expect(res.status).toHaveBeenCalledWith(500);
     expect(res.json).toHaveBeenCalledWith({error: errorMessage});
 
