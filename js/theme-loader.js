@@ -1,6 +1,6 @@
 import { logManagerError } from './utils.js';
 
-import { auth, db, onAuthStateChanged, doc, getDoc } from './auth.js';
+import { auth, db } from './auth.js';
 
 (function() {
     const localTheme = localStorage.getItem('userTheme');
@@ -19,32 +19,32 @@ export const applyTheme = (theme, accentColor) => {
     }
 };
 
-onAuthStateChanged(auth, async (user) => {
-    if (user) {
-        try {
-            const userDocRef = doc(db, "users", user.uid);
-            const userDoc = await getDoc(userDocRef);
-            if (userDoc.exists()) {
-                const userData = userDoc.data();
-                applyTheme(userData.theme, userData.accentColor);
-            } else {
-
+if (auth && auth.onAuthStateChanged) {
+    auth.onAuthStateChanged(async (user) => {
+        if (user) {
+            try {
+                const userDoc = await db.collection("users").doc(user.uid).get();
+                if (userDoc.exists) {
+                    const userData = userDoc.data();
+                    applyTheme(userData.theme, userData.accentColor);
+                } else {
+                    applyTheme('dark', 'blue');
+                }
+            } catch (error) {
+                logManagerError("Error loading theme from Firestore:", error);
                 applyTheme('dark', 'blue');
             }
-        } catch (error) {
-            logManagerError("Error loading theme from Firestore:", error);
-            applyTheme('dark', 'blue');
+        } else {
+            try {
+                const localTheme = localStorage.getItem('userTheme');
+                const localAccent = localStorage.getItem('userAccent');
+                applyTheme(localTheme, localAccent);
+            } catch (error) {
+                logManagerError("Error reading local storage for theme:", error);
+                applyTheme('dark', 'blue');
+            }
         }
-    } else {
-        try {
-            const localTheme = localStorage.getItem('userTheme');
-            const localAccent = localStorage.getItem('userAccent');
-            applyTheme(localTheme, localAccent);
-        } catch (error) {
-            logManagerError("Error reading local storage for theme:", error);
-            applyTheme('dark', 'blue');
-        }
-    }
-});
+    });
+}
 
 window.updateTheme = applyTheme;

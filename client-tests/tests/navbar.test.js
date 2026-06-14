@@ -21,6 +21,7 @@ const mockFirebase = {
       settings: jest.fn()
   }))
 };
+
 global.window = global.window || {};
 global.window.firebase = mockFirebase;
 global.firebase = mockFirebase;
@@ -46,25 +47,52 @@ describe('loadNavbar', () => {
     const firestoreFirebaseModule = await import("https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js");
     getDoc = firestoreFirebaseModule.getDoc;
   });
+  db: { settings: jest.fn(), collection: jest.fn(() => ({ doc: jest.fn(() => ({ get: jest.fn() })) })) },
+global.window = global.window || {};
+global.firebase = {
+    apps: [],
+    auth: jest.fn(() => ({ onAuthStateChanged: jest.fn() })),
+    firestore: jest.fn(() => ({ collection: jest.fn() }))
+};
+global.window.firebase = global.firebase;
 
+jest.unstable_mockModule('../../js/auth.js', () => ({
+  auth: { onAuthStateChanged: jest.fn() },
+  db: { collection: jest.fn(() => ({ doc: jest.fn(() => ({ get: jest.fn() })) })) },
+  getUserRedirectPath: (userData) => userData && userData.isAdmin ? 'admin.html' : 'index.html'
+}));
+
+const { loadNavbar } = await import('../../js/navbar.js');
+
+describe('loadNavbar', () => {
+
+const { auth, db } = await import('../../js/auth.js');
+
+describe('loadNavbar', () => {
   beforeEach(() => {
     document.body.innerHTML = '<div class="main-header"></div>';
     jest.clearAllMocks();
   });
 
   it('should inject navbar HTML', async () => {
-    await loadNavbar();
+    loadNavbar();
     expect(document.querySelector('.navbar')).not.toBeNull();
   });
 
   it('should set auth link to index.html if user is logged in but not admin', async () => {
     await loadNavbar();
     const mockUser = { uid: '123' };
-    const authCallback = onAuthStateChanged.mock.calls[0][1];
+    const authCallback = auth.onAuthStateChanged.mock.calls[0][0];
 
-    getDoc.mockResolvedValueOnce({
-      exists: () => true,
+    const mockGet = jest.fn().mockResolvedValueOnce({
+      exists: true,
       data: () => ({ isAdmin: false })
+    });
+
+    db.collection.mockReturnValueOnce({
+      doc: jest.fn().mockReturnValueOnce({
+        get: mockGet
+      })
     });
 
     await authCallback(mockUser);

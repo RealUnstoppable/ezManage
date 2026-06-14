@@ -2,8 +2,8 @@ const functions = require("firebase-functions");
 const {onRequest} = require("firebase-functions/v2/https");
 const HttpsError = functions.https.HttpsError;
 const admin = require("firebase-admin");
-const cors = require("cors")({ origin: true });
-const { adaptGen2Params, logManagerError } = require("./utils");
+const cors = require("cors")({origin: true});
+const {adaptGen2Params, logManagerError} = require("./utils");
 
 admin.initializeApp();
 
@@ -21,34 +21,47 @@ exports.createCheckoutSession = onRequest({invoker: "public"}, (req, res) => {
       return res.status(405).send("Method Not Allowed");
     }
 
-    const {uid, email, plan, amount, successUrl, cancelUrl} = req.body;
+    const {uid, email, plan, successUrl, cancelUrl} = req.body;
 
     let lineItems;
 
-    // If the frontend passed a specific discounted amount (Sale or Referral)
-    if (amount) {
-      const productId = plan === "Business Pro" ?
-        "prod_UFnBrTwFCgb54A" :
-        "prod_UFn8zqZ0mwyy5r";
-      lineItems = [{
-        price_data: {
-          currency: "usd",
-          product: productId,
-          recurring: {interval: "year"},
-          // Stripe requires amounts in cents
-          unit_amount: Math.round(amount * 100),
-        },
-        quantity: 1,
-      }];
-    } else {
-      // 🔴 Fallback to Actual Price IDs if no custom amount was provided
-      const priceId = plan === "Business Pro" ?
-        "price_1THHbVBp2C5GdKaKvCVoMf1X" :
-        "price_1THHYPBp2C5GdKaKxNpqndNE";
-      lineItems = [{price: priceId, quantity: 1}];
-    }
-
     try {
+      let finalPrice = null;
+
+      if (uid) {
+        const userDoc = await admin.firestore().collection("users").doc(uid).get();
+        if (userDoc.exists) {
+          const userData = userDoc.data();
+          if (userData && userData.hasPromoCode) {
+            const basePrice = (plan === "Business Pro") ? 207 : 61;
+            finalPrice = basePrice * 0.9;
+          }
+        }
+      }
+
+      if (finalPrice !== null) {
+        finalPrice = Math.floor(finalPrice);
+        const productId = plan === "Business Pro" ?
+          "prod_UFnBrTwFCgb54A" :
+          "prod_UFn8zqZ0mwyy5r";
+        lineItems = [{
+          price_data: {
+            currency: "usd",
+            product: productId,
+            recurring: {interval: "year"},
+            // Stripe requires amounts in cents
+            unit_amount: Math.round(finalPrice * 100),
+          },
+          quantity: 1,
+        }];
+      } else {
+        // 🔴 Fallback to Actual Price IDs if no custom amount was provided
+        const priceId = plan === "Business Pro" ?
+          "price_1THHbVBp2C5GdKaKvCVoMf1X" :
+          "price_1THHYPBp2C5GdKaKxNpqndNE";
+        lineItems = [{price: priceId, quantity: 1}];
+      }
+
       const session = await stripe.checkout.sessions.create({
         mode: "subscription",
         client_reference_id: uid,
@@ -390,7 +403,7 @@ exports.manageEmployees = functions.https.onCall(async (data, context) => {
     const actualOrgId = userDoc.data().orgId || null;
 
     if (!actualOrgId) {
-       throw new HttpsError("permission-denied", "User must be part of an organization.");
+      throw new HttpsError("permission-denied", "User must be part of an organization.");
     }
 
     if (action === "create") {
@@ -415,62 +428,62 @@ exports.manageEmployees = functions.https.onCall(async (data, context) => {
 
     if (action === "get") {
       const snapshot = await admin.firestore().collection("employees")
-        .where("orgId", "==", actualOrgId)
-        .where("status", "==", "Active")
-        .get();
+          .where("orgId", "==", actualOrgId)
+          .where("status", "==", "Active")
+          .get();
 
       const employees = [];
-      snapshot.forEach(doc => employees.push({id: doc.id, ...doc.data()}));
+      snapshot.forEach((doc) => employees.push({id: doc.id, ...doc.data()}));
       return {success: true, employees};
     }
 
     if (action === "update") {
-       const {empId, name, role, phone, status} = payload;
-       if (!empId) {
-          throw new HttpsError("invalid-argument", "Missing employee ID");
-       }
+      const {empId, name, role, phone, status} = payload;
+      if (!empId) {
+        throw new HttpsError("invalid-argument", "Missing employee ID");
+      }
 
-       const empRef = admin.firestore().collection("employees").doc(empId);
-       const empDoc = await empRef.get();
+      const empRef = admin.firestore().collection("employees").doc(empId);
+      const empDoc = await empRef.get();
 
-       if (!empDoc.exists) {
-          throw new HttpsError("not-found", "Employee not found");
-       }
+      if (!empDoc.exists) {
+        throw new HttpsError("not-found", "Employee not found");
+      }
 
-       if (empDoc.data().orgId !== actualOrgId) {
-          throw new HttpsError("permission-denied", "Unauthorized to update this employee");
-       }
+      if (empDoc.data().orgId !== actualOrgId) {
+        throw new HttpsError("permission-denied", "Unauthorized to update this employee");
+      }
 
-       const updates = {};
-       if (name !== undefined) updates.name = name;
-       if (role !== undefined) updates.role = role;
-       if (phone !== undefined) updates.phone = phone;
-       if (status !== undefined) updates.status = status;
+      const updates = {};
+      if (name !== undefined) updates.name = name;
+      if (role !== undefined) updates.role = role;
+      if (phone !== undefined) updates.phone = phone;
+      if (status !== undefined) updates.status = status;
 
-       await empRef.update(updates);
-       return {success: true};
+      await empRef.update(updates);
+      return {success: true};
     }
 
     if (action === "delete") {
-       const {empId} = payload;
-       if (!empId) {
-          throw new HttpsError("invalid-argument", "Missing employee ID");
-       }
+      const {empId} = payload;
+      if (!empId) {
+        throw new HttpsError("invalid-argument", "Missing employee ID");
+      }
 
-       const empRef = admin.firestore().collection("employees").doc(empId);
-       const empDoc = await empRef.get();
+      const empRef = admin.firestore().collection("employees").doc(empId);
+      const empDoc = await empRef.get();
 
-       if (!empDoc.exists) {
-          throw new HttpsError("not-found", "Employee not found");
-       }
+      if (!empDoc.exists) {
+        throw new HttpsError("not-found", "Employee not found");
+      }
 
-       if (empDoc.data().orgId !== actualOrgId) {
-          throw new HttpsError("permission-denied", "Unauthorized to delete this employee");
-       }
+      if (empDoc.data().orgId !== actualOrgId) {
+        throw new HttpsError("permission-denied", "Unauthorized to delete this employee");
+      }
 
-       // Soft delete
-       await empRef.update({ status: "Inactive" });
-       return {success: true};
+      // Soft delete
+      await empRef.update({status: "Inactive"});
+      return {success: true};
     }
 
     throw new HttpsError("invalid-argument", "Invalid action");
