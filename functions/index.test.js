@@ -5,12 +5,20 @@ const functionsTest = require("firebase-functions-test")();
 jest.mock("firebase-admin", () => {
   const firestoreMock = {
     collection: jest.fn().mockReturnThis(),
-    doc: jest.fn().mockReturnThis(),
+    doc: jest.fn((uid) => {
+      firestoreMock._lastUid = uid;
+      return firestoreMock;
+    }),
     where: jest.fn().mockReturnThis(),
-    get: jest.fn().mockResolvedValue({
-      exists: true,
-      data: () => ({email: "test@example.com"}),
-      docs: [],
+    get: jest.fn().mockImplementation(() => {
+      return Promise.resolve({
+        exists: true,
+        data: () => ({
+          email: "test@example.com",
+          hasPromoCode: firestoreMock._lastUid !== "no_promo_uid",
+        }),
+        docs: [],
+      });
     }),
     update: jest.fn().mockResolvedValue({}),
     set: jest.fn().mockResolvedValue({}),
@@ -119,7 +127,7 @@ describe("createCheckoutSession", () => {
           currency: "usd",
           product: "prod_UFnBrTwFCgb54A",
           recurring: {interval: "year"},
-          unit_amount: 15000,
+          unit_amount: 18600,
         },
         quantity: 1,
       }],
@@ -143,6 +151,12 @@ describe("createCheckoutSession", () => {
   });
 
   it("should create session successfully with default price ID when no amount is provided", async () => {
+    // override get to simulate no promo
+    jest.spyOn(require("firebase-admin").firestore().collection("users").doc("no_promo_uid"), "get").mockResolvedValueOnce({
+      exists: true,
+      data: () => ({hasPromoCode: false}),
+    });
+
     const req = {
       method: "POST",
       body: {
