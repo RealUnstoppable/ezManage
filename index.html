@@ -667,7 +667,7 @@
                                 data-lucide="upload" class="w-4"></i></button>
                         <button onclick="exportDataJSON()" class="btn btn-outline btn-sm" title="Export JSON"
                             aria-label="Export JSON"><i data-lucide="download" class="w-4"></i></button>
-                        <input type="file" id="jsonImportInput" accept=".json" class="hidden"
+                        <input type="file" id="jsonImportInput" aria-label="JSON Import File" accept=".json" class="hidden"
                             onchange="importDataJSON(event)">
                         <button aria-label="Templates" onclick="navTo('presets')" class="btn btn-outline btn-sm"><i data-lucide="layout"
                                 class="w-4"></i> Templates</button>
@@ -843,7 +843,7 @@
                                             <i data-lucide="arrow-down-a-z" class="w-4 h-4"></i> Alphabetical
                                         </button>
                                         <div class="h-px bg-slate-200 dark:bg-slate-700 my-1"></div>
-                                        <button type="button" @click="expanded = !expanded; dropdownOpen = false" class="w-full text-left px-4 py-3 text-sm font-bold hover:bg-slate-50 dark:hover:bg-slate-700/50 flex items-center gap-2">
+                                        <button type="button" aria-label="Toggle Section" @click="expanded = !expanded; dropdownOpen = false" class="w-full text-left px-4 py-3 text-sm font-bold hover:bg-slate-50 dark:hover:bg-slate-700/50 flex items-center gap-2">
                                             <i data-lucide="panel-top-close" class="w-4 h-4" x-show="expanded"></i>
                                             <i data-lucide="panel-top-open" class="w-4 h-4" x-show="!expanded" x-cloak></i>
                                             <span x-text="expanded ? 'Close Section' : 'Open Section'"></span>
@@ -898,10 +898,10 @@
                     <h2 class="text-xl font-bold mb-4" id="employeeModalTitle">Add New Employee</h2>
                     <input type="hidden" id="empModalId" value="">
                     <div class="space-y-4">
-                        <input type="text" id="empName" placeholder="Employee Full Name"
+                        <input type="text" id="empName" aria-label="Employee Full Name" placeholder="Employee Full Name"
                             class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
                         <div class="flex flex-col md:flex-row gap-4">
-                            <select id="empRole"
+                            <select id="empRole" aria-label="Employee Role"
                                 class="flex-1 bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
                                 <option value="Cashier">Cashier</option>
                                 <option value="Cook">Cook</option>
@@ -910,7 +910,7 @@
                                 <option value="Driver">Driver</option>
                                 <option value="Other">Other</option>
                             </select>
-                            <input type="text" id="empPhone" placeholder="Phone Number (Optional)"
+                            <input type="text" id="empPhone" aria-label="Phone Number" placeholder="Phone Number (Optional)"
                                 class="flex-1 bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
                         </div>
 
@@ -1049,9 +1049,9 @@
                     <p class="text-sm text-slate-500 mb-6">Create a group to share shift notes with other managers
                         securely.</p>
                     <div class="space-y-4">
-                        <input type="text" id="newGroupName" placeholder="Group Name (e.g. Store #1234)"
+                        <input type="text" id="newGroupName" aria-label="New Group Name" placeholder="Group Name (e.g. Store #1234)"
                             class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
-                        <input type="password" id="newGroupPassword" placeholder="Group Password"
+                        <input type="password" id="newGroupPassword" aria-label="New Group Password" placeholder="Group Password"
                             class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
                         <div class="flex justify-end gap-3 pt-2">
                             <button onclick="document.getElementById('createGroupModal').classList.add('hidden')"
@@ -1066,9 +1066,9 @@
                     <h2 class="text-xl font-bold mb-4">Join a Management Group</h2>
                     <p class="text-sm text-slate-500 mb-6">Ask your store owner/GM for the Group ID and Password.</p>
                     <div class="space-y-4">
-                        <input type="text" id="joinGroupId" placeholder="Group ID"
+                        <input type="text" id="joinGroupId" aria-label="Group ID to Join" placeholder="Group ID"
                             class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
-                        <input type="password" id="joinGroupPassword" placeholder="Group Password"
+                        <input type="password" id="joinGroupPassword" aria-label="Group Password" placeholder="Group Password"
                             class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
                         <div class="flex justify-end gap-3 pt-2">
                             <button onclick="document.getElementById('joinGroupModal').classList.add('hidden')"
@@ -1095,7 +1095,7 @@
                         class="w-full bg-slate-50 dark:bg-slate-800 p-4 rounded-xl border-none focus:ring-2 focus:ring-sky-500 mb-4 resize-none"
                         placeholder="Leave a note, warning, or handover instruction..." aria-label="Shift Note Content"></textarea>
                     <div class="flex justify-between items-center">
-                        <select id="shiftNotePriority"
+                        <select id="shiftNotePriority" aria-label="Shift Note Priority"
                             class="bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500 font-medium">
                             <option value="Normal">Normal Priority</option>
                             <option value="Urgent">🚨 Urgent Issue</option>
@@ -1131,13 +1131,13 @@
                     class="hidden bg-white dark:bg-slate-900 rounded-3xl p-6 md:p-8 shadow-sm border border-slate-100 dark:border-slate-800 mb-12">
                     <h2 class="text-xl font-bold mb-4">Report New Issue</h2>
                     <div class="space-y-4">
-                        <input type="text" id="maintenanceTitle" placeholder="Equipment or Issue Name"
+                        <input type="text" id="maintenanceTitle" aria-label="Equipment or Issue Name" placeholder="Equipment or Issue Name"
                             class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
-                        <textarea id="maintenanceDesc" placeholder="Describe the problem..." rows="3"
+                        <textarea id="maintenanceDesc" aria-label="Maintenance Description" placeholder="Describe the problem..." rows="3"
                             class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500 resize-none"></textarea>
 
                         <div class="flex flex-col md:flex-row gap-4">
-                            <select id="maintenancePriority"
+                            <select id="maintenancePriority" aria-label="Maintenance Priority"
                                 class="flex-1 bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
                                 <option value="Low">Low Priority</option>
                                 <option value="Medium">Medium Priority</option>
@@ -1179,7 +1179,7 @@
                             <h3 class="text-xl font-black mb-2">System Layouts</h3>
                             <p class="text-xs text-sky-500 font-bold uppercase tracking-widest mb-6"
                                 id="aiSuggestionText">AI: Loading suggestions...</p>
-                            <select id="presetSelector" class="mb-4">
+                            <select id="presetSelector" aria-label="Preset Selector" class="mb-4">
                                 <option value="arbys">Arby's / Roast Beef</option>
                                 <option value="mcdonalds">McDonald's</option>
                                 <option value="tacobell">Taco Bell</option>
@@ -1416,19 +1416,19 @@
                     class="hidden bg-white dark:bg-slate-900 rounded-3xl p-6 md:p-8 shadow-sm border border-slate-100 dark:border-slate-800 mb-12">
                     <h2 class="text-xl font-bold mb-4">Add New Employee</h2>
                     <div class="space-y-4">
-                        <input type="text" id="empName" placeholder="Full Name"
+                        <input type="text" id="empName" aria-label="Full Name" placeholder="Full Name"
                             class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
-                        <input type="text" id="empRole" placeholder="Role (e.g. Cashier, Cook)"
+                        <input type="text" id="empRole" aria-label="Employee Role" placeholder="Role (e.g. Cashier, Cook)"
                             class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
 
                         <div class="grid md:grid-cols-2 gap-4">
-                            <input type="tel" id="empPhone" placeholder="Phone Number"
+                            <input type="tel" id="empPhone" aria-label="Phone Number" placeholder="Phone Number"
                                 class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
-                            <input type="email" id="empEmail" placeholder="Email Address"
+                            <input type="email" id="empEmail" aria-label="Email Address" placeholder="Email Address"
                                 class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
                         </div>
 
-                        <select id="empStatus" class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
+                        <select id="empStatus" aria-label="Employee Status" class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
                             <option value="Active">Active</option>
                             <option value="Inactive">Inactive</option>
                         </select>
@@ -1479,15 +1479,15 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                         <div>
                             <label class="block text-sm font-bold mb-2">Start Date</label>
-                            <input type="date" id="timeoffStartDate" class="w-full">
+                            <input type="date" id="timeoffStartDate" aria-label="Time Off Start Date" class="w-full">
                         </div>
                         <div>
                             <label class="block text-sm font-bold mb-2">End Date</label>
-                            <input type="date" id="timeoffEndDate" class="w-full">
+                            <input type="date" id="timeoffEndDate" aria-label="Time Off End Date" class="w-full">
                         </div>
                     </div>
                     <label class="block text-sm font-bold mb-2">Reason</label>
-                    <textarea id="timeoffReason" class="h-24 mb-6" placeholder="e.g. Vacation, Medical appointment..."></textarea>
+                    <textarea id="timeoffReason" aria-label="Time Off Reason" class="h-24 mb-6" placeholder="e.g. Vacation, Medical appointment..."></textarea>
                     <button id="btnSubmitTimeOff" onclick="submitTimeOffRequest()" class="btn btn-accent w-full py-4">Submit Request</button>
                 </div>
 

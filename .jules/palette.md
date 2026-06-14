@@ -29,3 +29,6 @@
 ## 2024-05-24 - ARIA labels for dynamic inputs and textareas lacking visible labels
 **Learning:** Inputs (`<input>`) and textareas (`<textarea>`) that lack a visible `<label>` but use a `placeholder` attribute are inaccessible for screen readers. This applies to UI components like `newRoutineTask`, `customPresetName`, `featureReqText`, and `shiftNoteContent` in `index.html`. Placeholders do not replace explicit labels.
 **Action:** Always provide an explicit `aria-label` attribute on form inputs and textareas if screen space prohibits a visible `<label>`. This ensures the purpose of the input is clearly communicated to screen reader users.
+## 2024-10-25 - Missing aria-labels in ezManage Forms
+**Learning:** In the ezManage frontend app, many inputs (especially hidden file inputs and inputs lacking explicit `<label for>` wrappers) and icon-only dynamic buttons (like Alpine `<i data-lucide>` toggles) were missing `aria-label` attributes, heavily reducing screen-reader accessibility.
+**Action:** Always ensure that any raw `<input>` or icon-only toggle buttons in dynamic templates receive an explicit `aria-label` when explicit labels cannot be associated.
