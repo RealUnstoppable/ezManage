@@ -183,6 +183,99 @@ exports.cancelSubscription = onRequest({invoker: "public"}, (req, res) => {
 });
 
 /**
+ * Manage Tasks API
+ * Handles creation, status updating, and deletion of shift tasks.
+ */
+exports.manageTasks = functions.https.onCall(async (data, context) => {
+  const adapted = adaptGen2Params(data, context);
+  data = adapted.data;
+  context = adapted.context;
+
+  if (!context || !context.auth) {
+    throw new HttpsError("unauthenticated", "User must be logged in.");
+  }
+
+  const { action, payload } = data;
+  const uid = context.auth.uid;
+
+  if (!action || !payload) {
+    throw new HttpsError("invalid-argument", "Missing action or payload");
+  }
+
+  try {
+    const userDoc = await admin.firestore().collection("users").doc(uid).get();
+    if (!userDoc.exists) {
+      throw new HttpsError("not-found", "User not found");
+    }
+
+    const isManager = userDoc.data().orgId === uid;
+    const actualOrgId = userDoc.data().orgId || uid;
+
+    if (action === "create") {
+      if (!isManager) {
+        throw new HttpsError("permission-denied", "Only managers can create tasks");
+      }
+      const { title, description, assigneeId, assigneeName } = payload;
+      if (!title || !assigneeId) {
+         throw new HttpsError("invalid-argument", "Missing required fields");
+      }
+      const newTask = {
+        title,
+        description: description || "",
+        assigneeId,
+        assigneeName,
+        orgId: actualOrgId,
+        authorId: uid,
+        status: "Pending",
+        createdAt: admin.firestore.FieldValue.serverTimestamp()
+      };
+      const docRef = await admin.firestore().collection("tasks").add(newTask);
+      return { success: true, id: docRef.id };
+    }
+
+    if (action === "updateStatus") {
+      const { taskId, status } = payload;
+      const taskRef = admin.firestore().collection("tasks").doc(taskId);
+      const taskDoc = await taskRef.get();
+      if (!taskDoc.exists) {
+        throw new HttpsError("not-found", "Task not found");
+      }
+      // Allow managers or the assignee to update
+      if (!isManager && taskDoc.data().assigneeId !== uid) {
+        throw new HttpsError("permission-denied", "Not authorized to update this task");
+      }
+      await taskRef.update({ status });
+      return { success: true };
+    }
+
+    if (action === "delete") {
+      if (!isManager) {
+        throw new HttpsError("permission-denied", "Only managers can delete tasks");
+      }
+      const { taskId } = payload;
+      const taskRef = admin.firestore().collection("tasks").doc(taskId);
+      const taskDoc = await taskRef.get();
+      if (!taskDoc.exists) {
+        throw new HttpsError("not-found", "Task not found");
+      }
+      if (taskDoc.data().orgId !== actualOrgId) {
+         throw new HttpsError("permission-denied", "Not authorized to delete this task");
+      }
+      await taskRef.delete();
+      return { success: true };
+    }
+
+    throw new HttpsError("invalid-argument", "Invalid action");
+  } catch (error) {
+    logManagerError(`Manage Tasks Error for uid: ${uid}`, error);
+    if (error instanceof HttpsError) {
+      throw error;
+    }
+    throw new HttpsError("internal", error.message);
+  }
+});
+
+/**
  * Manage Shift Notes API
  * Handles creation, updating, and resolution of shift notes.
  */
