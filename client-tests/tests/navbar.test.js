@@ -81,6 +81,12 @@ global.window.firebase = mockFirebase;
 global.firebase = mockFirebase;
 globalThis.firebase = mockFirebase;
 
+jest.unstable_mockModule('https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js', () => ({
+  onAuthStateChanged: jest.fn()
+}));
+jest.unstable_mockModule('https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js', () => ({
+  getDoc: jest.fn(), doc: jest.fn()
+}));
 jest.unstable_mockModule('../../js/auth.js', () => ({
   auth: { onAuthStateChanged: jest.fn() },
   db: { settings: jest.fn(), collection: jest.fn() },
