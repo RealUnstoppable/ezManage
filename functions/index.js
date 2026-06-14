@@ -2,8 +2,8 @@ const functions = require("firebase-functions");
 const {onRequest} = require("firebase-functions/v2/https");
 const HttpsError = functions.https.HttpsError;
 const admin = require("firebase-admin");
-const cors = require("cors")({ origin: true });
-const { adaptGen2Params, logManagerError } = require("./utils");
+const cors = require("cors")({origin: true});
+const {adaptGen2Params, logManagerError} = require("./utils");
 
 /**
  * Helper to get a document, verify its existence, and verify its orgId.
@@ -39,34 +39,47 @@ exports.createCheckoutSession = onRequest({invoker: "public"}, (req, res) => {
       return res.status(405).send("Method Not Allowed");
     }
 
-    const {uid, email, plan, amount, successUrl, cancelUrl} = req.body;
+    const {uid, email, plan, successUrl, cancelUrl} = req.body;
 
     let lineItems;
 
-    // If the frontend passed a specific discounted amount (Sale or Referral)
-    if (amount) {
-      const productId = plan === "Business Pro" ?
-        "prod_UFnBrTwFCgb54A" :
-        "prod_UFn8zqZ0mwyy5r";
-      lineItems = [{
-        price_data: {
-          currency: "usd",
-          product: productId,
-          recurring: {interval: "year"},
-          // Stripe requires amounts in cents
-          unit_amount: Math.round(amount * 100),
-        },
-        quantity: 1,
-      }];
-    } else {
-      // 🔴 Fallback to Actual Price IDs if no custom amount was provided
-      const priceId = plan === "Business Pro" ?
-        "price_1THHbVBp2C5GdKaKvCVoMf1X" :
-        "price_1THHYPBp2C5GdKaKxNpqndNE";
-      lineItems = [{price: priceId, quantity: 1}];
-    }
-
     try {
+      let finalPrice = null;
+
+      if (uid) {
+        const userDoc = await admin.firestore().collection("users").doc(uid).get();
+        if (userDoc.exists) {
+          const userData = userDoc.data();
+          if (userData && userData.hasPromoCode) {
+            const basePrice = (plan === "Business Pro") ? 207 : 61;
+            finalPrice = basePrice * 0.9;
+          }
+        }
+      }
+
+      if (finalPrice !== null) {
+        finalPrice = Math.floor(finalPrice);
+        const productId = plan === "Business Pro" ?
+          "prod_UFnBrTwFCgb54A" :
+          "prod_UFn8zqZ0mwyy5r";
+        lineItems = [{
+          price_data: {
+            currency: "usd",
+            product: productId,
+            recurring: {interval: "year"},
+            // Stripe requires amounts in cents
+            unit_amount: Math.round(finalPrice * 100),
+          },
+          quantity: 1,
+        }];
+      } else {
+        // 🔴 Fallback to Actual Price IDs if no custom amount was provided
+        const priceId = plan === "Business Pro" ?
+          "price_1THHbVBp2C5GdKaKvCVoMf1X" :
+          "price_1THHYPBp2C5GdKaKxNpqndNE";
+        lineItems = [{price: priceId, quantity: 1}];
+      }
+
       const session = await stripe.checkout.sessions.create({
         mode: "subscription",
         client_reference_id: uid,
@@ -185,6 +198,99 @@ exports.cancelSubscription = onRequest({invoker: "public"}, (req, res) => {
       res.status(500).json({error: err.message});
     }
   });
+});
+
+/**
+ * Manage Tasks API
+ * Handles creation, status updating, and deletion of shift tasks.
+ */
+exports.manageTasks = functions.https.onCall(async (data, context) => {
+  const adapted = adaptGen2Params(data, context);
+  data = adapted.data;
+  context = adapted.context;
+
+  if (!context || !context.auth) {
+    throw new HttpsError("unauthenticated", "User must be logged in.");
+  }
+
+  const { action, payload } = data;
+  const uid = context.auth.uid;
+
+  if (!action || !payload) {
+    throw new HttpsError("invalid-argument", "Missing action or payload");
+  }
+
+  try {
+    const userDoc = await admin.firestore().collection("users").doc(uid).get();
+    if (!userDoc.exists) {
+      throw new HttpsError("not-found", "User not found");
+    }
+
+    const isManager = userDoc.data().orgId === uid;
+    const actualOrgId = userDoc.data().orgId || uid;
+
+    if (action === "create") {
+      if (!isManager) {
+        throw new HttpsError("permission-denied", "Only managers can create tasks");
+      }
+      const { title, description, assigneeId, assigneeName } = payload;
+      if (!title || !assigneeId) {
+         throw new HttpsError("invalid-argument", "Missing required fields");
+      }
+      const newTask = {
+        title,
+        description: description || "",
+        assigneeId,
+        assigneeName,
+        orgId: actualOrgId,
+        authorId: uid,
+        status: "Pending",
+        createdAt: admin.firestore.FieldValue.serverTimestamp()
+      };
+      const docRef = await admin.firestore().collection("tasks").add(newTask);
+      return { success: true, id: docRef.id };
+    }
+
+    if (action === "updateStatus") {
+      const { taskId, status } = payload;
+      const taskRef = admin.firestore().collection("tasks").doc(taskId);
+      const taskDoc = await taskRef.get();
+      if (!taskDoc.exists) {
+        throw new HttpsError("not-found", "Task not found");
+      }
+      // Allow managers or the assignee to update
+      if (!isManager && taskDoc.data().assigneeId !== uid) {
+        throw new HttpsError("permission-denied", "Not authorized to update this task");
+      }
+      await taskRef.update({ status });
+      return { success: true };
+    }
+
+    if (action === "delete") {
+      if (!isManager) {
+        throw new HttpsError("permission-denied", "Only managers can delete tasks");
+      }
+      const { taskId } = payload;
+      const taskRef = admin.firestore().collection("tasks").doc(taskId);
+      const taskDoc = await taskRef.get();
+      if (!taskDoc.exists) {
+        throw new HttpsError("not-found", "Task not found");
+      }
+      if (taskDoc.data().orgId !== actualOrgId) {
+         throw new HttpsError("permission-denied", "Not authorized to delete this task");
+      }
+      await taskRef.delete();
+      return { success: true };
+    }
+
+    throw new HttpsError("invalid-argument", "Invalid action");
+  } catch (error) {
+    logManagerError(`Manage Tasks Error for uid: ${uid}`, error);
+    if (error instanceof HttpsError) {
+      throw error;
+    }
+    throw new HttpsError("internal", error.message);
+  }
 });
 
 /**
@@ -311,7 +417,7 @@ exports.manageEmployees = functions.https.onCall(async (data, context) => {
     const actualOrgId = userDoc.data().orgId || null;
 
     if (!actualOrgId) {
-       throw new HttpsError("permission-denied", "User must be part of an organization.");
+      throw new HttpsError("permission-denied", "User must be part of an organization.");
     }
 
     if (action === "create") {
@@ -336,12 +442,12 @@ exports.manageEmployees = functions.https.onCall(async (data, context) => {
 
     if (action === "get") {
       const snapshot = await admin.firestore().collection("employees")
-        .where("orgId", "==", actualOrgId)
-        .where("status", "==", "Active")
-        .get();
+          .where("orgId", "==", actualOrgId)
+          .where("status", "==", "Active")
+          .get();
 
       const employees = [];
-      snapshot.forEach(doc => employees.push({id: doc.id, ...doc.data()}));
+      snapshot.forEach((doc) => employees.push({id: doc.id, ...doc.data()}));
       return {success: true, employees};
     }
 
@@ -367,13 +473,37 @@ exports.manageEmployees = functions.https.onCall(async (data, context) => {
 
        await empRef.update(updates);
        return {success: true};
+      const {empId, name, role, phone, status} = payload;
+      if (!empId) {
+        throw new HttpsError("invalid-argument", "Missing employee ID");
+      }
+
+      const empRef = admin.firestore().collection("employees").doc(empId);
+      const empDoc = await empRef.get();
+
+      if (!empDoc.exists) {
+        throw new HttpsError("not-found", "Employee not found");
+      }
+
+      if (empDoc.data().orgId !== actualOrgId) {
+        throw new HttpsError("permission-denied", "Unauthorized to update this employee");
+      }
+
+      const updates = {};
+      if (name !== undefined) updates.name = name;
+      if (role !== undefined) updates.role = role;
+      if (phone !== undefined) updates.phone = phone;
+      if (status !== undefined) updates.status = status;
+
+      await empRef.update(updates);
+      return {success: true};
     }
 
     if (action === "delete") {
-       const {empId} = payload;
-       if (!empId) {
-          throw new HttpsError("invalid-argument", "Missing employee ID");
-       }
+      const {empId} = payload;
+      if (!empId) {
+        throw new HttpsError("invalid-argument", "Missing employee ID");
+      }
 
        const { docRef: empRef } = await verifyDocAndAuth(
          "employees",
@@ -382,10 +512,20 @@ exports.manageEmployees = functions.https.onCall(async (data, context) => {
          "Employee not found",
          "Unauthorized to delete this employee"
        );
+      const empRef = admin.firestore().collection("employees").doc(empId);
+      const empDoc = await empRef.get();
 
-       // Soft delete
-       await empRef.update({ status: "Inactive" });
-       return {success: true};
+      if (!empDoc.exists) {
+        throw new HttpsError("not-found", "Employee not found");
+      }
+
+      if (empDoc.data().orgId !== actualOrgId) {
+        throw new HttpsError("permission-denied", "Unauthorized to delete this employee");
+      }
+
+      // Soft delete
+      await empRef.update({status: "Inactive"});
+      return {success: true};
     }
 
     throw new HttpsError("invalid-argument", "Invalid action");
