@@ -4,6 +4,14 @@
 <head>
   <script type="module">
     import { escapeHTML } from '/js/utils.js';
+    import { loadNavbar } from '/js/navbar.js';
+    import { loadFooter } from '/js/footer.js';
+
+    document.addEventListener('DOMContentLoaded', () => {
+        loadNavbar();
+        loadFooter();
+    });
+
     window.escapeHTML = escapeHTML;
   </script>
 
@@ -323,6 +331,8 @@
 </head>
 
 <body x-data="{ annual: true, mobileMenu: false }">
+    <header class="main-header"></header>
+
 
     <div id="tosModal"
         class="hidden fixed inset-0 z-[100] bg-black/80 flex items-center justify-center p-6 backdrop-blur-sm no-print"
@@ -1666,7 +1676,7 @@
 
         const firebaseConfig = {
             apiKey: "AIzaSyBgrI9HwJPSc5b4pu2Egsv4DE7shNwptSw",
-            authDomain: "dts-hub-website.firebaseapp.com",
+            authDomain: "ezmanage.realunstoppable.store",
             projectId: "dts-hub-website",
             storageBucket: "dts-hub-website.firebasestorage.app",
             messagingSenderId: "48345990988",
@@ -1676,11 +1686,12 @@
 
         if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
         const auth = firebase.auth();
+
         firebase.firestore().settings({
             experimentalForceLongPolling: true
         });
         const db = firebase.firestore();
-        db.settings({ experimentalForceLongPolling: true });
+
         const cloudFunctions = firebase.functions();
 
         db.enablePersistence().catch(err => console.error("Offline sync error:", err));
@@ -1798,13 +1809,13 @@
                             localStorage.removeItem('navTo');
                             navTo(pendingNavTo);
                         } else {
-                            const activeView = document.querySelector('.view-section.active');
+                            let activeView = document.querySelector('.view-section.active');
                             if (activeView && activeView.id === 'view-auth') navTo('tracker');
                         }
                         runAIPatternLogic();
                     } else {
                         if (!doc.exists) {
-                            const activeView = document.querySelector('.view-section.active');
+                            activeView = document.querySelector('.view-section.active');
                             if (activeView && activeView.id !== 'view-setup') {
                                 try {
                                     const emailDoc = await db.collection("users").doc(user.email).get();
@@ -1825,6 +1836,7 @@
                             navTo('tracker');
                         }
 
+                        activeView = document.querySelector('.view-section.active');
                         const activeView2 = document.querySelector('.view-section.active');
                         if (!navigator.onLine) {
                             if (activeView2 && activeView2.id !== 'view-tracker') navTo('tracker');
@@ -1844,7 +1856,7 @@
                     localStorage.removeItem('navTo');
                     navTo(pendingNavTo);
                 } else {
-                    const activeView = document.querySelector('.view-section.active');
+                    activeView = document.querySelector('.view-section.active');
                     if (activeView && activeView.id !== 'view-auth' && activeView.id !== 'view-tracker') navTo('auth');
                 }
                 isInitializingAuth = false;
@@ -2059,6 +2071,7 @@
                 localStorage.setItem('navTo', viewId);
                 return;
             }
+            if (!currentUser && (['history', 'presets', 'performance', 'request', 'profile', 'shiftNotes', 'employees', 'timeoff', 'team'].includes(viewId))) {
             if (!currentUser && (['history', 'presets', 'performance', 'request', 'profile', 'shiftNotes', 'team', 'employees', 'timeoff'].includes(viewId))) {
                 viewId = 'auth';
             }
@@ -3631,15 +3644,7 @@
             }
         }
 
-        async function deleteEmployee(id) {
-            if (!confirm("Are you sure you want to permanently delete this employee?")) return;
-            try {
-                await db.collection('employees').doc(id).delete();
-            } catch (err) {
-                console.error("Error deleting employee:", err);
-                alert("Failed to delete employee.");
-            }
-        }
+
 
         function populateScheduleDropdown() {
             const select = document.getElementById('shiftEmpName');
@@ -3878,9 +3883,6 @@
                 });
         }
 
-function checkAndRenderOrgControls() {
-
-
         function checkAndRenderOrgControls() {
             if (!currentUser) return false;
 
@@ -4087,12 +4089,19 @@ function checkAndRenderOrgControls() {
                     priority: priority,
                     status: 'Active',
                     orgId: currentUserData.orgId,
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
                     timestamp: firebase.firestore.FieldValue.serverTimestamp()
                 });
 
                 document.getElementById('shiftNoteContent').value = "";
                 fetchShiftNotes();
             } catch (err) {
+                console.error(err);
+                if (err.code === 'unavailable' || err.code === 'auth/network-request-failed') {
+                    alert("Network error: Could not submit shift note. Please check your connection.");
+                } else {
+                    alert("Failed to submit shift note. " + err.message);
                 console.error("Error posting note", err);
                 if (err.code === 'unavailable' || err.code === 'auth/network-request-failed') {
                     alert("Network error: Could not connect to the server. Please check your connection.");
@@ -4658,6 +4667,7 @@ function checkAndRenderOrgControls() {
         }
 
     </script>
+    <footer class="main-footer"></footer>
 
     <!-- Organization Tutorial Modal -->
     <div id="orgTutorialModal"

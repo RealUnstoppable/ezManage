@@ -1,8 +1,15 @@
+import { getFirebaseErrorMessage, logManagerError } from "./utils.js";
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
+import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, sendEmailVerification } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
+import { getFirestore, doc, setDoc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
+
+
 import { getFirebaseErrorMessage, logManagerError } from './utils.js';
 
 const firebaseConfig = {
   apiKey: "AIzaSyBgrI9HwJPSc5b4pu2Egsv4DE7shNwptSw",
-  authDomain: "dts-hub-website.firebaseapp.com",
+  authDomain: "ezmanage.realunstoppable.store",
   projectId: "dts-hub-website",
   storageBucket: "dts-hub-website.firebasestorage.app",
   messagingSenderId: "48345990988",
@@ -15,10 +22,7 @@ if (!window.firebase) { console.error("Firebase Compat SDK must be loaded before
 export const auth = window.firebase ? window.firebase.auth() : {};
 export const db = window.firebase ? window.firebase.firestore() : {};
 
-// Fallback for network reliability to bypass CORS/network errors
-if (db.settings) {
-    db.settings({ experimentalForceLongPolling: true });
-}
+
 
 export function getUserRedirectPath(userData) {
     return userData && userData.isAdmin ? 'admin.html' : 'index.html';
