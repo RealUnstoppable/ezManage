@@ -3321,9 +3321,8 @@
                                         <p class="text-sm text-slate-500">Reported by ${escapeHTML(ticket.reportedByName)} • ${dateStr}</p>
                                     </div>
                                     <div class="flex gap-2 items-start">
-                                        <span class="px-3 py-1 rounded-full text-xs font-bold ${prioColors[ticket.priority] || prioColors['Low']}">${ticket.priority}</span>
-                                        <select class="px-3 py-1 rounded-full text-xs font-bold border appearance-none cursor-pointer focus:outline-none ${statusColors[ticket.status] || statusColors['Open']}"
-                                            onchange="updateTicketStatus('${ticket.id}', this.value)">
+                                        <span class="px-3 py-1 rounded-full text-xs font-bold ${prioColors[ticket.priority] || prioColors['Low']}">${escapeHTML(ticket.priority)}</span>
+                                        <select class="ticket-status-select px-3 py-1 rounded-full text-xs font-bold border appearance-none cursor-pointer focus:outline-none ${statusColors[ticket.status] || statusColors['Open']}" data-ticket-id="${escapeHTML(ticket.id)}">
                                             <option value="Open" ${ticket.status === 'Open' ? 'selected' : ''}>Open</option>
                                             <option value="In Progress" ${ticket.status === 'In Progress' ? 'selected' : ''}>In Progress</option>
                                             <option value="Resolved" ${ticket.status === 'Resolved' ? 'selected' : ''}>Resolved</option>
@@ -3339,6 +3338,15 @@
                     container.innerHTML = `<div class="text-red-500 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl text-center">Failed to load tickets: ${escapeHTML(err.message)}</div>`;
                 });
         }
+
+        document.getElementById('maintenanceContainer').addEventListener('change', function(e) {
+            if (e.target && e.target.classList.contains('ticket-status-select')) {
+                const ticketId = e.target.getAttribute('data-ticket-id');
+                if (ticketId) {
+                    updateTicketStatus(ticketId, e.target.value);
+                }
+            }
+        });
 
         async function updateTicketStatus(ticketId, newStatus) {
             try {
