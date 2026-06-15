@@ -122,6 +122,7 @@ async function updateCartState(mutationFn, errorMessage) {
         renderCart();
         await saveCart();
     } catch (error) {
+
         logManagerError(`${errorMessage}:`, error);
         cart = originalCart;
         renderCart();
@@ -155,7 +156,8 @@ async function saveCart() {
             const userCartRef = doc(db, 'carts', currentUser.uid);
             await setDoc(userCartRef, { items: cart });
         } catch (error) {
-            logManagerError(`Error saving cart to Firestore for uid: ${currentUser.uid}`, error);
+            logManagerError("Error saving cart to Firestore for uid: " + currentUser.uid, error);
+
         }
     } else {
         localStorage.setItem('localCart', JSON.stringify(cart));
@@ -237,6 +239,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 localStorage.removeItem('localCart');
             } catch (error) {
                 logManagerError("Error loading cart during auth state change:", error);
+
                 cart = localCart;
             }
         } else {
