@@ -23,9 +23,22 @@
 ## 2024-05-24 - [DOM Append Bottleneck in Admin Dashboard]
 **Learning:** Sequential `appendChild` calls within loops (e.g., rendering table rows in `admin.html` and `harmonytunes.js`) create performance bottlenecks by causing repetitive DOM layout recalculations.
 **Action:** Replace sequential `appendChild` inside loops with a single `innerHTML` assignment using array `.map().join('')` for faster, batched string insertions. When event listeners need to be attached programmatically to each node, use a `DocumentFragment` to batch the DOM insertions instead.
+## 2026-05-26 - [Firebase Singleton Initialization]
+**Learning:** Initializing Firebase using `initializeApp` directly without checking if an app instance already exists can cause token mismatches and crashes during hot-module reloading or consecutive imports. Furthermore, `initializeFirestore` will throw an error if Firestore is already initialized on an existing app instance.
+**Action:** Always wrap initialization logic as a singleton: `const app = !getApps().length ? initializeApp(config) : getApp()`. Wrap `initializeFirestore` in a `try/catch` and fallback to `getFirestore(app)` if it throws.
 ## 2026-05-13 - [DOM Insertions Bottleneck]
 **Learning:** Sequential calls to `appendChild()` inside loops cause expensive layout thrashing and repaint cycles on the main thread, leading to perceived UI jank during rendering.
 **Action:** Always batch DOM insertions using a `DocumentFragment` (`document.createDocumentFragment()`) before appending the entire batch to the live DOM in a single operation.
-## 2024-05-24 - [DOM Insertions Bottleneck in company.html]
-**Learning:** Sequential calls to `appendChild()` inside loops cause expensive layout thrashing and repaint cycles on the main thread, leading to perceived UI jank during rendering.
-**Action:** Always batch DOM insertions using a `DocumentFragment` (`document.createDocumentFragment()`) before appending the entire batch to the live DOM in a single operation.
+## 2026-05-13 - [Interval Layout Thrashing]
+**Learning:** Frequent interval updates (like `setInterval(fn, 1000)`) that write to the DOM (`element.textContent = value`) force the browser to recalculate layout and repaint, even if the new text value is identical to the old one, leading to unnecessary battery drain and layout thrashing.
+**Action:** Always cache the current state locally within the closure or class and wrap the DOM assignment in a strict equality check (`if (newValue !== lastValue)`) so the browser only repaints when the actual visible content changes.
+## 2024-05-24 - [Interval DOM Property Updates]
+**Learning:** In polling loops (e.g., `setInterval`), repeatedly setting a DOM property like `textContent` with an identical value can still trigger layout thrashing and function evaluations.
+**Action:** Always cache the calculated state (e.g., `lastGreeting`) before applying changes, and wrap the DOM assignments in an `if (newState !== lastState)` condition.
+
+## 2026-06-03 - [O(n²) DOM Updates in Dashboard Metrics Avoidance]
+**Learning:** In dashboards loading and iterating through snapshot data (like `fetchGlobalMetrics`), using `appendChild` inside a loop causes layout thrashing and repaint cycles on the main thread.
+**Action:** Replace sequential `appendChild` inside loops with array accumulation using `.map().join('')` before setting `.innerHTML` once.
+## 2024-05-27 - Batch DOM insertions with DocumentFragment
+**Learning:** In vanilla JS loops where elements are individually appended to the DOM (e.g. \`tbody.appendChild(tr)\`), layout thrashing can occur causing performance issues, specifically for lists with many items.
+**Action:** Always batch DOM insertions using a \`DocumentFragment\` when appending multiple elements in a loop.
