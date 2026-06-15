@@ -80,6 +80,7 @@ global.window = global.window || {};
 global.window.firebase = mockFirebase;
 global.firebase = mockFirebase;
 globalThis.firebase = mockFirebase;
+global.firebase = mockFirebase;
 
 jest.unstable_mockModule('https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js', () => ({
   onAuthStateChanged: jest.fn()
@@ -92,6 +93,15 @@ jest.unstable_mockModule('../../js/auth.js', () => ({
   db: { settings: jest.fn(), collection: jest.fn() },
   getUserRedirectPath: (userData) => userData && userData.isAdmin ? 'admin.html' : 'index.html',
   fetchUserDoc: jest.fn()
+}));
+
+jest.unstable_mockModule('https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js', () => ({
+  onAuthStateChanged: jest.fn()
+}));
+
+jest.unstable_mockModule('https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js', () => ({
+  getDoc: jest.fn(),
+  doc: jest.fn()
 }));
 
 describe('loadNavbar', () => {
