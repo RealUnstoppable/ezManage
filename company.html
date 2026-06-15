@@ -1756,6 +1756,10 @@
 
             if (tbody) tbody.appendChild(fragment);
 
+            if (tbody) {
+                tbody.appendChild(fragment);
+            }
+
             document.getElementById('globalShifts').innerText = totalShifts;
             document.getElementById('globalRoutineScore').innerText = totalLogsWithScores > 0 ? Math.round(totalScore / totalLogsWithScores) + "%" : "0%";
             if(window.lucide) lucide.createIcons();
