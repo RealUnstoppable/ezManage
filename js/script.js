@@ -78,6 +78,9 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         };
 
+        let lastGreeting = null;
+        let lastShouldPlay = null;
+
         const updateGreeting = () => {
             const now = new Date();
 
@@ -85,21 +88,24 @@ document.addEventListener('DOMContentLoaded', () => {
             const endOfCelebration = new Date('January 1, 2026 23:59:59');
             const revertDate = new Date('January 2, 2026 00:00:00');
 
+            let nextGreeting = "";
+            let nextShouldPlay = false;
+
             if (now >= revertDate) {
                  const currentHour = now.getHours();
                  if (currentHour < 12) {
-                     greetingElement.textContent = "Good Morning.";
+                     nextGreeting = "Good Morning.";
                  } else if (currentHour < 18) {
-                     greetingElement.textContent = "Good Afternoon.";
+                     nextGreeting = "Good Afternoon.";
                  } else {
-                     greetingElement.textContent = "Good Evening.";
+                     nextGreeting = "Good Evening.";
                  }
-                 manageVideoBackground(false);
+                 nextShouldPlay = false;
             }
 
             else if (now >= newYear2026 && now <= endOfCelebration) {
-                greetingElement.textContent = "Happy New Year!";
-                manageVideoBackground(true);
+                nextGreeting = "Happy New Year!";
+                nextShouldPlay = true;
             }
 
             else {
@@ -111,9 +117,18 @@ document.addEventListener('DOMContentLoaded', () => {
                     const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
                     const seconds = Math.floor((diff % (1000 * 60)) / 1000);
 
-                    greetingElement.textContent = `New Years Countdown: ${days}d ${hours}h ${minutes}m ${seconds}s`;
+                    nextGreeting = `New Years Countdown: ${days}d ${hours}h ${minutes}m ${seconds}s`;
                 }
-                manageVideoBackground(false);
+                nextShouldPlay = false;
+            }
+
+            if (nextGreeting !== lastGreeting) {
+                greetingElement.textContent = nextGreeting;
+                lastGreeting = nextGreeting;
+            }
+            if (nextShouldPlay !== lastShouldPlay) {
+                manageVideoBackground(nextShouldPlay);
+                lastShouldPlay = nextShouldPlay;
             }
         };
 

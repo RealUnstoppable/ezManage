@@ -90,7 +90,6 @@ exports.stripeWebhook = onRequest({invoker: "public"}, async (req, res) => {
   try {
     event = stripe.webhooks.constructEvent(req.rawBody, sig, endpointSecret);
   } catch (err) {
-    console.error("Manager Troubleshooting: Webhook Error:", err);
     logManagerError("Webhook Error:", err);
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
@@ -262,8 +261,7 @@ exports.manageShiftNotes = functions.https.onCall(async (data, context) => {
     throw new HttpsError(
         "invalid-argument", "Invalid action");
   } catch (error) {
-    logManagerError("Shift Note Error for uid:", uid, error);
-    logManagerError("Shift Note Error:", error);
+    logManagerError(`Shift Note Error for uid: ${uid}`, error);
     throw new HttpsError("internal", error.message);
   }
 });
@@ -565,8 +563,7 @@ exports.manageShiftGroups = functions.https.onCall(async (data, context) => {
 
     throw new HttpsError("invalid-argument", "Invalid action");
   } catch (error) {
-    logManagerError("Shift Groups Error for uid:", uid, error);
-    logManagerError("Shift Groups Error:", error);
+    logManagerError(`Shift Groups Error for uid: ${uid}`, error);
     if (error instanceof HttpsError) {
       throw error;
     }
