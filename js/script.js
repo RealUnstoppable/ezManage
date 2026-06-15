@@ -154,6 +154,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 greetingElement.textContent = newGreeting;
                 lastGreeting = newGreeting;
             }
+            manageVideoBackground(shouldPlayVideo);
         };
 
         updateGreeting();

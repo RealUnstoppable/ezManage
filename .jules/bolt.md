@@ -29,6 +29,9 @@
 ## 2026-05-13 - [DOM Insertions Bottleneck]
 **Learning:** Sequential calls to `appendChild()` inside loops cause expensive layout thrashing and repaint cycles on the main thread, leading to perceived UI jank during rendering.
 **Action:** Always batch DOM insertions using a `DocumentFragment` (`document.createDocumentFragment()`) before appending the entire batch to the live DOM in a single operation.
+## 2026-05-13 - [Interval Layout Thrashing]
+**Learning:** Frequent interval updates (like `setInterval(fn, 1000)`) that write to the DOM (`element.textContent = value`) force the browser to recalculate layout and repaint, even if the new text value is identical to the old one, leading to unnecessary battery drain and layout thrashing.
+**Action:** Always cache the current state locally within the closure or class and wrap the DOM assignment in a strict equality check (`if (newValue !== lastValue)`) so the browser only repaints when the actual visible content changes.
 ## 2024-05-24 - [Interval DOM Property Updates]
 **Learning:** In polling loops (e.g., `setInterval`), repeatedly setting a DOM property like `textContent` with an identical value can still trigger layout thrashing and function evaluations.
 **Action:** Always cache the calculated state (e.g., `lastGreeting`) before applying changes, and wrap the DOM assignments in an `if (newState !== lastState)` condition.
