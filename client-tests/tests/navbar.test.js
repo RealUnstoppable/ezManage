@@ -176,6 +176,9 @@ describe('loadNavbar', () => {
       exists: true,
       data: () => ({ isAdmin: false })
     });
+    authModule.db.collection.mockReturnValue({
+      doc: jest.fn().mockReturnValue({ get: mockGet })
+    });
 
     db.collection.mockReturnValueOnce({
       doc: jest.fn().mockReturnValueOnce({

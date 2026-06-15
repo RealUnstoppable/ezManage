@@ -734,8 +734,7 @@
                                 <div class="flex items-center gap-3"><i data-lucide="list-checks"
                                         class="text-sky-500"></i>
                                     Routine & ServSafe</div>
-                                <i data-lucide="chevron-down" class="transition-transform no-print"
-                                    :class="expanded ? 'rotate-180' : ''"></i>
+                                <i data-lucide="chevron-down" class="transition-transform no-print" :class="expanded ? 'rotate-180' : ''"></i>
                             </button>
                         </h3>
                         <div x-show="expanded" x-transition>
@@ -755,8 +754,7 @@
                                 <div class="flex items-center gap-3"><i data-lucide="beef" class="text-amber-600"></i>
                                     Prep
                                     & Labor Stats</div>
-                                <i data-lucide="chevron-down" class="transition-transform no-print"
-                                    :class="expanded ? 'rotate-180' : ''"></i>
+                                <i data-lucide="chevron-down" class="transition-transform no-print" :class="expanded ? 'rotate-180' : ''"></i>
                             </button>
                         </h3>
                         <div x-show="expanded" x-transition class="mt-4">
@@ -801,8 +799,7 @@
                                 <div class="flex items-center gap-3"><i data-lucide="banknote"
                                         class="text-emerald-500"></i>
                                     Cash & Registers</div>
-                                <i data-lucide="chevron-down" class="transition-transform no-print"
-                                    :class="expanded ? 'rotate-180' : ''"></i>
+                                <i data-lucide="chevron-down" class="transition-transform no-print" :class="expanded ? 'rotate-180' : ''"></i>
                             </button>
                         </h3>
                         <div x-show="expanded" x-transition class="mt-4">
@@ -4097,7 +4094,7 @@ function checkAndRenderOrgControls() {
                         <div class="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700">
                             <span class="text-xs font-bold text-slate-500 uppercase">Group ID:</span>
                             <span class="text-sm font-mono font-bold">${currentUserData.orgId}</span>
-                            <button aria-label="Copy Group ID" onclick="navigator.clipboard.writeText('${currentUserData.orgId}'); alert('Group ID Copied!')" class="text-sky-500 hover:text-sky-600"><i data-lucide="copy" class="w-3.5 h-3.5"></i></button>
+                            <button aria-label="Copy Group ID" data-org-id="${escapeHTML(currentUserData.orgId)}" class="copy-group-id-btn text-sky-500 hover:text-sky-600"><i data-lucide="copy" class="w-3.5 h-3.5"></i></button>
                         </div>
                     `;
                     fetchGroupRequests(currentUserData.orgId);
@@ -5227,7 +5224,82 @@ function checkAndRenderOrgControls() {
                     .catch(err => console.error("Service Worker Registration Failed:", err));
             }
 
-            window.addEventListener('offline', updateNetworkStatus);
+
+        // Event delegation for dynamically added buttons to prevent XSS
+        document.addEventListener('click', function(e) {
+            const copyGroupIdBtn = e.target.closest('.copy-group-id-btn');
+            if (copyGroupIdBtn) {
+                e.preventDefault();
+                navigator.clipboard.writeText(copyGroupIdBtn.dataset.orgId);
+                alert('Group ID Copied!');
+                return;
+            }
+
+            const deleteTimeoffBtn = e.target.closest('.delete-timeoff-btn');
+            if (deleteTimeoffBtn) {
+                e.preventDefault();
+                deleteTimeOffRequest(deleteTimeoffBtn.dataset.requestId);
+                return;
+            }
+
+            const updateTimeoffBtn = e.target.closest('.update-timeoff-btn');
+            if (updateTimeoffBtn) {
+                e.preventDefault();
+                updateTimeOffStatus(updateTimeoffBtn.dataset.requestId, updateTimeoffBtn.dataset.status);
+                return;
+            }
+
+            const toggleEmployeeBtn = e.target.closest('.toggle-employee-btn');
+            if (toggleEmployeeBtn) {
+                e.preventDefault();
+                toggleEmployeeStatus(toggleEmployeeBtn.dataset.employeeId, toggleEmployeeBtn.dataset.employeeStatus);
+                return;
+            }
+
+            const deleteEmployeeBtn = e.target.closest('.delete-employee-btn');
+            if (deleteEmployeeBtn) {
+                e.preventDefault();
+                deleteEmployee(deleteEmployeeBtn.dataset.employeeId);
+                return;
+            }
+
+            const removeShiftBtn = e.target.closest('.remove-shift-btn');
+            if (removeShiftBtn) {
+                e.preventDefault();
+                removeShift(parseInt(removeShiftBtn.dataset.shiftIndex, 10));
+                return;
+            }
+
+            const resolveShiftNoteBtn = e.target.closest('.resolve-shift-note-btn');
+            if (resolveShiftNoteBtn) {
+                e.preventDefault();
+                resolveShiftNote(resolveShiftNoteBtn.dataset.noteId);
+                return;
+            }
+
+            const approveGroupRequestBtn = e.target.closest('.approve-group-request-btn');
+            if (approveGroupRequestBtn) {
+                e.preventDefault();
+                approveGroupRequest(approveGroupRequestBtn.dataset.requestId);
+                return;
+            }
+
+            const retractGroupRequestBtn = e.target.closest('.retract-group-request-btn');
+            if (retractGroupRequestBtn) {
+                e.preventDefault();
+                retractGroupRequest(retractGroupRequestBtn.dataset.requestId);
+                return;
+            }
+
+            const editEmployeeBtn = e.target.closest('.edit-employee-btn');
+            if (editEmployeeBtn) {
+                e.preventDefault();
+                openEditEmployeeModal(editEmployeeBtn.dataset.employeeId);
+                return;
+            }
+        });
+
+        window.addEventListener('offline', updateNetworkStatus);
             window.addEventListener('online', updateNetworkStatus);
             updateNetworkStatus();
         };
