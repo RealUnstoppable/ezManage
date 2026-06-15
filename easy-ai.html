@@ -167,7 +167,7 @@
                     <div id="statusIndicator" class="w-2 h-2 rounded-full bg-slate-300"></div>
                     <span class="text-[10px] font-black uppercase tracking-widest text-slate-500">Initializing</span>
                 </div>
-                <button onclick="toggleSidebar()" class="text-slate-400 hover:text-sky-500 transition-colors"
+                <button onclick="toggleSidebar()" class="text-black dark:text-white hover:text-sky-500 transition-colors"
                     aria-label="Open sidebar menu">
                     <i data-lucide="menu" class="w-6 h-6"></i>
                 </button>
@@ -201,16 +201,21 @@
     </div>
 
     <aside id="sidebar"
-        class="fixed inset-y-0 left-0 w-80 bg-white dark:bg-slate-950 z-[60] shadow-2xl border-r border-slate-100 dark:border-slate-800 p-8 no-print">
-        <div class="flex justify-between items-center mb-12">
+        class="fixed inset-y-0 left-0 w-80 bg-white dark:bg-slate-950 z-[60] shadow-2xl border-r border-slate-100 dark:border-slate-800 no-print flex flex-col">
+        
+        <div class="flex justify-between items-center p-8 pb-4 shrink-0">
             <span class="font-black uppercase tracking-widest text-xs">Menu</span>
-            <button onclick="toggleSidebar()" class="p-2" aria-label="Close menu"><i data-lucide="x"></i></button>
+            <button onclick="toggleSidebar()" class="p-2 text-black dark:text-white hover:text-sky-500" aria-label="Close menu"><i data-lucide="x"></i></button>
         </div>
 
-        <nav class="space-y-6">
+        <div class="flex-1 overflow-y-auto overscroll-contain px-8 py-4 custom-scrollbar">
+            <nav class="space-y-6">
             <a href="#" onclick="navTo('tracker')"
                 class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="edit-3"></i> Active
                 Tracker</a>
+            <a href="#" onclick="navTo('schedule')"
+                class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="calendar"></i>
+                Schedule</a>
             <a href="easy-ai.html" class="flex items-center gap-4 font-bold text-lg text-sky-500 hover:text-sky-600"><i
                     data-lucide="brain"></i> AI Predictor</a>
             <a href="#" onclick="navTo('presets')"
@@ -219,6 +224,20 @@
             <a href="#" onclick="navTo('history')"
                 class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="clock"></i>
                 History</a>
+            <a href="#" onclick="navTo('shiftNotes')"
+                class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i
+                    data-lucide="clipboard-list"></i>
+                Shift Notes</a>
+            <a href="#" onclick="navTo('team')"
+                class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="users"></i>
+                Team Directory</a>
+            <a href="#" onclick="navTo('employees')"
+                class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i
+                    data-lucide="users"></i>
+                Team Roster</a>
+            <a href="#" onclick="navTo('maintenance')"
+                class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="wrench"></i>
+                Maintenance</a>
             <a href="#" onclick="navTo('performance')"
                 class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="bar-chart-3"></i>
                 Performance</a>
@@ -229,12 +248,28 @@
             <a href="#" onclick="navTo('pricing')"
                 class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="credit-card"></i>
                 Pricing & Plans</a>
+
+            <a href="#" onclick="navTo('timeoff')"
+                class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="calendar-clock"></i>
+                Time Off</a>
+
             <a href="#" onclick="navTo('request')"
                 class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="lightbulb"></i>
                 Feature Request</a>
-        </nav>
+            </nav>
+        </div>
 
-        <div class="absolute bottom-8 left-8 right-8">
+        <div class="p-8 pt-4 border-t border-slate-100 dark:border-slate-800 shrink-0 bg-white dark:bg-slate-950">
+            <div
+                class="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800">
+                <span class="text-xs font-bold uppercase tracking-widest">AMOLED Dark</span>
+                <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" id="themeToggle" class="sr-only peer" aria-label="Toggle theme" onchange="toggleTheme()">
+                    <div
+                        class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:bg-sky-500 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all">
+                    </div>
+                </label>
+            </div>
             <button onclick="signOut()"
                 class="w-full mt-4 text-xs font-black uppercase tracking-[0.2em] text-red-500 hover:text-red-600">Sign
                 Out</button>
@@ -300,6 +335,29 @@
             return isNaN(parsed) ? 0 : parsed;
         }
 
+        function normalizeItemName(name, existingKeys = []) {
+            const lower = name.toLowerCase().trim();
+            if (lower.includes('mac') && (lower.includes('cheese') || lower.includes('chs') || lower.includes('chz'))) return 'Mac & Cheese';
+            if (lower.includes('bacon')) return 'Bacon';
+            
+            for (let key of existingKeys) {
+                const keyLower = key.toLowerCase();
+                if (keyLower === lower) return key;
+                
+                if (keyLower === lower + 's' || lower === keyLower + 's') return key;
+                if (keyLower === lower + 'es' || lower === keyLower + 'es') return key;
+                
+                const keyWords = keyLower.split(' ');
+                const lowerWords = lower.split(' ');
+                if (keyWords[0] === lowerWords[0] && Math.abs(keyLower.length - lower.length) <= 4) {
+                    if (keyLower.includes(lower) || lower.includes(keyLower)) {
+                        return key;
+                    }
+                }
+            }
+            return name.trim();
+        }
+
         function getDayOfWeek(dateString) {
             if (!dateString) return -1;
             let d;
@@ -329,7 +387,10 @@
             document.body.classList.add('dark-mode');
         }
 
-        function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); }
+        function toggleSidebar() { 
+            document.getElementById('sidebar').classList.toggle('open'); 
+            document.body.classList.toggle('overflow-hidden');
+        }
         function navTo(viewId) { localStorage.setItem('navTo', viewId); window.location.href = 'index.html'; }
         function handleNavAccountClick() { navTo('profile'); }
         function signOut() { auth.signOut().then(() => window.location.href = 'index.html'); }
@@ -598,24 +659,67 @@
             `;
 
             const list = document.getElementById('predictionsList');
-            // ⚡ Bolt Optimization: Batch DOM insertions using a DocumentFragment
-            // This prevents layout thrashing by avoiding multiple reflows/repaints during loop iterations.
             const fragment = document.createDocumentFragment();
             let addedCount = 0;
-
+            
+            let groupedItems = {}; 
+            
             Array.from(uniqueItems).sort().forEach(name => {
-
                 const bl = Math.round((prediction[`${name}_bl`] || 0) * maxValues[name].bl);
                 const cl = Math.round((prediction[`${name}_cl`] || 0) * maxValues[name].cl);
                 const fr = Math.round((prediction[`${name}_fr`] || 0) * maxValues[name].fr);
 
                 if (bl === 0 && cl === 0 && fr === 0) return;
 
-                const div = document.createElement('div');
-                div.className = "grid grid-cols-2 md:grid-cols-4 gap-3 p-4 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm items-center hover:border-sky-300 dark:hover:border-sky-700 transition-colors";
+                const canonical = normalizeItemName(name, Object.keys(groupedItems));
+                if (!groupedItems[canonical]) {
+                    groupedItems[canonical] = { bl: 0, cl: 0, fr: 0, originalNames: new Set() };
+                }
+                
+                groupedItems[canonical].bl = Math.max(groupedItems[canonical].bl, bl);
+                groupedItems[canonical].cl = Math.max(groupedItems[canonical].cl, cl);
+                groupedItems[canonical].fr = Math.max(groupedItems[canonical].fr, fr);
+                if (name !== canonical) {
+                    groupedItems[canonical].originalNames.add(name);
+                }
+            });
 
-                div.innerHTML = `
-                    <div class="col-span-2 md:col-span-1 font-bold text-slate-800 dark:text-slate-200">${escapeHTML(name)}</div>
+            window.latestGroupedPredictions = groupedItems;
+
+            Object.keys(groupedItems).sort().forEach(canonical => {
+                const item = groupedItems[canonical];
+                const bl = item.bl;
+                const cl = item.cl;
+                const fr = item.fr;
+
+                const div = document.createElement('div');
+                div.className = "flex flex-col bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm transition-colors hover:border-sky-300 dark:hover:border-sky-700";
+                
+                const mainRow = document.createElement('div');
+                mainRow.className = "grid grid-cols-2 md:grid-cols-4 gap-3 p-4 items-center";
+                
+                let originalNamesHtml = '';
+                let toggleBtnHtml = '';
+                if (item.originalNames.size > 0) {
+                    toggleBtnHtml = `
+                        <button class="text-[10px] uppercase font-bold text-slate-400 hover:text-sky-500 flex items-center gap-1 mt-1 toggle-variants-btn">
+                            <i data-lucide="chevron-down" class="w-3 h-3 transition-transform duration-200"></i> ${item.originalNames.size} Variations
+                        </button>
+                    `;
+                    const variantsList = Array.from(item.originalNames).map(n => `<span class="px-2 py-1 bg-slate-100 dark:bg-slate-800 rounded-md text-xs text-slate-600 dark:text-slate-300">${escapeHTML(n)}</span>`).join(' ');
+                    originalNamesHtml = `
+                        <div class="variants-container hidden px-4 pb-4 pt-2 border-t border-slate-100 dark:border-slate-800">
+                            <div class="text-xs font-semibold text-slate-500 mb-2">Combined Items:</div>
+                            <div class="flex flex-wrap gap-2">${variantsList}</div>
+                        </div>
+                    `;
+                }
+
+                mainRow.innerHTML = `
+                    <div class="col-span-2 md:col-span-1">
+                        <div class="font-bold text-slate-800 dark:text-slate-200">${escapeHTML(canonical)}</div>
+                        ${toggleBtnHtml}
+                    </div>
 
                     <div class="flex flex-col">
                         <span class="md:hidden text-[9px] font-black uppercase text-slate-400 mb-1">Backline</span>
@@ -637,16 +741,30 @@
                     </div>
                 `;
 
-                div.querySelector('.import-btn').onclick = () => importPrediction(name, bl, cl, fr);
+                div.appendChild(mainRow);
+                
+                if (originalNamesHtml) {
+                    const variantsDiv = document.createElement('div');
+                    variantsDiv.innerHTML = originalNamesHtml;
+                    div.appendChild(variantsDiv.firstElementChild);
+                    
+                    const toggleBtn = mainRow.querySelector('.toggle-variants-btn');
+                    if (toggleBtn) {
+                        toggleBtn.onclick = () => {
+                            const container = div.querySelector('.variants-container');
+                            const icon = toggleBtn.querySelector('i');
+                            if (container.classList.contains('hidden')) {
+                                container.classList.remove('hidden');
+                                icon.classList.add('rotate-180');
+                            } else {
+                                container.classList.add('hidden');
+                                icon.classList.remove('rotate-180');
+                            }
+                        };
+                    }
+                }
 
-                list.appendChild(div);
-                        <button class="btn btn-sm btn-accent w-full md:w-auto import-btn"
-                                data-name="${escapeHTML(name)}"
-                                data-bl="${bl}"
-                                data-cl="${cl}"
-                                data-fr="${fr}">Import</button>
-                    </div>
-                `;
+                mainRow.querySelector('.import-btn').onclick = () => importPrediction(canonical, bl, cl, fr);
 
                 fragment.appendChild(div);
                 addedCount++;
@@ -658,6 +776,7 @@
             } else {
                 list.appendChild(fragment);
                 document.getElementById('importAllBtn').classList.remove('hidden');
+                if (window.lucide) window.lucide.createIcons();
             }
         }
 
@@ -674,19 +793,16 @@
         }
 
         function importAllPredictions() {
-            if (!currentUser || !latestPrediction) return;
+            if (!currentUser || !window.latestGroupedPredictions) return;
 
             if (confirm("Import ALL predictions to your active shift tracker? This will update your current draft for all items shown below.")) {
                 const draft = getDraft();
                 if (!draft) return;
 
-                Array.from(uniqueItems).forEach(name => {
-                    const bl = Math.round((latestPrediction[`${name}_bl`] || 0) * maxValues[name].bl);
-                    const cl = Math.round((latestPrediction[`${name}_cl`] || 0) * maxValues[name].cl);
-                    const fr = Math.round((latestPrediction[`${name}_fr`] || 0) * maxValues[name].fr);
-
-                    if (bl > 0 || cl > 0 || fr > 0) {
-                        applyPredictionToDraft(draft, name, bl, cl, fr);
+                Object.keys(window.latestGroupedPredictions).forEach(canonical => {
+                    const item = window.latestGroupedPredictions[canonical];
+                    if (item.bl > 0 || item.cl > 0 || item.fr > 0) {
+                        applyPredictionToDraft(draft, canonical, item.bl, item.cl, item.fr);
                     }
                 });
 

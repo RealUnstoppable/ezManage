@@ -2,134 +2,184 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Account | ezManage</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ezManage | My Account</title>
+    
     <link rel="icon" type="image/jpeg" href="ManagerPro.jpg">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/css/themes.css">
-    <style>
-        :root {
-            --accent-blue: #2563EB;
-            --accent-red: #DC2626;
-            --font-main: 'Inter', sans-serif;
-        }
-        body {
-            font-family: var(--font-main);
-            background-color: var(--bg-color, #0f172a);
-            color: var(--text-primary, #f8fafc);
-            margin: 0;
-            padding: 40px 20px;
-            display: flex;
-            justify-content: center;
-        }
-        .account-container {
-            background-color: var(--primary-card-color, #1e293b);
-            padding: 40px;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-            width: 100%;
-            max-width: 600px;
-            border: 1px solid var(--border-color, #334155);
-        }
-        .account-container h2 {
-            margin-top: 0;
-            color: var(--accent-blue);
-            margin-bottom: 30px;
-            border-bottom: 1px solid var(--border-color, #334155);
-            padding-bottom: 10px;
-        }
-        .info-group {
-            margin-bottom: 20px;
-        }
-        .info-group label {
-            display: block;
-            font-weight: 600;
-            color: var(--text-secondary, #cbd5e1);
-            margin-bottom: 5px;
-        }
-        .info-group .value {
-            font-size: 1.1rem;
-            color: var(--text-primary, #f8fafc);
-        }
-        .btn {
-            display: inline-block;
-            padding: 10px 20px;
-            background-color: var(--accent-blue);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 1rem;
-            font-weight: 500;
-            cursor: pointer;
-            text-decoration: none;
-            transition: background-color 0.2s;
-        }
-        .btn:hover {
-            background-color: #1d4ed8;
-        }
-        .btn-danger {
-            background-color: var(--accent-red);
-        }
-        .btn-danger:hover {
-            background-color: #b91c1c;
-        }
-        .actions {
-            margin-top: 40px;
-            display: flex;
-            gap: 15px;
-        }
-        .back-link {
-            display: inline-block;
-            margin-bottom: 20px;
-            color: var(--text-secondary);
-            text-decoration: none;
-            font-size: 0.9rem;
-        }
-        .back-link:hover {
-            color: var(--text-primary);
-        }
-    </style>
-</head>
-<body style="display: none;">
-    <div class="account-container">
-        <a href="index.html" class="back-link">← Back to Home</a>
-        <h2>My Account</h2>
-        
-        <div class="info-group">
-            <label>Username</label>
-            <div class="value" id="acc-username">Loading...</div>
-        </div>
-        
-        <div class="info-group">
-            <label>Email</label>
-            <div class="value" id="acc-email">Loading...</div>
-        </div>
-        
-        <div class="info-group">
-            <label>Membership Level</label>
-            <div class="value" id="acc-membership">Loading...</div>
-        </div>
+    <link rel="apple-touch-icon" href="ManagerPro.jpg">
 
-        <div class="actions">
-            <button id="sign-out-btn" class="btn btn-danger">Sign Out</button>
-            <a href="index.html" class="btn">Return to App</a>
-        </div>
-    </div>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = { darkMode: ['class', '.dark-mode'], }
+    </script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 
     <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
-    <script type="module" src="/js/auth.js"></script>
-    <script type="module" src="/js/theme-loader.js"></script>
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+            color: #0f172a;
+            -webkit-font-smoothing: antialiased;
+        }
+        body.dark-mode {
+            background-color: #020617;
+            color: #f8fafc;
+        }
+        .card {
+            background: #ffffff;
+            border-radius: 1.5rem;
+            padding: 2rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e2e8f0;
+        }
+        .dark-mode .card {
+            background: #0f172a;
+            border-color: #1e293b;
+        }
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            border-radius: 9999px;
+            font-weight: 700;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+        .btn-primary {
+            background: #0ea5e9;
+            color: white;
+            border: 2px solid #0ea5e9;
+        }
+        .btn-primary:hover {
+            background: #0284c7;
+            border-color: #0284c7;
+        }
+        .btn-outline {
+            border: 2px solid #e2e8f0;
+            color: #475569;
+            background: transparent;
+        }
+        .dark-mode .btn-outline {
+            border-color: #334155;
+            color: #cbd5e1;
+        }
+        .btn-outline:hover {
+            border-color: #94a3b8;
+            color: #0f172a;
+        }
+        .dark-mode .btn-outline:hover {
+            border-color: #475569;
+            color: white;
+        }
+        .btn-danger {
+            background: rgba(220, 38, 38, 0.1);
+            color: #ef4444;
+            border: 2px solid transparent;
+        }
+        .btn-danger:hover {
+            background: #ef4444;
+            color: white;
+        }
+    </style>
+</head>
+<body class="min-h-screen hidden" id="bodyEl">
+
+    <!-- Top Navigation -->
+    <nav class="fixed top-0 w-full z-50 bg-white/80 dark:bg-slate-950/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800">
+        <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-3 cursor-pointer" onclick="window.location.href='index.html'">
+                <div class="relative group">
+                    <img src="ManagerPro.jpg" alt="Logo" class="w-8 h-8 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 transform transition-transform group-hover:rotate-6">
+                </div>
+                <span class="text-xl font-black tracking-tighter uppercase">ezManage</span>
+            </div>
+            <button onclick="window.location.href='index.html'" class="btn btn-outline py-1.5 px-4 text-sm"><i data-lucide="arrow-left" class="w-4 h-4"></i> Return to App</button>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="pt-28 pb-20 max-w-2xl mx-auto px-4 sm:px-6">
+        
+        <div class="text-center mb-10">
+            <div class="w-20 h-20 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4 border-4 border-white dark:border-slate-950 shadow-lg">
+                <i data-lucide="user" class="w-10 h-10 text-slate-400"></i>
+            </div>
+            <h1 class="text-3xl font-black tracking-tight" id="acc-username">Loading...</h1>
+            <p class="text-slate-500 font-medium" id="acc-email">loading...</p>
+        </div>
+
+        <div class="card space-y-8">
+            
+            <!-- Account Details -->
+            <div>
+                <h3 class="font-black text-xs uppercase tracking-widest text-slate-400 mb-4 flex items-center"><i data-lucide="shield" class="w-4 h-4 mr-2"></i> Account Details</h3>
+                <div class="bg-slate-50 dark:bg-slate-900/50 rounded-xl p-4 border border-slate-100 dark:border-slate-800 flex justify-between items-center">
+                    <div>
+                        <div class="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-1">Membership Level</div>
+                        <div class="font-bold text-lg text-sky-500" id="acc-membership">Free Tier</div>
+                    </div>
+                    <button class="btn btn-outline text-xs py-1.5 px-3">Upgrade</button>
+                </div>
+            </div>
+
+            <!-- Account Linking -->
+            <div>
+                <h3 class="font-black text-xs uppercase tracking-widest text-slate-400 mb-4 flex items-center"><i data-lucide="link" class="w-4 h-4 mr-2"></i> Linked Accounts</h3>
+                <p class="text-sm text-slate-500 mb-4">Link external accounts to enable one-click sign in.</p>
+                
+                <div class="space-y-3">
+                    <div class="bg-slate-50 dark:bg-slate-900/50 rounded-xl p-4 border border-slate-100 dark:border-slate-800 flex md:flex-row flex-col gap-4 justify-between md:items-center">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 bg-white dark:bg-slate-800 rounded-full flex items-center justify-center shadow-sm border border-slate-200 dark:border-slate-700">
+                                <svg class="w-5 h-5" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+                            </div>
+                            <div>
+                                <div class="font-bold">Google Account</div>
+                                <div class="text-xs text-slate-500" id="googleLinkStatus">Not Linked</div>
+                            </div>
+                        </div>
+                        <button onclick="linkGoogle()" class="btn btn-outline text-xs w-full md:w-auto" id="googleLinkBtn">Link Google</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Danger Zone -->
+            <div class="pt-6 border-t border-slate-100 dark:border-slate-800">
+                <button id="sign-out-btn" class="btn btn-danger w-full">Sign Out</button>
+            </div>
+            
+        </div>
+    </main>
+
     <script type="module">
         import { auth, db } from '/js/auth.js';
+        lucide.createIcons();
         
+        // Theme init
+        const savedTheme = localStorage.getItem('managerProTheme');
+        if (savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.body.classList.add('dark-mode');
+        }
+
         auth.onAuthStateChanged(async (user) => {
             if (user) {
-                document.body.style.display = 'block';
+                document.getElementById('bodyEl').style.display = 'block';
+                document.getElementById('bodyEl').classList.remove('hidden');
                 document.getElementById('acc-email').textContent = user.email;
                 
+                checkProviders(user);
+
                 try {
                     const docRef = db.collection("users").doc(user.uid);
                     const docSnap = await docRef.get();
@@ -138,7 +188,6 @@
                         document.getElementById('acc-username').textContent = data.username || "User";
                         document.getElementById('acc-membership').textContent = data.membershipLevel || "Free Tier";
                     } else {
-                        // Create a default user document if it doesn't exist
                         await docRef.set({
                             email: user.email,
                             username: "User",
@@ -148,21 +197,61 @@
                         document.getElementById('acc-username').textContent = "User";
                         document.getElementById('acc-membership').textContent = "Free Tier";
                     }
-                } catch (e) {
-                    console.error("Error fetching user data:", e);
+                } catch(e) {
+                    console.error("Firestore read error", e);
                 }
             } else {
-                if (!window.location.pathname.includes('sign in beta.html')) {
-                    window.location.replace('sign in beta.html');
-                }
+                window.location.href = 'index.html';
             }
         });
 
         document.getElementById('sign-out-btn').addEventListener('click', () => {
-            auth.signOut().then(() => {
-                window.location.replace('index.html');
-            });
+            auth.signOut();
         });
+
+        function checkProviders(user) {
+            const isGoogleLinked = user.providerData.some(p => p.providerId === 'google.com');
+            const statusEl = document.getElementById('googleLinkStatus');
+            const btnEl = document.getElementById('googleLinkBtn');
+            
+            if (isGoogleLinked) {
+                statusEl.textContent = 'Linked';
+                statusEl.className = 'text-xs text-emerald-500 font-bold';
+                btnEl.textContent = 'Unlink';
+                btnEl.onclick = () => unlinkProvider('google.com');
+            } else {
+                statusEl.textContent = 'Not Linked';
+                statusEl.className = 'text-xs text-slate-500';
+                btnEl.textContent = 'Link Google';
+                btnEl.onclick = linkGoogle;
+            }
+        }
+
+        window.linkGoogle = async function() {
+            if (!auth.currentUser) return;
+            const provider = new firebase.auth.GoogleAuthProvider();
+            try {
+                await auth.currentUser.linkWithPopup(provider);
+                alert("Successfully linked Google account!");
+                checkProviders(auth.currentUser);
+            } catch (error) {
+                console.error(error);
+                alert("Error linking: " + error.message);
+            }
+        }
+
+        window.unlinkProvider = async function(providerId) {
+            if (!auth.currentUser) return;
+            if(!confirm("Are you sure you want to unlink this provider?")) return;
+            try {
+                await auth.currentUser.unlink(providerId);
+                alert("Successfully unlinked!");
+                checkProviders(auth.currentUser);
+            } catch (error) {
+                console.error(error);
+                alert("Error unlinking: " + error.message);
+            }
+        }
     </script>
 </body>
 </html>

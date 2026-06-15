@@ -32,3 +32,15 @@
 ## 2026-06-06 - Form accessibility enhancements and malformed HTML
 **Learning:** Malformed HTML blocks (like duplicated IDs and unclosed select tags) can co-exist alongside accessibility issues (missing `for` attributes). Duplicate IDs break JavaScript's `getElementById` and accessibility mapping simultaneously. Also, properly mapped labels increase the clickable hit area for inputs, significantly improving UX on mobile.
 **Action:** When fixing accessibility mapping via explicit `for` attributes, always verify the surrounding HTML structure is not malformed, and ensure duplicate IDs are removed so the mapping correctly binds to the right element.
+
+## 2024-06-05 - Form Accessibility Broken Tags
+**Learning:** When addressing accessibility for form inputs (like adding explicit `for` attributes to labels), standard HTML validation can sometimes miss duplicated or malformed block structures in inline templates. This can cause the `for` attribute to map to duplicated `id` fields or break standard tab order.
+**Action:** Always verify the surrounding HTML tags using strict parsing or manual verification before asserting that `for` to `id` mapping effectively improves accessibility, and fix underlying malformed HTML alongside accessibility improvements.
+## 2024-05-18 - Missing Input Labels
+
+**Learning:** Various input elements, especially form fields and selects across modals (like adding employees, shift notes, maintenance tickets), lack explicit `for` attribute linkages or `aria-label`s, which compromises accessibility. `id` and `for` linkages are preferred when visible text exists, while `aria-label` provides a fallback where a visible label is missing or less strictly associated.
+
+**Action:** Consistently add `aria-label`s or correctly link `label` elements to their target `id` using the `for` attribute when introducing or modifying form fields.
+## 2026-05-26 - [Diagnosing Global UI Breakages]
+**Learning:** A single syntax error (like an unclosed brace) inside an inline HTML `<script>` block will halt execution of the entire script. This can cause unrelated features (like loading a Navbar or setting up event listeners) to completely fail, resulting in a broken UI.
+**Action:** When diagnosing complete UI failures in Vanilla JS, check for syntax errors using strict parsers like Acorn on extracted script contents, as standard linters often ignore inline HTML scripts.
