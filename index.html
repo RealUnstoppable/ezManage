@@ -1887,7 +1887,7 @@
             toggleAuthModeUI();
         }
 
-        function handleAuth(e) {
+        async function handleAuth(e) {
             e.preventDefault();
             const email = document.getElementById('authEmail').value;
             const pass = document.getElementById('authPass').value;
@@ -1898,21 +1898,23 @@
             lucide.createIcons();
             btn.disabled = true;
 
-            if (isRegisterMode) {
-                auth.createUserWithEmailAndPassword(email, pass)
-                    .then(() => navTo('setup'))
-                    .catch(err => alert(err.message))
-                    .finally(() => {
-                        btn.innerHTML = originalHTML;
-                        btn.disabled = false;
-                    });
-            } else {
-                auth.signInWithEmailAndPassword(email, pass)
-                    .catch(err => alert(err.message))
-                    .finally(() => {
-                        btn.innerHTML = originalHTML;
-                        btn.disabled = false;
-                    });
+            try {
+                if (isRegisterMode) {
+                    await auth.createUserWithEmailAndPassword(email, pass);
+                    navTo('setup');
+                } else {
+                    await auth.signInWithEmailAndPassword(email, pass);
+                }
+            } catch (err) {
+                if (err.code === 'auth/network-request-failed' || err.code === 'unavailable') {
+                    alert("Network error: Please check your connection or whitelist our domain.");
+                } else {
+                    alert(err.message);
+                }
+            } finally {
+                btn.innerHTML = originalHTML;
+                btn.disabled = false;
+                lucide.createIcons();
             }
         }
 
@@ -1927,7 +1929,7 @@
 
         function signOut() { auth.signOut().then(() => window.location.reload()); }
 
-        function completeSetup() {
+        async function completeSetup() {
             if (!currentUser) return;
             const data = {
                 name: document.getElementById('setupName').value,
@@ -1944,12 +1946,18 @@
 
             if (!data.name) return alert("Name is required.");
 
-            db.collection('users').doc(currentUser.uid).set(data, { merge: true }).then(() => {
+            try {
+                await db.collection('users').doc(currentUser.uid).set(data, { merge: true });
                 currentUser.updateProfile({ displayName: data.name });
                 document.getElementById('shiftManager').value = data.name;
-
                 navTo('tracker');
-            });
+            } catch (err) {
+                if (err.code === 'auth/network-request-failed' || err.code === 'unavailable') {
+                    alert("Network error: Could not connect to the server.");
+                } else {
+                    alert("Setup failed: " + err.message);
+                }
+            }
         }
 
         function toggleSidebar() { 
@@ -3476,8 +3484,7 @@
                 await scheduleRef.set({
                     uid: currentUser.uid,
                     authorId: currentUser.uid,
-                    orgId: currentUserData.orgId,
-                    orgId: currentUserData?.orgId || null,
+                    orgId: currentUserData.orgId || null,
                     date: date,
                     shifts: shifts,
                     updatedAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -3615,9 +3622,6 @@
         }
 
 function checkAndRenderOrgControls() {
-
-
-        function checkAndRenderOrgControls() {
             if (!currentUser) return false;
 
             const controls = document.getElementById('shiftNotesGroupControls');
@@ -3837,7 +3841,6 @@ function checkAndRenderOrgControls() {
                 }
                 noteDiv.remove(); // revert optimistic UI
             }
-        }
         }
 
         async function resolveShiftNote(noteId) {

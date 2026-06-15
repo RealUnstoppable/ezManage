@@ -2,13 +2,6 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // SCHEDULES
-    match /schedules/{scheduleId} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null && scheduleId.split('_')[0] == request.auth.uid;
-    }
-
-
     // Helper Functions
     function isAdmin() {
        return request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('isAdmin', false) == true;
@@ -16,12 +9,6 @@ service cloud.firestore {
 
     function isOwner(userId) {
       return request.auth != null && request.auth.uid == userId;
-    }
-
-
-    // SCHEDULES
-    match /schedules/{scheduleId} {
-      allow read, write: if request.auth != null && scheduleId[0:request.auth.uid.size()] == request.auth.uid;
     }
 
     // Default deny
@@ -123,10 +110,11 @@ service cloud.firestore {
       allow update: if isAdmin();
     }
 
-    // SCHEDULES (Missing rules added here)
+    // SCHEDULES
     match /schedules/{scheduleId} {
-      allow read, write: if request.auth != null && request.auth.uid == resource.data.uid;
+      allow read: if request.auth != null && (resource.data.uid == request.auth.uid || isAdmin() || scheduleId.split('_')[0] == request.auth.uid);
       allow create: if request.auth != null && request.resource.data.uid == request.auth.uid;
+      allow update, delete: if request.auth != null && (resource.data.uid == request.auth.uid || isAdmin());
     }
 
     // SHIFT NOTES
@@ -136,10 +124,6 @@ service cloud.firestore {
           (resource.data.get('orgId', null) != null && resource.data.get('orgId', null) == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('orgId', null)) ||
           isAdmin()
       );
-      // Removed "allow write: if false;" to allow clients to create/update
-      allow create: if request.auth != null
-                    && request.resource.data.get('authorId', null) == request.auth.uid;
-      // 🛡️ Sentinel: Enforce strict combined verification for authorId and orgId to prevent spoofing
       allow create: if request.auth != null
                     && request.resource.data.get('authorId', null) == request.auth.uid
                     && request.resource.data.get('orgId', null) == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('orgId', null);
@@ -147,23 +131,16 @@ service cloud.firestore {
           resource.data.get('authorId', null) == request.auth.uid ||
           (resource.data.get('orgId', null) != null && resource.data.get('orgId', null) == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('orgId', null)) ||
           resource == null ||
-          resource.data.authorId == request.auth.uid || 
-          (resource.data.orgId != null && resource.data.orgId == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.orgId) ||
           isAdmin()
       );
-      // Removed allow write: if false to permit client-side testing/usage since Cloud functions alone weren't handling all needs properly per bug report.
-      // But adding user/org verification for creation to be safe.
-      allow create: if request.auth != null && request.resource.data.orgId == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.orgId;
-      allow update: if request.auth != null && resource.data.orgId == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.orgId;
+      allow delete: if false;
     }
 
     // SHIFT GROUPS
     match /shift_groups/{groupId} {
-      allow read: if request.auth != null && (resource.data.ownerId == request.auth.uid || groupId == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.orgId);
-      allow create: if request.auth != null;
-      allow update: if request.auth != null && resource.data.ownerId == request.auth.uid;
       allow read: if request.auth != null && (resource.data.get('ownerId', null) == request.auth.uid || groupId == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('orgId', null));
-      allow write: if request.auth != null; // Allowed for client creation
+      allow create: if request.auth != null;
+      allow update, delete: if request.auth != null && resource.data.get('ownerId', null) == request.auth.uid;
     }
     
     // SHIFT GROUP REQUESTS
@@ -182,8 +159,6 @@ service cloud.firestore {
           resource.data.get('reportedByUid', null) == request.auth.uid ||
           (resource.data.get('orgId', null) != null && resource.data.get('orgId', null) == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('orgId', null)) ||
           resource == null ||
-          resource.data.reportedByUid == request.auth.uid ||
-          (resource.data.orgId != null && resource.data.orgId == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.orgId) ||
           isAdmin()
       );
       allow create: if request.auth != null
@@ -196,31 +171,6 @@ service cloud.firestore {
       ) && request.resource.data.get('orgId', null) == resource.data.get('orgId', null);
       allow delete: if request.auth != null && (resource.data.get('reportedByUid', null) == request.auth.uid || isAdmin());
     }
-
-    // EMPLOYEES
-    match /employees/{empId} {
-      allow read: if request.auth != null && (
-          (resource.data.orgId != null && resource.data.orgId == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.orgId) ||
-          isAdmin()
-      );
-      allow write: if false; // All creation and resolution must happen via secure Cloud Functions
-    }
-
-    // SCHEDULES
-    match /schedules/{scheduleId} {
-      allow read: if request.auth != null && (
-          resource.data.uid == request.auth.uid ||
-          isAdmin()
-      );
-      allow create: if request.auth != null
-                    && request.resource.data.uid == request.auth.uid;
-      allow update: if request.auth != null && (
-          resource.data.uid == request.auth.uid ||
-          isAdmin()
-      );
-      allow delete: if request.auth != null && (resource.data.uid == request.auth.uid || isAdmin());
-    }
-
 
     // TIME OFF REQUESTS
     match /time_off_requests/{requestId} {
@@ -242,7 +192,6 @@ service cloud.firestore {
           isAdmin()
       );
     }
-
 
   }
 }
