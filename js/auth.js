@@ -1,31 +1,7 @@
-import { getFirebaseErrorMessage } from './utils.js';
 import { getFirebaseErrorMessage, logManagerError } from './utils.js';
-
-import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
-import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, sendEmailVerification } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
-import { getFirestore, doc, setDoc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
-
-import { getFirebaseErrorMessage } from './utils/errorUtils.js';
-import { getFirebaseErrorMessage } from './utils.js';
-
-const firebaseConfig = {
-  apiKey: "AIzaSyBgrI9HwJPSc5b4pu2Egsv4DE7shNwptSw",
-  authDomain: "dts-hub-website.firebaseapp.com",
-  projectId: "dts-hub-website",
-  storageBucket: "dts-hub-website.firebasestorage.app",
-  messagingSenderId: "48345990988",
-  appId: "1:48345990988:web:e3662c9b508168546471e9",
-  measurementId: "G-ZN3YJPHVGX"
-};
 
 if (!window.firebase) { console.error("Firebase Compat SDK must be loaded before auth.js"); }
 
-export const auth = window.firebase ? window.firebase.auth() : {};
-export const db = window.firebase ? window.firebase.firestore() : {};
-if (db.settings) {
-  db.settings({ experimentalForceLongPolling: true });
-export const auth = firebase.auth();
-export const db = firebase.firestore();
 export const auth = window.firebase ? window.firebase.auth() : {};
 export const db = window.firebase ? window.firebase.firestore() : {};
 
@@ -73,7 +49,6 @@ auth.onAuthStateChanged(async (user) => {
             }
         } catch (error) {
             logManagerError("Error fetching user document in auth state change for uid:", user.uid, error);
-            logManagerError("Error fetching user document in auth state change:", error);
             console.error("Manager Troubleshooting: Error fetching user document in auth state change for uid:", user.uid, error);
         }
     } else {
@@ -83,10 +58,6 @@ auth.onAuthStateChanged(async (user) => {
         }
         if (membershipStatusContainer) {
             membershipStatusContainer.innerHTML = '';
-        }
-
-        if (!window.location.pathname.includes('sign in beta.html') && window.location.pathname !== '/' && !window.location.pathname.includes('index.html')) {
-            // We shouldn't force redirect all pages in auth.js. Each page should handle its own auth routing.
         }
     }
 });
@@ -137,7 +108,7 @@ if (document.getElementById('auth-form')) {
                 await db.collection("users").doc(userCredential.user.uid).set({
                     username: username || "User",
                     email,
-                    signupDate: firebase.firestore.FieldValue.serverTimestamp()
+                    signupDate: window.firebase.firestore.FieldValue.serverTimestamp()
                 });
                 sessionStorage.setItem('newUser', 'true');
                 window.location.replace('index.html');

@@ -1560,7 +1560,7 @@
             measurementId: "G-ZN3YJPHVGX"
         };
 
-        if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
+        const app = !window.firebase.apps.length ? window.firebase.initializeApp(firebaseConfig) : window.firebase.app();
         const auth = firebase.auth();
         firebase.firestore().settings({
             experimentalForceLongPolling: true
@@ -3102,7 +3102,11 @@
                 populateScheduleDropdown();
             } catch (err) {
                 console.error("Error adding employee:", err);
-                alert("Failed to add employee.");
+                if (err.code === 'unavailable' || err.code === 'auth/network-request-failed') {
+                    alert("Network error: Could not connect to the server. Please check your connection.");
+                } else {
+                    alert("Failed to add employee.");
+                }
             } finally {
                 saveBtn.innerHTML = originalText;
                 saveBtn.disabled = false;
@@ -3156,7 +3160,11 @@
                 document.getElementById('timeoffReason').value = '';
             } catch (err) {
                 console.error("Error submitting time off request", err);
-                alert("Error submitting request. Please try again.");
+                if (err.code === 'unavailable' || err.code === 'auth/network-request-failed') {
+                    alert("Network error: Could not connect to the server. Please check your connection.");
+                } else {
+                    alert("Error submitting request. Please try again.");
+                }
             } finally {
                 btn.innerText = originalText;
                 btn.disabled = false;
@@ -3571,7 +3579,6 @@
                 });
         }
 
-function checkAndRenderOrgControls() {
 
 
         function checkAndRenderOrgControls() {
@@ -3794,7 +3801,6 @@ function checkAndRenderOrgControls() {
                 }
                 noteDiv.remove(); // revert optimistic UI
             }
-        }
         }
 
         async function resolveShiftNote(noteId) {

@@ -26,3 +26,7 @@
 ## 2026-05-13 - [DOM Insertions Bottleneck]
 **Learning:** Sequential calls to `appendChild()` inside loops cause expensive layout thrashing and repaint cycles on the main thread, leading to perceived UI jank during rendering.
 **Action:** Always batch DOM insertions using a `DocumentFragment` (`document.createDocumentFragment()`) before appending the entire batch to the live DOM in a single operation.
+>> .jules/bolt.md
+## 2026-06-15 - [Firebase Config Fixes]
+**Learning:** Fixed firebase singleton init and deduplicated rules.
+**Action:** Re-check firebase compat logic early in the session and review duplicated firestore.rules definitions to fix syntax and race condition errors.
