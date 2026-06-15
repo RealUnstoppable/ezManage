@@ -28,6 +28,8 @@ global.firebase = {
   })
 };
 
-// Map to window since vanilla JS looks there
-window.firebase = global.firebase;
-globalThis.firebase = global.firebase;
+import { TextEncoder, TextDecoder } from 'util';
+Object.assign(global, { TextDecoder, TextEncoder });
+
+global.firebase = window.firebase;
+globalThis.firebase = window.firebase;
