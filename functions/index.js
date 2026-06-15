@@ -33,6 +33,18 @@ const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET ||
 const stripe = require("stripe")(stripeKey);
 
 // 🔹 Create Checkout Session
+
+/**
+ * Helper to get the actual organization ID for a user.
+ */
+async function getActualOrgId(admin, uid) {
+  const userDoc = await admin.firestore().collection("users").doc(uid).get();
+  if (!userDoc.exists) {
+    throw new HttpsError("not-found", "User not found");
+  }
+  return userDoc.data().orgId || null;
+}
+
 exports.createCheckoutSession = onRequest({invoker: "public"}, (req, res) => {
   cors(req, res, async () => {
     if (req.method !== "POST") {
@@ -359,11 +371,8 @@ exports.manageShiftNotes = functions.https.onCall(async (data, context) => {
   try {
     // 🛡️ Securely fetch the user's actual orgId from the database
     // instead of trusting the client payload to prevent IDOR
-    const userDoc = await admin.firestore().collection("users").doc(uid).get();
-    if (!userDoc.exists) {
-      throw new HttpsError("not-found", "User not found");
-    }
-    const actualOrgId = payload.orgId || userDoc.data().orgId || null;
+    const userOrgId = await getActualOrgId(admin, uid);
+    const actualOrgId = payload.orgId || userOrgId || null;
 
     if (action === "create") {
       const {authorId, orgId, authorName, content, priority} = payload;
@@ -451,11 +460,7 @@ exports.manageEmployees = functions.https.onCall(async (data, context) => {
   }
 
   try {
-    const userDoc = await admin.firestore().collection("users").doc(uid).get();
-    if (!userDoc.exists) {
-      throw new HttpsError("not-found", "User not found");
-    }
-    const actualOrgId = userDoc.data().orgId || null;
+    const actualOrgId = await getActualOrgId(admin, uid);
 
     if (!actualOrgId) {
       throw new HttpsError("permission-denied", "User must be part of an organization.");

@@ -157,6 +157,7 @@ document.addEventListener('DOMContentLoaded', () => {
             manageVideoBackground(shouldPlayVideo);
         };
 
+
         updateGreeting();
         setInterval(updateGreeting, 1000);
     }
