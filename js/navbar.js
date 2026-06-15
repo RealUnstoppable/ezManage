@@ -45,6 +45,17 @@ function updateAuthLink() {
     const authLink = document.getElementById('auth-link');
     if (!authLink) return;
 
+    onAuthStateChanged(auth, async (user) => {
+        if (user) {
+            try {
+                const userDoc = await getDoc(doc(db, "users", user.uid));
+                const destination = userDoc.exists() ? getUserRedirectPath(userDoc.data()) : 'account.html';
+                authLink.href = destination;
+                authLink.textContent = "My Account";
+            } catch (e) {
+                logManagerError("Navbar auth state error for uid: " + user.uid, e);
+
+
     if (auth && auth.onAuthStateChanged) {
         auth.onAuthStateChanged(async (user) => {
             if (user) {
@@ -54,9 +65,7 @@ function updateAuthLink() {
                     authLink.href = destination;
                     authLink.textContent = "My Account";
                 } catch (e) {
-                    logManagerError("Navbar auth state error for uid:", user.uid, e);
-                    logManagerError("Navbar auth state error:", e);
-                    console.error("Manager Troubleshooting: Navbar auth state error for uid:", user.uid, e);
+                    logManagerError(`Navbar auth state error for uid: ${user.uid}`, e);
                 }
             } else {
                 authLink.href = 'sign in beta.html';
