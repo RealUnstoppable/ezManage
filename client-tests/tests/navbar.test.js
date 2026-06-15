@@ -1,6 +1,7 @@
 
 import { jest } from "@jest/globals";
 
+// Map globals first before dynamic imports
 global.window = global.window || {};
 global.firebase = {
     apps: [],

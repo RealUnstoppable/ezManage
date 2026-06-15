@@ -75,10 +75,6 @@ auth.onAuthStateChanged(async (user) => {
         if (membershipStatusContainer) {
             membershipStatusContainer.innerHTML = '';
         }
-
-        if (!window.location.pathname.includes('sign in beta.html') && window.location.pathname !== '/' && !window.location.pathname.includes('index.html')) {
-            // We shouldn't force redirect all pages in auth.js. Each page should handle its own auth routing.
-        }
     }
 });
 }
@@ -128,7 +124,7 @@ if (document.getElementById('auth-form')) {
                 await db.collection("users").doc(userCredential.user.uid).set({
                     username: username || "User",
                     email,
-                    signupDate: firebase.firestore.FieldValue.serverTimestamp()
+                    signupDate: window.firebase.firestore.FieldValue.serverTimestamp()
                 });
                 sessionStorage.setItem('newUser', 'true');
                 window.location.replace('index.html');
