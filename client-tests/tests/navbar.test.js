@@ -168,6 +168,7 @@ describe('loadNavbar', () => {
 
   it('should set auth link to index.html if user is logged in but not admin', async () => {
     await loadNavbar();
+
     const mockUser = { uid: '123' };
     const authCallback = auth.onAuthStateChanged.mock.calls[0][0];
 

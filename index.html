@@ -5186,6 +5186,26 @@ function checkAndRenderOrgControls() {
 
         // We will fetch the team directory when the view is opened or during org check
 
+
+        // Global event delegation for dynamically created buttons to prevent XSS from inline handlers
+        document.addEventListener('click', (e) => {
+            const btn = e.target.closest('button[data-action]');
+            if (!btn) return;
+            const action = btn.dataset.action;
+            const id = btn.dataset.id;
+            const status = btn.dataset.status;
+
+            if (action === 'resolveShiftNote') resolveShiftNote(id);
+            else if (action === 'approveGroupRequest') approveGroupRequest(id);
+            else if (action === 'retractGroupRequest') retractGroupRequest(id);
+            else if (action === 'openEditEmployeeModal') openEditEmployeeModal(id);
+            else if (action === 'deleteEmployee') deleteEmployee(id);
+            else if (action === 'toggleEmployeeStatus') toggleEmployeeStatus(id, status);
+            else if (action === 'updateTimeOffStatus') updateTimeOffStatus(id, status);
+            else if (action === 'deleteTimeOffRequest') deleteTimeOffRequest(id);
+            else if (action === 'removeShift') removeShift(btn.dataset.index);
+        });
+
         window.onload = () => {
             if (localStorage.getItem('managerProTheme') === 'dark') {
                 document.body.classList.add('dark-mode');
