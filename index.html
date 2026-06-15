@@ -1613,8 +1613,13 @@
         let isInitializingAuth = true;
 
         async function callCloudFunction(functionName, payload) {
-            const func = firebase.functions().httpsCallable(functionName);
-            return await func(payload);
+            try {
+                const func = firebase.functions().httpsCallable(functionName);
+                return await func(payload);
+            } catch (error) {
+                console.error("Manager Troubleshooting: Error calling cloud function " + functionName, error);
+                throw error;
+            }
         }
 
         // Legal & Privacy Settings

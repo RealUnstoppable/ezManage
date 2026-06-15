@@ -411,7 +411,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         } catch (e) {
             logManagerError("Error toggling favorite for songId:", songId, e);
-            logManagerError("Error toggling favorite:", e);
             if (e.code === 'not-found') {
                 try {
                     await setDoc(userRef, { musicFavorites: [songId] }, { merge: true });

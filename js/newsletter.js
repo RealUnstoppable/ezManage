@@ -31,7 +31,6 @@ document.querySelectorAll('.signup-form').forEach(form => {
                 }, 5000);
             } catch (error) {
                 logManagerError("Newsletter subscription error for email:", email, error);
-                logManagerError("Newsletter subscription error:", error);
                 alert("There was an error subscribing. Please try again later.");
             }
         }

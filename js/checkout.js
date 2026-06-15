@@ -133,7 +133,6 @@ async function handlePlaceOrder(e) {
 
     } catch (error) {
         logManagerError("Error processing checkout for uid:", currentUser.uid, error);
-        logManagerError("Error processing checkout:", error);
         messageEl.textContent = 'There was an error placing your order. Please try again.';
         messageEl.style.color = 'var(--accent-red)';
         placeOrderBtn.disabled = false;
@@ -150,7 +149,6 @@ onAuthStateChanged(auth, async (user) => {
             userCart = docSnap.exists() ? docSnap.data().items : {};
         } catch (error) {
             logManagerError("Error loading cart for uid:", user.uid, error);
-            logManagerError("Error loading cart:", error);
             userCart = {};
         }
         renderCheckoutPage();

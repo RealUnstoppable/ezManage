@@ -263,7 +263,6 @@ exports.manageShiftNotes = functions.https.onCall(async (data, context) => {
         "invalid-argument", "Invalid action");
   } catch (error) {
     logManagerError("Shift Note Error for uid:", uid, error);
-    logManagerError("Shift Note Error:", error);
     throw new HttpsError("internal", error.message);
   }
 });
@@ -566,7 +565,6 @@ exports.manageShiftGroups = functions.https.onCall(async (data, context) => {
     throw new HttpsError("invalid-argument", "Invalid action");
   } catch (error) {
     logManagerError("Shift Groups Error for uid:", uid, error);
-    logManagerError("Shift Groups Error:", error);
     if (error instanceof HttpsError) {
       throw error;
     }

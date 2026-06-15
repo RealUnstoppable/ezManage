@@ -78,6 +78,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         };
 
+        let lastGreeting = "";
         const updateGreeting = () => {
             const now = new Date();
 
@@ -85,20 +86,22 @@ document.addEventListener('DOMContentLoaded', () => {
             const endOfCelebration = new Date('January 1, 2026 23:59:59');
             const revertDate = new Date('January 2, 2026 00:00:00');
 
+            let newGreetingText = "";
+
             if (now >= revertDate) {
                  const currentHour = now.getHours();
                  if (currentHour < 12) {
-                     greetingElement.textContent = "Good Morning.";
+                     newGreetingText = "Good Morning.";
                  } else if (currentHour < 18) {
-                     greetingElement.textContent = "Good Afternoon.";
+                     newGreetingText = "Good Afternoon.";
                  } else {
-                     greetingElement.textContent = "Good Evening.";
+                     newGreetingText = "Good Evening.";
                  }
                  manageVideoBackground(false);
             }
 
             else if (now >= newYear2026 && now <= endOfCelebration) {
-                greetingElement.textContent = "Happy New Year!";
+                newGreetingText = "Happy New Year!";
                 manageVideoBackground(true);
             }
 
@@ -111,9 +114,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
                     const seconds = Math.floor((diff % (1000 * 60)) / 1000);
 
-                    greetingElement.textContent = `New Years Countdown: ${days}d ${hours}h ${minutes}m ${seconds}s`;
+                    newGreetingText = `New Years Countdown: ${days}d ${hours}h ${minutes}m ${seconds}s`;
                 }
                 manageVideoBackground(false);
+            }
+
+            if (lastGreeting !== newGreetingText) {
+                greetingElement.textContent = newGreetingText;
+                lastGreeting = newGreetingText;
             }
         };
 
