@@ -157,6 +157,7 @@ describe('loadNavbar', () => {
   beforeEach(() => {
     document.body.innerHTML = '<div class="main-header"></div>';
     jest.clearAllMocks();
+    getMock.mockReset();
   });
 
   it('should inject navbar HTML', async () => {
