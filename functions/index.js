@@ -43,6 +43,47 @@ exports.createCheckoutSession = onRequest({invoker: "public"}, (req, res) => {
 
     let lineItems;
 
+    // Calculate final prices and discounts strictly server-side
+    let finalPrice = plan === "Business Pro" ? 207 : 61;
+    let userData = {};
+
+    if (uid) {
+      try {
+        const userDoc = await admin.firestore().collection("users").doc(uid).get();
+        if (userDoc.exists) userData = userDoc.data();
+      } catch (err) {
+        logManagerError("Error fetching user data for checkout", err);
+      }
+    }
+
+    if (userData.hasPromoCode) {
+      finalPrice *= 0.9;
+    }
+    finalPrice = Math.floor(finalPrice);
+
+    // If a discount was applied, we must build price_data dynamically
+    if (finalPrice !== (plan === "Business Pro" ? 207 : 61)) {
+      const productId = plan === "Business Pro" ?
+        "prod_UFnBrTwFCgb54A" :
+        "prod_UFn8zqZ0mwyy5r";
+      lineItems = [{
+        price_data: {
+          currency: "usd",
+          product: productId,
+          recurring: {interval: "year"},
+          // Stripe requires amounts in cents
+          unit_amount: Math.round(finalPrice * 100),
+        },
+        quantity: 1,
+      }];
+    } else {
+      // 🔴 Fallback to Actual Price IDs if no custom amount was provided
+      const priceId = plan === "Business Pro" ?
+        "price_1THHbVBp2C5GdKaKvCVoMf1X" :
+        "price_1THHYPBp2C5GdKaKxNpqndNE";
+      lineItems = [{price: priceId, quantity: 1}];
+    }
+
     try {
       let finalPrice = null;
 

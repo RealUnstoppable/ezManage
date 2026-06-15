@@ -96,7 +96,7 @@ describe("createCheckoutSession", () => {
         uid: "test_uid",
         email: "test@example.com",
         plan: "Business Pro",
-        amount: 150,
+        amount: 150, // Should be ignored now
       },
       headers: {origin: true},
       get: jest.fn(),
@@ -109,6 +109,13 @@ describe("createCheckoutSession", () => {
       json: jest.fn(),
       send: jest.fn(),
     };
+
+    // We mock firestore to return a user doc with a promo code
+    const mockFirestore = require("firebase-admin").firestore;
+    mockFirestore().collection().doc().get.mockResolvedValueOnce({
+      exists: true,
+      data: () => ({ hasPromoCode: true })
+    });
 
     mockStripeMock.checkout.sessions.create.mockResolvedValue({url: "https://checkout.url"});
 
@@ -127,6 +134,7 @@ describe("createCheckoutSession", () => {
           currency: "usd",
           product: "prod_UFnBrTwFCgb54A",
           recurring: {interval: "year"},
+            unit_amount: 18600, // 207 * 0.9 = 186.3 -> floored to 186 -> * 100 = 18600
           unit_amount: 18600,
         },
         quantity: 1,

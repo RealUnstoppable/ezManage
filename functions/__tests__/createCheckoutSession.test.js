@@ -96,7 +96,15 @@ describe("createCheckoutSession", () => {
       uid: "test-uid",
       email: "test@example.com",
       plan: "Business Pro",
+      amount: 50, // Should be ignored by backend
     };
+
+    // We mock firestore to return a user doc with a promo code
+    const mockFirestore = require("firebase-admin").firestore;
+    mockFirestore().collection().doc().get.mockResolvedValueOnce({
+      exists: true,
+      data: () => ({ hasPromoCode: true })
+    });
 
     mockCreateSession.mockResolvedValueOnce({url: "http://stripe.checkout.url"});
 
@@ -110,6 +118,7 @@ describe("createCheckoutSession", () => {
           currency: "usd",
           product: "prod_UFnBrTwFCgb54A",
           recurring: {interval: "year"},
+          unit_amount: 18600, // 207 * 0.9 = 186.3 -> floored to 186 -> * 100 = 18600
           unit_amount: 18600,
         },
         quantity: 1,
