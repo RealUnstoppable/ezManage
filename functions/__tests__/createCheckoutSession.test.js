@@ -7,7 +7,7 @@ jest.mock("firebase-admin", () => {
     where: jest.fn().mockReturnThis(),
     get: jest.fn().mockResolvedValue({
       exists: true,
-      data: () => ({email: "test@example.com"}),
+      data: () => ({email: "test@example.com", hasPromoCode: true}),
       docs: [],
     }),
     update: jest.fn().mockResolvedValue({}),
@@ -119,6 +119,7 @@ describe("createCheckoutSession", () => {
           product: "prod_UFnBrTwFCgb54A",
           recurring: {interval: "year"},
           unit_amount: 18600, // 207 * 0.9 = 186.3 -> floored to 186 -> * 100 = 18600
+          unit_amount: 18600,
         },
         quantity: 1,
       },
