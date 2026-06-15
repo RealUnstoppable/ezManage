@@ -410,17 +410,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 renderSongTable(userFavorites);
             }
         } catch (e) {
-            logManagerError("Error toggling favorite for songId:", songId, e);
-            logManagerError("Error toggling favorite:", e);
             if (e.code === 'not-found') {
                 try {
                     await setDoc(userRef, { musicFavorites: [songId] }, { merge: true });
                     userFavorites.push(song);
                 } catch (innerError) {
-                    logManagerError("Error setting initial favorite document for songId:", songId, innerError);
+                    logManagerError("Error setting initial favorite document for songId: " + songId, innerError);
                 }
             } else {
-                logManagerError("Error toggling favorite for songId:", songId, e);
+                logManagerError("Error toggling favorite for songId: " + songId, e);
             }
         }
     }
@@ -435,7 +433,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     const favIds = docSnap.data().musicFavorites;
                     userFavorites = librarySongs.filter(song => favIds.includes(song.id));
                 }
-            } catch (e) { logManagerError(`Error loading user favorites for uid: ${user.uid}`, e); }
+            } catch (e) { logManagerError("Error loading user favorites for uid: " + user.uid, e); }
 
             const hour = new Date().getHours();
             const timeGreeting = hour < 12 ? "Good Morning" : hour < 18 ? "Good Afternoon" : "Good Evening";
