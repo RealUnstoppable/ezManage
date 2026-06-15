@@ -435,7 +435,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     const favIds = docSnap.data().musicFavorites;
                     userFavorites = librarySongs.filter(song => favIds.includes(song.id));
                 }
-            } catch (e) { logManagerError("Error loading user favorites for uid:", user.uid, e); }
+            } catch (e) { logManagerError(`Error loading user favorites for uid: ${user.uid}`, e); }
 
             const hour = new Date().getHours();
             const timeGreeting = hour < 12 ? "Good Morning" : hour < 18 ? "Good Afternoon" : "Good Evening";

@@ -78,6 +78,9 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         };
 
+
+        let lastGreetingText = '';
+
         const updateGreeting = () => {
             const now = new Date();
 
@@ -85,20 +88,22 @@ document.addEventListener('DOMContentLoaded', () => {
             const endOfCelebration = new Date('January 1, 2026 23:59:59');
             const revertDate = new Date('January 2, 2026 00:00:00');
 
+            let newText = '';
+
             if (now >= revertDate) {
                  const currentHour = now.getHours();
                  if (currentHour < 12) {
-                     greetingElement.textContent = "Good Morning.";
+                     newText = "Good Morning.";
                  } else if (currentHour < 18) {
-                     greetingElement.textContent = "Good Afternoon.";
+                     newText = "Good Afternoon.";
                  } else {
-                     greetingElement.textContent = "Good Evening.";
+                     newText = "Good Evening.";
                  }
                  manageVideoBackground(false);
             }
 
             else if (now >= newYear2026 && now <= endOfCelebration) {
-                greetingElement.textContent = "Happy New Year!";
+                newText = "Happy New Year!";
                 manageVideoBackground(true);
             }
 
@@ -111,11 +116,17 @@ document.addEventListener('DOMContentLoaded', () => {
                     const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
                     const seconds = Math.floor((diff % (1000 * 60)) / 1000);
 
-                    greetingElement.textContent = `New Years Countdown: ${days}d ${hours}h ${minutes}m ${seconds}s`;
+                    newText = `New Years Countdown: ${days}d ${hours}h ${minutes}m ${seconds}s`;
                 }
                 manageVideoBackground(false);
             }
+
+            if (newText !== lastGreetingText) {
+                greetingElement.textContent = newText;
+                lastGreetingText = newText;
+            }
         };
+
 
         updateGreeting();
         setInterval(updateGreeting, 1000);
