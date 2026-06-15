@@ -768,4 +768,102 @@ exports.manageShiftGroups = functions.https.onCall(async (data, context) => {
   }
 });
 
+
+/**
+ * Manage Waste Logs API
+ * Handles creation, reading, and deletion of waste logs.
+ */
+exports.manageWaste = functions.https.onCall(async (data, context) => {
+  if (data && typeof data === "object" && "rawRequest" in data && "auth" in data) {
+    context = data;
+    data = data.data;
+  }
+
+  if (!context || !context.auth) {
+    throw new HttpsError("unauthenticated", "User must be logged in.");
+  }
+
+  const {action, payload} = data;
+  const uid = context.auth.uid;
+
+  if (!action || !payload) {
+    throw new HttpsError("invalid-argument", "Missing action or payload");
+  }
+
+  try {
+    const userDoc = await admin.firestore().collection("users").doc(uid).get();
+    if (!userDoc.exists) {
+      throw new HttpsError("not-found", "User not found");
+    }
+    const actualOrgId = userDoc.data().orgId || null;
+
+    if (!actualOrgId) {
+       throw new HttpsError("permission-denied", "User must be part of an organization to log waste.");
+    }
+
+    if (action === "create") {
+      const {itemName, quantity, cost, reason} = payload;
+
+      if (!itemName || !quantity || !cost || !reason) {
+        throw new HttpsError("invalid-argument", "Missing required waste log details");
+      }
+
+      const newLog = {
+        itemName,
+        quantity: Number(quantity),
+        cost: Number(cost),
+        reason,
+        loggedByUid: uid,
+        loggedByName: userDoc.data().name || "Anonymous",
+        orgId: actualOrgId,
+        timestamp: admin.firestore.FieldValue.serverTimestamp(),
+      };
+
+      const docRef = await admin.firestore().collection("waste_logs").add(newLog);
+      return {success: true, id: docRef.id};
+    }
+
+    if (action === "get") {
+      const snapshot = await admin.firestore().collection("waste_logs")
+        .where("orgId", "==", actualOrgId)
+        .orderBy("timestamp", "desc")
+        .limit(100)
+        .get();
+
+      const logs = [];
+      snapshot.forEach(doc => logs.push({id: doc.id, ...doc.data()}));
+      return {success: true, logs};
+    }
+
+    if (action === "delete") {
+       const {logId} = payload;
+       if (!logId) {
+          throw new HttpsError("invalid-argument", "Missing log ID");
+       }
+
+       const logRef = admin.firestore().collection("waste_logs").doc(logId);
+       const logDoc = await logRef.get();
+
+       if (!logDoc.exists) {
+          throw new HttpsError("not-found", "Waste log not found");
+       }
+
+       if (logDoc.data().orgId !== actualOrgId) {
+          throw new HttpsError("permission-denied", "Unauthorized to delete this log");
+       }
+
+       await logRef.delete();
+       return {success: true};
+    }
+
+    throw new HttpsError("invalid-argument", "Invalid action");
+  } catch (error) {
+    logManagerError(`Manage Waste Error for uid: ${uid}`, error);
+    if (error instanceof HttpsError) {
+      throw error;
+    }
+    throw new HttpsError("internal", error.message);
+  }
+});
+
 exports.trainGlobalAI = require("./trainGlobalAI").trainGlobalAI;
