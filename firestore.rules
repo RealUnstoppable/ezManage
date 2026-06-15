@@ -157,10 +157,6 @@ service cloud.firestore {
           isAdmin()
       ) && request.resource.data.get('orgId', resource.data.get('orgId', null)) == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('orgId', null);
       );
-      // Removed allow write: if false to permit client-side testing/usage since Cloud functions alone weren't handling all needs properly per bug report.
-      // But adding user/org verification for creation to be safe.
-      allow create: if request.auth != null && request.resource.data.orgId == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.orgId;
-      allow update: if request.auth != null && resource.data.orgId == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.orgId;
     }
 
     // SHIFT GROUPS

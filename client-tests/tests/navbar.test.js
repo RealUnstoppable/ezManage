@@ -185,8 +185,9 @@ describe('loadNavbar', () => {
 
     await authCallback(mockUser);
 
-    const authLink = document.getElementById('auth-link');
-    expect(authLink.textContent).toBe('My Account');
-    expect(authLink.href).toContain('index.html');
+        const authLink = document.getElementById('auth-link');
+        expect(authLink.textContent).toBe('My Account');
+        expect(authLink.href).toContain('index.html');
+    }
   });
 });

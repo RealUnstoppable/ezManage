@@ -3237,9 +3237,8 @@
                 fetchMaintenanceTickets();
             } catch (error) {
                 console.error("Error submitting ticket:", error);
-                if (error.code === 'unavailable' || error.code === 'auth/network-request-failed') {
+                if (error.code === 'unavailable' || error.code === 'auth/network-request-failed' || error.code === 'firestore/unavailable') {
                     alert("Network error: Could not connect to the server. Please check your connection.");
-                    alert("Network error: Could not submit maintenance ticket.");
                 } else {
                     alert("Failed to submit ticket. " + error.message);
                 }
@@ -3941,7 +3940,7 @@
                 endTime.value = '';
             } catch(err) {
                 console.error("Error saving shift", err);
-                if (err.code === 'unavailable' || err.code === 'auth/network-request-failed') {
+                if (err.code === 'unavailable' || err.code === 'auth/network-request-failed' || err.code === 'firestore/unavailable') {
                     alert("Network error: Could not connect to the server. Please check your connection.");
                 } else {
                     alert("Failed to save shift: " + err.message);
@@ -4292,7 +4291,7 @@ function checkAndRenderOrgControls() {
                 } else {
                     alert("Failed to submit shift note. " + err.message);
                 console.error("Error posting note", err);
-                if (err.code === 'unavailable' || err.code === 'auth/network-request-failed') {
+                if (err.code === 'unavailable' || err.code === 'auth/network-request-failed' || err.code === 'firestore/unavailable') {
                     alert("Network error: Could not connect to the server. Please check your connection.");
                 } else {
                     alert("Failed to post note: " + err.message);
