@@ -186,7 +186,7 @@ describe('loadNavbar', () => {
       })
     });
 
-    await authCallback(mockUser);
+    await new Promise(process.nextTick);
 
         const authLink = document.getElementById('auth-link');
         expect(authLink.textContent).toBe('My Account');
