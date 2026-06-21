@@ -37,18 +37,13 @@ describe('loadNavbar', () => {
     await loadNavbar();
 
     const mockUser = { uid: '123' };
-    const authCallback = auth.onAuthStateChanged.mock.calls[0][0];
 
     const mockGet = jest.fn().mockResolvedValueOnce({
       exists: true,
       data: () => ({ isAdmin: false })
     });
 
-    db.collection.mockReturnValueOnce({
-      doc: jest.fn().mockReturnValueOnce({
-        get: mockGet
-      })
-    });
+      await authCallback(mockUser);
 
     await authCallback(mockUser);
     await new Promise(process.nextTick);
