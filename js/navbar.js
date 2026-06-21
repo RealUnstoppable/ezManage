@@ -8,7 +8,6 @@ export function loadNavbar() {
     <nav class="navbar">
         <a href="index.html" class="nav-logo">un<span></span></a>
         <ul class="nav-links">
-
             <li><a href="unstoppable.html">Unstoppable</a></li>
             <li><a href="dreamstimeskip.html">Dreams TimeSkip</a></li>
             <li><a href="harmonytunes.html">HarmonyTunes</a></li>
@@ -17,6 +16,7 @@ export function loadNavbar() {
             <li><a href="blog.html">Blog</a></li>
             <li><a href="portfolio.html">About Me</a></li>
             <li><a href="uds.html">UDS</a></li>
+            <li><a href="#" onclick="navTo('incidents')">Incident Reports</a></li>
             <li><a href="sign in beta.html" id="auth-link">Sign In / Sign Up</a></li>
         </ul>
         <button class="hamburger" aria-label="Open menu">

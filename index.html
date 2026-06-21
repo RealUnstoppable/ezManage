@@ -464,6 +464,9 @@
                 class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i
                     data-lucide="users"></i>
                 Team Roster</a>
+            <a href="#" onclick="navTo('incidents')"
+                class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="alert-triangle"></i>
+                Incident Reports</a>
             <a href="#" onclick="navTo('maintenance')"
                 class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="wrench"></i>
                 Maintenance</a>
@@ -1249,6 +1252,65 @@
                 <h2 class="text-xl font-black mb-4 border-t border-slate-200 dark:border-slate-800 pt-8">Completed Tasks</h2>
                 <div id="completedTasksContainer" class="space-y-4 opacity-75">
                     <!-- Completed Tasks populated via JS -->
+                </div>
+            </div>
+        </div>
+
+        <div id="view-incidents" class="view-section px-6 py-12 hidden">
+            <div class="max-w-4xl mx-auto">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+                    <h1 class="text-4xl font-black">Incident Reports</h1>
+                    <button onclick="document.getElementById('reportIncidentModal').classList.toggle('hidden')"
+                        class="btn btn-primary flex items-center gap-2 px-6 bg-red-500 hover:bg-red-600 border-red-500 text-white">
+                        <i data-lucide="alert-triangle" class="w-5 h-5"></i> Report Incident
+                    </button>
+                </div>
+
+                <div id="reportIncidentModal"
+                    class="hidden bg-white dark:bg-slate-900 rounded-3xl p-6 md:p-8 shadow-sm border border-slate-100 dark:border-slate-800 mb-12">
+                    <h2 class="text-xl font-bold mb-4">Report New Incident</h2>
+                    <div class="space-y-4">
+                        <input type="text" id="incidentTitle" placeholder="Incident Title" aria-label="Incident Title"
+                            class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-red-500">
+                        <textarea id="incidentDesc" placeholder="Describe what happened..." aria-label="Incident Description" rows="3"
+                            class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-red-500 resize-none"></textarea>
+
+                        <div class="flex flex-col md:flex-row gap-4">
+                            <select id="incidentSeverity" aria-label="Incident Severity"
+                                class="flex-1 bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-red-500">
+                                <option value="Low">Low Severity</option>
+                                <option value="Medium">Medium Severity</option>
+                                <option value="High">High Severity</option>
+                                <option value="Critical">Critical Severity</option>
+                            </select>
+                            <select id="incidentType" aria-label="Incident Type"
+                                class="flex-1 bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-red-500">
+                                <option value="Safety">Safety / Injury</option>
+                                <option value="Security">Security / Theft</option>
+                                <option value="Customer">Customer Complaint</option>
+                                <option value="Operational">Operational Failure</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+
+                        <div class="flex justify-end gap-3 pt-2">
+                            <button onclick="document.getElementById('reportIncidentModal').classList.add('hidden')"
+                                class="btn btn-outline px-6 py-2">Cancel</button>
+                            <button onclick="submitIncidentTicket()" class="btn btn-accent bg-red-500 hover:bg-red-600 border-red-500 px-6 py-2">Submit Report</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-black">Active Incident Reports</h2>
+                    <button onclick="fetchIncidents()"
+                        class="text-sm font-bold text-sky-500 hover:text-sky-600 flex items-center gap-2">
+                        <i data-lucide="refresh-cw" class="w-4 h-4"></i> Refresh
+                    </button>
+                </div>
+
+                <div id="incidentsContainer" class="space-y-4">
+                    <!-- Incidents populated via JS -->
                 </div>
             </div>
         </div>
@@ -2231,6 +2293,9 @@
 
             if (viewId === 'waste' && currentUser) {
                 fetchWasteLogs();
+            }
+            if (viewId === 'incidents' && currentUser) {
+                fetchIncidents();
             }
 
             document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
@@ -4616,6 +4681,187 @@ function checkAndRenderOrgControls() {
             }
         }
 
+
+        // --- INCIDENTS LOGIC ---
+
+        async function submitIncidentTicket() {
+            if (!currentUser || !currentUserData || !currentUserData.orgId) {
+                alert("You must be part of an organization to report incidents.");
+                return;
+            }
+
+            const title = document.getElementById('incidentTitle').value.trim();
+            const desc = document.getElementById('incidentDesc').value.trim();
+            const severity = document.getElementById('incidentSeverity').value;
+            const type = document.getElementById('incidentType').value;
+
+            if (!title || !desc) {
+                alert("Please provide a title and description.");
+                return;
+            }
+
+            const submitBtn = document.querySelector('#reportIncidentModal .btn-accent');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> Submitting...';
+            submitBtn.disabled = true;
+            lucide.createIcons();
+
+            try {
+                const manageIncidents = cloudFunctions.httpsCallable('manageIncidents');
+                await manageIncidents({
+                    action: "create",
+                    payload: { title, description: desc, severity, type }
+                });
+
+                document.getElementById('incidentTitle').value = '';
+                document.getElementById('incidentDesc').value = '';
+                document.getElementById('incidentSeverity').value = 'Low';
+                document.getElementById('incidentType').value = 'Safety';
+                document.getElementById('reportIncidentModal').classList.add('hidden');
+
+                alert("Incident report submitted successfully.");
+                fetchIncidents();
+            } catch (error) {
+                console.error("Error submitting incident:", error);
+                if (error.code === 'unavailable' || error.code === 'auth/network-request-failed' || error.code === 'firestore/unavailable') {
+                    alert("Network error: Could not connect to the server. Please check your connection.");
+                } else {
+                    alert("Failed to submit incident. " + error.message);
+                }
+            } finally {
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+                lucide.createIcons();
+            }
+        }
+
+        async function fetchIncidents() {
+            if (!currentUser || !currentUserData || !currentUserData.orgId) {
+                const container = document.getElementById('incidentsContainer');
+                if (container) {
+                    container.innerHTML = `
+                        <div class="text-center py-16 bg-slate-50 dark:bg-slate-900 rounded-3xl border-2 border-dashed border-slate-200 dark:border-slate-800">
+                            <i data-lucide="users" class="w-12 h-12 text-slate-400 mx-auto mb-4"></i>
+                            <h3 class="text-xl font-bold mb-2">Join or Create a Group</h3>
+                            <p class="text-slate-500 mb-4">You must be in a Management Group to view and report incidents.</p>
+                            <button onclick="document.getElementById('orgTutorialModal').classList.remove('hidden')" class="btn btn-sm btn-outline text-sky-500 border-sky-200">How do I connect?</button>
+                        </div>
+                    `;
+                    lucide.createIcons();
+                }
+                return;
+            }
+
+            const container = document.getElementById('incidentsContainer');
+            container.innerHTML = '<div class="text-center py-8"><i data-lucide="loader-2" class="w-8 h-8 animate-spin mx-auto text-sky-500 mb-4"></i><p class="text-slate-500">Loading incidents...</p></div>';
+            lucide.createIcons();
+
+            try {
+                const manageIncidents = cloudFunctions.httpsCallable('manageIncidents');
+                const result = await manageIncidents({ action: "get", payload: {} });
+
+                if (result.data.success) {
+                    const incidents = result.data.incidents || [];
+                    container.innerHTML = '';
+
+                    if (incidents.length === 0) {
+                        container.innerHTML = `
+                            <div class="text-center py-16 bg-slate-50 dark:bg-slate-900 rounded-3xl border-2 border-dashed border-slate-200 dark:border-slate-800">
+                                <i data-lucide="check-circle-2" class="w-12 h-12 text-emerald-400 mx-auto mb-4"></i>
+                                <h3 class="text-xl font-bold mb-2">All Clear!</h3>
+                                <p class="text-slate-500">There are no reported incidents.</p>
+                            </div>
+                        `;
+                        lucide.createIcons();
+                        return;
+                    }
+
+                    const fragment = document.createDocumentFragment();
+
+                    incidents.forEach(incident => {
+                        const statusColors = {
+                            'Open': 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400 border-amber-200 dark:border-amber-800',
+                            'In Progress': 'bg-sky-100 text-sky-800 dark:bg-sky-900/30 dark:text-sky-400 border-sky-200 dark:border-sky-800',
+                            'Resolved': 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800'
+                        };
+                        const prioColors = {
+                            'Low': 'bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-300',
+                            'Medium': 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
+                            'High': 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400',
+                            'Critical': 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400 animate-pulse'
+                        };
+
+                        const dateStr = incident.timestamp ? new Date(incident.timestamp._seconds * 1000).toLocaleString() : 'Just now';
+
+                        const div = document.createElement('div');
+                        div.className = `card p-6 border-l-4 ${incident.severity === 'Critical' ? 'border-l-red-500' : incident.severity === 'High' ? 'border-l-orange-500' : 'border-l-sky-500'}`;
+
+                        div.innerHTML = `
+                            <div class="flex flex-col md:flex-row justify-between gap-4 mb-4">
+                                <div>
+                                    <h3 class="text-lg font-bold">${escapeHTML(incident.title)}</h3>
+                                    <p class="text-sm text-slate-500">Reported by ${escapeHTML(incident.reportedByName)} • ${dateStr}</p>
+                                    <span class="inline-block mt-1 px-2 py-0.5 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded text-[10px] font-bold uppercase tracking-widest">${escapeHTML(incident.type)}</span>
+                                </div>
+                                <div class="flex gap-2 items-start">
+                                    <span class="px-3 py-1 rounded-full text-xs font-bold ${prioColors[incident.severity] || prioColors['Low']}">${escapeHTML(incident.severity)}</span>
+                                    <select class="px-3 py-1 rounded-full text-xs font-bold border appearance-none cursor-pointer focus:outline-none incident-status-select ${statusColors[incident.status] || statusColors['Open']}" data-incident-id="${escapeHTML(incident.id)}">
+                                        <option value="Open" ${incident.status === 'Open' ? 'selected' : ''}>Open</option>
+                                        <option value="In Progress" ${incident.status === 'In Progress' ? 'selected' : ''}>In Progress</option>
+                                        <option value="Resolved" ${incident.status === 'Resolved' ? 'selected' : ''}>Resolved</option>
+                                    </select>
+                                    <button onclick="deleteIncident('${escapeHTML(incident.id)}')" class="text-red-400 p-1 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md ml-2" aria-label="Delete Incident"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                                </div>
+                            </div>
+                            <p class="text-slate-700 dark:text-slate-300 whitespace-pre-wrap">${escapeHTML(incident.description)}</p>
+                        `;
+                        fragment.appendChild(div);
+                    });
+                    container.appendChild(fragment);
+                    lucide.createIcons();
+                }
+            } catch (error) {
+                console.error("Error fetching incidents:", error);
+                container.innerHTML = `<div class="text-red-500 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl text-center">Failed to load incidents: ${error.message}</div>`;
+            }
+        }
+
+        async function deleteIncident(incidentId) {
+            if (!confirm("Are you sure you want to permanently delete this incident report?")) return;
+            try {
+                const manageIncidents = cloudFunctions.httpsCallable('manageIncidents');
+                await manageIncidents({ action: "delete", payload: { incidentId } });
+                fetchIncidents();
+            } catch (err) {
+                console.error("Error deleting incident:", err);
+                alert("Failed to delete incident.");
+            }
+        }
+
+        // Event delegation for incident status updates
+        document.addEventListener('change', function(e) {
+            if (e.target && e.target.classList.contains('incident-status-select')) {
+                const incidentId = e.target.getAttribute('data-incident-id');
+                if (incidentId) {
+                    updateIncidentStatus(incidentId, e.target.value);
+                }
+            }
+        });
+
+        async function updateIncidentStatus(incidentId, newStatus) {
+            try {
+                const manageIncidents = cloudFunctions.httpsCallable('manageIncidents');
+                await manageIncidents({
+                    action: "updateStatus",
+                    payload: { incidentId, status: newStatus }
+                });
+                // Optimistic UI update already handled by changing the select value
+            } catch (error) {
+                console.error("Manager Troubleshooting: Error updating incident:", error);
+                alert("Failed to update status. " + error.message);
+                fetchIncidents(); // revert
+            }
+        }
 
 // --- TEAM DIRECTORY LOGIC ---
 
