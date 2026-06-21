@@ -1,29 +1,9 @@
 import { getFirebaseErrorMessage, logManagerError } from './utils.js';
-import { getFirebaseErrorMessage, logManagerError } from "./utils.js";
-
-import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
-import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, sendEmailVerification } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
-import { getFirestore, doc, setDoc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
-
-
-import { getFirebaseErrorMessage, logManagerError } from './utils.js';
-
-const firebaseConfig = {
-  apiKey: "AIzaSyBgrI9HwJPSc5b4pu2Egsv4DE7shNwptSw",
-  authDomain: "ezmanage.realunstoppable.store",
-  projectId: "dts-hub-website",
-  storageBucket: "dts-hub-website.firebasestorage.app",
-  messagingSenderId: "48345990988",
-  appId: "1:48345990988:web:e3662c9b508168546471e9",
-  measurementId: "G-ZN3YJPHVGX"
-};
 
 if (!window.firebase) { console.error("Firebase Compat SDK must be loaded before auth.js"); }
 
 export const auth = window.firebase ? window.firebase.auth() : {};
 export const db = window.firebase ? window.firebase.firestore() : {};
-
-
 
 export function getUserRedirectPath(userData) {
     return userData && userData.isAdmin ? 'admin.html' : 'index.html';
@@ -40,7 +20,7 @@ export async function fetchUserDoc(uid) {
 
 const ADMIN_EMAIL = null;
 
-if (auth.onAuthStateChanged) {
+if (auth && auth.onAuthStateChanged) {
 auth.onAuthStateChanged(async (user) => {
     const authLink = document.getElementById('auth-link');
     const membershipStatusContainer = document.getElementById('membership-status-container');
@@ -64,8 +44,6 @@ auth.onAuthStateChanged(async (user) => {
             }
         } catch (error) {
             logManagerError("Error fetching user document in auth state change for uid: " + user.uid, error);
-
-
         }
     } else {
         if (authLink) {
