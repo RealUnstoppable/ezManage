@@ -96,8 +96,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const endOfCelebration = new Date('January 1, 2026 23:59:59');
             const revertDate = new Date('January 2, 2026 00:00:00');
 
-            let currentGreeting = "";
-
             if (now >= revertDate) {
                  const currentHour = now.getHours();
                  if (currentHour < 12) {
@@ -106,11 +104,6 @@ document.addEventListener('DOMContentLoaded', () => {
                      newGreeting = "Good Afternoon.";
                  } else {
                      newGreeting = "Good Evening.";
-                     currentGreeting = "Good Morning.";
-                 } else if (currentHour < 18) {
-                     currentGreeting = "Good Afternoon.";
-                 } else {
-                     currentGreeting = "Good Evening.";
                  }
                  shouldPlayVideo = false;
             }
@@ -118,8 +111,6 @@ document.addEventListener('DOMContentLoaded', () => {
             else if (now >= newYear2026 && now <= endOfCelebration) {
                 newGreeting = "Happy New Year!";
                 shouldPlayVideo = true;
-                currentGreeting = "Happy New Year!";
-                manageVideoBackground(true);
             }
 
             else {
@@ -132,7 +123,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     const seconds = Math.floor((diff % (1000 * 60)) / 1000);
 
                     newGreeting = `New Years Countdown: ${days}d ${hours}h ${minutes}m ${seconds}s`;
-                    currentGreeting = `New Years Countdown: ${days}d ${hours}h ${minutes}m ${seconds}s`;
                 }
                 shouldPlayVideo = false;
             }
@@ -144,6 +134,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 greetingElement.textContent = newGreeting;
                 lastGreeting = newGreeting;
             }
+
             manageVideoBackground(shouldPlayVideo);
         };
 
