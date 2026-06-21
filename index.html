@@ -1945,6 +1945,7 @@
                         runAIPatternLogic();
                     } else {
                         if (!doc.exists) {
+                            isInitializingAuth = false;
                             activeView = document.querySelector('.view-section.active');
                             if (activeView && activeView.id !== 'view-setup') {
                                 try {
