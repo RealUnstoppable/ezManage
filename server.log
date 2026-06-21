@@ -1,0 +1,5 @@
+
+> ezmanage-app@1.0.0 start
+> node server.cjs
+
+Server running on port 3000
