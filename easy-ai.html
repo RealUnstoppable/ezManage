@@ -463,7 +463,22 @@
 
         function updateStatus(text, color) {
             const ind = document.getElementById('statusIndicator');
-            ind.innerHTML = `<span class="w-2 h-2 rounded-full bg-${escapeHTML(color)}-500 ${escapeHTML(color) === 'amber' || escapeHTML(color) === 'sky' ? 'animate-pulse' : ''} shadow-[0_0_8px_rgba(var(--tw-colors-${escapeHTML(color)}-500),0.8)]"></span> ${escapeHTML(text)}`;
+            const isPulsing = color === 'amber' || color === 'sky';
+
+            ind.innerHTML = '';
+            const span = document.createElement('span');
+            span.className = `w-2 h-2 rounded-full shadow-[0_0_8px_rgba(var(--tw-colors-${color}-500),0.8)]`;
+
+            if (color === 'sky') span.classList.add('bg-sky-500');
+            else if (color === 'emerald') span.classList.add('bg-emerald-500');
+            else if (color === 'amber') span.classList.add('bg-amber-500');
+            else if (color === 'red') span.classList.add('bg-red-500');
+            else span.classList.add(`bg-${color}-500`);
+
+            if (isPulsing) span.classList.add('animate-pulse');
+
+            ind.appendChild(span);
+            ind.appendChild(document.createTextNode(' ' + text));
         }
 
         function checkAIRestrictions(data) {
@@ -878,8 +893,8 @@
             if (!navigator.onLine) {
                 ind.innerHTML = `<span class="w-2 h-2 rounded-full bg-red-500 shadow-[0_0_8px_rgba(var(--tw-colors-red-500),0.8)]"></span> Offline - Predictions Unavailable`;
             } else if (currentUser) {
-
-                ind.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(var(--tw-colors-emerald-500),0.8)]"></span> Analysis Complete`;
+                // Not updating innerHTML with dynamic strings to prevent XSS
+                updateStatus('Analysis Complete', 'emerald');
             }
         }
     </script>

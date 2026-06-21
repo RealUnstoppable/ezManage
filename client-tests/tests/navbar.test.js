@@ -1,15 +1,6 @@
 import { jest } from "@jest/globals";
 
-// Map globals first before dynamic imports
 global.window = global.window || {};
-global.firebase = {
-    apps: [],
-    auth: jest.fn(() => ({ onAuthStateChanged: jest.fn() })),
-    firestore: jest.fn(() => ({ collection: jest.fn(), settings: jest.fn() })),
-    initializeApp: jest.fn()
-};
-global.window.firebase = global.firebase;
-
 const mockFirebase = {
   apps: [],
   initializeApp: jest.fn(() => ({ name: '[DEFAULT]' })),
@@ -22,39 +13,16 @@ const mockFirebase = {
 global.window.firebase = mockFirebase;
 global.firebase = mockFirebase;
 
-jest.unstable_mockModule("https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js", () => ({
-    onAuthStateChanged: jest.fn(),
-    getAuth: jest.fn(),
-    createUserWithEmailAndPassword: jest.fn(),
-    signInWithEmailAndPassword: jest.fn(),
-    signOut: jest.fn(),
-    sendEmailVerification: jest.fn()
-}));
-
-jest.unstable_mockModule("https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js", () => ({
-    getDoc: jest.fn(),
-    doc: jest.fn(),
-    getFirestore: jest.fn(),
-    setDoc: jest.fn(),
-    serverTimestamp: jest.fn()
-}));
-
 jest.unstable_mockModule('../../js/auth.js', () => ({
   auth: { onAuthStateChanged: jest.fn() },
   db: { collection: jest.fn(() => ({ doc: jest.fn(() => ({ get: jest.fn() })) })) },
   getUserRedirectPath: (userData) => userData && userData.isAdmin ? 'admin.html' : 'index.html'
 }));
 
+const { loadNavbar } = await import('../../js/navbar.js');
+const { auth, db } = await import('../../js/auth.js');
+
 describe('loadNavbar', () => {
-  let loadNavbar;
-  let authModule;
-
-  beforeAll(async () => {
-    const navbarModule = await import('../../js/navbar.js');
-    loadNavbar = navbarModule.loadNavbar;
-    authModule = await import('../../js/auth.js');
-  });
-
   beforeEach(() => {
     document.body.innerHTML = '<div class="main-header"></div>';
     jest.clearAllMocks();
@@ -66,20 +34,18 @@ describe('loadNavbar', () => {
   });
 
   it('should set auth link to index.html if user is logged in but not admin', async () => {
-    await loadNavbar();
+    loadNavbar();
 
-    const authCallback = authModule.auth.onAuthStateChanged.mock.calls[0][0];
+    const mockUser = { uid: '123' };
 
     const mockGet = jest.fn().mockResolvedValueOnce({
       exists: true,
       data: () => ({ isAdmin: false })
     });
 
-    authModule.db.collection.mockReturnValue({
-      doc: jest.fn().mockReturnValue({ get: mockGet })
-    });
+      await authCallback(mockUser);
 
-    await authCallback({ uid: '123' });
+    await authCallback(mockUser);
     await new Promise(process.nextTick);
 
     const authLink = document.getElementById('auth-link');

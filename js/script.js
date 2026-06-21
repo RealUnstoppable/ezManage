@@ -1,4 +1,6 @@
 
+import { logManagerError } from './utils.js';
+
 document.addEventListener('DOMContentLoaded', () => {
 
     const hamburger = document.querySelector('.hamburger');
@@ -74,7 +76,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     heroSection.appendChild(videoBg);
                 }
 
-                if (videoBg.paused) videoBg.play().catch(() => {});
+                if (videoBg.paused) videoBg.play().catch(e => logManagerError("Error playing video background:", e));
 
             } else {
                 if (videoBg) {
