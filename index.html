@@ -2428,6 +2428,7 @@
                 items.sort((a, b) => Number(b.dataset.timestamp) - Number(a.dataset.timestamp));
             }
             
+            // ⚡ Bolt Optimization: Batch DOM insertions to avoid layout thrashing
             // ⚡ Bolt Optimization: Use DocumentFragment to batch DOM re-insertions and avoid layout thrashing
             const fragment = document.createDocumentFragment();
             items.forEach(item => fragment.appendChild(item));
