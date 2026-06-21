@@ -47,15 +47,20 @@ function updateAuthLink() {
     const authLink = document.getElementById('auth-link');
     if (!authLink) return;
 
-    onAuthStateChanged(auth, async (user) => {
-        if (user) {
-            try {
-                const userDoc = await getDoc(doc(db, "users", user.uid));
-                const destination = userDoc.exists() ? getUserRedirectPath(userDoc.data()) : 'account.html';
-                authLink.href = destination;
-                authLink.textContent = "My Account";
-            } catch (e) {
-                logManagerError("Navbar auth state error for uid: " + user.uid, e);
+    if (auth && auth.onAuthStateChanged) {
+        auth.onAuthStateChanged(async (user) => {
+            if (user) {
+                try {
+                    const userDoc = await db.collection("users").doc(user.uid).get();
+                    const destination = userDoc.exists ? getUserRedirectPath(userDoc.data()) : 'account.html';
+                    authLink.href = destination;
+                    authLink.textContent = "My Account";
+                } catch (e) {
+                    logManagerError(`Navbar auth state error for uid: ${user.uid}`, e);
+                }
+            } else {
+                authLink.href = 'sign in beta.html';
+                authLink.textContent = "Sign In / Sign Up";
             }
         } else {
             authLink.href = 'sign in beta.html';
