@@ -1,4 +1,6 @@
 
+import { logManagerError } from './utils.js';
+
 document.addEventListener('DOMContentLoaded', () => {
 
     const hamburger = document.querySelector('.hamburger');
@@ -74,7 +76,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     heroSection.appendChild(videoBg);
                 }
 
-                if (videoBg.paused) videoBg.play().catch(() => {});
+                if (videoBg.paused) videoBg.play().catch(e => logManagerError("Error playing video background:", e));
 
             } else {
                 if (videoBg) {
@@ -135,22 +137,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 shouldPlayVideo = false;
             }
 
-            // ⚡ Bolt Optimization: Only update DOM if the state actually changed
-            if (newGreeting !== lastGreeting) {
-                greetingElement.textContent = newGreeting;
-                manageVideoBackground(shouldPlayVideo);
-                lastGreeting = newGreeting;
-            }
-
-            if (currentGreeting !== lastGreeting) {
-                greetingElement.textContent = currentGreeting;
-                lastGreeting = currentGreeting;
-            }
-
             // ⚡ Bolt Performance Optimization:
             // Only apply DOM updates when the greeting state actually changes to prevent unnecessary re-renders and layout thrashing,
             // especially when the greeting is static text like "Good Morning".
-            if (newGreeting && newGreeting !== lastGreeting) {
+            if (newGreeting !== lastGreeting) {
                 greetingElement.textContent = newGreeting;
                 lastGreeting = newGreeting;
             }

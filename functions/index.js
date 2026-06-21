@@ -519,30 +519,6 @@ exports.manageEmployees = functions.https.onCall(async (data, context) => {
 
        await empRef.update(updates);
        return {success: true};
-      const {empId, name, role, phone, status} = payload;
-      if (!empId) {
-        throw new HttpsError("invalid-argument", "Missing employee ID");
-      }
-
-      const empRef = admin.firestore().collection("employees").doc(empId);
-      const empDoc = await empRef.get();
-
-      if (!empDoc.exists) {
-        throw new HttpsError("not-found", "Employee not found");
-      }
-
-      if (empDoc.data().orgId !== actualOrgId) {
-        throw new HttpsError("permission-denied", "Unauthorized to update this employee");
-      }
-
-      const updates = {};
-      if (name !== undefined) updates.name = name;
-      if (role !== undefined) updates.role = role;
-      if (phone !== undefined) updates.phone = phone;
-      if (status !== undefined) updates.status = status;
-
-      await empRef.update(updates);
-      return {success: true};
     }
 
     if (action === "delete") {
@@ -558,16 +534,6 @@ exports.manageEmployees = functions.https.onCall(async (data, context) => {
          "Employee not found",
          "Unauthorized to delete this employee"
        );
-      const empRef = admin.firestore().collection("employees").doc(empId);
-      const empDoc = await empRef.get();
-
-      if (!empDoc.exists) {
-        throw new HttpsError("not-found", "Employee not found");
-      }
-
-      if (empDoc.data().orgId !== actualOrgId) {
-        throw new HttpsError("permission-denied", "Unauthorized to delete this employee");
-      }
 
       // Soft delete
       await empRef.update({status: "Inactive"});
