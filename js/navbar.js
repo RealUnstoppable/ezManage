@@ -1,5 +1,7 @@
 import { logManagerError } from './utils.js';
 import { auth, db, getUserRedirectPath } from './auth.js';
+import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
+import { doc, getDoc } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
 
 export function loadNavbar() {
     const headerHTML = `
@@ -14,6 +16,7 @@ export function loadNavbar() {
             <li><a href="blog.html">Blog</a></li>
             <li><a href="portfolio.html">About Me</a></li>
             <li><a href="uds.html">UDS</a></li>
+            <li><a href="#" onclick="navTo('incidents')">Incident Reports</a></li>
             <li><a href="sign in beta.html" id="auth-link">Sign In / Sign Up</a></li>
         </ul>
         <button class="hamburger" aria-label="Open menu">
@@ -59,6 +62,9 @@ function updateAuthLink() {
                 authLink.href = 'sign in beta.html';
                 authLink.textContent = "Sign In / Sign Up";
             }
-        });
-    }
+        } else {
+            authLink.href = 'sign in beta.html';
+            authLink.textContent = "Sign In / Sign Up";
+        }
+    });
 }

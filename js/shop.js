@@ -66,7 +66,7 @@ const navLinks = document.querySelector('.nav-links');
 function renderProducts() {
     productGrid.innerHTML = products.map(product => `
         <div class="product-card">
-            <img src="${product.imageUrl}" alt="${product.name}" class="product-image">
+            <img src="${product.imageUrl}" alt="${product.name}" class="product-image" loading="lazy">
             <div class="product-info">
                 <h3>${product.name}</h3>
                 <p>${product.description}</p>
@@ -90,7 +90,7 @@ function renderCart() {
             if (!product) return '';
             return `
                 <div class="cart-item">
-                    <img src="${product.imageUrl}" alt="${product.name}" class="cart-item-img">
+                    <img src="${product.imageUrl}" alt="${product.name}" class="cart-item-img" loading="lazy">
                     <div class="cart-item-info">
                         <h4>${product.name}</h4>
                         <p>$${product.price.toFixed(2)}</p>

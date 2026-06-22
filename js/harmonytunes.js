@@ -145,7 +145,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         containerTikToks.innerHTML = tiktokData.map(tk => `
             <div class="tiktok-card" onclick="window.open('${tk.url}', '_blank')">
-                <img src="${tk.img}" alt="${tk.title}">
+                <img src="${tk.img}" alt="${tk.title}" loading="lazy">
                 <div class="tiktok-overlay">
                     <div class="tiktok-title">${tk.title}</div>
                 </div>
@@ -159,7 +159,7 @@ document.addEventListener('DOMContentLoaded', () => {
         containerPlaylists.innerHTML = playlists.map(pl => `
             <div class="music-card" onclick="window.loadPlaylistView('${pl.id}')">
                 <div class="card-img-wrapper">
-                    <img src="/images/harmony-tunes-card.jpg" alt="${pl.title}">
+                    <img src="/images/harmony-tunes-card.jpg" alt="${pl.title}" loading="lazy">
                     <button class="card-play-btn">▶</button>
                 </div>
                 <div class="card-title">${pl.title}</div>
@@ -184,7 +184,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return `
             <div class="music-card" data-song-id="${song.id}" onclick="playSongById('${song.id}')">
                 <div class="card-img-wrapper">
-                    <img src="${song.art}" alt="${song.title}">
+                    <img src="${song.art}" alt="${song.title}" loading="lazy">
                     <button class="card-play-btn">▶</button>
                 </div>
                 <div class="card-title">${song.title}</div>

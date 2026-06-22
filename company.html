@@ -1723,6 +1723,7 @@
                     }).join('');
             }
 
+            // ⚡ Bolt Optimization: Batch DOM insertions to avoid layout thrashing
             // ⚡ Bolt Optimization: Batch DOM insertions using a DocumentFragment to prevent layout thrashing
             const fragment = document.createDocumentFragment();
 
@@ -1759,6 +1760,8 @@
             if (tbody) {
                 tbody.appendChild(fragment);
             }
+
+            if (tbody) tbody.appendChild(fragment);
 
             document.getElementById('globalShifts').innerText = totalShifts;
             document.getElementById('globalRoutineScore').innerText = totalLogsWithScores > 0 ? Math.round(totalScore / totalLogsWithScores) + "%" : "0%";

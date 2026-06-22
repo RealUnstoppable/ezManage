@@ -1,5 +1,6 @@
 import { jest } from "@jest/globals";
 
+global.window = global.window || {};
 const mockFirebase = {
   apps: [],
   initializeApp: jest.fn(() => ({ name: '[DEFAULT]' })),
@@ -9,8 +10,6 @@ const mockFirebase = {
       settings: jest.fn()
   }))
 };
-
-global.window = global.window || {};
 global.window.firebase = mockFirebase;
 global.firebase = mockFirebase;
 
@@ -21,7 +20,7 @@ jest.unstable_mockModule('../../js/auth.js', () => ({
 }));
 
 const { loadNavbar } = await import('../../js/navbar.js');
-const authModule = await import('../../js/auth.js');
+const { auth, db } = await import('../../js/auth.js');
 
 describe('loadNavbar', () => {
   beforeEach(() => {
@@ -38,18 +37,16 @@ describe('loadNavbar', () => {
     loadNavbar();
 
     const mockUser = { uid: '123' };
-    const authCallback = authModule.auth.onAuthStateChanged.mock.calls[0][0];
 
     const mockGet = jest.fn().mockResolvedValueOnce({
       exists: true,
       data: () => ({ isAdmin: false })
     });
 
-    authModule.db.collection.mockReturnValue({
-      doc: jest.fn().mockReturnValue({ get: mockGet })
-    });
+      await authCallback(mockUser);
 
     await authCallback(mockUser);
+    await new Promise(process.nextTick);
 
     const authLink = document.getElementById('auth-link');
     expect(authLink.textContent).toBe('My Account');
