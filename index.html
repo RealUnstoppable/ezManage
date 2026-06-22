@@ -5391,7 +5391,7 @@ function checkAndRenderOrgControls() {
                                     <p class="text-xs font-mono text-slate-400 mt-1">${dueDateStr}</p>
                                 </div>
                                 <div class="flex flex-wrap gap-2 items-start justify-end">
-                                    <span class="px-3 py-1 rounded-full text-xs font-bold ${prioColors[task.priority] || prioColors['Low']}">${task.priority}</span>
+                                    <span class="px-3 py-1 rounded-full text-xs font-bold ${prioColors[task.priority] || prioColors['Low']}">${escapeHTML(task.priority)}</span>
                                     <select class="px-3 py-1 rounded-full text-xs font-bold border appearance-none cursor-pointer focus:outline-none ${statusColors[task.status] || statusColors['Pending']}"
                                         onchange="updateTaskStatus('${task.id}', this.value)">
                                         <option value="Pending" ${task.status === 'Pending' ? 'selected' : ''}>Pending</option>

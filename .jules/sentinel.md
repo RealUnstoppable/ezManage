@@ -97,3 +97,7 @@
 **Vulnerability:** Redundant `allow create` blocks in Firestore rules, allowing less restrictive rules to be evaluated successfully, resulting in IDOR/security bypass.
 **Learning:** Firestore evaluates rules using a logical `OR`. Providing multiple blocks for the same operation doesn't enforce the strictest rule, but rather any one that evaluates to true.
 **Prevention:** Consolidate required checks into a single block linked with `&&`.
+## $(date +%Y-%m-%d) - Cross-Site Scripting (XSS) in index.html Task Priority
+**Vulnerability:** User-controlled input `task.priority` was interpolated directly into `innerHTML` strings when rendering task cards, leading to a Stored XSS vulnerability.
+**Learning:** It is crucial to escape all user-provided data, including seemingly restricted fields like "priority", as data in the database can be manipulated.
+**Prevention:** Consistently apply `escapeHTML` to all dynamic variables embedded within string literals that are assigned to `innerHTML`.
