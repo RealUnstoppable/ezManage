@@ -669,7 +669,7 @@
                         <button aria-label="Templates" onclick="navTo('presets')" class="btn btn-outline btn-sm"><i data-lucide="layout"
                                 class="w-4"></i> Templates</button>
                         <button onclick="clearData()"
-                            class="btn btn-outline btn-sm text-red-500 border-red-200 hover:bg-red-50"><i
+                            class="btn btn-outline btn-sm text-red-500 border-red-200 hover:bg-red-50" aria-label="Clear Data"><i
                                 data-lucide="trash-2" class="w-4"></i> Reset</button>
                     </div>
                 </div>
@@ -880,10 +880,10 @@
                     <h2 class="text-xl font-bold mb-4" id="employeeModalTitle">Add New Employee</h2>
                     <input type="hidden" id="empModalId" value="">
                     <div class="space-y-4">
-                        <input type="text" id="empName" placeholder="Employee Full Name"
+                        <input type="text" id="empName" aria-label="Employee Full Name" placeholder="Employee Full Name"
                             class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
                         <div class="flex flex-col md:flex-row gap-4">
-                            <select id="empRole"
+                            <select id="empRole" aria-label="Employee Role"
                                 class="flex-1 bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
                                 <option value="Cashier">Cashier</option>
                                 <option value="Cook">Cook</option>
@@ -892,7 +892,7 @@
                                 <option value="Driver">Driver</option>
                                 <option value="Other">Other</option>
                             </select>
-                            <input type="text" id="empPhone" placeholder="Phone Number (Optional)"
+                            <input type="text" id="empPhone" aria-label="Employee Phone Number" placeholder="Phone Number (Optional)"
                                 class="flex-1 bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
                         </div>
 
@@ -930,24 +930,14 @@
                             <input type="date" id="scheduleDate" class="w-full" onchange="fetchSchedules(this.value)">
                         </div>
                         <div>
-                            <label class="block text-sm font-bold mb-1">Employee Name</label>
+                            <label for="shiftEmpName" class="block text-sm font-bold mb-1">Employee Name</label>
                             <select id="shiftEmpName" class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
                                 <option value="">Select Employee...</option>
                             </select>
                         </div>
                         <div>
-                            <label class="block text-sm font-bold mb-1">Role</label>
-                            <select id="shiftRole" class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
-                            <label for="shiftEmpName" class="block text-sm font-bold mb-1">Employee Name</label>
-                            <input type="text" id="shiftEmpName" class="w-full" placeholder="John Doe">
-                            <label class="block text-sm font-bold mb-1">Employee Name</label>
-                            <select id="shiftEmpName" class="w-full">
-                                <option value="" disabled selected>Select Employee</option>
-                            </select>
-                        </div>
-                        <div>
                             <label for="shiftRole" class="block text-sm font-bold mb-1">Role</label>
-                            <select id="shiftRole" class="w-full">
+                            <select id="shiftRole" class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
                                 <option value="Cashier">Cashier</option>
                                 <option value="Cook">Cook</option>
                                 <option value="Shift Leader">Shift Leader</option>
@@ -1388,35 +1378,35 @@
             <div class="max-w-4xl mx-auto">
                 <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
                     <h1 class="text-4xl font-black">Team Roster</h1>
-                    <button onclick="document.getElementById('addEmployeeModal').classList.toggle('hidden')"
+                    <button onclick="document.getElementById('addStaffModal').classList.toggle('hidden')"
                         class="btn btn-primary flex items-center gap-2 px-6">
                         <i data-lucide="plus-circle" class="w-5 h-5"></i> Add Employee
                     </button>
                 </div>
 
-                <div id="addEmployeeModal"
+                <div id="addStaffModal"
                     class="hidden bg-white dark:bg-slate-900 rounded-3xl p-6 md:p-8 shadow-sm border border-slate-100 dark:border-slate-800 mb-12">
                     <h2 class="text-xl font-bold mb-4">Add New Employee</h2>
                     <div class="space-y-4">
-                        <input type="text" id="empName" placeholder="Full Name"
+                        <input type="text" id="staffName" aria-label="Staff Full Name" placeholder="Full Name"
                             class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
-                        <input type="text" id="empRole" placeholder="Role (e.g. Cashier, Cook)"
+                        <input type="text" id="staffRole" aria-label="Staff Role" placeholder="Role (e.g. Cashier, Cook)"
                             class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
 
                         <div class="grid md:grid-cols-2 gap-4">
-                            <input type="tel" id="empPhone" placeholder="Phone Number"
+                            <input type="tel" id="staffPhone" aria-label="Staff Phone" placeholder="Phone Number"
                                 class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
-                            <input type="email" id="empEmail" placeholder="Email Address"
+                            <input type="email" id="staffEmail" aria-label="Staff Email" placeholder="Email Address"
                                 class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
                         </div>
 
-                        <select id="empStatus" class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
+                        <select id="staffStatus" aria-label="Staff Status" class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
                             <option value="Active">Active</option>
                             <option value="Inactive">Inactive</option>
                         </select>
 
                         <div class="flex justify-end gap-3 pt-2">
-                            <button onclick="document.getElementById('addEmployeeModal').classList.add('hidden')"
+                            <button onclick="document.getElementById('addStaffModal').classList.add('hidden')"
                                 class="btn btn-outline px-6 py-2">Cancel</button>
                             <button onclick="addEmployee()" class="btn btn-accent px-6 py-2">Save Employee</button>
                         </div>
@@ -3061,18 +3051,18 @@
 
         async function addEmployee() {
             if (!currentUser || !currentUserData) return;
-            const name = document.getElementById('empName').value.trim();
-            const role = document.getElementById('empRole').value.trim();
-            const phone = document.getElementById('empPhone').value.trim();
-            const email = document.getElementById('empEmail').value.trim();
-            const status = document.getElementById('empStatus').value;
+            const name = document.getElementById('staffName').value.trim();
+            const role = document.getElementById('staffRole').value.trim();
+            const phone = document.getElementById('staffPhone').value.trim();
+            const email = document.getElementById('staffEmail').value.trim();
+            const status = document.getElementById('staffStatus').value;
 
             if (!name || !role) {
                 alert("Employee Name and Role are required.");
                 return;
             }
 
-            const saveBtn = document.querySelector('#addEmployeeModal .btn-accent');
+            const saveBtn = document.querySelector('#addStaffModal .btn-accent');
             const originalText = saveBtn.innerHTML;
             saveBtn.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> Saving...';
             saveBtn.disabled = true;
