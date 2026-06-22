@@ -96,6 +96,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const endOfCelebration = new Date('January 1, 2026 23:59:59');
             const revertDate = new Date('January 2, 2026 00:00:00');
 
+            let newGreetingText = "";
+
             if (now >= revertDate) {
                  const currentHour = now.getHours();
                  if (currentHour < 12) {
