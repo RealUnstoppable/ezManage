@@ -3,7 +3,7 @@
 
 <head>
   <script type="module">
-    import { escapeHTML } from '/js/utils.js';
+    import { escapeHTML } from './js/utils.js';
     window.escapeHTML = escapeHTML;
   </script>
 
@@ -1560,7 +1560,7 @@
             measurementId: "G-ZN3YJPHVGX"
         };
 
-        if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
+        const app = !window.firebase.apps.length ? window.firebase.initializeApp(firebaseConfig) : window.firebase.app();
         const auth = firebase.auth();
         firebase.firestore().settings({
             experimentalForceLongPolling: true
@@ -1592,6 +1592,7 @@
         let hasReferralDiscount = false;
         let unsubscribeUser = null;
         let initialDraftLoaded = false;
+        let isInitializingAuth = true;
 
         async function callCloudFunction(functionName, payload) {
             const func = firebase.functions().httpsCallable(functionName);
@@ -3044,19 +3045,27 @@
             }
         }
 
-        function submitFeatureRequest() {
+        async function submitFeatureRequest() {
             const msg = document.getElementById('featureReqText').value;
             if (!msg) return;
-            db.collection('feature_requests').add({
-                uid: currentUser.uid,
-                email: currentUser.email,
-                message: msg,
-                status: "In Progress",
-                timestamp: new Date().toISOString()
-            }).then(() => {
+            try {
+                await db.collection('feature_requests').add({
+                    uid: currentUser.uid,
+                    email: currentUser.email,
+                    message: msg,
+                    status: "In Progress",
+                    timestamp: new Date().toISOString()
+                });
                 alert("Sent!");
                 document.getElementById('featureReqText').value = "";
-            });
+            } catch (err) {
+                console.error("Error sending request:", err);
+                if (err.code === 'unavailable' || err.code === 'auth/network-request-failed') {
+                    alert("Network error: Could not connect to the server. Please check your connection.");
+                } else {
+                    alert("Failed to send request. " + err.message);
+                }
+            }
         }
 
         async function addEmployee() {
@@ -3784,7 +3793,7 @@ function checkAndRenderOrgControls() {
                 });
 
                 document.getElementById('shiftNoteContent').value = "";
-                fetchShiftNotes();
+                await fetchShiftNotes();
             } catch (err) {
                 console.error("Error posting note", err);
                 if (err.code === 'unavailable' || err.code === 'auth/network-request-failed') {

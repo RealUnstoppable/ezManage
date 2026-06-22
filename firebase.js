@@ -1,8 +1,3 @@
-import { initializeApp, getApps, getApp } from "firebase/app";
-import { getAuth } from "firebase/auth";
-import { getFirestore, initializeFirestore } from "firebase/firestore";
-import { getFunctions } from "firebase/functions";
-
 const firebaseConfig = {
     apiKey: process.env.REACT_APP_FIREBASE_API_KEY || "AIzaSyBgrI9HwJPSc5b4pu2Egsv4DE7shNwptSw",
     authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN || "dts-hub-website.firebaseapp.com",
@@ -13,16 +8,16 @@ const firebaseConfig = {
     measurementId: process.env.REACT_APP_FIREBASE_MEASUREMENT_ID || "G-ZN3YJPHVGX"
 };
 
-// Ensure Firebase is initialized exactly once as a singleton to prevent token mismatches
-const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+const app = typeof window !== 'undefined' && window.firebase
+    ? (!window.firebase.apps.length ? window.firebase.initializeApp(firebaseConfig) : window.firebase.app())
+    : null;
 
-const auth = getAuth(app);
+const auth = app ? window.firebase.auth() : null;
 
-// Use experimentalForceLongPolling for fallback on CORS/network issues
-const db = initializeFirestore(app, {
-    experimentalForceLongPolling: true
-});
+const db = app ? window.firebase.firestore() : null;
+if (db && db.settings) {
+    db.settings({ experimentalForceLongPolling: true });
+}
+const functions = app ? window.firebase.functions() : null;
 
-const functions = getFunctions(app);
-
-export { app, auth, db, functions };
+export { app, auth, db, functions, firebaseConfig };
