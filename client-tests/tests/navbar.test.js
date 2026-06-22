@@ -28,7 +28,7 @@ describe('loadNavbar', () => {
     jest.clearAllMocks();
   });
 
-  it('should inject navbar HTML', async () => {
+  it('should inject navbar HTML', () => {
     loadNavbar();
     expect(document.querySelector('.navbar')).not.toBeNull();
   });

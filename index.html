@@ -1877,14 +1877,14 @@
         };
 
         const app = !window.firebase.apps.length ? window.firebase.initializeApp(firebaseConfig) : window.firebase.app();
-        const auth = firebase.auth();
+        const auth = window.firebase.auth();
 
-        firebase.firestore().settings({
+        window.firebase.firestore().settings({
             experimentalForceLongPolling: true
         });
-        const db = firebase.firestore();
+        const db = window.firebase.firestore();
 
-        const cloudFunctions = firebase.functions();
+        const cloudFunctions = window.firebase.functions();
 
         db.enablePersistence().catch(err => console.error("Offline sync error:", err));
 
@@ -4260,10 +4260,10 @@ function checkAndRenderOrgControls() {
                             <div class="flex justify-end border-t border-slate-100 dark:border-slate-800 pt-4 mt-2">
                                 <button class="text-sm font-bold text-slate-400 hover:text-emerald-500 flex items-center gap-2 transition-colors resolve-note-btn" aria-label="Resolve Shift Note" data-note-id="${docId}">
                                     <i data-lucide="check-circle" class="w-4 h-4"></i> Mark Resolved
-                                </button>`;
-                        noteDiv.querySelector('.resolve-note-btn').onclick = () => resolveShiftNote(docId);
+                                </button>
                             </div>
                         `;
+                        noteDiv.querySelector('.resolve-note-btn').onclick = () => resolveShiftNote(docId);
                         noteDiv.querySelector('.shift-note-text').textContent = data.content;
                         fragment.appendChild(noteDiv);
                     });
@@ -4341,19 +4341,13 @@ function checkAndRenderOrgControls() {
                     priority: priority,
                     status: 'Active',
                     orgId: currentUserData.orgId,
-                    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
                     timestamp: firebase.firestore.FieldValue.serverTimestamp()
                 });
 
                 document.getElementById('shiftNoteContent').value = "";
                 fetchShiftNotes();
             } catch (err) {
-                console.error(err);
-                if (err.code === 'unavailable' || err.code === 'auth/network-request-failed') {
-                    alert("Network error: Could not submit shift note. Please check your connection.");
-                } else {
-                    alert("Failed to submit shift note. " + err.message);
                 console.error("Error posting note", err);
                 if (err.code === 'unavailable' || err.code === 'auth/network-request-failed' || err.code === 'firestore/unavailable') {
                     alert("Network error: Could not connect to the server. Please check your connection.");
@@ -5458,6 +5452,8 @@ function checkAndRenderOrgControls() {
             else if (action === 'removeShift') removeShift(btn.dataset.index);
         });
 
+        // The second event listener was unclosed
+
         window.onload = () => {
             if (localStorage.getItem('managerProTheme') === 'dark') {
                 document.body.classList.add('dark-mode');
@@ -5471,7 +5467,6 @@ function checkAndRenderOrgControls() {
                     .then(() => console.log("Service Worker Registered"))
                     .catch(err => console.error("Service Worker Registration Failed:", err));
             }
-
 
         // Event delegation for dynamically added buttons to prevent XSS
         document.addEventListener('click', function(e) {

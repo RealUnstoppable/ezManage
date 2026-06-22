@@ -20,8 +20,6 @@ if (!window.firebase) { console.error("Firebase Compat SDK must be loaded before
 export const auth = window.firebase ? window.firebase.auth() : {};
 export const db = window.firebase ? window.firebase.firestore() : {};
 
-
-
 export function getUserRedirectPath(userData) {
     return userData && userData.isAdmin ? 'admin.html' : 'index.html';
 }
@@ -37,7 +35,7 @@ export async function fetchUserDoc(uid) {
 
 const ADMIN_EMAIL = null;
 
-if (auth.onAuthStateChanged) {
+if (auth && auth.onAuthStateChanged) {
 auth.onAuthStateChanged(async (user) => {
     const authLink = document.getElementById('auth-link');
     const membershipStatusContainer = document.getElementById('membership-status-container');
@@ -61,8 +59,6 @@ auth.onAuthStateChanged(async (user) => {
             }
         } catch (error) {
             logManagerError("Error fetching user document in auth state change for uid: " + user.uid, error);
-
-
         }
     } else {
         if (authLink) {
