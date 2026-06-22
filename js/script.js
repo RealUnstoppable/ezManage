@@ -1,4 +1,6 @@
 
+import { logManagerError } from './utils.js';
+
 document.addEventListener('DOMContentLoaded', () => {
 
     const hamburger = document.querySelector('.hamburger');
@@ -51,8 +53,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const heroSection = document.querySelector('.hero');
 
     if (greetingElement && heroSection) {
+        let lastGreeting = "";
+        let lastShouldPlay = null;
 
         const manageVideoBackground = (shouldPlay) => {
+            if (shouldPlay === lastShouldPlay) return;
+            lastShouldPlay = shouldPlay;
+
             let videoBg = document.getElementById('new-year-video');
 
             if (shouldPlay) {
@@ -69,7 +76,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     heroSection.appendChild(videoBg);
                 }
 
-                if (videoBg.paused) videoBg.play().catch(() => {});
+                if (videoBg.paused) videoBg.play().catch(e => logManagerError("Error playing video background:", e));
 
             } else {
                 if (videoBg) {
@@ -78,9 +85,12 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         };
 
-        let lastGreeting = "";
+        let lastGreeting = ""; // ⚡ Bolt Optimization: Cache state to prevent layout thrashing
+
         const updateGreeting = () => {
             const now = new Date();
+            let newGreeting = "";
+            let shouldPlayVideo = false;
 
             const newYear2026 = new Date('January 1, 2026 00:00:00');
             const endOfCelebration = new Date('January 1, 2026 23:59:59');
@@ -91,18 +101,18 @@ document.addEventListener('DOMContentLoaded', () => {
             if (now >= revertDate) {
                  const currentHour = now.getHours();
                  if (currentHour < 12) {
-                     newGreetingText = "Good Morning.";
+                     newGreeting = "Good Morning.";
                  } else if (currentHour < 18) {
-                     newGreetingText = "Good Afternoon.";
+                     newGreeting = "Good Afternoon.";
                  } else {
-                     newGreetingText = "Good Evening.";
+                     newGreeting = "Good Evening.";
                  }
-                 manageVideoBackground(false);
+                 shouldPlayVideo = false;
             }
 
             else if (now >= newYear2026 && now <= endOfCelebration) {
-                newGreetingText = "Happy New Year!";
-                manageVideoBackground(true);
+                newGreeting = "Happy New Year!";
+                shouldPlayVideo = true;
             }
 
             else {
@@ -114,16 +124,22 @@ document.addEventListener('DOMContentLoaded', () => {
                     const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
                     const seconds = Math.floor((diff % (1000 * 60)) / 1000);
 
-                    newGreetingText = `New Years Countdown: ${days}d ${hours}h ${minutes}m ${seconds}s`;
+                    newGreeting = `New Years Countdown: ${days}d ${hours}h ${minutes}m ${seconds}s`;
                 }
-                manageVideoBackground(false);
+                shouldPlayVideo = false;
             }
 
-            if (lastGreeting !== newGreetingText) {
-                greetingElement.textContent = newGreetingText;
-                lastGreeting = newGreetingText;
+            // ⚡ Bolt Performance Optimization:
+            // Only apply DOM updates when the greeting state actually changes to prevent unnecessary re-renders and layout thrashing,
+            // especially when the greeting is static text like "Good Morning".
+            if (newGreeting !== lastGreeting) {
+                greetingElement.textContent = newGreeting;
+                lastGreeting = newGreeting;
             }
+
+            manageVideoBackground(shouldPlayVideo);
         };
+
 
         updateGreeting();
         setInterval(updateGreeting, 1000);
