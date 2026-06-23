@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <script type="module">
-    import { escapeHTML } from '/js/utils.js';
+    import { escapeHTML } from './js/utils.js';
     window.escapeHTML = escapeHTML;
   </script>
 
@@ -222,7 +222,7 @@
         messagingSenderId: "48345990988",
         appId: "1:48345990988:web:e3662c9b508168546471e9"
     };
-    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    const app = !window.firebase.apps.length ? window.firebase.initializeApp(firebaseConfig) : window.firebase.app();
     const auth = firebase.auth();
     const db   = firebase.firestore();
     db.settings({ experimentalForceLongPolling: true });

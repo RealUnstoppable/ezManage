@@ -752,7 +752,7 @@
             measurementId: "G-ZN3YJPHVGX"
         };
 
-        if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
+        const app = !window.firebase.apps.length ? window.firebase.initializeApp(firebaseConfig) : window.firebase.app();
         const auth = firebase.auth();
         const db = firebase.firestore();
         db.settings({ experimentalForceLongPolling: true });

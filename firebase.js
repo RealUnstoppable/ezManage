@@ -22,4 +22,4 @@ window.firebase.firestore().settings({
 const db = window.firebase.firestore();
 const functions = window.firebase.functions();
 
-export { app, auth, db, functions };
+export { app, auth, db, functions, firebaseConfig };
