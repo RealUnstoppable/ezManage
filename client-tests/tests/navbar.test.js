@@ -1,34 +1,26 @@
 import { jest } from "@jest/globals";
 
-// The gstatic URLs are mocked by moduleNameMapper pointing to __mocks__/firebase.js
-import { onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js';
-import { getDoc } from 'https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js';
-
 global.window = global.window || {};
-global.firebase = {
+const mockFirebase = {
   apps: [],
   initializeApp: jest.fn(() => ({ name: '[DEFAULT]' })),
   auth: jest.fn(() => ({ onAuthStateChanged: jest.fn() })),
-  firestore: jest.fn(() => ({ collection: jest.fn(), settings: jest.fn() }))
+  firestore: jest.fn(() => ({
+      collection: jest.fn(() => ({ doc: jest.fn(() => ({ get: jest.fn() })) })),
+      settings: jest.fn()
+  }))
 };
-global.window.firebase = global.firebase;
-globalThis.firebase = global.firebase;
+global.window.firebase = mockFirebase;
+global.firebase = mockFirebase;
 
 jest.unstable_mockModule('../../js/auth.js', () => ({
   auth: { onAuthStateChanged: jest.fn() },
-  db: {
-      collection: jest.fn(() => ({
-          doc: jest.fn(() => ({
-              get: jest.fn()
-          }))
-      })),
-      settings: jest.fn()
-  },
+  db: { collection: jest.fn(() => ({ doc: jest.fn(() => ({ get: jest.fn() })) })) },
   getUserRedirectPath: (userData) => userData && userData.isAdmin ? 'admin.html' : 'index.html'
 }));
 
 const { loadNavbar } = await import('../../js/navbar.js');
-const authModule = await import('../../js/auth.js');
+const { auth, db } = await import('../../js/auth.js');
 
 describe('loadNavbar', () => {
   beforeEach(() => {
@@ -36,27 +28,27 @@ describe('loadNavbar', () => {
     jest.clearAllMocks();
   });
 
-  it('should inject navbar HTML', async () => {
-    await loadNavbar();
+  it('should inject navbar HTML', () => {
+    loadNavbar();
     expect(document.querySelector('.navbar')).not.toBeNull();
   });
 
   it('should set auth link to index.html if user is logged in but not admin', async () => {
-    await loadNavbar();
-    const mockUser = { uid: '123' };
-    const authCallback = authModule.auth.onAuthStateChanged.mock.calls[0][0];
+    loadNavbar();
 
-    // Mock the get() to return a document snapshot
-    authModule.db.collection.mockReturnValue({
-        doc: jest.fn().mockReturnValue({
-            get: jest.fn().mockResolvedValue({
-                exists: true,
-                data: () => ({ isAdmin: false })
-            })
-        })
+    const mockUser = { uid: '123' };
+
+    const mockGet = jest.fn().mockResolvedValueOnce({
+      exists: true,
+      data: () => ({ isAdmin: false })
     });
+    const mockDoc = jest.fn().mockReturnValue({ get: mockGet });
+    authModule.db.collection = jest.fn().mockReturnValue({ doc: mockDoc });
+
+      await authCallback(mockUser);
 
     await authCallback(mockUser);
+    await new Promise(process.nextTick);
 
     const authLink = document.getElementById('auth-link');
     expect(authLink.textContent).toBe('My Account');
