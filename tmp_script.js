@@ -27,64 +27,6 @@
                 .replace(/'/g, "&#039;");
         }
 
-        let currentUser = null;
-        let activeOrgId = null;
-        let activeOrgPass = null;
-        let globalChartInstance = null;
-
-        // --- Cloud Function Caller (bypasses callable SDK token-attachment bugs) ---
-        const FUNCTIONS_BASE = 'https://us-central1-dts-hub-website.cloudfunctions.net';
-        async function callFunction(name, data) {
-            const user = auth.currentUser;
-            if (!user) throw new Error('User must be logged in.');
-            const token = await user.getIdToken(true);
-            console.log("DEBUG CLIENT: token type:", typeof token, "length:", token ? token.length : 0, "value starts with:", token ? token.substring(0, 15) : "null");
-            const res = await fetch(`${FUNCTIONS_BASE}/${name}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': 'Bearer ' + token
-                },
-                body: JSON.stringify({ data })
-            });
-            const json = await res.json();
-            if (!res.ok || json.error) {
-                throw new Error((json.error && json.error.message) || `Function call failed (${res.status})`);
-            }
-            return json.result !== undefined ? { data: json.result } : { data: json };
-        }
-
-        // --- Theme Management ---
-        function toggleTheme() {
-            document.documentElement.classList.toggle('dark-mode');
-            const isDark = document.documentElement.classList.contains('dark-mode');
-            localStorage.setItem('userTheme', isDark ? 'dark' : 'light');
-            document.getElementById('themeIcon').setAttribute('data-lucide', isDark ? 'sun' : 'moon');
-            lucide.createIcons();
-            if (globalChartInstance) {
-                // Adjust chart text color for theme
-                globalChartInstance.options.scales.x.ticks.color = isDark ? '#94a3b8' : '#64748b';
-                globalChartInstance.options.scales.y.ticks.color = isDark ? '#94a3b8' : '#64748b';
-                globalChartInstance.update();
-            }
-        }
-
-        if (localStorage.getItem('userTheme') === 'dark' || (!localStorage.getItem('userTheme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-            document.documentElement.classList.add('dark-mode');
-        }
-        document.getElementById('themeIcon').setAttribute('data-lucide', document.documentElement.classList.contains('dark-mode') ? 'sun' : 'moon');
-        lucide.createIcons();
-
-        function escapeHTML(str) {
-            if (!str && str !== 0) return "";
-            return String(str)
-                .replace(/&/g, "&amp;")
-                .replace(/</g, "&lt;")
-                .replace(/>/g, "&gt;")
-                .replace(/"/g, "&quot;")
-                .replace(/'/g, "&#039;");
-        }
-
         // --- Navigation ---
         function navTo(viewId) {
             document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));

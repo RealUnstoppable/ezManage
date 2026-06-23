@@ -5,12 +5,20 @@ const functionsTest = require("firebase-functions-test")();
 jest.mock("firebase-admin", () => {
   const firestoreMock = {
     collection: jest.fn().mockReturnThis(),
-    doc: jest.fn().mockReturnThis(),
+    doc: jest.fn((uid) => {
+      firestoreMock._lastUid = uid;
+      return firestoreMock;
+    }),
     where: jest.fn().mockReturnThis(),
-    get: jest.fn().mockResolvedValue({
-      exists: true,
-      data: () => ({email: "test@example.com"}),
-      docs: [],
+    get: jest.fn().mockImplementation(() => {
+      return Promise.resolve({
+        exists: true,
+        data: () => ({
+          email: "test@example.com",
+          hasPromoCode: firestoreMock._lastUid !== "no_promo_uid",
+        }),
+        docs: [],
+      });
     }),
     update: jest.fn().mockResolvedValue({}),
     set: jest.fn().mockResolvedValue({}),
@@ -88,7 +96,7 @@ describe("createCheckoutSession", () => {
         uid: "test_uid",
         email: "test@example.com",
         plan: "Business Pro",
-        amount: 150,
+        amount: 150, // Should be ignored now
       },
       headers: {origin: true},
       get: jest.fn(),
@@ -101,6 +109,13 @@ describe("createCheckoutSession", () => {
       json: jest.fn(),
       send: jest.fn(),
     };
+
+    // We mock firestore to return a user doc with a promo code
+    const mockFirestore = require("firebase-admin").firestore;
+    mockFirestore().collection().doc().get.mockResolvedValueOnce({
+      exists: true,
+      data: () => ({ hasPromoCode: true })
+    });
 
     mockStripeMock.checkout.sessions.create.mockResolvedValue({url: "https://checkout.url"});
 
@@ -119,7 +134,8 @@ describe("createCheckoutSession", () => {
           currency: "usd",
           product: "prod_UFnBrTwFCgb54A",
           recurring: {interval: "year"},
-          unit_amount: 15000,
+            unit_amount: 18600, // 207 * 0.9 = 186.3 -> floored to 186 -> * 100 = 18600
+          unit_amount: 18600,
         },
         quantity: 1,
       }],
@@ -143,6 +159,12 @@ describe("createCheckoutSession", () => {
   });
 
   it("should create session successfully with default price ID when no amount is provided", async () => {
+    // override get to simulate no promo
+    jest.spyOn(require("firebase-admin").firestore().collection("users").doc("no_promo_uid"), "get").mockResolvedValueOnce({
+      exists: true,
+      data: () => ({hasPromoCode: false}),
+    });
+
     const req = {
       method: "POST",
       body: {
@@ -176,7 +198,15 @@ describe("createCheckoutSession", () => {
       client_reference_id: "test_uid",
       payment_method_types: ["card"],
       customer_email: "test2@example.com",
-      line_items: [{price: "price_1THHYPBp2C5GdKaKxNpqndNE", quantity: 1}],
+      line_items: [{
+        price_data: {
+          currency: "usd",
+          product: "prod_UFn8zqZ0mwyy5r",
+          recurring: {interval: "year"},
+          unit_amount: 5400,
+        },
+        quantity: 1,
+      }],
       subscription_data: {
         trial_period_days: 7,
         metadata: {
@@ -228,8 +258,8 @@ describe("createCheckoutSession", () => {
     });
 
     expect(mockStripeMock.checkout.sessions.create).toHaveBeenCalled();
+
     expect(consoleSpy).toHaveBeenCalledWith("Manager Troubleshooting: Checkout Error for uid: " + req.body.uid, expect.any(Error));
-    expect(consoleSpy).toHaveBeenCalledWith("Manager Troubleshooting: Checkout Error for uid: test_uid", expect.any(Error));
     expect(res.status).toHaveBeenCalledWith(500);
     expect(res.json).toHaveBeenCalledWith({error: errorMessage});
 
