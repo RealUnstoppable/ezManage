@@ -12,13 +12,16 @@ const firebaseConfig = {
 // to prevent token mismatches and duplicate initialization errors.
 const app = !window.firebase.apps.length ? window.firebase.initializeApp(firebaseConfig) : window.firebase.app();
 
-const auth = window.firebase.auth();
-
 // Use experimentalForceLongPolling for fallback on CORS/network issues
-window.firebase.firestore().settings({
-    experimentalForceLongPolling: true
-});
+// Must be called exactly once immediately after init and BEFORE any other references
+if (!window.firebase.apps.length || window.firebase.firestore()._settingsfrozen !== true) {
+    window.firebase.firestore().settings({
+        experimentalForceLongPolling: true
+    });
+    window.firebase.firestore()._settingsfrozen = true;
+}
 
+const auth = window.firebase.auth();
 const db = window.firebase.firestore();
 const functions = window.firebase.functions();
 
