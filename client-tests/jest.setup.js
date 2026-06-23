@@ -1,10 +1,11 @@
 import { jest } from '@jest/globals';
+import { TextEncoder, TextDecoder } from 'util';
+Object.assign(global, { TextDecoder, TextEncoder });
 
-window.firebase = {
-  apps: [{
-    name: '[DEFAULT]'
-  }],
+global.firebase = {
+  apps: [],
   initializeApp: jest.fn(),
+  app: jest.fn(),
   auth: () => ({
     onAuthStateChanged: jest.fn(),
     createUserWithEmailAndPassword: jest.fn(),
@@ -12,53 +13,23 @@ window.firebase = {
     signOut: jest.fn()
   }),
   firestore: () => ({
+    settings: jest.fn(),
     collection: jest.fn(() => ({
       doc: jest.fn(() => ({
         get: jest.fn(),
         set: jest.fn(),
+        update: jest.fn(),
         onSnapshot: jest.fn()
       }))
     }))
+  }),
+  functions: () => ({
+    httpsCallable: jest.fn()
   })
 };
 
 import { TextEncoder, TextDecoder } from 'util';
 Object.assign(global, { TextDecoder, TextEncoder });
 
-window.firebase = {
-    apps: [],
-    initializeApp: () => {},
-    auth: () => ({
-        onAuthStateChanged: () => {},
-        signInWithEmailAndPassword: () => {},
-        signOut: () => {}
-    }),
-    firestore: () => ({
-        collection: () => ({
-            doc: () => ({
-                get: () => {},
-                set: () => {},
-                update: () => {}
-            })
-        })
-    })
-};
-import { jest } from '@jest/globals';
-window.firebase = {
-    apps: [],
-    auth: () => ({
-        onAuthStateChanged: jest.fn()
-    }),
-    firestore: jest.fn(),
-    initializeApp: jest.fn()
-};
 global.firebase = window.firebase;
-global.firebase = {
-  apps: [],
-  initializeApp: jest.fn(),
-  auth: () => ({
-    onAuthStateChanged: jest.fn()
-  }),
-  firestore: () => ({})
-};
-window.firebase = global.firebase;
+globalThis.firebase = window.firebase;

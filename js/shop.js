@@ -66,7 +66,7 @@ const navLinks = document.querySelector('.nav-links');
 function renderProducts() {
     productGrid.innerHTML = products.map(product => `
         <div class="product-card">
-            <img src="${product.imageUrl}" alt="${product.name}" class="product-image">
+            <img src="${product.imageUrl}" alt="${product.name}" class="product-image" loading="lazy">
             <div class="product-info">
                 <h3>${product.name}</h3>
                 <p>${product.description}</p>
@@ -90,7 +90,7 @@ function renderCart() {
             if (!product) return '';
             return `
                 <div class="cart-item">
-                    <img src="${product.imageUrl}" alt="${product.name}" class="cart-item-img">
+                    <img src="${product.imageUrl}" alt="${product.name}" class="cart-item-img" loading="lazy">
                     <div class="cart-item-info">
                         <h4>${product.name}</h4>
                         <p>$${product.price.toFixed(2)}</p>
@@ -122,7 +122,7 @@ async function updateCartState(mutationFn, errorMessage) {
         renderCart();
         await saveCart();
     } catch (error) {
-        logManagerError("Error adding item to cart for productId:", productId, error);
+
         logManagerError(`${errorMessage}:`, error);
         cart = originalCart;
         renderCart();
@@ -156,8 +156,8 @@ async function saveCart() {
             const userCartRef = doc(db, 'carts', currentUser.uid);
             await setDoc(userCartRef, { items: cart });
         } catch (error) {
-            logManagerError("Error saving cart to Firestore for uid:", currentUser.uid, error);
-            logManagerError("Error saving cart to Firestore:", error);
+            logManagerError("Error saving cart to Firestore for uid: " + currentUser.uid, error);
+
         }
     } else {
         localStorage.setItem('localCart', JSON.stringify(cart));
@@ -239,7 +239,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 localStorage.removeItem('localCart');
             } catch (error) {
                 logManagerError("Error loading cart during auth state change:", error);
-                logManagerError("Error loading cart:", error);
+
                 cart = localCart;
             }
         } else {

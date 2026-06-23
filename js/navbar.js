@@ -8,7 +8,6 @@ export function loadNavbar() {
     <nav class="navbar">
         <a href="index.html" class="nav-logo">un<span></span></a>
         <ul class="nav-links">
-
             <li><a href="unstoppable.html">Unstoppable</a></li>
             <li><a href="dreamstimeskip.html">Dreams TimeSkip</a></li>
             <li><a href="harmonytunes.html">HarmonyTunes</a></li>
@@ -17,6 +16,7 @@ export function loadNavbar() {
             <li><a href="blog.html">Blog</a></li>
             <li><a href="portfolio.html">About Me</a></li>
             <li><a href="uds.html">UDS</a></li>
+            <li><a href="#" onclick="navTo('incidents')">Incident Reports</a></li>
             <li><a href="sign in beta.html" id="auth-link">Sign In / Sign Up</a></li>
         </ul>
         <button class="hamburger" aria-label="Open menu">
@@ -47,17 +47,20 @@ function updateAuthLink() {
     const authLink = document.getElementById('auth-link');
     if (!authLink) return;
 
-    onAuthStateChanged(auth, async (user) => {
-        if (user) {
-            try {
-                const userDoc = await getDoc(doc(db, "users", user.uid));
-                const destination = userDoc.exists() ? getUserRedirectPath(userDoc.data()) : 'account.html';
-                authLink.href = destination;
-                authLink.textContent = "My Account";
-            } catch (e) {
-                logManagerError("Navbar auth state error for uid:", user.uid, e);
-                logManagerError("Navbar auth state error:", e);
-                console.error("Manager Troubleshooting: Navbar auth state error for uid:", user.uid, e);
+    if (auth && auth.onAuthStateChanged) {
+        auth.onAuthStateChanged(async (user) => {
+            if (user) {
+                try {
+                    const userDoc = await db.collection("users").doc(user.uid).get();
+                    const destination = userDoc.exists ? getUserRedirectPath(userDoc.data()) : 'account.html';
+                    authLink.href = destination;
+                    authLink.textContent = "My Account";
+                } catch (e) {
+                    logManagerError(`Navbar auth state error for uid: ${user.uid}`, e);
+                }
+            } else {
+                authLink.href = 'sign in beta.html';
+                authLink.textContent = "Sign In / Sign Up";
             }
         } else {
             authLink.href = 'sign in beta.html';

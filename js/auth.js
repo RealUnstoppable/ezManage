@@ -1,12 +1,10 @@
 import { getFirebaseErrorMessage, logManagerError } from './utils.js';
 
-import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
-import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, sendEmailVerification } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
-import { getFirestore, doc, setDoc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
+
 
 const firebaseConfig = {
   apiKey: "AIzaSyBgrI9HwJPSc5b4pu2Egsv4DE7shNwptSw",
-  authDomain: "dts-hub-website.firebaseapp.com",
+  authDomain: "ezmanage.realunstoppable.store",
   projectId: "dts-hub-website",
   storageBucket: "dts-hub-website.firebasestorage.app",
   messagingSenderId: "48345990988",
@@ -18,11 +16,6 @@ if (!window.firebase) { console.error("Firebase Compat SDK must be loaded before
 
 export const auth = window.firebase ? window.firebase.auth() : {};
 export const db = window.firebase ? window.firebase.firestore() : {};
-
-// Fallback for network reliability to bypass CORS/network errors
-if (db.settings) {
-    db.settings({ experimentalForceLongPolling: true });
-}
 
 export function getUserRedirectPath(userData) {
     return userData && userData.isAdmin ? 'admin.html' : 'index.html';
@@ -39,6 +32,7 @@ export async function fetchUserDoc(uid) {
 
 const ADMIN_EMAIL = null;
 
+if (auth && auth.onAuthStateChanged) {
 auth.onAuthStateChanged(async (user) => {
     const authLink = document.getElementById('auth-link');
     const membershipStatusContainer = document.getElementById('membership-status-container');
@@ -61,8 +55,7 @@ auth.onAuthStateChanged(async (user) => {
                 }
             }
         } catch (error) {
-            logManagerError("Error fetching user document in auth state change for uid:", user.uid, error);
-            console.error("Manager Troubleshooting: Error fetching user document in auth state change for uid:", user.uid, error);
+            logManagerError("Error fetching user document in auth state change for uid: " + user.uid, error);
         }
     } else {
         if (authLink) {
@@ -71,10 +64,6 @@ auth.onAuthStateChanged(async (user) => {
         }
         if (membershipStatusContainer) {
             membershipStatusContainer.innerHTML = '';
-        }
-
-        if (!window.location.pathname.includes('sign in beta.html') && window.location.pathname !== '/' && !window.location.pathname.includes('index.html')) {
-            // We shouldn't force redirect all pages in auth.js. Each page should handle its own auth routing.
         }
     }
 });
@@ -129,7 +118,7 @@ if (document.getElementById('auth-form')) {
                 sessionStorage.setItem('newUser', 'true');
                 window.location.replace('index.html');
             } catch (error) {
-                logManagerError("Sign up error for email:", email, error);
+                logManagerError("Sign up error for email: " + email, error);
                 if (error.code === 'auth/network-request-failed' || error.code === 'unavailable') {
                     showMessage("Network error: Please check your connection or whitelist our domain.");
                 } else {
@@ -151,7 +140,7 @@ if (document.getElementById('auth-form')) {
                     submitBtn.disabled = false;
                 }
             } catch (error) {
-                logManagerError("Sign in error for email:", email, error);
+                logManagerError("Sign in error for email: " + email, error);
                 if (error.code === 'auth/network-request-failed' || error.code === 'unavailable') {
                     showMessage("Network error: Please check your connection or whitelist our domain.");
                 } else {
