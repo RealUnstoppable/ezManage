@@ -19,6 +19,17 @@ jest.unstable_mockModule('../../js/auth.js', () => ({
   getUserRedirectPath: (userData) => userData && userData.isAdmin ? 'admin.html' : 'index.html'
 }));
 
+const mockOnAuthStateChanged = jest.fn();
+jest.unstable_mockModule('https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js', () => ({
+    onAuthStateChanged: mockOnAuthStateChanged
+}));
+
+const mockGetDoc = jest.fn();
+jest.unstable_mockModule('https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js', () => ({
+    getDoc: mockGetDoc,
+    doc: jest.fn()
+}));
+
 const { loadNavbar } = await import('../../js/navbar.js');
 const { auth, db } = await import('../../js/auth.js');
 
