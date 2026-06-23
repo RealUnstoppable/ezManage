@@ -2194,7 +2194,7 @@
             toggleAuthModeUI();
         }
 
-        function handleAuth(e) {
+        async function handleAuth(e) {
             e.preventDefault();
             const email = document.getElementById('authEmail').value;
             const pass = document.getElementById('authPass').value;
@@ -2246,7 +2246,7 @@
 
         function signOut() { auth.signOut().then(() => window.location.reload()); }
 
-        function completeSetup() {
+        async function completeSetup() {
             if (!currentUser) return;
             const data = {
                 name: document.getElementById('setupName').value,
@@ -2263,12 +2263,18 @@
 
             if (!data.name) return alert("Name is required.");
 
-            db.collection('users').doc(currentUser.uid).set(data, { merge: true }).then(() => {
+            try {
+                await db.collection('users').doc(currentUser.uid).set(data, { merge: true });
                 currentUser.updateProfile({ displayName: data.name });
                 document.getElementById('shiftManager').value = data.name;
-
                 navTo('tracker');
-            });
+            } catch (err) {
+                if (err.code === 'auth/network-request-failed' || err.code === 'unavailable') {
+                    alert("Network error: Could not connect to the server.");
+                } else {
+                    alert("Setup failed: " + err.message);
+                }
+            }
         }
 
         function toggleSidebar() { 
