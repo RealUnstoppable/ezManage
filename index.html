@@ -1587,7 +1587,7 @@
         db.settings({ experimentalForceLongPolling: true });
         const cloudFunctions = firebase.functions();
 
-        db.enablePersistence().catch(err => console.error("Offline sync error:", err));
+        db.enablePersistence().catch(err => console.error("Manager Troubleshooting: Offline sync error:", err));
 
         let currentUser = null;
         let currentUserData = null;
@@ -1613,8 +1613,13 @@
         let isInitializingAuth = true;
 
         async function callCloudFunction(functionName, payload) {
-            const func = firebase.functions().httpsCallable(functionName);
-            return await func(payload);
+            try {
+                const func = firebase.functions().httpsCallable(functionName);
+                return await func(payload);
+            } catch (err) {
+                console.error("Manager Troubleshooting: Error in callCloudFunction:", err);
+                throw err;
+            }
         }
 
         // Legal & Privacy Settings
@@ -1636,7 +1641,7 @@
                         currentUserData = JSON.parse(cached);
                         loadProfileUI(currentUserData);
                     } catch (e) {
-                        console.error("Cache parsing error", e);
+                        console.error("Manager Troubleshooting: Cache parsing error", e);
                     }
                 }
 
@@ -2253,7 +2258,7 @@
                     const parsed = JSON.parse(localDraft);
                     populateTrackerFromState(parsed);
                     return;
-                } catch (e) { console.error("Local parse err", e); }
+                } catch (e) { console.error("Manager Troubleshooting: Local parse err", e); }
             }
 
             if (cloudSyncEnabled && currentUserData && currentUserData.trackerDraft) {
@@ -2968,7 +2973,7 @@
                 alert("Maintenance ticket submitted successfully.");
                 fetchMaintenanceTickets();
             } catch (error) {
-                console.error("Error submitting ticket:", error);
+                console.error("Manager Troubleshooting: Error submitting ticket:", error);
                 if (error.code === 'unavailable' || error.code === 'auth/network-request-failed') {
                     alert("Network error: Could not connect to the server. Please check your connection.");
                     alert("Network error: Could not submit maintenance ticket.");
@@ -3067,7 +3072,7 @@
                         `;
                     }).join('');
                 }, err => {
-                    console.error("Error fetching tickets:", err);
+                    console.error("Manager Troubleshooting: Error fetching tickets:", err);
                     container.innerHTML = `<div class="text-red-500 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl text-center">Failed to load tickets: ${err.message}</div>`;
                 });
         }
@@ -3144,7 +3149,7 @@
                         fetchTimeOffRequests();
                 populateScheduleDropdown();
             } catch (err) {
-                console.error("Error adding employee:", err);
+                console.error("Manager Troubleshooting: Error adding employee:", err);
                 alert("Failed to add employee.");
             } finally {
                 saveBtn.innerHTML = originalText;
@@ -3198,7 +3203,7 @@
                 document.getElementById('timeoffEndDate').value = '';
                 document.getElementById('timeoffReason').value = '';
             } catch (err) {
-                console.error("Error submitting time off request", err);
+                console.error("Manager Troubleshooting: Error submitting time off request", err);
                 alert("Error submitting request. Please try again.");
             } finally {
                 btn.innerText = originalText;
@@ -3278,7 +3283,7 @@
                      }
                  }
              }, err => {
-                 console.error("Error fetching time off requests:", err);
+                 console.error("Manager Troubleshooting: Error fetching time off requests:", err);
              });
         }
 
@@ -3286,7 +3291,7 @@
             try {
                 await db.collection('time_off_requests').doc(id).update({ status: status });
             } catch (err) {
-                console.error("Error updating time off status", err);
+                console.error("Manager Troubleshooting: Error updating time off status", err);
                 alert("Error updating status.");
             }
         }
@@ -3296,7 +3301,7 @@
             try {
                 await db.collection('time_off_requests').doc(id).delete();
             } catch (err) {
-                console.error("Error deleting time off request", err);
+                console.error("Manager Troubleshooting: Error deleting time off request", err);
                 alert("Error cancelling request.");
             }
         }
@@ -3369,7 +3374,7 @@
                     lucide.createIcons();
                     populateScheduleDropdown();
                 }, err => {
-                    console.error("Error fetching employees:", err);
+                    console.error("Manager Troubleshooting: Error fetching employees:", err);
                     if (container) container.innerHTML = `<p class="text-red-500 text-center py-8">Failed to load roster.</p>`;
                 });
         }
@@ -3379,7 +3384,7 @@
             try {
                 await db.collection('employees').doc(id).update({ status: newStatus });
             } catch (err) {
-                console.error("Error updating status:", err);
+                console.error("Manager Troubleshooting: Error updating status:", err);
                 alert("Failed to update employee status.");
             }
         }
@@ -3389,7 +3394,7 @@
             try {
                 await db.collection('employees').doc(id).delete();
             } catch (err) {
-                console.error("Error deleting employee:", err);
+                console.error("Manager Troubleshooting: Error deleting employee:", err);
                 alert("Failed to delete employee.");
             }
         }
@@ -3418,7 +3423,7 @@
                         select.appendChild(opt);
                     });
                 })
-                .catch(err => console.error("Error populating dropdown:", err));
+                .catch(err => console.error("Manager Troubleshooting: Error populating dropdown:", err));
         }
 
         // Auto-select role when an employee is chosen in schedule
@@ -3487,7 +3492,7 @@
                 startTime.value = '';
                 endTime.value = '';
             } catch(err) {
-                console.error("Error saving shift", err);
+                console.error("Manager Troubleshooting: Error saving shift", err);
                 if (err.code === 'unavailable' || err.code === 'auth/network-request-failed') {
                     alert("Network error: Could not connect to the server. Please check your connection.");
                 } else {
@@ -3544,7 +3549,7 @@
                         listContainer.appendChild(fragment);
                     }
                 }, error => {
-                    console.error("Error fetching schedules: ", error);
+                    console.error("Manager Troubleshooting: Error fetching schedules: ", error);
                     if (listContainer) listContainer.innerHTML = "<p class='text-sm text-red-500'>Error loading schedule.</p>";
                 });
         }
@@ -3565,7 +3570,7 @@
                     await scheduleRef.update({ shifts: shifts });
                 }
             } catch (error) {
-                console.error("Error removing shift:", error);
+                console.error("Manager Troubleshooting: Error removing shift:", error);
             }
         }
 
@@ -3755,7 +3760,7 @@ function checkAndRenderOrgControls() {
                     lucide.createIcons();
                 })
                 .catch(err => {
-                    console.error("Error fetching notes:", err);
+                    console.error("Manager Troubleshooting: Error fetching notes:", err);
                     container.innerHTML = `<p class="text-red-500 text-center py-8">Failed to load shift notes. Please check your connection.</p>`;
                 });
         }
@@ -3827,9 +3832,9 @@ function checkAndRenderOrgControls() {
                 });
 
                 document.getElementById('shiftNoteContent').value = "";
-                fetchShiftNotes();
+                // Removed fetchShiftNotes() to prevent unnecessary re-fetches after optimistic update
             } catch (err) {
-                console.error("Error posting note", err);
+                console.error("Manager Troubleshooting: Error posting note", err);
                 if (err.code === 'unavailable' || err.code === 'auth/network-request-failed') {
                     alert("Network error: Could not connect to the server. Please check your connection.");
                 } else {
@@ -3859,8 +3864,7 @@ function checkAndRenderOrgControls() {
             }
 
             try {
-                const manageShiftNotes = cloudFunctions.httpsCallable('manageShiftNotes');
-                const result = await manageShiftNotes({
+                const result = await callCloudFunction('manageShiftNotes', {
                     action: "resolve",
                     payload: { noteId: noteId, resolvedBy: currentUser.email.split('@')[0] }
                 });
@@ -3881,8 +3885,7 @@ function checkAndRenderOrgControls() {
             if (!name || !pass) return alert("All fields required");
 
             try {
-                const manageShiftGroups = cloudFunctions.httpsCallable('manageShiftGroups');
-                const result = await manageShiftGroups({
+                const result = await callCloudFunction('manageShiftGroups', {
                     action: "create",
                     payload: {
                         authorId: currentUser.uid,
@@ -3911,8 +3914,7 @@ function checkAndRenderOrgControls() {
             if (!groupId || !pass) return alert("All fields required");
 
             try {
-                const manageShiftGroups = cloudFunctions.httpsCallable('manageShiftGroups');
-                const result = await manageShiftGroups({
+                const result = await callCloudFunction('manageShiftGroups', {
                     action: "request_join",
                     payload: {
                         userName: currentUser.email.split('@')[0],
@@ -3998,21 +4000,20 @@ function checkAndRenderOrgControls() {
 
         async function retractGroupRequest(requestId) {
             try {
-                const manageShiftGroups = cloudFunctions.httpsCallable('manageShiftGroups');
-                await manageShiftGroups({
+                await callCloudFunction('manageShiftGroups', {
                     action: "retract_join",
                     payload: { requestId: requestId }
                 });
                 alert("Request Retracted!");
             } catch (e) {
+                console.error("Manager Troubleshooting: Error retracting request:", e);
                 alert("Failed to retract: " + e.message);
             }
         }
 
         async function approveGroupRequest(requestId) {
             try {
-                const manageShiftGroups = cloudFunctions.httpsCallable('manageShiftGroups');
-                const result = await manageShiftGroups({
+                const result = await callCloudFunction('manageShiftGroups', {
                     action: "approve_join",
                     payload: { requestId: requestId }
                 });
@@ -4074,14 +4075,13 @@ function checkAndRenderOrgControls() {
             lucide.createIcons();
 
             try {
-                const manageEmployees = firebase.functions().httpsCallable('manageEmployees');
                 if (empId) {
-                    await manageEmployees({
+                    await callCloudFunction('manageEmployees', {
                         action: "update",
                         payload: { empId, name, role, phone }
                     });
                 } else {
-                    await manageEmployees({
+                    await callCloudFunction('manageEmployees', {
                         action: "create",
                         payload: { name, role, phone }
                     });
@@ -4090,6 +4090,7 @@ function checkAndRenderOrgControls() {
                 closeEmployeeModal();
                 fetchTeamDirectory();
             } catch (error) {
+                console.error("Manager Troubleshooting: Error saving employee:", error);
                 alert("Failed to save employee: " + error.message);
             } finally {
                 btn.innerText = ogText;
@@ -4117,8 +4118,7 @@ function checkAndRenderOrgControls() {
             lucide.createIcons();
 
             try {
-                const manageEmployees = firebase.functions().httpsCallable('manageEmployees');
-                const result = await manageEmployees({ action: "get", payload: {} });
+                const result = await callCloudFunction('manageEmployees', { action: "get", payload: {} });
 
                 if (result.data.success) {
                     activeEmployeesList = result.data.employees || [];
@@ -4207,7 +4207,7 @@ function checkAndRenderOrgControls() {
             if ('serviceWorker' in navigator) {
                 navigator.serviceWorker.register('./sw.js')
                     .then(() => console.log("Service Worker Registered"))
-                    .catch(err => console.error("Service Worker Registration Failed:", err));
+                    .catch(err => console.error("Manager Troubleshooting: Service Worker Registration Failed:", err));
             }
 
             window.addEventListener('offline', updateNetworkStatus);
