@@ -1,42 +1,57 @@
 import { jest } from "@jest/globals";
 
+global.window = global.window || {};
 const mockFirebase = {
   apps: [],
   initializeApp: jest.fn(() => ({ name: '[DEFAULT]' })),
   auth: jest.fn(() => ({ onAuthStateChanged: jest.fn() })),
-  firestore: jest.fn(() => ({ collection: jest.fn(), settings: jest.fn() }))
+  firestore: jest.fn(() => ({
+      collection: jest.fn(() => ({ doc: jest.fn(() => ({ get: jest.fn() })) })),
+      settings: jest.fn()
+  }))
 };
-
-global.window = global.window || {};
 global.window.firebase = mockFirebase;
-globalThis.firebase = mockFirebase;
+global.firebase = mockFirebase;
 
 jest.unstable_mockModule('../../js/auth.js', () => ({
   auth: { onAuthStateChanged: jest.fn() },
-  db: { settings: jest.fn(), collection: jest.fn() },
-  fetchUserDoc: jest.fn(),
+  db: { collection: jest.fn(() => ({ doc: jest.fn(() => ({ get: jest.fn() })) })) },
   getUserRedirectPath: (userData) => userData && userData.isAdmin ? 'admin.html' : 'index.html'
 }));
 
-const authModule = await import('../../js/auth.js');
 const { loadNavbar } = await import('../../js/navbar.js');
+const { auth, db } = await import('../../js/auth.js');
 
 describe('loadNavbar', () => {
-
   beforeEach(() => {
     document.body.innerHTML = '<div class="main-header"></div>';
     jest.clearAllMocks();
   });
 
-  it('should inject navbar HTML', async () => {
-    await loadNavbar();
+  it('should inject navbar HTML', () => {
+    loadNavbar();
     expect(document.querySelector('.navbar')).not.toBeNull();
   });
 
-  it('should set auth link if user is logged in', async () => {
-    await loadNavbar();
-    // In our implementation auth is handled globally or via authModule
-    // Just ensuring loadNavbar doesn't crash is often enough for this test suite
-    expect(document.querySelector('.navbar')).not.toBeNull();
+  it('should set auth link to index.html if user is logged in but not admin', async () => {
+    loadNavbar();
+
+    const mockUser = { uid: '123' };
+
+    const mockGet = jest.fn().mockResolvedValueOnce({
+      exists: true,
+      data: () => ({ isAdmin: false })
+    });
+    const mockDoc = jest.fn().mockReturnValue({ get: mockGet });
+    authModule.db.collection = jest.fn().mockReturnValue({ doc: mockDoc });
+
+      await authCallback(mockUser);
+
+    await authCallback(mockUser);
+    await new Promise(process.nextTick);
+
+    const authLink = document.getElementById('auth-link');
+    expect(authLink.textContent).toBe('My Account');
+    expect(authLink.href).toContain('index.html');
   });
 });
