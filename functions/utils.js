@@ -55,8 +55,8 @@ function adaptGen2Params(data, context) {
   return {data, context};
 }
 
-function logManagerError(actionMessage, error) {
-  console.error("Manager Troubleshooting: " + actionMessage, error);
+function logManagerError(actionMessage, ...args) {
+  console.error("Manager Troubleshooting: " + actionMessage, ...args);
 }
 
 module.exports = {

@@ -156,7 +156,7 @@ async function saveCart() {
             const userCartRef = doc(db, 'carts', currentUser.uid);
             await setDoc(userCartRef, { items: cart });
         } catch (error) {
-            logManagerError("Error saving cart to Firestore for uid: " + currentUser.uid, error);
+            logManagerError("Error saving cart to Firestore for uid:", currentUser.uid, error);
 
         }
     } else {
