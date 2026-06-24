@@ -56,15 +56,15 @@ function updateAuthLink() {
                     authLink.href = destination;
                     authLink.textContent = "My Account";
                 } catch (e) {
-                    logManagerError(`Navbar auth state error for uid: ${user.uid}`, e);
+                    logManagerError("Navbar auth state error for uid:", user.uid, e);
                 }
             } else {
                 authLink.href = 'sign in beta.html';
                 authLink.textContent = "Sign In / Sign Up";
             }
-        } else {
-            authLink.href = 'sign in beta.html';
-            authLink.textContent = "Sign In / Sign Up";
-        }
-    });
+        });
+    } else {
+        authLink.href = 'sign in beta.html';
+        authLink.textContent = "Sign In / Sign Up";
+    }
 }
