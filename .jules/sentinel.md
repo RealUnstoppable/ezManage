@@ -101,3 +101,7 @@
 **Vulnerability:** User-controlled input `task.priority` was interpolated directly into `innerHTML` strings when rendering task cards, leading to a Stored XSS vulnerability.
 **Learning:** It is crucial to escape all user-provided data, including seemingly restricted fields like "priority", as data in the database can be manipulated.
 **Prevention:** Consistently apply `escapeHTML` to all dynamic variables embedded within string literals that are assigned to `innerHTML`.
+## 2025-02-21 - Authorization Bypass via Arbitrary orgId
+**Vulnerability:** Non-admin users were able to modify their `orgId` field during a profile update or during account creation.
+**Learning:** `firestore.rules` for multi-tenant applications must explicitly deny clients from mutating fields that determine their authorization boundaries. Omitting `orgId` from the `affectedKeys().hasAny` restricted list for the `users` collection meant any authenticated user could associate their user profile with any tenant's data.
+**Prevention:** Always restrict fields used for data segmentation (e.g. `orgId`, `tenantId`, `role`) using `affectedKeys().hasAny([...])` on `update` rules, and strictly validate or prevent them on `create` rules for non-admin accounts.
