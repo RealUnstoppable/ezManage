@@ -42,3 +42,6 @@
 ## 2024-05-27 - Batch DOM insertions with DocumentFragment
 **Learning:** In vanilla JS loops where elements are individually appended to the DOM (e.g. \`tbody.appendChild(tr)\`), layout thrashing can occur causing performance issues, specifically for lists with many items.
 **Action:** Always batch DOM insertions using a \`DocumentFragment\` when appending multiple elements in a loop.
+## 2024-05-18 - Replacing string concatenations inside loops with array.join()
+**Learning:** String concatenations (`+=`) inside loops that append DOM elements as HTML strings can cause severe performance issues (O(n²) time complexity for large lists) due to constant string reallocation. We've seen this pattern in `fetchTasks` and `fetchTimeOffRequests`.
+**Action:** Replace `htmlString += newChunk` inside iterations with an array `htmlArray.push(newChunk)` and a final `htmlArray.join('')` to construct large DOM strings efficiently.
