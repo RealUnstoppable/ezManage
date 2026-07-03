@@ -21,13 +21,14 @@ service cloud.firestore {
       allow read: if isOwner(userId) || isAdmin() || (request.auth != null && resource.data.get('orgId', null) == request.auth.uid);
       allow create: if request.auth != null
                     && (isOwner(userId) || request.resource.data.get('orgId', null) == request.auth.uid)
+                    && (request.resource.data.get('orgId', null) == null || request.resource.data.get('orgId', null) == request.auth.uid)
                     && request.resource.data.get('isAdmin', false) == false
                     && !request.resource.data.keys().hasAny(['isBanned', 'membershipLevel', 'plan', 'subscription']);
       allow update: if request.auth != null
                     && (isOwner(userId) || resource.data.get('orgId', null) == request.auth.uid || isAdmin())
                     && (isAdmin() || (
                         request.resource.data.get('isAdmin', false) == resource.data.get('isAdmin', false)
-                        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['isBanned', 'membershipLevel', 'plan', 'subscription'])
+                        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['isBanned', 'membershipLevel', 'plan', 'subscription', 'orgId'])
                     ));
       allow delete: if isOwner(userId) || isAdmin(); 
     }
