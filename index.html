@@ -694,7 +694,7 @@
                         <button aria-label="Templates" onclick="navTo('presets')" class="btn btn-outline btn-sm"><i data-lucide="layout"
                                 class="w-4"></i> Templates</button>
                         <button onclick="clearData()"
-                            class="btn btn-outline btn-sm text-red-500 border-red-200 hover:bg-red-50"><i
+                            class="btn btn-outline btn-sm text-red-500 border-red-200 hover:bg-red-50" aria-label="Clear Data"><i
                                 data-lucide="trash-2" class="w-4"></i> Reset</button>
                     </div>
                 </div>
@@ -1658,13 +1658,13 @@
             <div class="max-w-4xl mx-auto">
                 <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
                     <h1 class="text-4xl font-black">Team Roster</h1>
-                    <button onclick="document.getElementById('addEmployeeModal').classList.toggle('hidden')"
+                    <button onclick="document.getElementById('addStaffModal').classList.toggle('hidden')"
                         class="btn btn-primary flex items-center gap-2 px-6">
                         <i data-lucide="plus-circle" class="w-5 h-5"></i> Add Employee
                     </button>
                 </div>
 
-                <div id="addEmployeeModal"
+                <div id="addStaffModal"
                     class="hidden bg-white dark:bg-slate-900 rounded-3xl p-6 md:p-8 shadow-sm border border-slate-100 dark:border-slate-800 mb-12">
                     <h2 class="text-xl font-bold mb-4">Add New Employee</h2>
                     <div class="space-y-4">
@@ -1695,7 +1695,7 @@
                         </select>
 
                         <div class="flex justify-end gap-3 pt-2">
-                            <button onclick="document.getElementById('addEmployeeModal').classList.add('hidden')"
+                            <button onclick="document.getElementById('addStaffModal').classList.add('hidden')"
                                 class="btn btn-outline px-6 py-2">Cancel</button>
                             <button onclick="addEmployee()" class="btn btn-accent px-6 py-2">Save Employee</button>
                         </div>
@@ -3454,18 +3454,18 @@
 
         async function addEmployee() {
             if (!currentUser || !currentUserData) return;
-            const name = document.getElementById('empName').value.trim();
-            const role = document.getElementById('empRole').value.trim();
-            const phone = document.getElementById('empPhone').value.trim();
-            const email = document.getElementById('empEmail').value.trim();
-            const status = document.getElementById('empStatus').value;
+            const name = document.getElementById('staffName').value.trim();
+            const role = document.getElementById('staffRole').value.trim();
+            const phone = document.getElementById('staffPhone').value.trim();
+            const email = document.getElementById('staffEmail').value.trim();
+            const status = document.getElementById('staffStatus').value;
 
             if (!name || !role) {
                 alert("Employee Name and Role are required.");
                 return;
             }
 
-            const saveBtn = document.querySelector('#addEmployeeModal .btn-accent');
+            const saveBtn = document.querySelector('#addStaffModal .btn-accent');
             const originalText = saveBtn.innerHTML;
             saveBtn.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> Saving...';
             saveBtn.disabled = true;
