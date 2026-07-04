@@ -1,4 +1,4 @@
-const fs = require('fs');
+import fs from 'fs';
 let code = fs.readFileSync('tmp_script.js', 'utf8');
 
 // Quick fixes for the known issues:
