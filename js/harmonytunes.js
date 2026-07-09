@@ -1,7 +1,5 @@
 import { logManagerError } from './utils.js';
 import { auth, db } from './auth.js';
-import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
-import { doc, getDoc, setDoc, updateDoc, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
 import { showToast } from './utils.js';
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -390,15 +388,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const song = librarySongs.find(s => s.id === songId);
         const isFav = userFavorites.some(s => s.id === songId);
-        const userRef = doc(db, "users", currentUser.uid);
+        const userRef = db.collection("users").doc(currentUser.uid);
 
         try {
             if (isFav) {
                 userFavorites = userFavorites.filter(s => s.id !== songId);
-                await updateDoc(userRef, { musicFavorites: arrayRemove(songId) });
+                await userRef.update({ musicFavorites: window.firebase.firestore.FieldValue.arrayRemove(songId) });
             } else {
                 userFavorites.push(song);
-                await updateDoc(userRef, { musicFavorites: arrayUnion(songId) });
+                await userRef.update({ musicFavorites: window.firebase.firestore.FieldValue.arrayUnion(songId) });
             }
 
             const isPlayingFav = (currentQueue[currentSongIndex]?.id === songId);
@@ -412,7 +410,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (e) {
             if (e.code === 'not-found') {
                 try {
-                    await setDoc(userRef, { musicFavorites: [songId] }, { merge: true });
+                    await userRef.set({ musicFavorites: [songId] }, { merge: true });
                     userFavorites.push(song);
                 } catch (innerError) {
                     logManagerError("Error setting initial favorite document for songId: " + songId, innerError);
@@ -423,13 +421,13 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    onAuthStateChanged(auth, async (user) => {
+    auth.onAuthStateChanged(async (user) => {
         currentUser = user;
         if (user) {
             try {
-                const docRef = doc(db, "users", user.uid);
-                const docSnap = await getDoc(docRef);
-                if (docSnap.exists() && docSnap.data().musicFavorites) {
+                const docRef = db.collection("users").doc(user.uid);
+                const docSnap = await docRef.get();
+                if (docSnap.exists && docSnap.data().musicFavorites) {
                     const favIds = docSnap.data().musicFavorites;
                     userFavorites = librarySongs.filter(song => favIds.includes(song.id));
                 }

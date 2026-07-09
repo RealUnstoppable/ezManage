@@ -28,12 +28,11 @@ export async function fetchUserDoc(uid) {
         logManagerError("Error fetching user document in fetchUserDoc for uid: " + uid, error);
         throw error;
     }
-}
 
 const ADMIN_EMAIL = null;
 
 if (auth && auth.onAuthStateChanged) {
-auth.onAuthStateChanged(async (user) => {
+    auth.onAuthStateChanged(async (user) => {
     const authLink = document.getElementById('auth-link');
     const membershipStatusContainer = document.getElementById('membership-status-container');
 
@@ -66,7 +65,8 @@ auth.onAuthStateChanged(async (user) => {
             membershipStatusContainer.innerHTML = '';
         }
     }
-});
+    });
+}
 
 if (document.getElementById('auth-form')) {
     const form = document.getElementById('auth-form');
@@ -153,4 +153,5 @@ if (document.getElementById('auth-form')) {
 
     function showMessage(msg) { messageEl.textContent = msg; }
     updateFormView();
+}
 }

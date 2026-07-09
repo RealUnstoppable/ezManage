@@ -1,8 +1,6 @@
 import { logManagerError } from './utils.js';
 
 import { auth, db } from './auth.js';
-import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
-import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
 
 export const products = [
     {
@@ -153,8 +151,8 @@ async function handleRemoveFromCart(productId) {
 async function saveCart() {
     if (currentUser) {
         try {
-            const userCartRef = doc(db, 'carts', currentUser.uid);
-            await setDoc(userCartRef, { items: cart });
+            const userCartRef = db.collection('carts').doc(currentUser.uid);
+            await userCartRef.set({ items: cart });
         } catch (error) {
             logManagerError("Error saving cart to Firestore for uid: " + currentUser.uid, error);
 
@@ -218,16 +216,16 @@ document.addEventListener('DOMContentLoaded', () => {
     renderProducts();
     setupEventListeners();
 
-    onAuthStateChanged(auth, async (user) => {
+    auth.onAuthStateChanged(async (user) => {
         currentUser = user;
         const localCartData = localStorage.getItem('localCart');
         const localCart = localCartData ? JSON.parse(localCartData) : {};
 
         if (user) {
             try {
-                const userCartRef = doc(db, 'carts', user.uid);
-                const docSnap = await getDoc(userCartRef);
-                const firestoreCart = docSnap.exists() ? docSnap.data().items : {};
+                const userCartRef = db.collection('carts').doc(user.uid);
+                const docSnap = await userCartRef.get();
+                const firestoreCart = docSnap.exists ? docSnap.data().items : {};
 
                 const mergedCart = { ...firestoreCart };
                 for (const [productId, quantity] of Object.entries(localCart)) {
