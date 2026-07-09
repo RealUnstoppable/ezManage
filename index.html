@@ -409,8 +409,7 @@
                 <a href="#" onclick="navTo('welcome')" class="hover:text-sky-600 transition-colors">Home</a>
                 <a href="#" onclick="navTo('tracker')" class="hover:text-sky-600 transition-colors">App</a>
                 <a href="#" onclick="navTo('schedule')" class="hover:text-sky-600 transition-colors">Schedule</a>
-            <a href="#" onclick="navTo('tasks')"
-                <a href="#" onclick="navTo('tasks')" class="hover:text-sky-600 transition-colors">Tasks</a>
+            <a href="#" onclick="navTo('tasks')" class="hover:text-sky-600 transition-colors">Tasks</a>
                 <a href="easy-ai.html" class="hover:text-sky-600 transition-colors text-sky-500">AI Predictor</a>
                 <a href="#" onclick="navTo('pricing')" class="hover:text-sky-600 transition-colors">Pricing</a>
             </div>
@@ -929,7 +928,6 @@
                                 <option value="Driver">Driver</option>
                                 <option value="Other">Other</option>
                             </select>
-                            <input type="text" id="empPhone" placeholder="Phone Number (Optional)" aria-label="Phone Number"
                             <input type="text" id="empPhone" placeholder="Phone Number (Optional)" aria-label="Employee Phone Number"
                                 class="flex-1 bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
                         </div>
@@ -957,57 +955,7 @@
         </div>
 
 
-        <!-- View: Tasks -->
-        <div id="view-tasks" class="view-section px-6 py-12 hidden max-w-4xl mx-auto">
-            <h2 class="text-3xl font-bold mb-6 text-slate-800 dark:text-white flex items-center gap-2">
-                <i data-lucide="check-square" class="w-8 h-8 text-sky-500"></i>
-                Task Management
-            </h2>
 
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <!-- Task Creation Form -->
-                <div class="lg:col-span-1 card">
-                    <h3 class="text-xl font-semibold mb-4 text-slate-800 dark:text-white border-b border-slate-200 dark:border-slate-700 pb-2">Assign New Task</h3>
-                    <form id="createTaskForm" class="space-y-4" onsubmit="event.preventDefault(); createTask();">
-                        <div>
-                            <label for="taskTitle" class="block text-sm font-medium mb-1">Task Title</label>
-                            <input type="text" id="taskTitle" class="w-full" placeholder="e.g. Clean fryers" required>
-                        </div>
-                        <div>
-                            <label for="taskDesc" class="block text-sm font-medium mb-1">Description (Optional)</label>
-                            <textarea id="taskDesc" class="w-full h-24" placeholder="Task details..."></textarea>
-                        </div>
-                        <div>
-                            <label for="taskAssignee" class="block text-sm font-medium mb-1">Assign To</label>
-                            <select id="taskAssignee" class="w-full" required>
-                                <option value="">Select Employee...</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label for="taskDueDate" class="block text-sm font-medium mb-1">Due Date</label>
-                            <input type="date" id="taskDueDate" class="w-full" required>
-                        </div>
-                        <button type="submit" class="btn btn-primary w-full">Assign Task</button>
-                    </form>
-                </div>
-
-                <!-- Task List -->
-                <div class="lg:col-span-2">
-                    <div class="flex justify-between items-center mb-4">
-                        <h3 class="text-xl font-semibold text-slate-800 dark:text-white">Assigned Tasks</h3>
-                        <select id="taskFilterStatus" class="text-sm p-1 border rounded" onchange="fetchTasks()">
-                            <option value="All">All Tasks</option>
-                            <option value="Pending">Pending</option>
-                            <option value="In Progress">In Progress</option>
-                            <option value="Completed">Completed</option>
-                        </select>
-                    </div>
-                    <div id="taskList" class="space-y-4">
-                        <p class="text-sm text-slate-500">Loading tasks...</p>
-                    </div>
-                </div>
-            </div>
-        </div>
 
         <div id="view-schedule" class="view-section px-6 py-12">
             <div class="max-w-4xl mx-auto">
@@ -1112,9 +1060,6 @@
                     <p class="text-sm text-slate-500 mb-6">Create a group to share shift notes with other managers
                         securely.</p>
                     <div class="space-y-4">
-                        <input type="text" id="newGroupName" placeholder="Group Name (e.g. Store #1234)" aria-label="Group Name"
-                            class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
-                        <input type="password" id="newGroupPassword" placeholder="Group Password" aria-label="Group Password"
                         <input type="text" id="newGroupName" placeholder="Group Name (e.g. Store #1234)" aria-label="New Group Name"
                             class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
                         <input type="password" id="newGroupPassword" placeholder="Group Password" aria-label="New Group Password"
@@ -1132,9 +1077,6 @@
                     <h2 class="text-xl font-bold mb-4">Join a Management Group</h2>
                     <p class="text-sm text-slate-500 mb-6">Ask your store owner/GM for the Group ID and Password.</p>
                     <div class="space-y-4">
-                        <input type="text" id="joinGroupId" placeholder="Group ID" aria-label="Group ID"
-                            class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
-                        <input type="password" id="joinGroupPassword" placeholder="Group Password" aria-label="Group Password"
                         <input type="text" id="joinGroupId" placeholder="Group ID" aria-label="Join Group ID"
                             class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
                         <input type="password" id="joinGroupPassword" placeholder="Group Password" aria-label="Join Group Password"
@@ -1329,7 +1271,6 @@
                     class="hidden bg-white dark:bg-slate-900 rounded-3xl p-6 md:p-8 shadow-sm border border-slate-100 dark:border-slate-800 mb-12">
                     <h2 class="text-xl font-bold mb-4">Report New Issue</h2>
                     <div class="space-y-4">
-                        <input type="text" id="maintenanceTitle" placeholder="Equipment or Issue Name" aria-label="Equipment or Issue Name"
                         <input type="text" id="maintenanceTitle" placeholder="Equipment or Issue Name" aria-label="Maintenance Title"
                             class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
                         <textarea id="maintenanceDesc" placeholder="Describe the problem..." aria-label="Maintenance Description" rows="3"
@@ -1668,24 +1609,15 @@
                     class="hidden bg-white dark:bg-slate-900 rounded-3xl p-6 md:p-8 shadow-sm border border-slate-100 dark:border-slate-800 mb-12">
                     <h2 class="text-xl font-bold mb-4">Add New Employee</h2>
                     <div class="space-y-4">
-                        <input type="text" id="empName" placeholder="Full Name" aria-label="Full Name"
+                        <input type="text" id="empName2" placeholder="Full Name" aria-label="Employee Full Name"
                             class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
-                        <input type="text" id="empRole" placeholder="Role (e.g. Cashier, Cook)" aria-label="Role"
-                            class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
-
-                        <div class="grid md:grid-cols-2 gap-4">
-                            <input type="tel" id="empPhone" placeholder="Phone Number" aria-label="Phone Number"
-                                class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
-                            <input type="email" id="empEmail" placeholder="Email Address" aria-label="Email Address"
-                        <input type="text" id="empName" placeholder="Full Name" aria-label="Employee Full Name"
-                            class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
-                        <input type="text" id="empRole" placeholder="Role (e.g. Cashier, Cook)" aria-label="Employee Role"
+                        <input type="text" id="empRole2" placeholder="Role (e.g. Cashier, Cook)" aria-label="Employee Role"
                             class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
 
                         <div class="grid md:grid-cols-2 gap-4">
-                            <input type="tel" id="empPhone" placeholder="Phone Number" aria-label="Employee Phone Number"
+                            <input type="tel" id="empPhone2" placeholder="Phone Number" aria-label="Employee Phone Number"
                                 class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
-                            <input type="email" id="empEmail" placeholder="Email Address" aria-label="Employee Email Address"
+                            <input type="email" id="empEmail2" placeholder="Email Address" aria-label="Employee Email Address"
                                 class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
                         </div>
 
@@ -1732,42 +1664,7 @@
             </div>
         </div>
 
-        <div id="view-tasks" class="view-section px-6 py-12 hidden">
-            <div class="max-w-4xl mx-auto">
-                <div class="card shadow-2xl mb-12" id="managerTaskCreation" style="display: none;">
-                    <h1 class="text-3xl font-black mb-4">Assign Tasks</h1>
-                    <p class="text-slate-500 mb-8">Create specific checklists and tasks for your team to complete during their shifts.</p>
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                        <div>
-                            <label class="block text-sm font-bold mb-2">Task Title</label>
-                            <input type="text" id="taskTitle" class="w-full" placeholder="e.g. Close Registers">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-bold mb-2">Assign To</label>
-                            <select id="taskAssignee" class="w-full">
-                                <option value="">Select Employee</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <label class="block text-sm font-bold mb-2">Description (Optional)</label>
-                    <textarea id="taskDescription" class="h-24 mb-6" placeholder="Provide extra details..."></textarea>
-
-                    <button id="btnSubmitTask" onclick="submitTask()" class="btn btn-accent w-full py-4">Assign Task</button>
-                </div>
-
-                <div class="mb-12">
-                    <h3 class="text-xl font-black mb-6 border-b border-slate-200 dark:border-slate-800 pb-2">My Assigned Tasks</h3>
-                    <div id="myTasksContainer" class="space-y-4"></div>
-                </div>
-
-                <div id="managerTasksSection" style="display: none;">
-                    <h3 class="text-xl font-black mb-6 border-b border-slate-200 dark:border-slate-800 pb-2 text-purple-600"><i data-lucide="shield" class="inline w-5 h-5 mr-2"></i>Organization Tasks</h3>
-                    <div id="orgTasksContainer" class="space-y-4"></div>
-                </div>
-            </div>
-        </div>
 
         <div id="view-timeoff" class="view-section px-6 py-12 hidden">
             <div class="max-w-4xl mx-auto">
