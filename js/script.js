@@ -85,7 +85,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         };
 
-        let lastGreeting = ""; // ⚡ Bolt Optimization: Cache state to prevent layout thrashing
 
         const updateGreeting = () => {
             const now = new Date();

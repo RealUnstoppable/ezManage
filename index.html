@@ -1876,12 +1876,14 @@
             measurementId: "G-ZN3YJPHVGX"
         };
 
-        const app = !window.firebase.apps.length ? window.firebase.initializeApp(firebaseConfig) : window.firebase.app();
+        if (!window.firebase.apps.length) {
+            window.firebase.initializeApp(firebaseConfig);
+            window.firebase.firestore().settings({
+                experimentalForceLongPolling: true
+            });
+        }
+        const app = window.firebase.app();
         const auth = window.firebase.auth();
-
-        window.firebase.firestore().settings({
-            experimentalForceLongPolling: true
-        });
         const db = window.firebase.firestore();
 
         const cloudFunctions = window.firebase.functions();
@@ -4436,7 +4438,11 @@ function checkAndRenderOrgControls() {
                 }
             } catch (e) {
                 console.error("Manager Troubleshooting: Error creating shift group:", e);
-                alert("Failed to create group: " + e.message);
+                if (e.code === 'unavailable' || e.code === 'auth/network-request-failed' || e.code === 'firestore/unavailable') {
+                    alert("Network error: Could not connect to the server. Please check your connection.");
+                } else {
+                    alert("Failed to create group: " + e.message);
+                }
             }
         }
 

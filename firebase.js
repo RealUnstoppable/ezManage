@@ -10,14 +10,16 @@ const firebaseConfig = {
 
 // Ensure Firebase is initialized strictly as a global singleton using the compat SDK
 // to prevent token mismatches and duplicate initialization errors.
-const app = !window.firebase.apps.length ? window.firebase.initializeApp(firebaseConfig) : window.firebase.app();
-
-const auth = window.firebase.auth();
-
 // Use experimentalForceLongPolling for fallback on CORS/network issues
-window.firebase.firestore().settings({
-    experimentalForceLongPolling: true
-});
+if (!window.firebase.apps.length) {
+    window.firebase.initializeApp(firebaseConfig);
+    window.firebase.firestore().settings({
+        experimentalForceLongPolling: true
+    });
+}
+
+const app = window.firebase.app();
+const auth = window.firebase.auth();
 
 const db = window.firebase.firestore();
 const functions = window.firebase.functions();
