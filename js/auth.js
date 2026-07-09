@@ -21,13 +21,21 @@ export function getUserRedirectPath(userData) {
     return userData && userData.isAdmin ? 'admin.html' : 'index.html';
 }
 
+const userDocCache = new Map(); // ⚡ Bolt Optimization: Cache user document fetches
+
 export async function fetchUserDoc(uid) {
-    try {
-        return await db.collection("users").doc(uid).get();
-    } catch (error) {
-        logManagerError("Error fetching user document in fetchUserDoc for uid: " + uid, error);
-        throw error;
+    if (userDocCache.has(uid)) {
+        return userDocCache.get(uid);
     }
+
+    const fetchPromise = db.collection("users").doc(uid).get().catch(error => {
+        logManagerError("Error fetching user document in fetchUserDoc for uid: " + uid, error);
+        userDocCache.delete(uid); // Remove from cache on error so we can retry later
+        throw error;
+    });
+
+    userDocCache.set(uid, fetchPromise);
+    return fetchPromise;
 }
 
 const ADMIN_EMAIL = null;
@@ -153,4 +161,5 @@ if (document.getElementById('auth-form')) {
 
     function showMessage(msg) { messageEl.textContent = msg; }
     updateFormView();
+}
 }
