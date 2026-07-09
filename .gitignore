@@ -31,3 +31,4 @@ out/
 build/
 *.dmg
 *.app
+.DS_Store
