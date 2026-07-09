@@ -5018,6 +5018,7 @@ function checkAndRenderOrgControls() {
                 }
 
                 let tasksCount = 0;
+                let htmlStr = ''; // ⚡ Bolt Optimization: Replace O(N) appendChild loop with batched string update to prevent layout thrashing
 
                 snapshot.forEach(doc => {
                     const task = doc.data();
@@ -5026,8 +5027,7 @@ function checkAndRenderOrgControls() {
 
                     tasksCount++;
 
-                    const div = document.createElement('div');
-                    div.className = 'p-4 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 flex justify-between items-start';
+                    const divClassName = 'p-4 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 flex justify-between items-start';
 
                     let statusColor = 'bg-yellow-100 text-yellow-800';
                     if (task.status === 'In Progress') statusColor = 'bg-blue-100 text-blue-800';
@@ -5060,7 +5060,8 @@ function checkAndRenderOrgControls() {
                     if(assigneeOption) assigneeName = assigneeOption.text;
                     else if (task.assigneeId === currentUser.uid) assigneeName = "You";
 
-                    div.innerHTML = `
+                    htmlStr += `
+                    <div class="${divClassName}">
                         <div class="flex-1">
                             <h4 class="font-bold text-slate-800 dark:text-white">${escapeHTML(task.title)}</h4>
                             ${task.description ? `<p class="text-sm text-slate-600 dark:text-slate-400 mt-1">${escapeHTML(task.description)}</p>` : ''}
@@ -5073,12 +5074,13 @@ function checkAndRenderOrgControls() {
                             ${statusHtml}
                             ${deleteBtnHtml}
                         </div>
-                    `;
-                    listContainer.appendChild(div);
+                    </div>`;
                 });
 
                 if (tasksCount === 0) {
                     listContainer.innerHTML = "<p class='text-sm text-slate-500'>No tasks match the selected filter.</p>";
+                } else {
+                    listContainer.innerHTML = htmlStr;
                 }
 
                 lucide.createIcons();
