@@ -3674,6 +3674,10 @@
                         return bTime - aTime;
                     });
 
+                    // ⚡ Bolt Optimization: Replace O(n²) string concatenation inside loop with array map().join('')
+                    let myTasksArr = [];
+                    let orgTasksArr = [];
+
                     tasks.forEach(task => {
                         let statusColor = task.status === 'Completed' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800';
 
@@ -3747,6 +3751,10 @@
                  });
 
                  const isManager = currentUserData.orgId === currentUser.uid;
+
+                 // ⚡ Bolt Optimization: Replace O(n²) string concatenation inside loop with array map().join('')
+                 let myRequestsArr = [];
+                 let managerRequestsArr = [];
 
                  requests.forEach(req => {
                      let statusColor = req.status === 'Approved' ? 'bg-green-100 text-green-800' : (req.status === 'Rejected' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800');
@@ -5011,6 +5019,9 @@ function checkAndRenderOrgControls() {
 
                 let tasksCount = 0;
 
+                // ⚡ Bolt Optimization: Use DocumentFragment to batch DOM insertions and reduce layout thrashing
+                const fragment = document.createDocumentFragment();
+
                 snapshot.forEach(doc => {
                     const task = doc.data();
 
@@ -5066,8 +5077,10 @@ function checkAndRenderOrgControls() {
                             ${deleteBtnHtml}
                         </div>
                     `;
-                    listContainer.appendChild(div);
+                    fragment.appendChild(div);
                 });
+
+                listContainer.appendChild(fragment);
 
                 if (tasksCount === 0) {
                     listContainer.innerHTML = "<p class='text-sm text-slate-500'>No tasks match the selected filter.</p>";
