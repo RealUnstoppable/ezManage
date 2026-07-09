@@ -1,7 +1,6 @@
 import { logManagerError } from './utils.js';
 import { auth, db, getUserRedirectPath } from './auth.js';
-import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
-import { doc, getDoc } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
+
 
 export function loadNavbar() {
     const headerHTML = `

@@ -1788,15 +1788,7 @@
         let currentUser = null;
         let currentUserData = null;
         window.currentUser = null;
-        function escapeHTML(str) {
-            if (!str && str !== 0) return "";
-            return String(str)
-                .replace(/&/g, "&amp;")
-                .replace(/</g, "&lt;")
-                .replace(/>/g, "&gt;")
-                .replace(/"/g, "&quot;")
-                .replace(/'/g, "&#039;");
-        }
+
 
         window.currentUserData = null;
         let isRegisterMode = false;
@@ -3567,8 +3559,8 @@
                     const myContainer = document.getElementById('myTasksContainer');
                     const orgContainer = document.getElementById('orgTasksContainer');
 
-                    let myTasksHtml = '';
-                    let orgTasksHtml = '';
+                    let myTasksHtml = [];
+                    let orgTasksHtml = [];
 
                     let tasks = [];
                     snap.forEach(doc => tasks.push({ id: doc.id, ...doc.data() }));
@@ -3578,6 +3570,10 @@
                         let bTime = b.createdAt ? b.createdAt.toMillis() : 0;
                         return bTime - aTime;
                     });
+
+                    // ⚡ Bolt Optimization: Replace O(n²) string concatenation inside loop with array map().join('')
+                    let myTasksArr = [];
+                    let orgTasksArr = [];
 
                     tasks.forEach(task => {
                         let statusColor = task.status === 'Completed' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800';
@@ -3595,12 +3591,12 @@
 
                         // Employee specific view (Can mark their own as complete)
                         if (task.assigneeId === currentUser.uid && task.status === 'Pending') {
-                            myTasksHtml += taskCard + `
+                            myTasksHtml.push(taskCard + `
                                     <button onclick="updateTaskStatus('${task.id}', 'Completed')" class="btn btn-sm bg-green-500 text-white hover:bg-green-600"><i data-lucide="check" class="w-4 h-4 mr-1"></i>Complete</button>
                                 </div></div>
-                            `;
+                            `);
                         } else if (task.assigneeId === currentUser.uid) {
-                             myTasksHtml += taskCard + `</div></div>`;
+                             myTasksHtml.push(taskCard + `</div></div>`);
                         }
 
                         // Manager specific view
@@ -3608,12 +3604,12 @@
                             let deleteBtn = `<button onclick="deleteTask('${task.id}')" class="btn btn-sm btn-outline text-red-500 hover:bg-red-50" aria-label="Delete Task"><i data-lucide="trash-2" class="w-4 h-4"></i></button>`;
                             let revertBtn = task.status === 'Completed' ? `<button onclick="updateTaskStatus('${task.id}', 'Pending')" class="btn btn-sm btn-outline text-yellow-600" aria-label="Mark Pending"><i data-lucide="rotate-ccw" class="w-4 h-4"></i></button>` : '';
 
-                            orgTasksHtml += taskCard + revertBtn + deleteBtn + `</div></div>`;
+                            orgTasksHtml.push(taskCard + revertBtn + deleteBtn + `</div></div>`);
                         }
                     });
 
-                    if (myContainer) myContainer.innerHTML = myTasksHtml || '<p class="text-slate-500 text-center py-4">No tasks assigned to you right now. You\'re all caught up!</p>';
-                    if (orgContainer && isManager) orgContainer.innerHTML = orgTasksHtml || '<p class="text-slate-500 text-center py-4">No active tasks in the organization.</p>';
+                    if (myContainer) myContainer.innerHTML = myTasksHtml.join('') || '<p class="text-slate-500 text-center py-4">No tasks assigned to you right now. You\'re all caught up!</p>';
+                    if (orgContainer && isManager) orgContainer.innerHTML = orgTasksHtml.join('') || '<p class="text-slate-500 text-center py-4">No active tasks in the organization.</p>';
                     lucide.createIcons();
                 }, err => {
                     console.error("Manager Troubleshooting: Error fetching tasks:", err);
@@ -3638,8 +3634,8 @@
                  const employeeContainer = document.getElementById('myTimeOffRequests');
                  const managerContainer = document.getElementById('managerTimeOffRequests');
 
-                 let myRequestsHtml = '';
-                 let managerRequestsHtml = '';
+                 let myRequestsHtml = [];
+                 let managerRequestsHtml = [];
 
                  let requests = [];
                  snap.forEach(doc => requests.push({ id: doc.id, ...doc.data() }));
@@ -3652,6 +3648,10 @@
                  });
 
                  const isManager = currentUserData.orgId === currentUser.uid;
+
+                 // ⚡ Bolt Optimization: Replace O(n²) string concatenation inside loop with array map().join('')
+                 let myRequestsArr = [];
+                 let managerRequestsArr = [];
 
                  requests.forEach(req => {
                      let statusColor = req.status === 'Approved' ? 'bg-green-100 text-green-800' : (req.status === 'Rejected' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800');
@@ -3669,23 +3669,23 @@
 
                      if (req.uid === currentUser.uid) {
                           let cancelBtn = req.status === 'Pending' ? `<button class="btn btn-sm btn-outline text-red-500 hover:bg-red-50 delete-timeoff-btn" data-req-id="${req.id}">Cancel</button>` : '';
-                          myRequestsHtml += reqCard + cancelBtn + `</div></div>`;
+                          myRequestsHtml.push(reqCard + cancelBtn + `</div></div>`);
                      }
 
                      if (isManager && req.status === 'Pending') {
-                          managerRequestsHtml += reqCard + `
+                          managerRequestsHtml.push(reqCard + `
                                 <button class="btn btn-sm bg-green-500 text-white hover:bg-green-600 update-timeoff-btn" data-req-id="${req.id}" data-req-status="Approved">Approve</button>
                                 <button class="btn btn-sm bg-red-500 text-white hover:bg-red-600 update-timeoff-btn" data-req-id="${req.id}" data-req-status="Rejected">Deny</button>
-                          </div></div>`;
+                          </div></div>`);
                      } else if (isManager) {
-                          managerRequestsHtml += reqCard + `</div></div>`;
+                          managerRequestsHtml.push(reqCard + `</div></div>`);
                      }
                  });
 
-                 if (employeeContainer) employeeContainer.innerHTML = myRequestsHtml || '<p class="text-slate-500">No time off requests found.</p>';
+                 if (employeeContainer) employeeContainer.innerHTML = myRequestsHtml.join('') || '<p class="text-slate-500">No time off requests found.</p>';
                  if (managerContainer) {
                      if (isManager) {
-                         managerContainer.innerHTML = managerRequestsHtml || '<p class="text-slate-500">No requests to manage.</p>';
+                         managerContainer.innerHTML = managerRequestsHtml.join('') || '<p class="text-slate-500">No requests to manage.</p>';
                          document.getElementById('managerTimeOffSection').style.display = 'block';
                      } else {
                          document.getElementById('managerTimeOffSection').style.display = 'none';
@@ -4916,6 +4916,9 @@ function checkAndRenderOrgControls() {
 
                 let tasksCount = 0;
 
+                // ⚡ Bolt Optimization: Use DocumentFragment to batch DOM insertions and reduce layout thrashing
+                const fragment = document.createDocumentFragment();
+
                 snapshot.forEach(doc => {
                     const task = doc.data();
 
@@ -4971,8 +4974,10 @@ function checkAndRenderOrgControls() {
                             ${deleteBtnHtml}
                         </div>
                     `;
-                    listContainer.appendChild(div);
+                    fragment.appendChild(div);
                 });
+
+                listContainer.appendChild(fragment);
 
                 if (tasksCount === 0) {
                     listContainer.innerHTML = "<p class='text-sm text-slate-500'>No tasks match the selected filter.</p>";
