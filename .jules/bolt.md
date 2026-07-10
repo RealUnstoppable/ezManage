@@ -45,3 +45,6 @@
 ## 2026-06-25 - [Repeated Firebase DB Docs Fetch]
 **Learning:** Functions invoked via callbacks from listeners that span multiple files (e.g., \`auth.onAuthStateChanged\`) will fire simultaneously. Without a caching layer, they execute redundant concurrent network fetch queries (like \`db.collection('users').doc(uid).get()\`), causing latency and blocking operations.
 **Action:** Always wrap independent multi-listener fetched resources with a generic memoization layer using a \`Map\` cache to immediately resolve redundant Promise requests.
+## 2024-05-27 - [Batched string insertion in DOM rendering]
+**Learning:** While \`DocumentFragment\` prevents layout thrashing, replacing an O(N) DOM node creation and \`appendChild\` loop with a batched string assignment (using \`.map().join('')\` and a single \`innerHTML\` update) is tangibly faster due to utilizing the browser's highly optimized C++ HTML parser once instead of iteratively building nodes via JS-to-DOM boundary crossings.
+**Action:** Replace sequential \`appendChild\` and \`createElement\` loops with array accumulation using \`.map().join('')\` before setting \`.innerHTML\` once. Ensure proper XSS sanitization (e.g. \`escapeHTML\`) is maintained in the string templates.

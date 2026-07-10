@@ -5019,8 +5019,8 @@ function checkAndRenderOrgControls() {
 
                 let tasksCount = 0;
 
-                // ⚡ Bolt Optimization: Use DocumentFragment to batch DOM insertions and reduce layout thrashing
-                const fragment = document.createDocumentFragment();
+                // ⚡ Bolt Optimization: Replace O(N) DOM appendChild loop with O(1) batched string map/join to prevent layout thrashing
+                const taskHtmlArray = [];
 
                 snapshot.forEach(doc => {
                     const task = doc.data();
@@ -5028,9 +5028,6 @@ function checkAndRenderOrgControls() {
                     if (filterStatus !== 'All' && task.status !== filterStatus) return;
 
                     tasksCount++;
-
-                    const div = document.createElement('div');
-                    div.className = 'p-4 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 flex justify-between items-start';
 
                     let statusColor = 'bg-yellow-100 text-yellow-800';
                     if (task.status === 'In Progress') statusColor = 'bg-blue-100 text-blue-800';
@@ -5063,27 +5060,28 @@ function checkAndRenderOrgControls() {
                     if(assigneeOption) assigneeName = assigneeOption.text;
                     else if (task.assigneeId === currentUser.uid) assigneeName = "You";
 
-                    div.innerHTML = `
-                        <div class="flex-1">
-                            <h4 class="font-bold text-slate-800 dark:text-white">${escapeHTML(task.title)}</h4>
-                            ${task.description ? `<p class="text-sm text-slate-600 dark:text-slate-400 mt-1">${escapeHTML(task.description)}</p>` : ''}
-                            <div class="flex flex-wrap gap-3 mt-3 text-xs text-slate-500">
-                                <span><i data-lucide="user" class="inline w-3 h-3 mr-1"></i>${escapeHTML(assigneeName)}</span>
-                                <span><i data-lucide="calendar" class="inline w-3 h-3 mr-1"></i>Due: ${escapeHTML(task.dueDate)}</span>
+                    taskHtmlArray.push(`
+                        <div class="p-4 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 flex justify-between items-start">
+                            <div class="flex-1">
+                                <h4 class="font-bold text-slate-800 dark:text-white">${escapeHTML(task.title)}</h4>
+                                ${task.description ? `<p class="text-sm text-slate-600 dark:text-slate-400 mt-1">${escapeHTML(task.description)}</p>` : ''}
+                                <div class="flex flex-wrap gap-3 mt-3 text-xs text-slate-500">
+                                    <span><i data-lucide="user" class="inline w-3 h-3 mr-1"></i>${escapeHTML(assigneeName)}</span>
+                                    <span><i data-lucide="calendar" class="inline w-3 h-3 mr-1"></i>Due: ${escapeHTML(task.dueDate)}</span>
+                                </div>
+                            </div>
+                            <div class="flex flex-col items-end ml-4 space-y-2">
+                                ${statusHtml}
+                                ${deleteBtnHtml}
                             </div>
                         </div>
-                        <div class="flex flex-col items-end ml-4 space-y-2">
-                            ${statusHtml}
-                            ${deleteBtnHtml}
-                        </div>
-                    `;
-                    fragment.appendChild(div);
+                    `);
                 });
-
-                listContainer.appendChild(fragment);
 
                 if (tasksCount === 0) {
                     listContainer.innerHTML = "<p class='text-sm text-slate-500'>No tasks match the selected filter.</p>";
+                } else {
+                    listContainer.innerHTML = taskHtmlArray.join('');
                 }
 
                 lucide.createIcons();
