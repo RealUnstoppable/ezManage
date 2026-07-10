@@ -951,4 +951,108 @@ exports.manageWaste = functions.https.onCall(async (data, context) => {
   }
 });
 
+
+/**
+ * Manage Feedbacks API
+ * Handles creation, reading, and deletion of employee feedbacks.
+ */
+exports.manageFeedbacks = functions.https.onCall(async (data, context) => {
+  if (data && typeof data === "object" && "rawRequest" in data && "auth" in data) {
+    context = data;
+    data = data.data;
+  }
+
+  if (!context || !context.auth) {
+    throw new HttpsError("unauthenticated", "User must be logged in.");
+  }
+
+  const {action, payload} = data;
+  const uid = context.auth.uid;
+
+  if (!action || !payload) {
+    throw new HttpsError("invalid-argument", "Missing action or payload");
+  }
+
+  try {
+    const userDoc = await admin.firestore().collection("users").doc(uid).get();
+    if (!userDoc.exists) {
+      throw new HttpsError("not-found", "User not found");
+    }
+    const actualOrgId = userDoc.data().orgId || null;
+
+    if (!actualOrgId) {
+       throw new HttpsError("permission-denied", "User must be part of an organization to manage feedbacks.");
+    }
+
+    if (action === "create") {
+      const {empId, empName, rating, comment} = payload;
+
+      if (!empId || !rating) {
+        throw new HttpsError("invalid-argument", "Missing required feedback details");
+      }
+
+      const newFeedback = {
+        empId,
+        empName: empName || "Employee",
+        rating: Number(rating),
+        comment: comment || "",
+        managerId: uid,
+        managerName: userDoc.data().name || "Anonymous Manager",
+        orgId: actualOrgId,
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      };
+
+      const docRef = await admin.firestore().collection("feedbacks").add(newFeedback);
+      return {success: true, id: docRef.id};
+    }
+
+    if (action === "get") {
+      const {empId} = payload;
+      if (!empId) {
+        throw new HttpsError("invalid-argument", "Missing employee ID");
+      }
+
+      const snapshot = await admin.firestore().collection("feedbacks")
+        .where("orgId", "==", actualOrgId)
+        .where("empId", "==", empId)
+        .orderBy("createdAt", "desc")
+        .limit(100)
+        .get();
+
+      const feedbacks = [];
+      snapshot.forEach(doc => feedbacks.push({id: doc.id, ...doc.data()}));
+      return {success: true, feedbacks};
+    }
+
+    if (action === "delete") {
+       const {feedbackId} = payload;
+       if (!feedbackId) {
+          throw new HttpsError("invalid-argument", "Missing feedback ID");
+       }
+
+       const feedbackRef = admin.firestore().collection("feedbacks").doc(feedbackId);
+       const feedbackDoc = await feedbackRef.get();
+
+       if (!feedbackDoc.exists) {
+          throw new HttpsError("not-found", "Feedback not found");
+       }
+
+       if (feedbackDoc.data().orgId !== actualOrgId) {
+          throw new HttpsError("permission-denied", "Unauthorized to delete this feedback");
+       }
+
+       await feedbackRef.delete();
+       return {success: true};
+    }
+
+    throw new HttpsError("invalid-argument", "Invalid action");
+  } catch (error) {
+    logManagerError(`Manage Feedbacks Error for uid: ${uid}`, error);
+    if (error instanceof HttpsError) {
+      throw error;
+    }
+    throw new HttpsError("internal", error.message);
+  }
+});
+
 exports.trainGlobalAI = require("./trainGlobalAI").trainGlobalAI;
