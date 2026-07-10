@@ -37,7 +37,7 @@ service cloud.firestore {
     // GROUPS (Added as requested by user, or handling shift_groups to act as groups)
     match /groups/{groupId} {
       allow read: if request.auth != null;
-      allow create: if request.auth != null && request.resource.data.get('authorId', null) == request.auth.uid;
+      allow create: if request.auth != null;
       allow update, delete: if request.auth != null && (
           resource.data.get('authorId', null) == request.auth.uid ||
           isAdmin()
@@ -100,8 +100,7 @@ service cloud.firestore {
           isAdmin()
       );
       allow create: if request.auth != null
-                    && request.resource.data.get('authorId', null) == request.auth.uid
-                    && request.resource.data.get('orgId', null) == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('orgId', null);
+                    && request.resource.data.get('authorId', null) == request.auth.uid;
       allow update, delete: if request.auth != null && (
           resource.data.get('authorId', null) == request.auth.uid ||
           (resource.data.get('orgId', null) != null && resource.data.get('orgId', null) == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('orgId', null)) ||
@@ -165,7 +164,7 @@ service cloud.firestore {
           (resource.data.get('orgId', null) != null && resource.data.get('orgId', null) == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('orgId', null)) ||
           isAdmin()
       );
-      allow create: if request.auth != null && request.resource.data.get('orgId', null) == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('orgId', null);
+      allow create: if request.auth != null ;
       allow update: if request.auth != null && (
           (resource.data.get('assigneeId', null) == request.auth.uid && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])) ||
           resource.data.get('assignerId', null) == request.auth.uid ||
@@ -189,8 +188,7 @@ service cloud.firestore {
           isAdmin()
       );
       allow create: if request.auth != null
-                    && request.resource.data.get('reportedByUid', null) == request.auth.uid
-                    && request.resource.data.get('orgId', null) == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('orgId', null);
+                    && request.resource.data.get('reportedByUid', null) == request.auth.uid;
       allow update: if request.auth != null && (
           resource.data.get('reportedByUid', null) == request.auth.uid ||
           (resource.data.get('orgId', null) != null && resource.data.get('orgId', null) == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('orgId', null)) ||
@@ -209,7 +207,7 @@ service cloud.firestore {
       );
       allow create: if request.auth != null
                     && request.resource.data.get('reportedByUid', null) == request.auth.uid
-                    && request.resource.data.get('orgId', null) == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('orgId', null);
+                    ;
       allow update: if request.auth != null && (
           resource.data.get('reportedByUid', null) == request.auth.uid ||
           (resource.data.get('orgId', null) != null && resource.data.get('orgId', null) == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('orgId', null)) ||
@@ -228,7 +226,7 @@ service cloud.firestore {
       );
       allow create: if request.auth != null
                     && request.resource.data.get('loggedByUid', null) == request.auth.uid
-                    && request.resource.data.get('orgId', null) == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('orgId', null);
+                    ;
       allow update: if request.auth != null && (
           resource.data.get('loggedByUid', null) == request.auth.uid ||
           (resource.data.get('orgId', null) != null && resource.data.get('orgId', null) == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('orgId', null)) ||
@@ -244,7 +242,7 @@ service cloud.firestore {
           (resource.data.get('orgId', null) != null && resource.data.get('orgId', null) == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('orgId', null)) ||
           isAdmin()
       );
-      allow create: if request.auth != null && request.resource.data.get('orgId', null) == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('orgId', null);
+      allow create: if request.auth != null ;
       allow update, delete: if request.auth != null && resource.data.get('orgId', null) == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('orgId', null);
     }
 
@@ -258,7 +256,7 @@ service cloud.firestore {
       );
       allow create: if request.auth != null
                     && request.resource.data.get('uid', null) == request.auth.uid
-                    && request.resource.data.get('orgId', null) == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('orgId', null);
+                    ;
       allow update: if request.auth != null && (
           (resource.data.get('uid', null) == request.auth.uid && request.resource.data.get('status', null) == 'Pending') ||
           (resource.data.get('orgId', null) == request.auth.uid) ||
