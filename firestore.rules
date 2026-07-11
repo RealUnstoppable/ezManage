@@ -47,7 +47,8 @@ service cloud.firestore {
 
     // CARTS
     match /carts/{userId} {
-      allow read, write: if isOwner(userId) || isAdmin();
+      allow read: if isOwner(userId) || isAdmin();
+      allow create, update, delete: if isOwner(userId) || isAdmin();
     }
 
     // ORDERS
@@ -88,7 +89,7 @@ service cloud.firestore {
     // SITE STATS
     match /site_stats/{docId} {
         allow read: if true;
-        allow write: if isAdmin();
+        allow create, update, delete: if isAdmin();
     }
 
     // SHIFT NOTES
