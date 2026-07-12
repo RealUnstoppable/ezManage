@@ -855,6 +855,113 @@ exports.manageIncidents = functions.https.onCall(async (data, context) => {
 });
 
 /**
+ * Manage Time Logs API
+ * Handles clock in, clock out, and retrieving time logs.
+ */
+exports.manageTimeLogs = functions.https.onCall(async (data, context) => {
+  if (data && typeof data === "object" && "rawRequest" in data && "auth" in data) {
+    context = data;
+    data = data.data;
+  }
+
+  if (!context || !context.auth) {
+    throw new HttpsError("unauthenticated", "User must be logged in.");
+  }
+
+  const {action, payload} = data;
+  const uid = context.auth.uid;
+
+  if (!action || !payload) {
+    throw new HttpsError("invalid-argument", "Missing action or payload");
+  }
+
+  try {
+    const userDoc = await admin.firestore().collection("users").doc(uid).get();
+    if (!userDoc.exists) {
+      throw new HttpsError("not-found", "User not found");
+    }
+    const actualOrgId = userDoc.data().orgId || null;
+    const employeeName = userDoc.data().name || "Anonymous";
+
+    if (!actualOrgId) {
+       throw new HttpsError("permission-denied", "User must be part of an organization to clock in/out.");
+    }
+
+    if (action === "clock_in") {
+      // Check if there is already an active clock in
+      const activeLogSnap = await admin.firestore().collection("time_logs")
+          .where("uid", "==", uid)
+          .where("orgId", "==", actualOrgId)
+          .where("status", "==", "Clocked In")
+          .limit(1)
+          .get();
+
+      if (!activeLogSnap.empty) {
+          throw new HttpsError("already-exists", "User is already clocked in.");
+      }
+
+      const newLog = {
+        uid: uid,
+        employeeName: employeeName,
+        orgId: actualOrgId,
+        clockInTime: admin.firestore.FieldValue.serverTimestamp(),
+        clockOutTime: null,
+        status: "Clocked In",
+      };
+
+      const docRef = await admin.firestore().collection("time_logs").add(newLog);
+      return {success: true, id: docRef.id};
+    }
+
+    if (action === "clock_out") {
+      // Find the active clock in
+      const activeLogSnap = await admin.firestore().collection("time_logs")
+          .where("uid", "==", uid)
+          .where("orgId", "==", actualOrgId)
+          .where("status", "==", "Clocked In")
+          .limit(1)
+          .get();
+
+      if (activeLogSnap.empty) {
+          throw new HttpsError("failed-precondition", "User is not clocked in.");
+      }
+
+      const activeLog = activeLogSnap.docs[0];
+      await activeLog.ref.update({
+          clockOutTime: admin.firestore.FieldValue.serverTimestamp(),
+          status: "Clocked Out"
+      });
+
+      return {success: true, id: activeLog.id};
+    }
+
+    if (action === "get_logs") {
+      const isManager = userDoc.data().orgId === uid || userDoc.data().isAdmin;
+
+      let query = admin.firestore().collection("time_logs").where("orgId", "==", actualOrgId);
+
+      if (!isManager) {
+        query = query.where("uid", "==", uid);
+      }
+
+      const snapshot = await query.limit(100).get();
+
+      const logs = [];
+      snapshot.forEach(doc => logs.push({id: doc.id, ...doc.data()}));
+      return {success: true, logs};
+    }
+
+    throw new HttpsError("invalid-argument", "Invalid action");
+  } catch (error) {
+    logManagerError(`Manage Time Logs Error for uid: ${uid}`, error);
+    if (error instanceof HttpsError) {
+      throw error;
+    }
+    throw new HttpsError("internal", error.message);
+  }
+});
+
+/**
  * Manage Waste Logs API
  * Handles creation, reading, and deletion of waste logs.
  */

@@ -1,5 +1,14 @@
-
-> ezmanage-app@1.0.0 start
-> node server.cjs
-
-Server running on port 3000
+npm warn exec The following package was not found and will be installed: serve@14.2.6
+ INFO  Accepting connections at http://localhost:3000
+ HTTP  7/12/2026 4:45:19 AM ::1 GET /
+ HTTP  7/12/2026 4:45:19 AM ::1 Returned 200 in 271 ms
+ HTTP  7/12/2026 4:45:20 AM ::1 GET /ManagerPro.jpg
+ HTTP  7/12/2026 4:45:20 AM ::1 Returned 200 in 6 ms
+ HTTP  7/12/2026 4:45:20 AM ::1 GET /js/utils.js
+ HTTP  7/12/2026 4:45:20 AM ::1 GET /js/navbar.js
+ HTTP  7/12/2026 4:45:20 AM ::1 GET /js/footer.js
+ HTTP  7/12/2026 4:45:20 AM ::1 Returned 200 in 4 ms
+ HTTP  7/12/2026 4:45:20 AM ::1 Returned 200 in 4 ms
+ HTTP  7/12/2026 4:45:20 AM ::1 Returned 200 in 4 ms
+ HTTP  7/12/2026 4:45:20 AM ::1 GET /js/auth.js
+ HTTP  7/12/2026 4:45:20 AM ::1 Returned 200 in 3 ms
