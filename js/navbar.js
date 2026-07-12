@@ -1,5 +1,5 @@
 import { logManagerError } from './utils.js';
-import { auth, db, getUserRedirectPath } from './auth.js';
+import { auth, db, getUserRedirectPath, fetchUserDoc } from './auth.js';
 
 
 export function loadNavbar() {
@@ -50,7 +50,9 @@ function updateAuthLink() {
         auth.onAuthStateChanged(async (user) => {
             if (user) {
                 try {
-                    const userDoc = await db.collection("users").doc(user.uid).get();
+                    // ⚡ Bolt Optimization: Use cached fetchUserDoc instead of db.collection().doc().get()
+                    // This prevents redundant concurrent network requests when onAuthStateChanged fires across multiple files.
+                    const userDoc = await fetchUserDoc(user.uid);
                     const destination = userDoc.exists ? getUserRedirectPath(userDoc.data()) : 'account.html';
                     authLink.href = destination;
                     authLink.textContent = "My Account";
