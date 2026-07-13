@@ -45,3 +45,12 @@
 ## 2026-06-25 - [Repeated Firebase DB Docs Fetch]
 **Learning:** Functions invoked via callbacks from listeners that span multiple files (e.g., \`auth.onAuthStateChanged\`) will fire simultaneously. Without a caching layer, they execute redundant concurrent network fetch queries (like \`db.collection('users').doc(uid).get()\`), causing latency and blocking operations.
 **Action:** Always wrap independent multi-listener fetched resources with a generic memoization layer using a \`Map\` cache to immediately resolve redundant Promise requests.
+## 2026-07-09 - [Cloud Functions Parameter Adaptation]
+**Learning:** Duplicating the boilerplate `if (data && typeof data === 'object' && 'rawRequest' in data && 'auth' in data)` parameter adaptation logic across multiple Cloud Functions violates the DRY principle and increases the risk of subtle bugs if the format changes.
+**Action:** Always use the shared `adaptGen2Params(data, context)` utility function to parse and adapt the Gen2 Cloud Function arguments consistently.
+## 2026-07-09 - [Optimistic UI Error Swallowing]
+**Learning:** If an underlying network wrapper function (like `saveCart`) uses a try/catch block to log an error but does not re-throw it, callers further up the stack (like `updateCartState`) that depend on receiving the error to rollback the Optimistic UI state will silently fail, leaving the UI out of sync with the backend.
+**Action:** Always ensure that network layer wrapper functions explicitly re-throw errors (`throw error;`) after logging or handling them if upper layers rely on the error to trigger rollback mechanisms.
+## 2026-07-09 - [Syntax Errors in Scripts]
+**Learning:** Duplicate variable declarations (e.g., using `let` twice for the same variable in the same block) will cause a `SyntaxError: Identifier has already been declared`. This prevents the entire script from being parsed and executed, leading to total UI breakdown.
+**Action:** When refactoring, always verify that variable declarations are unique within their scope and that unused declarations are cleanly removed.
