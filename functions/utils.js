@@ -48,6 +48,7 @@ function escapeHTML(str) {
 
 
 
+// Shared utility to adapt Gen2 callable function parameters.
 function adaptGen2Params(data, context) {
   if (data && typeof data === "object" && "rawRequest" in data && "auth" in data) {
     return {data: data.data, context: data};
