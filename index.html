@@ -4674,7 +4674,11 @@ function checkAndRenderOrgControls() {
                 }
             } catch (error) {
                 console.error("Error fetching waste logs:", error);
-                container.innerHTML = `<div class="text-red-500 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl text-center">Failed to load waste logs: ${error.message}</div>`;
+                container.innerHTML = '';
+                const errDiv = document.createElement('div');
+                errDiv.className = 'text-red-500 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl text-center';
+                errDiv.textContent = 'Failed to load waste logs: ' + error.message;
+                container.appendChild(errDiv);
             }
         }
 
@@ -4831,7 +4835,11 @@ function checkAndRenderOrgControls() {
                 }
             } catch (error) {
                 console.error("Error fetching incidents:", error);
-                container.innerHTML = `<div class="text-red-500 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl text-center">Failed to load incidents: ${error.message}</div>`;
+                container.innerHTML = '';
+                const errDiv = document.createElement('div');
+                errDiv.className = 'text-red-500 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl text-center';
+                errDiv.textContent = 'Failed to load incidents: ' + error.message;
+                container.appendChild(errDiv);
             }
         }
 
@@ -5348,7 +5356,11 @@ function checkAndRenderOrgControls() {
                     renderFilteredTasks();
                 }, err => {
                     console.error("Error fetching tasks:", err);
-                    container.innerHTML = `<div class="text-red-500 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl text-center">Failed to load tasks: ${err.message}</div>`;
+                    container.innerHTML = '';
+                    const errDiv = document.createElement('div');
+                    errDiv.className = 'text-red-500 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl text-center';
+                    errDiv.textContent = 'Failed to load tasks: ' + err.message;
+                    container.appendChild(errDiv);
                 });
         }
 
