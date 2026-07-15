@@ -47,7 +47,6 @@ function escapeHTML(str) {
 }
 
 
-
 function adaptGen2Params(data, context) {
   if (data && typeof data === "object" && "rawRequest" in data && "auth" in data) {
     return {data: data.data, context: data};
