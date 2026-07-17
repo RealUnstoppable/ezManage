@@ -54,11 +54,10 @@ describe('loadNavbar', () => {
       data: () => ({ isAdmin: false })
     });
     const mockDoc = jest.fn().mockReturnValue({ get: mockGet });
-    authModule.db.collection = jest.fn().mockReturnValue({ doc: mockDoc });
+    db.collection = jest.fn().mockReturnValue({ doc: mockDoc });
 
+      const authCallback = auth.onAuthStateChanged.mock.calls[0][0];
       await authCallback(mockUser);
-
-    await authCallback(mockUser);
     await new Promise(process.nextTick);
 
     const authLink = document.getElementById('auth-link');

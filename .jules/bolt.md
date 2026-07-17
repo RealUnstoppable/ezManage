@@ -42,3 +42,7 @@
 ## 2024-05-27 - Batch DOM insertions with DocumentFragment
 **Learning:** In vanilla JS loops where elements are individually appended to the DOM (e.g. \`tbody.appendChild(tr)\`), layout thrashing can occur causing performance issues, specifically for lists with many items.
 **Action:** Always batch DOM insertions using a \`DocumentFragment\` when appending multiple elements in a loop.
+
+## 2024-05-24 - Optimistic UI Batch Rendering Optimization
+**Learning:** When applying state changes to a cart or inventory UI during an optimistic update, checking if the new state payload differs from the previous cached state before invoking the render function prevents significant, unnecessary layout thrashing, particularly for rapid or iterative interactions.
+**Action:** Implement deep equality checks (e.g. `JSON.stringify()`) against a cached original state snapshot prior to executing heavy DOM manipulations like `renderCart()` in vanilla JS applications.

@@ -119,6 +119,7 @@ async function updateCartState(mutationFn, errorMessage) {
     const originalCart = { ...cart };
     try {
         mutationFn();
+        if (JSON.stringify(cart) === JSON.stringify(originalCart)) return;
         renderCart();
         await saveCart();
     } catch (error) {
