@@ -3959,7 +3959,7 @@
                     populateScheduleDropdown();
                 }, err => {
                     console.error("Manager Troubleshooting: Error fetching employees:", err);
-                    if (container) container.innerHTML = `<p class="text-red-500 text-center py-8">Failed to load roster.</p>`;
+                    if (container) { container.innerHTML = '<p class="text-red-500 text-center py-8">Failed to load roster.</p>'; }
                 });
         }
 
@@ -4143,7 +4143,7 @@
                     }
                 }, error => {
                     console.error("Manager Troubleshooting: Error fetching schedules: ", error);
-                    if (listContainer) listContainer.innerHTML = "<p class='text-sm text-red-500'>Error loading schedule.</p>";
+                    if (listContainer) { listContainer.innerHTML = "<p class='text-sm text-red-500'>Error loading schedule.</p>"; }
                 });
         }
 
@@ -4353,7 +4353,7 @@ function checkAndRenderOrgControls() {
                 })
                 .catch(err => {
                     console.error("Manager Troubleshooting: Error fetching notes:", err);
-                    container.innerHTML = `<p class="text-red-500 text-center py-8">Failed to load shift notes. Please check your connection.</p>`;
+                    if (container) { container.innerHTML = '<p class="text-red-500 text-center py-8">Failed to load shift notes. Please check your connection.</p>'; }
                 });
         }
 
@@ -5301,7 +5301,7 @@ function checkAndRenderOrgControls() {
                 lucide.createIcons();
             } catch (error) {
                 logManagerError("Error fetching tasks", error);
-                listContainer.innerHTML = "<p class='text-sm text-red-500'>Error loading tasks.</p>";
+                if (listContainer) { listContainer.innerHTML = "<p class='text-sm text-red-500'>Error loading tasks.</p>"; }
             }
         }
 
