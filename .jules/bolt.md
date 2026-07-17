@@ -42,3 +42,6 @@
 ## 2024-05-27 - Batch DOM insertions with DocumentFragment
 **Learning:** In vanilla JS loops where elements are individually appended to the DOM (e.g. \`tbody.appendChild(tr)\`), layout thrashing can occur causing performance issues, specifically for lists with many items.
 **Action:** Always batch DOM insertions using a \`DocumentFragment\` when appending multiple elements in a loop.
+## 2024-06-27 - [Debounce Draft Synchronization]
+**Learning:** Calling `triggerDraftSync` on every input keypress causes repetitive `getTrackerState()` execution, which parses the entire DOM of the tracker, dragging down performance and potentially blocking the main UI thread during typing.
+**Action:** Replaced direct `triggerDraftSync` bindings to `oninput` and `onchange` with `debouncedTriggerDraftSync()` using a 500ms timeout to reduce CPU workload and prevent UI stutter.

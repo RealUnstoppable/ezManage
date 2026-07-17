@@ -2103,7 +2103,7 @@
             db.collection('users').doc(currentUser.uid).set({ cloudSyncEnabled: true }, { merge: true });
             localStorage.setItem(`ezManage_cloudEnabled_${currentUser.uid}`, 'true');
             updateCloudSyncUI();
-            triggerDraftSync();
+            debouncedTriggerDraftSync();
         }
 
         function declineToS() {
@@ -2170,7 +2170,7 @@
                     const state = JSON.parse(e.target.result);
                     if (confirm("This will overwrite your current tracker draft. Proceed?")) {
                         populateTrackerFromState(state);
-                        triggerDraftSync();
+                        debouncedTriggerDraftSync();
                         alert("Data imported successfully!");
                     }
                 } catch (err) {
@@ -2370,11 +2370,11 @@
                 <button type="button" class="text-red-400 p-2 delete-drawer-btn" aria-label="Remove drawer"><i data-lucide="x" class="w-4"></i></button>
             `;
 
-            div.querySelector('.drawer-name').oninput = triggerDraftSync;
-            div.querySelector('.drawer-val').oninput = function() { calcDrawer(this); triggerDraftSync(); };
+            div.querySelector('.drawer-name').oninput = debouncedTriggerDraftSync;
+            div.querySelector('.drawer-val').oninput = function() { calcDrawer(this); debouncedTriggerDraftSync(); };
             div.querySelector('.delete-drawer-btn').onclick = function() {
                 if(confirm('Are you sure you want to delete this drawer? This action cannot be undone.')) {
-                    this.parentElement.remove(); triggerDraftSync();
+                    this.parentElement.remove(); debouncedTriggerDraftSync();
                 }
             };
 
@@ -2383,7 +2383,7 @@
             document.getElementById('drawersContainer').appendChild(div);
             calcDrawer(div.querySelector('.drawer-val'));
             lucide.createIcons();
-            if (initialDraftLoaded) triggerDraftSync();
+            if (initialDraftLoaded) debouncedTriggerDraftSync();
         }
 
         function calcDrawer(input) {
@@ -2398,18 +2398,18 @@
             const div = document.createElement('div');
             div.className = "flex gap-4 items-center bg-slate-50 dark:bg-slate-800 p-3 rounded-xl animate-fadeIn";
             div.innerHTML = `
-                <input type="text" placeholder="Amount" class="dep-val" style="flex:1;" aria-label="Deposit Amount" oninput="triggerDraftSync()">
-                <label class="flex items-center gap-1 text-[10px] font-bold"><input type="checkbox" class="dep-ver accent-sky-500 w-4 h-4" onchange="triggerDraftSync()" aria-label="Verify Deposit"> VER</label>
-                <label class="flex items-center gap-1 text-[10px] font-bold"><input type="checkbox" class="dep-val-chk accent-sky-500 w-4 h-4" onchange="triggerDraftSync()" aria-label="Validate Deposit"> VAL</label>
+                <input type="text" placeholder="Amount" class="dep-val" style="flex:1;" aria-label="Deposit Amount" oninput="debouncedTriggerDraftSync()">
+                <label class="flex items-center gap-1 text-[10px] font-bold"><input type="checkbox" class="dep-ver accent-sky-500 w-4 h-4" onchange="debouncedTriggerDraftSync()" aria-label="Verify Deposit"> VER</label>
+                <label class="flex items-center gap-1 text-[10px] font-bold"><input type="checkbox" class="dep-val-chk accent-sky-500 w-4 h-4" onchange="debouncedTriggerDraftSync()" aria-label="Validate Deposit"> VAL</label>
                 <button type="button" class="text-red-400 delete-deposit-btn" aria-label="Remove deposit"><i data-lucide="x" class="w-4"></i></button>
             `;
 
-            div.querySelector('.dep-val').oninput = triggerDraftSync;
-            div.querySelector('.dep-ver').onchange = triggerDraftSync;
-            div.querySelector('.dep-val-chk').onchange = triggerDraftSync;
+            div.querySelector('.dep-val').oninput = debouncedTriggerDraftSync;
+            div.querySelector('.dep-ver').onchange = debouncedTriggerDraftSync;
+            div.querySelector('.dep-val-chk').onchange = debouncedTriggerDraftSync;
             div.querySelector('.delete-deposit-btn').onclick = function() {
                 if(confirm('Are you sure you want to delete this deposit? This action cannot be undone.')) {
-                    this.parentElement.remove(); triggerDraftSync();
+                    this.parentElement.remove(); debouncedTriggerDraftSync();
                 }
             };
 
@@ -2418,7 +2418,7 @@
             div.querySelector('.dep-val-chk').checked = valCheck;
             document.getElementById('depositsContainer').appendChild(div);
             lucide.createIcons();
-            if (initialDraftLoaded) triggerDraftSync();
+            if (initialDraftLoaded) debouncedTriggerDraftSync();
         }
 
         function addRoutineTask(name = "", isChecked = false) {
@@ -2431,7 +2431,7 @@
             chk.type = "checkbox";
             chk.className = "routine-chk w-5 h-5 accent-sky-500";
             chk.checked = isChecked;
-            chk.onchange = triggerDraftSync;
+            chk.onchange = debouncedTriggerDraftSync;
 
             const span = document.createElement('span');
             span.className = "routine-name flex-1 font-semibold text-sm";
@@ -2440,7 +2440,7 @@
             const btn = document.createElement('button');
             btn.type = "button";
             btn.className = "text-slate-300 hover:text-red-400";
-            btn.onclick = function () { if (confirm('Are you sure you want to delete this task? This action cannot be undone.')) { this.parentElement.remove(); triggerDraftSync(); } };
+            btn.onclick = function () { if (confirm('Are you sure you want to delete this task? This action cannot be undone.')) { this.parentElement.remove(); debouncedTriggerDraftSync(); } };
             btn.setAttribute('aria-label', 'Remove task');
             btn.innerHTML = '<i data-lucide="trash-2" class="w-4"></i>';
 
@@ -2451,7 +2451,7 @@
             document.getElementById('routineContainer').appendChild(div);
             document.getElementById('newRoutineTask').value = "";
             lucide.createIcons();
-            if (initialDraftLoaded) triggerDraftSync();
+            if (initialDraftLoaded) debouncedTriggerDraftSync();
         }
 
         let _invLoadTime = Date.now();
@@ -2467,13 +2467,13 @@
                 <button type="button" class="text-red-400 text-right delete-inv-btn" aria-label="Remove item"><i data-lucide="minus-circle" class="w-5"></i></button>
             `;
 
-            div.querySelector('.inv-name').oninput = triggerDraftSync;
-            div.querySelector('.inv-backline').oninput = triggerDraftSync;
-            div.querySelector('.inv-cooler').oninput = triggerDraftSync;
-            div.querySelector('.inv-freezer').oninput = triggerDraftSync;
+            div.querySelector('.inv-name').oninput = debouncedTriggerDraftSync;
+            div.querySelector('.inv-backline').oninput = debouncedTriggerDraftSync;
+            div.querySelector('.inv-cooler').oninput = debouncedTriggerDraftSync;
+            div.querySelector('.inv-freezer').oninput = debouncedTriggerDraftSync;
             div.querySelector('.delete-inv-btn').onclick = function() {
                 if(confirm('Are you sure you want to delete this item? This action cannot be undone.')) {
-                    this.parentElement.remove(); triggerDraftSync();
+                    this.parentElement.remove(); debouncedTriggerDraftSync();
                 }
             };
 
@@ -2488,7 +2488,7 @@
                 container.appendChild(div);
             }
             lucide.createIcons();
-            if (initialDraftLoaded) triggerDraftSync();
+            if (initialDraftLoaded) debouncedTriggerDraftSync();
         }
 
         function sortInventory(type) {
@@ -2511,7 +2511,7 @@
             items.forEach(item => fragment.appendChild(item));
             container.appendChild(fragment);
 
-            triggerDraftSync();
+            debouncedTriggerDraftSync();
         }
 
         function getTrackerState() {
@@ -2545,7 +2545,16 @@
             return state;
         }
 
-        document.getElementById('trackerForm').addEventListener('input', triggerDraftSync);
+        // ⚡ Bolt Optimization: Debounce triggerDraftSync
+        // Why: Calling triggerDraftSync on every input keypress causes repetitive getTrackerState() execution which parses the entire DOM of the tracker, dragging down performance and potentially blocking the main thread.
+        // Impact: Reduces CPU workload and UI stutter while filling out the tracker form.
+        let localDraftSyncTimeout = null;
+        function debouncedTriggerDraftSync() {
+            if (localDraftSyncTimeout) clearTimeout(localDraftSyncTimeout);
+            localDraftSyncTimeout = setTimeout(triggerDraftSync, 500);
+        }
+
+        document.getElementById('trackerForm').addEventListener('input', debouncedTriggerDraftSync);
 
         function triggerDraftSync() {
             if (!initialDraftLoaded || !currentUser) return;
@@ -2797,7 +2806,7 @@
             if (shift) {
                 populateTrackerFromState(shift);
                 navTo('tracker');
-                triggerDraftSync();
+                debouncedTriggerDraftSync();
                 alert("Shift loaded into Active Tracker successfully.");
             }
         }
@@ -2938,7 +2947,7 @@
                 document.getElementById('inventoryContainer').innerHTML = '';
                 (presets[key] || []).forEach(name => addInventoryItem(name));
                 navTo('tracker');
-                triggerDraftSync();
+                debouncedTriggerDraftSync();
             }
         }
 
@@ -3016,7 +3025,7 @@
                     populateTrackerFromState(preset);
                 }
                 navTo('tracker');
-                triggerDraftSync();
+                debouncedTriggerDraftSync();
             }
         }
 
@@ -3215,7 +3224,7 @@
                 document.getElementById('inventoryContainer').innerHTML = '';
                 document.getElementById('routineContainer').innerHTML = '';
                 initDefaults();
-                triggerDraftSync();
+                debouncedTriggerDraftSync();
             }
         }
 
