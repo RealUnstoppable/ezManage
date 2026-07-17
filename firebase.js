@@ -15,9 +15,13 @@ const app = !window.firebase.apps.length ? window.firebase.initializeApp(firebas
 const auth = window.firebase.auth();
 
 // Use experimentalForceLongPolling for fallback on CORS/network issues
-window.firebase.firestore().settings({
-    experimentalForceLongPolling: true
-});
+try {
+    window.firebase.firestore().settings({
+        experimentalForceLongPolling: true
+    });
+} catch (e) {
+    console.warn("Firestore settings already configured or errored: ", e);
+}
 
 const db = window.firebase.firestore();
 const functions = window.firebase.functions();
