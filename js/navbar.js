@@ -62,9 +62,6 @@ function updateAuthLink() {
                 authLink.href = 'sign in beta.html';
                 authLink.textContent = "Sign In / Sign Up";
             }
-        } else {
-            authLink.href = 'sign in beta.html';
-            authLink.textContent = "Sign In / Sign Up";
-        }
     });
+    }
 }

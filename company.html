@@ -1716,7 +1716,7 @@
                                 <td class="p-3 font-medium">${escapeHTML(data.email || 'Unknown')}</td>
                                 <td class="p-3">${escapeHTML(data.role || 'Manager')}</td>
                                 <td class="p-3 text-right">
-                                    <button onclick="removeManager('${escapeHTML(doc.id)}')" class="btn btn-outline btn-sm text-red-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                                    <button onclick="removeManager('${escapeHTML(doc.id)}')" aria-label="Remove manager" class="btn btn-outline btn-sm text-red-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
                                 </td>
                             </tr>
                         `;

@@ -47,3 +47,6 @@
 ## 2026-05-26 - [Diagnosing Global UI Breakages]
 **Learning:** A single syntax error (like an unclosed brace) inside an inline HTML `<script>` block will halt execution of the entire script. This can cause unrelated features (like loading a Navbar or setting up event listeners) to completely fail, resulting in a broken UI.
 **Action:** When diagnosing complete UI failures in Vanilla JS, check for syntax errors using strict parsers like Acorn on extracted script contents, as standard linters often ignore inline HTML scripts.
+## 2024-07-17 - Missing ARIA label for dynamically generated "Remove manager" button
+**Learning:** Dynamically generated action buttons that only use icons (like the `trash-2` Lucide icon) within table rows in `company.html` lack an explicit `aria-label`. This makes it difficult for screen readers to identify the button's purpose since there is no visible text.
+**Action:** Always add an `aria-label` (e.g., `aria-label="Remove manager"`) to icon-only buttons injected via JavaScript template literals to ensure the action is properly announced by screen readers.
