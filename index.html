@@ -3595,8 +3595,7 @@
             btn.disabled = true;
 
             try {
-                const manageTasks = firebase.functions().httpsCallable('manageTasks');
-                const result = await manageTasks({
+                const result = await callCloudFunction('manageTasks', {
                     action: "create",
                     payload: {
                         title,
@@ -3623,8 +3622,7 @@
 
         async function updateTaskStatus(taskId, status) {
             try {
-                const manageTasks = firebase.functions().httpsCallable('manageTasks');
-                await manageTasks({
+                await callCloudFunction('manageTasks', {
                     action: "updateStatus",
                     payload: { taskId, status }
                 });
@@ -3637,8 +3635,7 @@
         async function deleteTask(taskId) {
             if (!confirm("Are you sure you want to delete this task?")) return;
             try {
-                const manageTasks = firebase.functions().httpsCallable('manageTasks');
-                await manageTasks({
+                await callCloudFunction('manageTasks', {
                     action: "delete",
                     payload: { taskId }
                 });
@@ -4582,8 +4579,7 @@ function checkAndRenderOrgControls() {
             lucide.createIcons();
 
             try {
-                const manageWaste = cloudFunctions.httpsCallable('manageWaste');
-                await manageWaste({
+                await callCloudFunction('manageWaste', {
                     action: "create",
                     payload: { itemName, quantity, cost, reason }
                 });
@@ -4627,8 +4623,7 @@ function checkAndRenderOrgControls() {
             lucide.createIcons();
 
             try {
-                const manageWaste = cloudFunctions.httpsCallable('manageWaste');
-                const result = await manageWaste({ action: "get", payload: {} });
+                const result = await callCloudFunction('manageWaste', { action: "get", payload: {} });
 
                 if (result.data.success) {
                     const logs = result.data.logs || [];
@@ -4681,8 +4676,7 @@ function checkAndRenderOrgControls() {
         async function deleteWasteLog(logId) {
             if (!confirm("Are you sure you want to permanently delete this waste log entry?")) return;
             try {
-                const manageWaste = cloudFunctions.httpsCallable('manageWaste');
-                await manageWaste({ action: "delete", payload: { logId } });
+                await callCloudFunction('manageWaste', { action: "delete", payload: { logId } });
                 fetchWasteLogs();
             } catch (err) {
                 console.error("Error deleting waste log:", err);
@@ -4716,8 +4710,7 @@ function checkAndRenderOrgControls() {
             lucide.createIcons();
 
             try {
-                const manageIncidents = cloudFunctions.httpsCallable('manageIncidents');
-                await manageIncidents({
+                await callCloudFunction('manageIncidents', {
                     action: "create",
                     payload: { title, description: desc, severity, type }
                 });
@@ -4766,8 +4759,7 @@ function checkAndRenderOrgControls() {
             lucide.createIcons();
 
             try {
-                const manageIncidents = cloudFunctions.httpsCallable('manageIncidents');
-                const result = await manageIncidents({ action: "get", payload: {} });
+                const result = await callCloudFunction('manageIncidents', { action: "get", payload: {} });
 
                 if (result.data.success) {
                     const incidents = result.data.incidents || [];
@@ -4838,8 +4830,7 @@ function checkAndRenderOrgControls() {
         async function deleteIncident(incidentId) {
             if (!confirm("Are you sure you want to permanently delete this incident report?")) return;
             try {
-                const manageIncidents = cloudFunctions.httpsCallable('manageIncidents');
-                await manageIncidents({ action: "delete", payload: { incidentId } });
+                await callCloudFunction('manageIncidents', { action: "delete", payload: { incidentId } });
                 fetchIncidents();
             } catch (err) {
                 console.error("Error deleting incident:", err);
@@ -4859,8 +4850,7 @@ function checkAndRenderOrgControls() {
 
         async function updateIncidentStatus(incidentId, newStatus) {
             try {
-                const manageIncidents = cloudFunctions.httpsCallable('manageIncidents');
-                await manageIncidents({
+                await callCloudFunction('manageIncidents', {
                     action: "updateStatus",
                     payload: { incidentId, status: newStatus }
                 });
@@ -4990,7 +4980,7 @@ function checkAndRenderOrgControls() {
                 submitBtn.textContent = originalText;
                 submitBtn.disabled = false;
             } catch (error) {
-                logManagerError("Error creating task", error);
+                logManagerError("Error creating task for assignerId: " + currentUser.uid, error);
                 showToast("Error assigning task.");
                 document.querySelector('#createTaskForm button[type="submit"]').disabled = false;
             }
@@ -5083,7 +5073,7 @@ function checkAndRenderOrgControls() {
 
                 lucide.createIcons();
             } catch (error) {
-                logManagerError("Error fetching tasks", error);
+                logManagerError("Error fetching tasks for uid: " + currentUser.uid, error);
                 listContainer.innerHTML = "<p class='text-sm text-red-500'>Error loading tasks.</p>";
             }
         }
@@ -5093,7 +5083,7 @@ function checkAndRenderOrgControls() {
                 await db.collection('tasks').doc(taskId).update({ status: newStatus });
                 showToast("Task status updated.");
             } catch (error) {
-                logManagerError("Error updating task status", error);
+                logManagerError("Error updating task status for taskId: " + taskId, error);
                 showToast("Error updating task.");
                 fetchTasks(); // Reload to reset dropdown
             }
@@ -5106,7 +5096,7 @@ function checkAndRenderOrgControls() {
                 showToast("Task deleted.");
                 fetchTasks();
             } catch (error) {
-                logManagerError("Error deleting task", error);
+                logManagerError("Error deleting task for taskId: " + taskId, error);
                 showToast("Error deleting task.");
             }
         }
