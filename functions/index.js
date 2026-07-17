@@ -306,11 +306,13 @@ exports.manageTasks = functions.https.onCall(async (data, context) => {
 
     if (action === "updateStatus") {
       const { taskId, status } = payload;
-      const taskRef = admin.firestore().collection("tasks").doc(taskId);
-      const taskDoc = await taskRef.get();
-      if (!taskDoc.exists) {
-        throw new HttpsError("not-found", "Task not found");
-      }
+      const { docRef: taskRef, docSnap: taskDoc } = await verifyDocAndAuth(
+        "tasks",
+        taskId,
+        actualOrgId,
+        "Task not found",
+        "Not authorized to update this task"
+      );
       // Allow managers or the assignee to update
       if (!isManager && taskDoc.data().assigneeId !== uid) {
         throw new HttpsError("permission-denied", "Not authorized to update this task");
@@ -324,14 +326,13 @@ exports.manageTasks = functions.https.onCall(async (data, context) => {
         throw new HttpsError("permission-denied", "Only managers can delete tasks");
       }
       const { taskId } = payload;
-      const taskRef = admin.firestore().collection("tasks").doc(taskId);
-      const taskDoc = await taskRef.get();
-      if (!taskDoc.exists) {
-        throw new HttpsError("not-found", "Task not found");
-      }
-      if (taskDoc.data().orgId !== actualOrgId) {
-         throw new HttpsError("permission-denied", "Not authorized to delete this task");
-      }
+      const { docRef: taskRef } = await verifyDocAndAuth(
+        "tasks",
+        taskId,
+        actualOrgId,
+        "Task not found",
+        "Not authorized to delete this task"
+      );
       await taskRef.delete();
       return { success: true };
     }
@@ -808,16 +809,13 @@ exports.manageIncidents = functions.https.onCall(async (data, context) => {
           throw new HttpsError("invalid-argument", "Missing incident ID or status");
        }
 
-       const incidentRef = admin.firestore().collection("incident_reports").doc(incidentId);
-       const incidentDoc = await incidentRef.get();
-
-       if (!incidentDoc.exists) {
-          throw new HttpsError("not-found", "Incident not found");
-       }
-
-       if (incidentDoc.data().orgId !== actualOrgId) {
-          throw new HttpsError("permission-denied", "Unauthorized to update this incident");
-       }
+       const { docRef: incidentRef } = await verifyDocAndAuth(
+         "incident_reports",
+         incidentId,
+         actualOrgId,
+         "Incident not found",
+         "Unauthorized to update this incident"
+       );
 
        await incidentRef.update({status});
        return {success: true};
@@ -829,16 +827,13 @@ exports.manageIncidents = functions.https.onCall(async (data, context) => {
           throw new HttpsError("invalid-argument", "Missing incident ID");
        }
 
-       const incidentRef = admin.firestore().collection("incident_reports").doc(incidentId);
-       const incidentDoc = await incidentRef.get();
-
-       if (!incidentDoc.exists) {
-          throw new HttpsError("not-found", "Incident not found");
-       }
-
-       if (incidentDoc.data().orgId !== actualOrgId) {
-          throw new HttpsError("permission-denied", "Unauthorized to delete this incident");
-       }
+       const { docRef: incidentRef } = await verifyDocAndAuth(
+         "incident_reports",
+         incidentId,
+         actualOrgId,
+         "Incident not found",
+         "Unauthorized to delete this incident"
+       );
 
        await incidentRef.delete();
        return {success: true};
@@ -926,16 +921,13 @@ exports.manageWaste = functions.https.onCall(async (data, context) => {
           throw new HttpsError("invalid-argument", "Missing log ID");
        }
 
-       const logRef = admin.firestore().collection("waste_logs").doc(logId);
-       const logDoc = await logRef.get();
-
-       if (!logDoc.exists) {
-          throw new HttpsError("not-found", "Waste log not found");
-       }
-
-       if (logDoc.data().orgId !== actualOrgId) {
-          throw new HttpsError("permission-denied", "Unauthorized to delete this log");
-       }
+       const { docRef: logRef } = await verifyDocAndAuth(
+         "waste_logs",
+         logId,
+         actualOrgId,
+         "Waste log not found",
+         "Unauthorized to delete this log"
+       );
 
        await logRef.delete();
        return {success: true};
