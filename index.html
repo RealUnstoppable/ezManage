@@ -476,6 +476,9 @@
             <a href="#" onclick="navTo('performance')"
                 class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="bar-chart-3"></i>
                 Performance</a>
+            <a href="#" onclick="navTo('recognition')"
+                class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="award"></i>
+                Recognition</a>
             <div class="h-px bg-slate-100 dark:bg-slate-800 my-8"></div>
             <a href="#" onclick="handleNavAccountClick()"
                 class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="user"></i> My
@@ -1769,6 +1772,52 @@
             </div>
         </div>
 
+        <div id="view-recognition" class="view-section px-6 py-12 hidden">
+            <div class="max-w-4xl mx-auto">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+                    <h1 class="text-4xl font-black">Team Recognition</h1>
+                    <button onclick="document.getElementById('addRecognitionModal').classList.toggle('hidden')"
+                        class="btn btn-primary flex items-center gap-2 px-6">
+                        <i data-lucide="award" class="w-5 h-5"></i> Give Kudos
+                    </button>
+                </div>
+
+                <div id="addRecognitionModal"
+                    class="hidden bg-white dark:bg-slate-900 rounded-3xl p-6 md:p-8 shadow-sm border border-slate-100 dark:border-slate-800 mb-12">
+                    <h2 class="text-xl font-bold mb-4">Recognize a Team Member</h2>
+                    <div class="space-y-4">
+                        <select id="recogAssignee" class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
+                            <option value="" disabled selected>Select Employee</option>
+                        </select>
+                        <select id="recogType" class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
+                            <option value="Kudos">Kudos (Public)</option>
+                            <option value="Private Feedback">Private Feedback</option>
+                        </select>
+                        <textarea id="recogMessage" placeholder="Write a nice message..." rows="3"
+                            class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500 resize-none"></textarea>
+
+                        <div class="flex justify-end gap-3 pt-2">
+                            <button onclick="document.getElementById('addRecognitionModal').classList.add('hidden')"
+                                class="btn btn-outline px-6 py-2">Cancel</button>
+                            <button onclick="submitRecognition()" class="btn btn-accent px-6 py-2">Submit</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-black">Recent Recognitions</h2>
+                    <button onclick="fetchRecognitions()"
+                        class="text-sm font-bold text-sky-500 hover:text-sky-600 flex items-center gap-2">
+                        <i data-lucide="refresh-cw" class="w-4 h-4"></i> Refresh
+                    </button>
+                </div>
+
+                <div id="recognitionsContainer" class="space-y-4">
+                    <!-- Recognitions populated via JS -->
+                </div>
+            </div>
+        </div>
+
         <div id="view-timeoff" class="view-section px-6 py-12 hidden">
             <div class="max-w-4xl mx-auto">
                 <div class="card shadow-2xl mb-12">
@@ -2279,9 +2328,9 @@
                 localStorage.setItem('navTo', viewId);
                 return;
             }
-            if (!currentUser && (['history', 'presets', 'performance', 'request', 'profile', 'shiftNotes', 'team', 'employees', 'timeoff', 'tasks'].includes(viewId))) {
-            if (!currentUser && (['history', 'presets', 'performance', 'request', 'profile', 'shiftNotes', 'employees', 'timeoff', 'team'].includes(viewId))) {
-            if (!currentUser && (['history', 'presets', 'performance', 'request', 'profile', 'shiftNotes', 'team', 'employees', 'timeoff'].includes(viewId))) {
+            if (!currentUser && (['history', 'presets', 'performance', 'request', 'profile', 'shiftNotes', 'team', 'employees', 'timeoff', 'tasks', 'recognition'].includes(viewId))) {
+            if (!currentUser && (['history', 'presets', 'performance', 'request', 'profile', 'shiftNotes', 'employees', 'timeoff', 'team', 'recognition'].includes(viewId))) {
+            if (!currentUser && (['history', 'presets', 'performance', 'request', 'profile', 'shiftNotes', 'team', 'employees', 'timeoff', 'recognition'].includes(viewId))) {
                 viewId = 'auth';
             }
             if (viewId === 'maintenance' && currentUser) {
@@ -2299,6 +2348,10 @@
             }
             if (viewId === 'incidents' && currentUser) {
                 fetchIncidents();
+            }
+            if (viewId === 'recognition' && currentUser) {
+                fetchRecognitions();
+                populateRecognitionDropdown();
             }
 
             document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
@@ -5448,6 +5501,189 @@ function checkAndRenderOrgControls() {
                 alert("Failed to delete task. " + error.message);
             }
         }
+
+        // --- RECOGNITION SYSTEM ---
+
+        function populateRecognitionDropdown() {
+            const select = document.getElementById('recogAssignee');
+            if (!select || !currentUserData) return;
+
+            const queryOrgId = currentUserData.orgId || currentUser.uid;
+
+            db.collection('employees')
+                .where('orgId', '==', queryOrgId)
+                .where('status', '==', 'Active')
+                .get()
+                .then(snap => {
+                    select.innerHTML = '<option value="" disabled selected>Select Employee</option>';
+                    let employees = [];
+                    snap.forEach(doc => employees.push({id: doc.id, ...doc.data()}));
+                    employees.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+
+                    employees.forEach(emp => {
+                        const opt = document.createElement('option');
+                        opt.value = emp.id;
+                        opt.dataset.name = emp.name;
+                        opt.textContent = `${emp.name} (${emp.role})`;
+                        select.appendChild(opt);
+                    });
+                })
+                .catch(err => console.error("Error populating recognition dropdown:", err));
+        }
+
+        async function submitRecognition() {
+            if (!currentUser || !currentUserData || !currentUserData.orgId) {
+                alert("You must be part of an organization to send recognition.");
+                return;
+            }
+
+            const assigneeSelect = document.getElementById('recogAssignee');
+            const receiverId = assigneeSelect.value;
+            const receiverName = assigneeSelect.options[assigneeSelect.selectedIndex]?.dataset?.name;
+            const type = document.getElementById('recogType').value;
+            const message = document.getElementById('recogMessage').value.trim();
+
+            if (!receiverId || !message) {
+                alert("Please select a team member and enter a message.");
+                return;
+            }
+
+            const submitBtn = document.querySelector('#addRecognitionModal .btn-accent');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> Submitting...';
+            submitBtn.disabled = true;
+            lucide.createIcons();
+
+            try {
+                await callCloudFunction('manageRecognitions', {
+                    action: "create",
+                    payload: { receiverId, receiverName, message, type }
+                });
+
+                document.getElementById('recogAssignee').value = '';
+                document.getElementById('recogType').value = 'Kudos';
+                document.getElementById('recogMessage').value = '';
+                document.getElementById('addRecognitionModal').classList.add('hidden');
+
+                alert("Recognition submitted successfully.");
+                fetchRecognitions();
+            } catch (error) {
+                console.error("Error submitting recognition:", error);
+                if (error.code === 'unavailable' || error.code === 'auth/network-request-failed') {
+                    alert("Network error: Could not connect to the server. Please check your connection.");
+                } else {
+                    alert("Failed to submit recognition. " + error.message);
+                }
+            } finally {
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+                lucide.createIcons();
+            }
+        }
+
+        async function fetchRecognitions() {
+            if (!currentUser || !currentUserData || !currentUserData.orgId) {
+                const container = document.getElementById('recognitionsContainer');
+                if (container) {
+                    container.innerHTML = `
+                        <div class="text-center py-16 bg-slate-50 dark:bg-slate-900 rounded-3xl border-2 border-dashed border-slate-200 dark:border-slate-800">
+                            <i data-lucide="users" class="w-12 h-12 text-slate-400 mx-auto mb-4"></i>
+                            <h3 class="text-xl font-bold mb-2">Join or Create a Group</h3>
+                            <p class="text-slate-500 mb-4">You must be in a Management Group to view recognitions.</p>
+                        </div>
+                    `;
+                    lucide.createIcons();
+                }
+                return;
+            }
+
+            const container = document.getElementById('recognitionsContainer');
+            container.innerHTML = '<div class="text-center py-8"><i data-lucide="loader-2" class="w-8 h-8 animate-spin mx-auto text-sky-500 mb-4"></i><p class="text-slate-500">Loading recognitions...</p></div>';
+            lucide.createIcons();
+
+            try {
+                const result = await callCloudFunction('manageRecognitions', { action: "get", payload: {} });
+
+                if (result.data.success) {
+                    const recognitions = result.data.recognitions || [];
+                    container.innerHTML = '';
+
+                    const isManager = currentUserData.orgId === currentUser.uid;
+
+                    // Filter out private feedback meant for others (unless manager)
+                    const visibleRecognitions = recognitions.filter(rec => {
+                        if (rec.type === 'Kudos') return true;
+                        if (rec.type === 'Private Feedback') {
+                            return isManager || rec.receiverId === currentUser.uid || rec.senderId === currentUser.uid;
+                        }
+                        return false;
+                    });
+
+                    if (visibleRecognitions.length === 0) {
+                        container.innerHTML = `
+                            <div class="text-center py-16 bg-slate-50 dark:bg-slate-900 rounded-3xl border-2 border-dashed border-slate-200 dark:border-slate-800">
+                                <i data-lucide="award" class="w-12 h-12 text-slate-300 mx-auto mb-4"></i>
+                                <h3 class="text-xl font-bold mb-2">No Recognitions Yet</h3>
+                                <p class="text-slate-500">Be the first to recognize a team member's hard work!</p>
+                            </div>
+                        `;
+                        lucide.createIcons();
+                        return;
+                    }
+
+                    const fragment = document.createDocumentFragment();
+
+                    visibleRecognitions.forEach(rec => {
+                        const dateStr = rec.createdAt ? new Date(rec.createdAt._seconds * 1000).toLocaleString() : 'Just now';
+                        const isKudos = rec.type === 'Kudos';
+
+                        const div = document.createElement('div');
+                        div.className = `card p-6 border-l-4 ${isKudos ? 'border-l-sky-500' : 'border-l-purple-500'}`;
+
+                        let badgeHtml = isKudos
+                            ? `<span class="px-3 py-1 rounded-full text-xs font-bold bg-sky-100 text-sky-800 flex items-center gap-1"><i data-lucide="star" class="w-3 h-3"></i> Kudos</span>`
+                            : `<span class="px-3 py-1 rounded-full text-xs font-bold bg-purple-100 text-purple-800 flex items-center gap-1"><i data-lucide="lock" class="w-3 h-3"></i> Private Feedback</span>`;
+
+                        let deleteBtn = '';
+                        if (isManager || rec.senderId === currentUser.uid) {
+                            deleteBtn = `<button onclick="deleteRecognition('${escapeHTML(rec.id)}')" class="text-red-400 p-1 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md ml-2" aria-label="Delete Recognition"><i data-lucide="trash-2" class="w-4 h-4"></i></button>`;
+                        }
+
+                        div.innerHTML = `
+                            <div class="flex flex-col md:flex-row justify-between gap-4 mb-4">
+                                <div>
+                                    <h3 class="text-lg font-bold">To: ${escapeHTML(rec.receiverName)}</h3>
+                                    <p class="text-sm text-slate-500">From ${escapeHTML(rec.senderName)} • ${dateStr}</p>
+                                </div>
+                                <div class="flex gap-2 items-start">
+                                    ${badgeHtml}
+                                    ${deleteBtn}
+                                </div>
+                            </div>
+                            <p class="text-slate-700 dark:text-slate-300 whitespace-pre-wrap italic">"${escapeHTML(rec.message)}"</p>
+                        `;
+                        fragment.appendChild(div);
+                    });
+                    container.appendChild(fragment);
+                    lucide.createIcons();
+                }
+            } catch (error) {
+                console.error("Error fetching recognitions:", error);
+                container.innerHTML = `<div class="text-red-500 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl text-center">Failed to load recognitions: ${error.message}</div>`;
+            }
+        }
+
+        async function deleteRecognition(recognitionId) {
+            if (!confirm("Are you sure you want to permanently delete this recognition?")) return;
+            try {
+                await callCloudFunction('manageRecognitions', { action: "delete", payload: { recognitionId } });
+                fetchRecognitions();
+            } catch (err) {
+                console.error("Error deleting recognition:", err);
+                alert("Failed to delete recognition.");
+            }
+        }
+
 
         // We will fetch the team directory when the view is opened or during org check
 

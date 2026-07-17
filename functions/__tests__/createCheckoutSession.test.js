@@ -103,7 +103,7 @@ describe("createCheckoutSession", () => {
     const mockFirestore = require("firebase-admin").firestore;
     mockFirestore().collection().doc().get.mockResolvedValueOnce({
       exists: true,
-      data: () => ({ hasPromoCode: true })
+      data: () => ({hasPromoCode: true}),
     });
 
     mockCreateSession.mockResolvedValueOnce({url: "http://stripe.checkout.url"});
