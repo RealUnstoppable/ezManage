@@ -937,7 +937,7 @@
                         <div class="flex justify-end gap-3 pt-2">
                             <button onclick="closeEmployeeModal()"
                                 class="btn btn-outline px-6 py-2">Cancel</button>
-                            <button onclick="submitEmployee()" class="btn btn-accent px-6 py-2" id="submitEmpBtn">Save Employee</button>
+                            <button onclick="submitEmployee()" class="btn btn-accent px-6 py-2 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center min-w-[140px]" id="submitEmpBtn">Save Employee</button>
                         </div>
                     </div>
                 </div>
@@ -4917,10 +4917,9 @@ function checkAndRenderOrgControls() {
             }
 
             const btn = document.getElementById('submitEmpBtn');
-            const ogText = btn.innerText;
-            btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Saving...`;
+            btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin mr-2"></i> Saving...`;
             btn.disabled = true;
-            lucide.createIcons();
+            if (window.lucide) window.lucide.createIcons();
 
             try {
                 if (empId) {
@@ -4941,7 +4940,7 @@ function checkAndRenderOrgControls() {
                 console.error("Manager Troubleshooting: Error saving employee:", error);
                 alert("Failed to save employee: " + error.message);
             } finally {
-                btn.innerText = ogText;
+                btn.innerText = document.getElementById('empModalId').value ? "Update Employee" : "Save Employee";
                 btn.disabled = false;
             }
         }
