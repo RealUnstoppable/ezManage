@@ -1197,23 +1197,23 @@
                     class="hidden bg-white dark:bg-slate-900 rounded-3xl p-6 md:p-8 shadow-sm border border-slate-100 dark:border-slate-800 mb-12">
                     <h2 class="text-xl font-bold mb-4">Assign New Task</h2>
                     <div class="space-y-4">
-                        <input type="text" id="taskTitle" placeholder="Task Title"
+                        <input type="text" id="taskTitle" placeholder="Task Title" aria-label="Task Title"
                             class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
-                        <textarea id="taskDesc" placeholder="Task Description..." rows="3"
+                        <textarea id="taskDesc" placeholder="Task Description..." aria-label="Task Description" rows="3"
                             class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500 resize-none"></textarea>
 
                         <div class="flex flex-col md:flex-row gap-4">
-                            <select id="taskAssignee" class="flex-1 bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
+                            <select id="taskAssignee" aria-label="Assign To" class="flex-1 bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
                                 <option value="" disabled selected>Assign To Employee</option>
                             </select>
-                            <select id="taskPriority"
+                            <select id="taskPriority" aria-label="Task Priority"
                                 class="flex-1 bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
                                 <option value="Low">Low Priority</option>
                                 <option value="Medium">Medium Priority</option>
                                 <option value="High">High Priority</option>
                                 <option value="Critical">Critical</option>
                             </select>
-                            <input type="date" id="taskDueDate" class="flex-1 bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
+                            <input type="date" id="taskDueDate" aria-label="Due Date" class="flex-1 bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
                         </div>
 
                         <div class="flex justify-end gap-3 pt-2">
@@ -1267,7 +1267,6 @@
                     class="hidden bg-white dark:bg-slate-900 rounded-3xl p-6 md:p-8 shadow-sm border border-slate-100 dark:border-slate-800 mb-12">
                     <h2 class="text-xl font-bold mb-4">Report New Issue</h2>
                     <div class="space-y-4">
-                        <input type="text" id="maintenanceTitle" placeholder="Equipment or Issue Name" aria-label="Equipment or Issue Name"
                         <input type="text" id="maintenanceTitle" placeholder="Equipment or Issue Name" aria-label="Maintenance Title"
                             class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
                         <textarea id="maintenanceDesc" placeholder="Describe the problem..." aria-label="Maintenance Description" rows="3"
@@ -1678,18 +1677,18 @@
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                         <div>
-                            <label class="block text-sm font-bold mb-2">Task Title</label>
+                            <label for="taskTitle" class="block text-sm font-bold mb-2">Task Title</label>
                             <input type="text" id="taskTitle" class="w-full" placeholder="e.g. Close Registers">
                         </div>
                         <div>
-                            <label class="block text-sm font-bold mb-2">Assign To</label>
+                            <label for="taskAssignee" class="block text-sm font-bold mb-2">Assign To</label>
                             <select id="taskAssignee" class="w-full">
                                 <option value="">Select Employee</option>
                             </select>
                         </div>
                     </div>
 
-                    <label class="block text-sm font-bold mb-2">Description (Optional)</label>
+                    <label for="taskDescription" class="block text-sm font-bold mb-2">Description (Optional)</label>
                     <textarea id="taskDescription" class="h-24 mb-6" placeholder="Provide extra details..."></textarea>
 
                     <button id="btnSubmitTask" onclick="submitTask()" class="btn btn-accent w-full py-4">Assign Task</button>
@@ -3504,9 +3503,10 @@
             const assigneeName = assigneeSelect.options[assigneeSelect.selectedIndex].text;
 
             const btn = document.getElementById('btnSubmitTask');
-            const originalText = btn.innerText;
-            btn.innerText = 'Assigning...';
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> Assigning...';
             btn.disabled = true;
+            lucide.createIcons();
 
             try {
                 const manageTasks = firebase.functions().httpsCallable('manageTasks');
@@ -3530,8 +3530,9 @@
                 console.error("Manager Troubleshooting: Error creating task:", err);
                 alert("Failed to assign task: " + err.message);
             } finally {
-                btn.innerText = originalText;
+                btn.innerHTML = originalText;
                 btn.disabled = false;
+                lucide.createIcons();
             }
         }
 
