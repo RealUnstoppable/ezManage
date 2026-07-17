@@ -199,12 +199,7 @@ describe("createCheckoutSession", () => {
       payment_method_types: ["card"],
       customer_email: "test2@example.com",
       line_items: [{
-        price_data: {
-          currency: "usd",
-          product: "prod_UFn8zqZ0mwyy5r",
-          recurring: {interval: "year"},
-          unit_amount: 5400,
-        },
+        price: "price_1THHYPBp2C5GdKaKxNpqndNE",
         quantity: 1,
       }],
       subscription_data: {

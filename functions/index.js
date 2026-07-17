@@ -97,42 +97,6 @@ exports.createCheckoutSession = onRequest({invoker: "public"}, (req, res) => {
     }
 
     try {
-      let finalPrice = null;
-
-      if (uid) {
-        const userDoc = await admin.firestore().collection("users").doc(uid).get();
-        if (userDoc.exists) {
-          const userData = userDoc.data();
-          if (userData && userData.hasPromoCode) {
-            const basePrice = (plan === "Business Pro") ? 207 : 61;
-            finalPrice = basePrice * 0.9;
-          }
-        }
-      }
-
-      if (finalPrice !== null) {
-        finalPrice = Math.floor(finalPrice);
-        const productId = plan === "Business Pro" ?
-          "prod_UFnBrTwFCgb54A" :
-          "prod_UFn8zqZ0mwyy5r";
-        lineItems = [{
-          price_data: {
-            currency: "usd",
-            product: productId,
-            recurring: {interval: "year"},
-            // Stripe requires amounts in cents
-            unit_amount: Math.round(finalPrice * 100),
-          },
-          quantity: 1,
-        }];
-      } else {
-        // 🔴 Fallback to Actual Price IDs if no custom amount was provided
-        const priceId = plan === "Business Pro" ?
-          "price_1THHbVBp2C5GdKaKvCVoMf1X" :
-          "price_1THHYPBp2C5GdKaKxNpqndNE";
-        lineItems = [{price: priceId, quantity: 1}];
-      }
-
       const session = await stripe.checkout.sessions.create({
         mode: "subscription",
         client_reference_id: uid,
