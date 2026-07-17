@@ -12,6 +12,12 @@ const firebaseConfig = {
 // to prevent token mismatches and duplicate initialization errors.
 const app = !window.firebase.apps.length ? window.firebase.initializeApp(firebaseConfig) : window.firebase.app();
 
+// INSTRUCTIONS FOR AUTHORIZED DOMAINS:
+// To whitelist `ezmanage.realunstoppable.store` in the Firebase Console:
+// 1. Go to Authentication -> Settings -> Authorized domains
+// 2. Click "Add domain" and enter `ezmanage.realunstoppable.store`
+// Note: Firestore rules are handled via firestore.rules file deployment.
+
 const auth = window.firebase.auth();
 
 // Use experimentalForceLongPolling for fallback on CORS/network issues

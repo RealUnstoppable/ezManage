@@ -4276,17 +4276,11 @@ function checkAndRenderOrgControls() {
                     orgId: currentUserData.orgId,
                     timestamp: firebase.firestore.FieldValue.serverTimestamp(),
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
                 });
 
                 document.getElementById('shiftNoteContent').value = "";
                 fetchShiftNotes();
             } catch (err) {
-                console.error(err);
-                if (err.code === 'unavailable' || err.code === 'auth/network-request-failed') {
-                    alert("Network error: Could not submit shift note. Please check your connection.");
-                } else {
-                    alert("Failed to submit shift note. " + err.message);
                 console.error("Error posting note", err);
                 if (err.code === 'unavailable' || err.code === 'auth/network-request-failed' || err.code === 'firestore/unavailable') {
                     alert("Network error: Could not connect to the server. Please check your connection.");
@@ -4987,68 +4981,6 @@ function checkAndRenderOrgControls() {
                 .catch(err => console.error("Error populating task assignee dropdown:", err));
         }
 
-        async function submitTask() {
-            if (!currentUser || !currentUserData || !currentUserData.orgId) {
-                alert("You must be part of an organization to assign tasks.");
-                return;
-            }
-
-            const title = document.getElementById('taskTitle').value.trim();
-            const desc = document.getElementById('taskDesc').value.trim();
-            const assignee = document.getElementById('taskAssignee').value;
-            const priority = document.getElementById('taskPriority').value;
-            const dueDate = document.getElementById('taskDueDate').value;
-
-            if (!title || !assignee) {
-                alert("Please provide a title and assign the task to an employee.");
-                return;
-            }
-
-            const submitBtn = document.querySelector('#assignTaskModal .btn-accent');
-            const originalText = submitBtn.innerHTML;
-            submitBtn.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> Assigning...';
-            submitBtn.disabled = true;
-            lucide.createIcons();
-
-            try {
-                await db.collection('tasks').add({
-                    title: title,
-                    description: desc,
-                    assignedTo: assignee,
-                    priority: priority,
-                    dueDate: dueDate || null,
-                    status: 'Pending',
-                    authorId: currentUser.uid,
-                    assignedByName: currentUserData.name || currentUser.email,
-                    orgId: currentUserData.orgId || null,
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-                });
-
-                document.getElementById('taskTitle').value = '';
-                document.getElementById('taskDesc').value = '';
-                document.getElementById('taskAssignee').value = '';
-                document.getElementById('taskPriority').value = 'Low';
-                document.getElementById('taskDueDate').value = '';
-                document.getElementById('assignTaskModal').classList.add('hidden');
-
-                alert("Task assigned successfully.");
-                fetchTasks();
-            } catch (error) {
-                console.error("Error assigning task:", error);
-                if (error.code === 'unavailable' || error.code === 'auth/network-request-failed') {
-                    alert("Network error: Could not connect to the server. Please check your connection.");
-                } else {
-                    alert("Failed to assign task. " + error.message);
-                }
-            } finally {
-                submitBtn.innerHTML = originalText;
-                submitBtn.disabled = false;
-                lucide.createIcons();
-            }
-        }
-
-        let unsubscribeTasks = null;
         let activeTasksList = [];
 
         function fetchTasks() {
