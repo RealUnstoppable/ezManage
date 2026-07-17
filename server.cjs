@@ -19,7 +19,7 @@ app.post("/create-checkout-session", async (req, res) => {
   try {
     const priceId =
       plan === "Business Pro"
-        ? ""
+        ? "price_business_pro_id"
         : "price_individual_id";
 
     const session = await stripe.checkout.sessions.create({
