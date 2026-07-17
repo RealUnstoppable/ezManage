@@ -1661,7 +1661,7 @@
                     <p class="text-slate-500 mb-8">Direct line to the engineering team. Pro users receive priority.</p>
                     <textarea id="featureReqText" class="h-32 mb-6"
                         placeholder="I would love it if ezManage could..." aria-label="Feature Request Description"></textarea>
-                    <button onclick="submitFeatureRequest()" class="btn btn-accent w-full py-4">Send Directly to
+                    <button id="btnSubmitFeatureReq" onclick="submitFeatureRequest()" class="btn btn-accent w-full py-4 disabled:opacity-70 disabled:cursor-not-allowed">Send Directly to
                         Admin</button>
                 </div>
                 <h3 class="text-xl font-black mb-6 border-b border-slate-200 dark:border-slate-800 pb-2">My Requests
@@ -1692,7 +1692,7 @@
                     <label class="block text-sm font-bold mb-2">Description (Optional)</label>
                     <textarea id="taskDescription" class="h-24 mb-6" placeholder="Provide extra details..."></textarea>
 
-                    <button id="btnSubmitTask" onclick="submitTask()" class="btn btn-accent w-full py-4">Assign Task</button>
+                    <button id="btnSubmitTask" onclick="submitTask()" class="btn btn-accent w-full py-4 disabled:opacity-70 disabled:cursor-not-allowed">Assign Task</button>
                 </div>
 
                 <div class="mb-12">
@@ -1724,7 +1724,7 @@
                     </div>
                     <label for="timeoffReason" class="block text-sm font-bold mb-2">Reason</label>
                     <textarea id="timeoffReason" class="h-24 mb-6" placeholder="e.g. Vacation, Medical appointment..."></textarea>
-                    <button id="btnSubmitTimeOff" onclick="submitTimeOffRequest()" class="btn btn-accent w-full py-4">Submit Request</button>
+                    <button id="btnSubmitTimeOff" onclick="submitTimeOffRequest()" class="btn btn-accent w-full py-4 disabled:opacity-70 disabled:cursor-not-allowed">Submit Request</button>
                 </div>
 
                 <div class="mb-12">
@@ -3359,19 +3359,34 @@
             }
         }
 
-        function submitFeatureRequest() {
+        async function submitFeatureRequest() {
             const msg = document.getElementById('featureReqText').value;
             if (!msg) return;
-            db.collection('feature_requests').add({
-                uid: currentUser.uid,
-                email: currentUser.email,
-                message: msg,
-                status: "In Progress",
-                timestamp: new Date().toISOString()
-            }).then(() => {
+
+            const btn = document.getElementById('btnSubmitFeatureReq');
+            const originalHTML = btn.innerHTML;
+            btn.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin mr-2 inline-block"></i> Sending...';
+            btn.disabled = true;
+            lucide.createIcons();
+
+            try {
+                await db.collection('feature_requests').add({
+                    uid: currentUser.uid,
+                    email: currentUser.email,
+                    message: msg,
+                    status: "In Progress",
+                    timestamp: new Date().toISOString()
+                });
                 alert("Sent!");
                 document.getElementById('featureReqText').value = "";
-            });
+            } catch (error) {
+                console.error("Error submitting feature request", error);
+                alert("Error submitting request. Please try again.");
+            } finally {
+                btn.innerHTML = originalHTML;
+                btn.disabled = false;
+                lucide.createIcons();
+            }
         }
 
         async function addEmployee() {
@@ -3456,9 +3471,10 @@
             }
 
             const btn = document.getElementById('btnSubmitTimeOff');
-            const originalText = btn.innerText;
-            btn.innerText = 'Submitting...';
+            const originalHTML = btn.innerHTML;
+            btn.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin mr-2 inline-block"></i> Submitting...';
             btn.disabled = true;
+            lucide.createIcons();
 
             try {
                 await db.collection('time_off_requests').add({
@@ -3483,8 +3499,9 @@
                     alert("Error submitting request. Please try again.");
                 }
             } finally {
-                btn.innerText = originalText;
+                btn.innerHTML = originalHTML;
                 btn.disabled = false;
+                lucide.createIcons();
             }
         }
 
@@ -3504,9 +3521,10 @@
             const assigneeName = assigneeSelect.options[assigneeSelect.selectedIndex].text;
 
             const btn = document.getElementById('btnSubmitTask');
-            const originalText = btn.innerText;
-            btn.innerText = 'Assigning...';
+            const originalHTML = btn.innerHTML;
+            btn.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin mr-2 inline-block"></i> Assigning...';
             btn.disabled = true;
+            lucide.createIcons();
 
             try {
                 const manageTasks = firebase.functions().httpsCallable('manageTasks');
@@ -3530,8 +3548,9 @@
                 console.error("Manager Troubleshooting: Error creating task:", err);
                 alert("Failed to assign task: " + err.message);
             } finally {
-                btn.innerText = originalText;
+                btn.innerHTML = originalHTML;
                 btn.disabled = false;
+                lucide.createIcons();
             }
         }
 
