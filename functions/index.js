@@ -3,25 +3,7 @@ const {onRequest} = require("firebase-functions/v2/https");
 const HttpsError = functions.https.HttpsError;
 const admin = require("firebase-admin");
 const cors = require("cors")({origin: true});
-const {adaptGen2Params, logManagerError} = require("./utils");
-
-/**
- * Helper to get a document, verify its existence, and verify its orgId.
- */
-async function verifyDocAndAuth(collection, docId, expectedOrgId, notFoundMessage, unauthorizedMessage) {
-  const docRef = admin.firestore().collection(collection).doc(docId);
-  const docSnap = await docRef.get();
-
-  if (!docSnap.exists) {
-    throw new HttpsError("not-found", notFoundMessage);
-  }
-
-  if (docSnap.data().orgId !== expectedOrgId) {
-    throw new HttpsError("permission-denied", unauthorizedMessage);
-  }
-
-  return { docRef, docSnap };
-}
+const {adaptGen2Params, logManagerError, verifyDocAndAuth, getActualOrgId} = require("./utils");
 
 admin.initializeApp();
 
@@ -33,17 +15,6 @@ const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET ||
 const stripe = require("stripe")(stripeKey);
 
 // 🔹 Create Checkout Session
-
-/**
- * Helper to get the actual organization ID for a user.
- */
-async function getActualOrgId(admin, uid) {
-  const userDoc = await admin.firestore().collection("users").doc(uid).get();
-  if (!userDoc.exists) {
-    throw new HttpsError("not-found", "User not found");
-  }
-  return userDoc.data().orgId || null;
-}
 
 exports.createCheckoutSession = onRequest({invoker: "public"}, (req, res) => {
   cors(req, res, async () => {
@@ -412,7 +383,7 @@ exports.manageShiftNotes = functions.https.onCall(async (data, context) => {
       }
 
       // 🛡️ Verify the user resolving the note is in the same organization
-      const { docRef: noteRef } = await verifyDocAndAuth(
+      const { docRef: noteRef } = await verifyDocAndAuth(admin,
         "shift_notes",
         noteId,
         actualOrgId,
@@ -503,7 +474,7 @@ exports.manageEmployees = functions.https.onCall(async (data, context) => {
           throw new HttpsError("invalid-argument", "Missing employee ID");
        }
 
-       const { docRef: empRef } = await verifyDocAndAuth(
+       const { docRef: empRef } = await verifyDocAndAuth(admin,
          "employees",
          empId,
          actualOrgId,
@@ -519,30 +490,6 @@ exports.manageEmployees = functions.https.onCall(async (data, context) => {
 
        await empRef.update(updates);
        return {success: true};
-      const {empId, name, role, phone, status} = payload;
-      if (!empId) {
-        throw new HttpsError("invalid-argument", "Missing employee ID");
-      }
-
-      const empRef = admin.firestore().collection("employees").doc(empId);
-      const empDoc = await empRef.get();
-
-      if (!empDoc.exists) {
-        throw new HttpsError("not-found", "Employee not found");
-      }
-
-      if (empDoc.data().orgId !== actualOrgId) {
-        throw new HttpsError("permission-denied", "Unauthorized to update this employee");
-      }
-
-      const updates = {};
-      if (name !== undefined) updates.name = name;
-      if (role !== undefined) updates.role = role;
-      if (phone !== undefined) updates.phone = phone;
-      if (status !== undefined) updates.status = status;
-
-      await empRef.update(updates);
-      return {success: true};
     }
 
     if (action === "delete") {
@@ -551,23 +498,13 @@ exports.manageEmployees = functions.https.onCall(async (data, context) => {
         throw new HttpsError("invalid-argument", "Missing employee ID");
       }
 
-       const { docRef: empRef } = await verifyDocAndAuth(
+       const { docRef: empRef } = await verifyDocAndAuth(admin,
          "employees",
          empId,
          actualOrgId,
          "Employee not found",
          "Unauthorized to delete this employee"
        );
-      const empRef = admin.firestore().collection("employees").doc(empId);
-      const empDoc = await empRef.get();
-
-      if (!empDoc.exists) {
-        throw new HttpsError("not-found", "Employee not found");
-      }
-
-      if (empDoc.data().orgId !== actualOrgId) {
-        throw new HttpsError("permission-denied", "Unauthorized to delete this employee");
-      }
 
       // Soft delete
       await empRef.update({status: "Inactive"});

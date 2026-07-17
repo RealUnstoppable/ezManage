@@ -198,7 +198,15 @@ describe("createCheckoutSession", () => {
       client_reference_id: "test_uid",
       payment_method_types: ["card"],
       customer_email: "test2@example.com",
-      line_items: [{price: "price_1THHYPBp2C5GdKaKxNpqndNE", quantity: 1}],
+      line_items: [{
+        price_data: {
+          currency: "usd",
+          product: "prod_UFn8zqZ0mwyy5r",
+          recurring: {interval: "year"},
+          unit_amount: 5400,
+        },
+        quantity: 1,
+      }],
       subscription_data: {
         trial_period_days: 7,
         metadata: {
