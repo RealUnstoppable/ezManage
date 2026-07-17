@@ -3584,8 +3584,8 @@
                     const myContainer = document.getElementById('myTasksContainer');
                     const orgContainer = document.getElementById('orgTasksContainer');
 
-                    let myTasksHtml = '';
-                    let orgTasksHtml = '';
+                    let myTasks = [];
+                    let orgTasks = [];
 
                     let tasks = [];
                     snap.forEach(doc => tasks.push({ id: doc.id, ...doc.data() }));
@@ -3596,6 +3596,7 @@
                         return bTime - aTime;
                     });
 
+                    // ⚡ Bolt Optimization: Replace O(N²) string concatenation inside loop with array map().join('')
                     tasks.forEach(task => {
                         let statusColor = task.status === 'Completed' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800';
 
@@ -3612,12 +3613,12 @@
 
                         // Employee specific view (Can mark their own as complete)
                         if (task.assigneeId === currentUser.uid && task.status === 'Pending') {
-                            myTasksHtml += taskCard + `
+                            myTasks.push(taskCard + `
                                     <button onclick="updateTaskStatus('${task.id}', 'Completed')" class="btn btn-sm bg-green-500 text-white hover:bg-green-600"><i data-lucide="check" class="w-4 h-4 mr-1"></i>Complete</button>
                                 </div></div>
-                            `;
+                            `);
                         } else if (task.assigneeId === currentUser.uid) {
-                             myTasksHtml += taskCard + `</div></div>`;
+                             myTasks.push(taskCard + `</div></div>`);
                         }
 
                         // Manager specific view
@@ -3625,12 +3626,12 @@
                             let deleteBtn = `<button onclick="deleteTask('${task.id}')" class="btn btn-sm btn-outline text-red-500 hover:bg-red-50" aria-label="Delete Task"><i data-lucide="trash-2" class="w-4 h-4"></i></button>`;
                             let revertBtn = task.status === 'Completed' ? `<button onclick="updateTaskStatus('${task.id}', 'Pending')" class="btn btn-sm btn-outline text-yellow-600" aria-label="Mark Pending"><i data-lucide="rotate-ccw" class="w-4 h-4"></i></button>` : '';
 
-                            orgTasksHtml += taskCard + revertBtn + deleteBtn + `</div></div>`;
+                            orgTasks.push(taskCard + revertBtn + deleteBtn + `</div></div>`);
                         }
                     });
 
-                    if (myContainer) myContainer.innerHTML = myTasksHtml || '<p class="text-slate-500 text-center py-4">No tasks assigned to you right now. You\'re all caught up!</p>';
-                    if (orgContainer && isManager) orgContainer.innerHTML = orgTasksHtml || '<p class="text-slate-500 text-center py-4">No active tasks in the organization.</p>';
+                    if (myContainer) myContainer.innerHTML = myTasks.join('') || '<p class="text-slate-500 text-center py-4">No tasks assigned to you right now. You\'re all caught up!</p>';
+                    if (orgContainer && isManager) orgContainer.innerHTML = orgTasks.join('') || '<p class="text-slate-500 text-center py-4">No active tasks in the organization.</p>';
                     lucide.createIcons();
                 }, err => {
                     console.error("Manager Troubleshooting: Error fetching tasks:", err);
@@ -4762,6 +4763,9 @@ function checkAndRenderOrgControls() {
 
                 let tasksCount = 0;
 
+                // ⚡ Bolt Optimization: Use DocumentFragment to batch DOM insertions and reduce layout thrashing
+                const fragment = document.createDocumentFragment();
+
                 snapshot.forEach(doc => {
                     const task = doc.data();
 
@@ -4817,8 +4821,10 @@ function checkAndRenderOrgControls() {
                             ${deleteBtnHtml}
                         </div>
                     `;
-                    listContainer.appendChild(div);
+                    fragment.appendChild(div);
                 });
+
+                listContainer.appendChild(fragment);
 
                 if (tasksCount === 0) {
                     listContainer.innerHTML = "<p class='text-sm text-slate-500'>No tasks match the selected filter.</p>";
