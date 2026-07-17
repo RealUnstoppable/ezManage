@@ -119,7 +119,7 @@ if (document.getElementById('auth-form')) {
                 window.location.replace('index.html');
             } catch (error) {
                 logManagerError("Sign up error for email: " + email, error);
-                if (error.code === 'auth/network-request-failed' || error.code === 'unavailable') {
+                if (error.code === 'auth/network-request-failed' || error.code === 'unavailable' || error.code === 'firestore/unavailable') {
                     showMessage("Network error: Please check your connection or whitelist our domain.");
                 } else {
                     showMessage(getFirebaseErrorMessage(error));
@@ -141,7 +141,7 @@ if (document.getElementById('auth-form')) {
                 }
             } catch (error) {
                 logManagerError("Sign in error for email: " + email, error);
-                if (error.code === 'auth/network-request-failed' || error.code === 'unavailable') {
+                if (error.code === 'auth/network-request-failed' || error.code === 'unavailable' || error.code === 'firestore/unavailable') {
                     showMessage("Network error: Please check your connection or whitelist our domain.");
                 } else {
                     showMessage(getFirebaseErrorMessage(error));
@@ -153,4 +153,5 @@ if (document.getElementById('auth-form')) {
 
     function showMessage(msg) { messageEl.textContent = msg; }
     updateFormView();
+}
 }
