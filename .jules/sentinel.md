@@ -101,3 +101,7 @@
 **Vulnerability:** User-controlled input `task.priority` was interpolated directly into `innerHTML` strings when rendering task cards, leading to a Stored XSS vulnerability.
 **Learning:** It is crucial to escape all user-provided data, including seemingly restricted fields like "priority", as data in the database can be manipulated.
 **Prevention:** Consistently apply `escapeHTML` to all dynamic variables embedded within string literals that are assigned to `innerHTML`.
+## 2024-06-25 - Cross-Site Scripting (XSS) via Unescaped Error Messages
+**Vulnerability:** In `index.html`, error messages caught from promises (`err.message` and `error.message`) were interpolated directly into `innerHTML` strings (e.g. `Failed to load tasks: ${err.message}`).
+**Learning:** Even error messages originating from external libraries or backend systems can sometimes contain unescaped, potentially malicious payloads or reflect user-controlled input, acting as a DOM-based XSS vector when injected into `innerHTML`.
+**Prevention:** Always wrap dynamically rendered variables in `escapeHTML()`, even if they represent standard error strings (`err.message`), to guarantee XSS protection against unexpected backend responses or payload reflection.
