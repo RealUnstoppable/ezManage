@@ -3,6 +3,7 @@
 
 <head>
   <script type="module">
+    import { fetchUserDoc } from '/js/auth.js';
     import { escapeHTML } from '/js/utils.js';
     import { loadNavbar } from '/js/navbar.js';
     import { loadFooter } from '/js/footer.js';
@@ -2230,7 +2231,7 @@
         function signInWithGoogle() {
             const provider = new firebase.auth.GoogleAuthProvider();
             auth.signInWithPopup(provider).then(cred => {
-                db.collection("users").doc(cred.user.uid).get().then(doc => {
+                fetchUserDoc(cred.user.uid).then(doc => {
                     if (!doc.exists) navTo('setup');
                 });
             }).catch(err => alert(err.message));
@@ -3695,7 +3696,7 @@
                         // Employee specific view (Can mark their own as complete)
                         if (task.assigneeId === currentUser.uid && task.status === 'Pending') {
                             myTasksHtml.push(taskCard + `
-                                    <button onclick="updateTaskStatus('${task.id}', 'Completed')" class="btn btn-sm bg-green-500 text-white hover:bg-green-600"><i data-lucide="check" class="w-4 h-4 mr-1"></i>Complete</button>
+                                    <button data-action="updateTaskStatus" data-id="${escapeHTML(task.id)}" data-status="Completed" class="btn btn-sm bg-green-500 text-white hover:bg-green-600"><i data-lucide="check" class="w-4 h-4 mr-1"></i>Complete</button>
                                 </div></div>
                             `);
                         } else if (task.assigneeId === currentUser.uid) {
@@ -3704,8 +3705,8 @@
 
                         // Manager specific view
                         if (isManager) {
-                            let deleteBtn = `<button onclick="deleteTask('${task.id}')" class="btn btn-sm btn-outline text-red-500 hover:bg-red-50" aria-label="Delete Task"><i data-lucide="trash-2" class="w-4 h-4"></i></button>`;
-                            let revertBtn = task.status === 'Completed' ? `<button onclick="updateTaskStatus('${task.id}', 'Pending')" class="btn btn-sm btn-outline text-yellow-600" aria-label="Mark Pending"><i data-lucide="rotate-ccw" class="w-4 h-4"></i></button>` : '';
+                            let deleteBtn = `<button data-action="deleteTask" data-id="${escapeHTML(task.id)}" class="btn btn-sm btn-outline text-red-500 hover:bg-red-50" aria-label="Delete Task"><i data-lucide="trash-2" class="w-4 h-4"></i></button>`;
+                            let revertBtn = task.status === 'Completed' ? `<button data-action="updateTaskStatus" data-id="${escapeHTML(task.id)}" data-status="Pending" class="btn btn-sm btn-outline text-yellow-600" aria-label="Mark Pending"><i data-lucide="rotate-ccw" class="w-4 h-4"></i></button>` : '';
 
                             orgTasksHtml.push(taskCard + revertBtn + deleteBtn + `</div></div>`);
                         }
@@ -4674,7 +4675,7 @@ function checkAndRenderOrgControls() {
                 }
             } catch (error) {
                 console.error("Error fetching waste logs:", error);
-                container.innerHTML = `<div class="text-red-500 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl text-center">Failed to load waste logs: ${error.message}</div>`;
+                container.innerHTML = `<div class="text-red-500 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl text-center">Failed to load waste logs: ${escapeHTML(error.message)}</div>`;
             }
         }
 
@@ -4831,7 +4832,7 @@ function checkAndRenderOrgControls() {
                 }
             } catch (error) {
                 console.error("Error fetching incidents:", error);
-                container.innerHTML = `<div class="text-red-500 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl text-center">Failed to load incidents: ${error.message}</div>`;
+                container.innerHTML = `<div class="text-red-500 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl text-center">Failed to load incidents: ${escapeHTML(error.message)}</div>`;
             }
         }
 
@@ -4849,6 +4850,14 @@ function checkAndRenderOrgControls() {
 
         // Event delegation for incident status updates
         document.addEventListener('change', function(e) {
+            const select = e.target.closest('select[data-action]');
+            if (select) {
+                const action = select.dataset.action;
+                const id = select.dataset.id;
+                if (action === 'updateTaskStatus') {
+                    updateTaskStatus(id, select.value);
+                }
+            }
             if (e.target && e.target.classList.contains('incident-status-select')) {
                 const incidentId = e.target.getAttribute('data-incident-id');
                 if (incidentId) {
@@ -5044,7 +5053,7 @@ function checkAndRenderOrgControls() {
 
                     if (canEdit) {
                         statusHtml = `
-                            <select class="text-xs p-1 border rounded bg-slate-50 dark:bg-slate-900 ${statusColor}" onchange="updateTaskStatus('${doc.id}', this.value)">
+                            <select class="text-xs p-1 border rounded bg-slate-50 dark:bg-slate-900 ${statusColor}" data-action="updateTaskStatus" data-id="${escapeHTML(doc.id)}">
                                 <option value="Pending" ${task.status === 'Pending' ? 'selected' : ''}>Pending</option>
                                 <option value="In Progress" ${task.status === 'In Progress' ? 'selected' : ''}>In Progress</option>
                                 <option value="Completed" ${task.status === 'Completed' ? 'selected' : ''}>Completed</option>
@@ -5054,7 +5063,7 @@ function checkAndRenderOrgControls() {
 
                     let deleteBtnHtml = '';
                     if (isAssigner || currentUserData.isAdmin) {
-                        deleteBtnHtml = `<button onclick="deleteTask('${doc.id}')" class="text-red-500 hover:text-red-700 text-sm mt-2" aria-label="Delete task"><i data-lucide="trash-2" class="w-4 h-4"></i></button>`;
+                        deleteBtnHtml = `<button data-action="deleteTask" data-id="${escapeHTML(doc.id)}" class="text-red-500 hover:text-red-700 text-sm mt-2" aria-label="Delete task"><i data-lucide="trash-2" class="w-4 h-4"></i></button>`;
                     }
 
                     // Look up employee name if cached
@@ -5348,7 +5357,7 @@ function checkAndRenderOrgControls() {
                     renderFilteredTasks();
                 }, err => {
                     console.error("Error fetching tasks:", err);
-                    container.innerHTML = `<div class="text-red-500 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl text-center">Failed to load tasks: ${err.message}</div>`;
+                    container.innerHTML = `<div class="text-red-500 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl text-center">Failed to load tasks: ${escapeHTML(err.message)}</div>`;
                 });
         }
 
@@ -5406,12 +5415,12 @@ function checkAndRenderOrgControls() {
                                 <div class="flex flex-wrap gap-2 items-start justify-end">
                                     <span class="px-3 py-1 rounded-full text-xs font-bold ${prioColors[task.priority] || prioColors['Low']}">${escapeHTML(task.priority)}</span>
                                     <select class="px-3 py-1 rounded-full text-xs font-bold border appearance-none cursor-pointer focus:outline-none ${statusColors[task.status] || statusColors['Pending']}"
-                                        onchange="updateTaskStatus('${task.id}', this.value)">
+                                        data-action="updateTaskStatus" data-id="${escapeHTML(task.id)}">
                                         <option value="Pending" ${task.status === 'Pending' ? 'selected' : ''}>Pending</option>
                                         <option value="In Progress" ${task.status === 'In Progress' ? 'selected' : ''}>In Progress</option>
                                         <option value="Completed" ${task.status === 'Completed' ? 'selected' : ''}>Completed</option>
                                     </select>
-                                    <button onclick="deleteTask('${task.id}')" class="text-red-400 p-1 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md" aria-label="Delete Task"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                                    <button data-action="deleteTask" data-id="${escapeHTML(task.id)}" class="text-red-400 p-1 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md" aria-label="Delete Task"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
                                 </div>
                             </div>
                             <p class="text-slate-700 dark:text-slate-300 whitespace-pre-wrap">${escapeHTML(task.description)}</p>
@@ -5468,6 +5477,8 @@ function checkAndRenderOrgControls() {
             else if (action === 'toggleEmployeeStatus') toggleEmployeeStatus(id, status);
             else if (action === 'updateTimeOffStatus') updateTimeOffStatus(id, status);
             else if (action === 'deleteTimeOffRequest') deleteTimeOffRequest(id);
+            else if (action === 'updateTaskStatus') updateTaskStatus(id, status);
+            else if (action === 'deleteTask') deleteTask(id);
             else if (action === 'removeShift') removeShift(btn.dataset.index);
         });
 
