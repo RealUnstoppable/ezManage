@@ -45,3 +45,6 @@
 ## 2026-06-25 - [Repeated Firebase DB Docs Fetch]
 **Learning:** Functions invoked via callbacks from listeners that span multiple files (e.g., \`auth.onAuthStateChanged\`) will fire simultaneously. Without a caching layer, they execute redundant concurrent network fetch queries (like \`db.collection('users').doc(uid).get()\`), causing latency and blocking operations.
 **Action:** Always wrap independent multi-listener fetched resources with a generic memoization layer using a \`Map\` cache to immediately resolve redundant Promise requests.
+## 2024-07-17 - [DOM Append Bottleneck in Dropdown Populators]
+**Learning:** Sequential `appendChild` calls within iterative loops (e.g., repeatedly appending `<option>` elements to a `<select>` when populating employee or task dropdowns) trigger repetitive reflows and repaints. This causes layout thrashing and perceived UI jank, especially as the number of elements scales.
+**Action:** Replace sequential `appendChild` loops with batched DOM insertions using a `DocumentFragment` (`document.createDocumentFragment()`). Accumulate elements in the fragment first, then append the entire fragment to the live DOM in a single operation.
