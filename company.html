@@ -1438,8 +1438,8 @@
                             </select>
                         </td>
                         <td class="px-6 py-3 text-right">
-                            ${!isOwner ? `<button onclick="removeManager('${escapeHTML(doc.id)}')" aria-label="Remove manager" class="text-slate-400 hover:text-red-500 transition-colors"><i data-lucide="trash-2" class="w-4 h-4"></i></button>` : `<span class="text-slate-300">-</span>`}
-                            ${!isOwner ? `<button onclick="removeManager('${doc.id}')" aria-label="Remove manager" class="text-slate-400 hover:text-red-500 transition-colors"><i data-lucide="trash-2" class="w-4 h-4"></i></button>` : `<span class="text-slate-300">-</span>`}
+                            ${!isOwner ? `<button data-action="removeManager" data-id="${escapeHTML(doc.id)}" aria-label="Remove manager" class="text-slate-400 hover:text-red-500 transition-colors"><i data-lucide="trash-2" class="w-4 h-4"></i></button>` : `<span class="text-slate-300">-</span>`}
+                            ${!isOwner ? `<button data-action="removeManager" data-id="${doc.id}" aria-label="Remove manager" class="text-slate-400 hover:text-red-500 transition-colors"><i data-lucide="trash-2" class="w-4 h-4"></i></button>` : `<span class="text-slate-300">-</span>`}
                         </td>
                     </tr>`;
 
@@ -1499,7 +1499,7 @@
                             <td class="px-6 py-4 text-slate-500">${d.email || 'N/A'}</td>
                             <td class="px-6 py-4"><span class="px-2 py-1 bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 text-[10px] font-black uppercase tracking-widest rounded-full">Active</span></td>
                             <td class="px-6 py-4 text-right">
-                                ${!isOwner ? `<button onclick="removeManager('${doc.id}')" class="text-red-400 hover:text-red-500 font-bold text-sm">Remove</button>` : `<span class="text-slate-300">-</span>`}
+                                ${!isOwner ? `<button data-action="removeManager" data-id="${doc.id}" class="text-red-400 hover:text-red-500 font-bold text-sm">Remove</button>` : `<span class="text-slate-300">-</span>`}
                             </td>
                         </tr>
                       `;
@@ -1574,7 +1574,7 @@
                                 <div class="font-black text-slate-900 dark:text-white text-sm">${escapeHTML(doc.data().userName)}</div>
                                 <div class="text-[10px] font-bold uppercase tracking-widest text-amber-500">Requested Access</div>
                             </div>
-                            <button onclick="approveRequest('${escapeHTML(doc.id)}')" class="btn btn-accent btn-sm py-1 px-4 text-xs">Approve</button>
+                            <button data-action="approveRequest" data-id="${escapeHTML(doc.id)}" class="btn btn-accent btn-sm py-1 px-4 text-xs">Approve</button>
                         </div>
                     `).join('');
                 });
@@ -1716,7 +1716,7 @@
                                 <td class="p-3 font-medium">${escapeHTML(data.email || 'Unknown')}</td>
                                 <td class="p-3">${escapeHTML(data.role || 'Manager')}</td>
                                 <td class="p-3 text-right">
-                                    <button onclick="removeManager('${escapeHTML(doc.id)}')" class="btn btn-outline btn-sm text-red-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                                    <button data-action="removeManager" data-id="${escapeHTML(doc.id)}" class="btn btn-outline btn-sm text-red-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
                                 </td>
                             </tr>
                         `;
@@ -1748,7 +1748,7 @@
                         <td class="p-3 font-medium">${escapeHTML(data.email || 'Unknown')}</td>
                         <td class="p-3">${escapeHTML(data.role || 'Manager')}</td>
                         <td class="p-3 text-right">
-                            <button onclick="removeManager('${escapeHTML(doc.id)}')" aria-label="Remove manager" class="btn btn-outline btn-sm text-red-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                            <button data-action="removeManager" data-id="${escapeHTML(doc.id)}" aria-label="Remove manager" class="btn btn-outline btn-sm text-red-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
                         </td>
                     `;
                     fragment.appendChild(tr);
@@ -1795,7 +1795,19 @@
             }
         });
 
-</script>
+
+        // Global event delegation for dynamically created buttons to prevent XSS from inline handlers
+        document.addEventListener('click', (e) => {
+            const btn = e.target.closest('button[data-action]');
+            if (!btn) return;
+            const action = btn.dataset.action;
+            const id = btn.dataset.id;
+
+            if (action === 'removeManager') removeManager(id);
+            else if (action === 'approveRequest') approveRequest(id);
+        });
+
+    </script>
 </body>
 
 </html>

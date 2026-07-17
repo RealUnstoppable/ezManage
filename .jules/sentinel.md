@@ -101,3 +101,8 @@
 **Vulnerability:** User-controlled input `task.priority` was interpolated directly into `innerHTML` strings when rendering task cards, leading to a Stored XSS vulnerability.
 **Learning:** It is crucial to escape all user-provided data, including seemingly restricted fields like "priority", as data in the database can be manipulated.
 **Prevention:** Consistently apply `escapeHTML` to all dynamic variables embedded within string literals that are assigned to `innerHTML`.
+
+## 2024-06-30 - XSS via Inline Event Handlers
+**Vulnerability:** Inline HTML `onclick` and `onchange` attributes (e.g. `onclick="updateTaskStatus('${task.id}', 'Completed')"` and `<select ... onchange="updateTaskStatus('${doc.id}', this.value)">`) directly evaluated unescaped variables.
+**Learning:** This widespread pattern allowed arbitrary JavaScript execution if malicious data (like `task.id` or `doc.id`) was crafted. String interpolation in vanilla JavaScript UI rendering must be strictly separated from HTML structure using data attributes.
+**Prevention:** Avoid inline event handlers entirely. Implement global event delegation (e.g., `document.addEventListener('click', ...)`) and attach contextual data securely using HTML `data-*` attributes. Use `escapeHTML()` when setting `.innerHTML` containing error objects or dynamic text.
