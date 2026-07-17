@@ -224,8 +224,8 @@
     };
     const app = !window.firebase.apps.length ? window.firebase.initializeApp(firebaseConfig) : window.firebase.app();
     const auth = firebase.auth();
-    const db   = firebase.firestore();
-    db.settings({ experimentalForceLongPolling: true });
+    firebase.firestore().settings({ experimentalForceLongPolling: true });
+        const db = firebase.firestore();
 
     const ADMIN_EMAIL = 'catalinandrian1@gmail.com';
 

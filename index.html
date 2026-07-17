@@ -3695,7 +3695,7 @@
                         // Employee specific view (Can mark their own as complete)
                         if (task.assigneeId === currentUser.uid && task.status === 'Pending') {
                             myTasksHtml.push(taskCard + `
-                                    <button onclick="updateTaskStatus('${task.id}', 'Completed')" class="btn btn-sm bg-green-500 text-white hover:bg-green-600"><i data-lucide="check" class="w-4 h-4 mr-1"></i>Complete</button>
+                                    <button data-action="updateTaskStatus" data-id="${task.id}" data-status="Completed" class="btn btn-sm bg-green-500 text-white hover:bg-green-600"><i data-lucide="check" class="w-4 h-4 mr-1"></i>Complete</button>
                                 </div></div>
                             `);
                         } else if (task.assigneeId === currentUser.uid) {
@@ -3704,8 +3704,8 @@
 
                         // Manager specific view
                         if (isManager) {
-                            let deleteBtn = `<button onclick="deleteTask('${task.id}')" class="btn btn-sm btn-outline text-red-500 hover:bg-red-50" aria-label="Delete Task"><i data-lucide="trash-2" class="w-4 h-4"></i></button>`;
-                            let revertBtn = task.status === 'Completed' ? `<button onclick="updateTaskStatus('${task.id}', 'Pending')" class="btn btn-sm btn-outline text-yellow-600" aria-label="Mark Pending"><i data-lucide="rotate-ccw" class="w-4 h-4"></i></button>` : '';
+                            let deleteBtn = `<button data-action="deleteTask" data-id="${task.id}" class="btn btn-sm btn-outline text-red-500 hover:bg-red-50" aria-label="Delete Task"><i data-lucide="trash-2" class="w-4 h-4"></i></button>`;
+                            let revertBtn = task.status === 'Completed' ? `<button data-action="updateTaskStatus" data-id="${task.id}" data-status="Pending" class="btn btn-sm btn-outline text-yellow-600" aria-label="Mark Pending"><i data-lucide="rotate-ccw" class="w-4 h-4"></i></button>` : '';
 
                             orgTasksHtml.push(taskCard + revertBtn + deleteBtn + `</div></div>`);
                         }
@@ -4663,7 +4663,7 @@ function checkAndRenderOrgControls() {
                                     <span class="px-2 py-1 bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 rounded-lg text-xs font-bold">${escapeHTML(log.reason)}</span>
                                 </div>
                             </div>
-                            <button onclick="deleteWasteLog('${escapeHTML(log.id)}')" class="btn btn-outline btn-sm text-red-500 hover:bg-red-50" aria-label="Delete Waste Log">
+                            <button data-action="deleteWasteLog" data-id="${escapeHTML(log.id)}" class="btn btn-outline btn-sm text-red-500 hover:bg-red-50" aria-label="Delete Waste Log">
                                 <i data-lucide="trash-2" class="w-4 h-4"></i> Remove
                             </button>
                         `;
@@ -4819,7 +4819,7 @@ function checkAndRenderOrgControls() {
                                         <option value="In Progress" ${incident.status === 'In Progress' ? 'selected' : ''}>In Progress</option>
                                         <option value="Resolved" ${incident.status === 'Resolved' ? 'selected' : ''}>Resolved</option>
                                     </select>
-                                    <button onclick="deleteIncident('${escapeHTML(incident.id)}')" class="text-red-400 p-1 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md ml-2" aria-label="Delete Incident"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                                    <button data-action="deleteIncident" data-id="${escapeHTML(incident.id)}" class="text-red-400 p-1 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md ml-2" aria-label="Delete Incident"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
                                 </div>
                             </div>
                             <p class="text-slate-700 dark:text-slate-300 whitespace-pre-wrap">${escapeHTML(incident.description)}</p>
@@ -4849,6 +4849,10 @@ function checkAndRenderOrgControls() {
 
         // Event delegation for incident status updates
         document.addEventListener('change', function(e) {
+            if (e.target.dataset.changeAction === 'updateTaskStatus') {
+                updateTaskStatus(e.target.dataset.id, e.target.value);
+            }
+
             if (e.target && e.target.classList.contains('incident-status-select')) {
                 const incidentId = e.target.getAttribute('data-incident-id');
                 if (incidentId) {
@@ -5044,7 +5048,7 @@ function checkAndRenderOrgControls() {
 
                     if (canEdit) {
                         statusHtml = `
-                            <select class="text-xs p-1 border rounded bg-slate-50 dark:bg-slate-900 ${statusColor}" onchange="updateTaskStatus('${doc.id}', this.value)">
+                            <select class="text-xs p-1 border rounded bg-slate-50 dark:bg-slate-900 ${statusColor}" data-change-action="updateTaskStatus" data-id="${doc.id}">
                                 <option value="Pending" ${task.status === 'Pending' ? 'selected' : ''}>Pending</option>
                                 <option value="In Progress" ${task.status === 'In Progress' ? 'selected' : ''}>In Progress</option>
                                 <option value="Completed" ${task.status === 'Completed' ? 'selected' : ''}>Completed</option>
@@ -5054,7 +5058,7 @@ function checkAndRenderOrgControls() {
 
                     let deleteBtnHtml = '';
                     if (isAssigner || currentUserData.isAdmin) {
-                        deleteBtnHtml = `<button onclick="deleteTask('${doc.id}')" class="text-red-500 hover:text-red-700 text-sm mt-2" aria-label="Delete task"><i data-lucide="trash-2" class="w-4 h-4"></i></button>`;
+                        deleteBtnHtml = `<button data-action="deleteTask" data-id="${doc.id}" class="text-red-500 hover:text-red-700 text-sm mt-2" aria-label="Delete task"><i data-lucide="trash-2" class="w-4 h-4"></i></button>`;
                     }
 
                     // Look up employee name if cached
@@ -5406,12 +5410,12 @@ function checkAndRenderOrgControls() {
                                 <div class="flex flex-wrap gap-2 items-start justify-end">
                                     <span class="px-3 py-1 rounded-full text-xs font-bold ${prioColors[task.priority] || prioColors['Low']}">${escapeHTML(task.priority)}</span>
                                     <select class="px-3 py-1 rounded-full text-xs font-bold border appearance-none cursor-pointer focus:outline-none ${statusColors[task.status] || statusColors['Pending']}"
-                                        onchange="updateTaskStatus('${task.id}', this.value)">
+                                        data-change-action="updateTaskStatus" data-id="${task.id}">
                                         <option value="Pending" ${task.status === 'Pending' ? 'selected' : ''}>Pending</option>
                                         <option value="In Progress" ${task.status === 'In Progress' ? 'selected' : ''}>In Progress</option>
                                         <option value="Completed" ${task.status === 'Completed' ? 'selected' : ''}>Completed</option>
                                     </select>
-                                    <button onclick="deleteTask('${task.id}')" class="text-red-400 p-1 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md" aria-label="Delete Task"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                                    <button data-action="deleteTask" data-id="${task.id}" class="text-red-400 p-1 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md" aria-label="Delete Task"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
                                 </div>
                             </div>
                             <p class="text-slate-700 dark:text-slate-300 whitespace-pre-wrap">${escapeHTML(task.description)}</p>
@@ -5464,6 +5468,11 @@ function checkAndRenderOrgControls() {
             else if (action === 'approveGroupRequest') approveGroupRequest(id);
             else if (action === 'retractGroupRequest') retractGroupRequest(id);
             else if (action === 'openEditEmployeeModal') openEditEmployeeModal(id);
+            else if (action === 'deleteTask') deleteTask(id);
+            else if (action === 'deleteWasteLog') deleteWasteLog(id);
+            else if (action === 'deleteIncident') deleteIncident(id);
+            else if (action === 'updateTaskStatus') updateTaskStatus(id, status);
+
             else if (action === 'deleteEmployee') deleteEmployee(id);
             else if (action === 'toggleEmployeeStatus') toggleEmployeeStatus(id, status);
             else if (action === 'updateTimeOffStatus') updateTimeOffStatus(id, status);
