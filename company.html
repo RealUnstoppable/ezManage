@@ -1696,7 +1696,7 @@
                     });
                 });
 
-                if(tbody) {
+                if (tbody) {
                     // ⚡ Bolt Optimization: Replace O(N) appendChild loop with O(1) batched string map/join to prevent layout thrashing
                     tbody.innerHTML = snap.docs.map(doc => {
                         const data = doc.data();
@@ -1710,12 +1710,10 @@
                             </tr>
                         `;
                     }).join('');
-            }
+                }
+            } // close else block
 
-            // ⚡ Bolt Optimization: Batch DOM insertions to avoid layout thrashing
-            // ⚡ Bolt Optimization: Batch DOM insertions using a DocumentFragment to prevent layout thrashing
-            const fragment = document.createDocumentFragment();
-
+            // Preserving the stats calculation logic while stripping duplicate UI DOM insertion code
             snap.forEach(doc => {
                 const data = doc.data();
                 const history = data.shiftHistory || [];
@@ -1729,28 +1727,7 @@
                         totalLogsWithScores++;
                     }
                 });
-
-                if(tbody) {
-                    const tr = document.createElement('tr');
-                    tr.className = 'border-b border-slate-100 dark:border-slate-800';
-                    tr.innerHTML = `
-                        <td class="p-3 font-medium">${escapeHTML(data.email || 'Unknown')}</td>
-                        <td class="p-3">${escapeHTML(data.role || 'Manager')}</td>
-                        <td class="p-3 text-right">
-                            <button onclick="removeManager('${escapeHTML(doc.id)}')" aria-label="Remove manager" class="btn btn-outline btn-sm text-red-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
-                        </td>
-                    `;
-                    fragment.appendChild(tr);
-                }
-            }
-
-            if (tbody) tbody.appendChild(fragment);
-
-            if (tbody) {
-                tbody.appendChild(fragment);
-            }
-
-            if (tbody) tbody.appendChild(fragment);
+            });
 
             document.getElementById('globalShifts').innerText = totalShifts;
             document.getElementById('globalRoutineScore').innerText = totalLogsWithScores > 0 ? Math.round(totalScore / totalLogsWithScores) + "%" : "0%";

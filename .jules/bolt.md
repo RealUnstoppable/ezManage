@@ -45,3 +45,6 @@
 ## 2026-06-25 - [Repeated Firebase DB Docs Fetch]
 **Learning:** Functions invoked via callbacks from listeners that span multiple files (e.g., \`auth.onAuthStateChanged\`) will fire simultaneously. Without a caching layer, they execute redundant concurrent network fetch queries (like \`db.collection('users').doc(uid).get()\`), causing latency and blocking operations.
 **Action:** Always wrap independent multi-listener fetched resources with a generic memoization layer using a \`Map\` cache to immediately resolve redundant Promise requests.
+## 2026-07-17 - [Redundant DOM Insertion Cleanup]
+**Learning:** When refactoring to O(1) batched `innerHTML` insertions, failing to remove legacy `appendChild` operations results in duplicate DOM rendering and layout thrashing.
+**Action:** Always fully remove the older `document.createElement` and `DocumentFragment` operations from the same execution path to ensure exactly one batch insertion occurs.
