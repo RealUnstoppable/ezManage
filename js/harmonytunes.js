@@ -160,7 +160,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="music-card" onclick="window.loadPlaylistView('${pl.id}')">
                 <div class="card-img-wrapper">
                     <img src="/images/harmony-tunes-card.jpg" alt="${pl.title}" loading="lazy">
-                    <button class="card-play-btn">▶</button>
+                    <button class="card-play-btn" aria-label="Play Playlist">▶</button>
                 </div>
                 <div class="card-title">${pl.title}</div>
                 <div class="card-desc">${pl.desc}</div>
@@ -185,7 +185,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="music-card" data-song-id="${song.id}" onclick="playSongById('${song.id}')">
                 <div class="card-img-wrapper">
                     <img src="${song.art}" alt="${song.title}" loading="lazy">
-                    <button class="card-play-btn">▶</button>
+                    <button class="card-play-btn" aria-label="Play Song">▶</button>
                 </div>
                 <div class="card-title">${song.title}</div>
                 <div class="card-desc">${song.artist}</div>

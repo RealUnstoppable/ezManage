@@ -97,7 +97,7 @@ function renderCart() {
                     </div>
                     <div class="cart-item-actions">
                         <input type="number" value="${quantity}" min="1" data-id="${productId}" class="item-quantity-input">
-                        <button class="remove-item-btn" data-id="${productId}">&#128465;</button>
+                        <button class="remove-item-btn" data-id="${productId}" aria-label="Remove item from cart">&#128465;</button>
                     </div>
                 </div>
             `;
