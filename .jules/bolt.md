@@ -42,3 +42,6 @@
 ## 2024-05-27 - Batch DOM insertions with DocumentFragment
 **Learning:** In vanilla JS loops where elements are individually appended to the DOM (e.g. \`tbody.appendChild(tr)\`), layout thrashing can occur causing performance issues, specifically for lists with many items.
 **Action:** Always batch DOM insertions using a \`DocumentFragment\` when appending multiple elements in a loop.
+## 2025-02-20 - Batching DOM Insertions in Dropdown Loops
+**Learning:** Appending `option` elements individually to a `select` dropdown inside a `.forEach()` loop (`select.appendChild(opt)`) triggers sequential, expensive layout recalculations (thrashing).
+**Action:** When populating dynamic lists or dropdowns in vanilla JS, always construct the elements using `document.createDocumentFragment()`, append children to the fragment in the loop, and append the fragment to the DOM once outside the loop to drastically reduce main thread blocking.
