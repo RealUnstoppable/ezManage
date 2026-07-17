@@ -163,7 +163,7 @@
     </main>
 
     <script type="module">
-        import { auth, db } from '/js/auth.js';
+        import { auth, db, fetchUserDoc } from '/js/auth.js';
         lucide.createIcons();
         
         // Theme init
@@ -182,7 +182,7 @@
 
                 try {
                     const docRef = db.collection("users").doc(user.uid);
-                    const docSnap = await docRef.get();
+                    const docSnap = await fetchUserDoc(user.uid);
                     if (docSnap.exists) {
                         const data = docSnap.data();
                         document.getElementById('acc-username').textContent = data.username || "User";
