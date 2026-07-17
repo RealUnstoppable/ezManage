@@ -1,12 +1,10 @@
 import { getFirebaseErrorMessage, logManagerError } from './utils.js';
-import { getFirebaseErrorMessage, logManagerError } from "./utils.js";
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
 import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, sendEmailVerification } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
 import { getFirestore, doc, setDoc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
 
 
-import { getFirebaseErrorMessage, logManagerError } from './utils.js';
 
 const firebaseConfig = {
   apiKey: "AIzaSyBgrI9HwJPSc5b4pu2Egsv4DE7shNwptSw",
@@ -19,6 +17,14 @@ const firebaseConfig = {
 };
 
 if (!window.firebase) { console.error("Firebase Compat SDK must be loaded before auth.js"); }
+
+const app = window.firebase && !window.firebase.apps.length ? window.firebase.initializeApp(firebaseConfig) : (window.firebase ? window.firebase.app() : null);
+
+if (window.firebase) {
+    window.firebase.firestore().settings({
+        experimentalForceLongPolling: true
+    });
+}
 
 export const auth = window.firebase ? window.firebase.auth() : {};
 export const db = window.firebase ? window.firebase.firestore() : {};

@@ -42,3 +42,6 @@
 ## 2024-05-27 - Batch DOM insertions with DocumentFragment
 **Learning:** In vanilla JS loops where elements are individually appended to the DOM (e.g. \`tbody.appendChild(tr)\`), layout thrashing can occur causing performance issues, specifically for lists with many items.
 **Action:** Always batch DOM insertions using a \`DocumentFragment\` when appending multiple elements in a loop.
+## 2026-06-18 - Prevent Firebase Initialization Duplication and Connection Errors
+**Learning:** Initializing Firebase directly via `window.firebase.initializeApp()` without checking for existing instances, combined with missing configuration settings, leads to duplicate app errors and `firestore/unavailable` or network request failures, especially on restrictive networks.
+**Action:** Always initialize Firebase using a global singleton pattern (`!window.firebase.apps.length ? window.firebase.initializeApp(...) : window.firebase.app()`) and immediately apply fallback settings like `experimentalForceLongPolling: true` to the `firestore().settings({})` object before instantiating variables.
