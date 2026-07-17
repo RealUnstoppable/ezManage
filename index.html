@@ -5011,6 +5011,9 @@ function checkAndRenderOrgControls() {
 
                 let tasksCount = 0;
 
+                // ⚡ Bolt Optimization: Batch DOM insertions using DocumentFragment
+                const fragment = document.createDocumentFragment();
+
                 snapshot.forEach(doc => {
                     const task = doc.data();
 
@@ -5066,8 +5069,10 @@ function checkAndRenderOrgControls() {
                             ${deleteBtnHtml}
                         </div>
                     `;
-                    listContainer.appendChild(div);
+                    fragment.appendChild(div);
                 });
+
+                listContainer.appendChild(fragment);
 
                 if (tasksCount === 0) {
                     listContainer.innerHTML = "<p class='text-sm text-slate-500'>No tasks match the selected filter.</p>";
