@@ -13,9 +13,14 @@ const mockFirebase = {
 global.window.firebase = mockFirebase;
 global.firebase = mockFirebase;
 
+const mockGet = jest.fn().mockResolvedValue({
+  exists: true,
+  data: () => ({ isAdmin: false })
+});
+
 jest.unstable_mockModule('../../js/auth.js', () => ({
   auth: { onAuthStateChanged: jest.fn() },
-  db: { collection: jest.fn(() => ({ doc: jest.fn(() => ({ get: jest.fn() })) })) },
+  db: { collection: jest.fn(() => ({ doc: jest.fn(() => ({ get: mockGet })) })) },
   getUserRedirectPath: (userData) => userData && userData.isAdmin ? 'admin.html' : 'index.html'
 }));
 
@@ -38,13 +43,7 @@ describe('loadNavbar', () => {
 
     const mockUser = { uid: '123' };
 
-    const mockGet = jest.fn().mockResolvedValueOnce({
-      exists: true,
-      data: () => ({ isAdmin: false })
-    });
-
-      await authCallback(mockUser);
-
+    const authCallback = auth.onAuthStateChanged.mock.calls[0][0];
     await authCallback(mockUser);
     await new Promise(process.nextTick);
 

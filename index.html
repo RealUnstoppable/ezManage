@@ -1664,40 +1664,32 @@
                     </button>
                 </div>
 
-                <div id="addEmployeeModal"
+                <div id="addEmployeeModalAlt"
                     class="hidden bg-white dark:bg-slate-900 rounded-3xl p-6 md:p-8 shadow-sm border border-slate-100 dark:border-slate-800 mb-12">
-                    <h2 class="text-xl font-bold mb-4">Add New Employee</h2>
+                    <h2 class="text-xl font-bold mb-4" id="employeeModalTitleAlt">Add New Employee</h2>
+                    <input type="hidden" id="empModalIdAlt" value="">
                     <div class="space-y-4">
-                        <input type="text" id="empName" placeholder="Full Name" aria-label="Full Name"
+                        <input type="text" id="empNameAlt" placeholder="Full Name" aria-label="Full Name"
                             class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
-                        <input type="text" id="empRole" placeholder="Role (e.g. Cashier, Cook)" aria-label="Role"
-                            class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
-
-                        <div class="grid md:grid-cols-2 gap-4">
-                            <input type="tel" id="empPhone" placeholder="Phone Number" aria-label="Phone Number"
-                                class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
-                            <input type="email" id="empEmail" placeholder="Email Address" aria-label="Email Address"
-                        <input type="text" id="empName" placeholder="Full Name" aria-label="Employee Full Name"
-                            class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
-                        <input type="text" id="empRole" placeholder="Role (e.g. Cashier, Cook)" aria-label="Employee Role"
+                        <input type="text" id="empRoleAlt" placeholder="Role (e.g. Cashier, Cook)" aria-label="Role"
                             class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
 
                         <div class="grid md:grid-cols-2 gap-4">
-                            <input type="tel" id="empPhone" placeholder="Phone Number" aria-label="Employee Phone Number"
+                            <input type="tel" id="empPhoneAlt" placeholder="Phone Number" aria-label="Employee Phone Number"
                                 class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
-                            <input type="email" id="empEmail" placeholder="Email Address" aria-label="Employee Email Address"
+                            <input type="email" id="empEmailAlt" placeholder="Email Address" aria-label="Employee Email Address"
                                 class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
                         </div>
 
-                        <select id="empStatus" aria-label="Employee Status" class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
+                        <select id="empStatusAlt" aria-label="Employee Status" class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
                             <option value="Active">Active</option>
                             <option value="Inactive">Inactive</option>
                         </select>
 
                         <div class="flex justify-end gap-3 pt-2">
-                            <button onclick="document.getElementById('addEmployeeModal').classList.add('hidden')"
+                            <button onclick="closeEmployeeModalAlt()"
                                 class="btn btn-outline px-6 py-2">Cancel</button>
-                            <button onclick="addEmployee()" class="btn btn-accent px-6 py-2">Save Employee</button>
+                            <button onclick="submitEmployee()" class="btn btn-accent px-6 py-2" id="submitEmpBtnAlt">Save Employee</button>
                         </div>
                     </div>
                 </div>
@@ -1732,7 +1724,7 @@
             </div>
         </div>
 
-        <div id="view-tasks" class="view-section px-6 py-12 hidden">
+        <div id="view-tasks-alt" class="view-section px-6 py-12 hidden">
             <div class="max-w-4xl mx-auto">
                 <div class="card shadow-2xl mb-12" id="managerTaskCreation" style="display: none;">
                     <h1 class="text-3xl font-black mb-4">Assign Tasks</h1>
@@ -1741,20 +1733,20 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                         <div>
                             <label class="block text-sm font-bold mb-2">Task Title</label>
-                            <input type="text" id="taskTitle" class="w-full" placeholder="e.g. Close Registers">
+                            <input type="text" id="taskTitleAlt" class="w-full" placeholder="e.g. Close Registers">
                         </div>
                         <div>
                             <label class="block text-sm font-bold mb-2">Assign To</label>
-                            <select id="taskAssignee" class="w-full">
+                            <select id="taskAssigneeAlt" class="w-full">
                                 <option value="">Select Employee</option>
                             </select>
                         </div>
                     </div>
 
                     <label class="block text-sm font-bold mb-2">Description (Optional)</label>
-                    <textarea id="taskDescription" class="h-24 mb-6" placeholder="Provide extra details..."></textarea>
+                    <textarea id="taskDescriptionAlt" class="h-24 mb-6" placeholder="Provide extra details..."></textarea>
 
-                    <button id="btnSubmitTask" onclick="submitTask()" class="btn btn-accent w-full py-4">Assign Task</button>
+                    <button id="btnSubmitTaskAlt" onclick="submitTaskAlt()" class="btn btn-accent w-full py-4">Assign Task</button>
                 </div>
 
                 <div class="mb-12">
@@ -3305,6 +3297,62 @@
                     alert("Network error: Could not connect to the server. Please check your connection.");
                 } else {
                     alert("Failed to submit ticket. " + error.message);
+                }
+            } finally {
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+                lucide.createIcons();
+            }
+        }
+
+        async function submitTaskAlt() {
+            if (!currentUser || !currentUserData || !currentUserData.orgId) {
+                alert("You must be part of an organization to assign tasks.");
+                return;
+            }
+
+            const title = document.getElementById('taskTitleAlt').value.trim();
+            const desc = document.getElementById('taskDescriptionAlt').value.trim();
+            const assignee = document.getElementById('taskAssigneeAlt').value;
+
+            if (!title || !assignee) {
+                alert("Please provide a title and assign the task to an employee.");
+                return;
+            }
+
+            const submitBtn = document.getElementById('btnSubmitTaskAlt');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> Assigning...';
+            submitBtn.disabled = true;
+            lucide.createIcons();
+
+            try {
+                await db.collection('tasks').add({
+                    title: title,
+                    description: desc,
+                    assignedTo: assignee,
+                    priority: 'Medium', // defaults
+                    dueDate: null,
+                    status: 'Pending',
+                    authorId: currentUser.uid,
+                    assignedByName: currentUserData.name || currentUser.email,
+                    orgId: currentUserData.orgId || null,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                document.getElementById('taskTitleAlt').value = '';
+                document.getElementById('taskDescriptionAlt').value = '';
+                document.getElementById('taskAssigneeAlt').value = '';
+
+                alert("Task assigned successfully.");
+                fetchTasks();
+            } catch (error) {
+                console.error("Error assigning task:", error);
+                if (error.code === 'unavailable' || error.code === 'auth/network-request-failed') {
+                    alert("Network error: Could not connect to the server. Please check your connection.");
+                } else {
+                    alert("Failed to assign task. " + error.message);
                 }
             } finally {
                 submitBtn.innerHTML = originalText;
@@ -4871,10 +4919,21 @@ function checkAndRenderOrgControls() {
             document.getElementById('submitEmpBtn').innerText = "Save Employee";
         }
 
+        function closeEmployeeModalAlt() {
+            document.getElementById('addEmployeeModalAlt').classList.add('hidden');
+            document.getElementById('empModalIdAlt').value = "";
+            document.getElementById('empNameAlt').value = "";
+            document.getElementById('empRoleAlt').value = "";
+            document.getElementById('empPhoneAlt').value = "";
+            document.getElementById('employeeModalTitleAlt').innerText = "Add New Employee";
+            document.getElementById('submitEmpBtnAlt').innerText = "Save Employee";
+        }
+
         function openEditEmployeeModal(empId) {
             const emp = activeEmployeesList.find(e => e.id === empId);
             if (!emp) return;
 
+            // Ensure the main modal is populated for team view edit
             document.getElementById('empModalId').value = emp.id;
             document.getElementById('empName').value = emp.name;
             document.getElementById('empRole').value = emp.role;
@@ -4891,17 +4950,22 @@ function checkAndRenderOrgControls() {
                 return;
             }
 
-            const empId = document.getElementById('empModalId').value;
-            const name = document.getElementById('empName').value.trim();
-            const role = document.getElementById('empRole').value;
-            const phone = document.getElementById('empPhone').value.trim();
+            let modalIdPrefix = '';
+            if(!document.getElementById('addEmployeeModalAlt').classList.contains('hidden')){
+                modalIdPrefix = 'Alt';
+            }
+
+            const empId = document.getElementById('empModalId' + modalIdPrefix)?.value || "";
+            const name = document.getElementById('empName' + modalIdPrefix).value.trim();
+            const role = document.getElementById('empRole' + modalIdPrefix).value;
+            const phone = document.getElementById('empPhone' + modalIdPrefix).value.trim();
 
             if (!name) {
                 alert("Employee name is required.");
                 return;
             }
 
-            const btn = document.getElementById('submitEmpBtn');
+            const btn = document.getElementById('submitEmpBtn' + modalIdPrefix) || document.getElementById('submitEmpBtn');
             const ogText = btn.innerText;
             btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Saving...`;
             btn.disabled = true;
