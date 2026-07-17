@@ -101,3 +101,8 @@
 **Vulnerability:** User-controlled input `task.priority` was interpolated directly into `innerHTML` strings when rendering task cards, leading to a Stored XSS vulnerability.
 **Learning:** It is crucial to escape all user-provided data, including seemingly restricted fields like "priority", as data in the database can be manipulated.
 **Prevention:** Consistently apply `escapeHTML` to all dynamic variables embedded within string literals that are assigned to `innerHTML`.
+
+## 2024-05-27 - Multitenant Authorization Bypass via Arbitrary Field Updates
+**Vulnerability:** The `users/{userId}` collection allowed users to arbitrarily update their `orgId` and `role` fields because these fields were omitted from the `affectedKeys().hasAny([...])` restriction block for non-admin users. This allowed standard users to assign themselves to any organization or elevate their privileges.
+**Learning:** In a multi-tenant environment, the fields that determine data isolation boundaries (like `orgId` or `tenantId`) or authorization capabilities (`role`, `isAdmin`) must be strictly guarded against client-side modification. Simply validating user ownership (`isOwner(userId)`) on an update request is insufficient if they can alter their access parameters.
+**Prevention:** Always restrict fields used for data segmentation or authorization using `affectedKeys().hasAny([...])` on `update` rules, and stringently validate them on `create` rules for non-admin accounts.
