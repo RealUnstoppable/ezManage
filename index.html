@@ -987,7 +987,7 @@
                             <label for="taskDueDate" class="block text-sm font-medium mb-1">Due Date</label>
                             <input type="date" id="taskDueDate" class="w-full" required>
                         </div>
-                        <button type="submit" class="btn btn-primary w-full">Assign Task</button>
+                        <button type="submit" class="btn btn-primary w-full disabled:opacity-70 disabled:cursor-not-allowed">Assign Task</button>
                     </form>
                 </div>
 
@@ -1786,7 +1786,7 @@
                     </div>
                     <label for="timeoffReason" class="block text-sm font-bold mb-2">Reason</label>
                     <textarea id="timeoffReason" class="h-24 mb-6" placeholder="e.g. Vacation, Medical appointment..."></textarea>
-                    <button id="btnSubmitTimeOff" onclick="submitTimeOffRequest()" class="btn btn-accent w-full py-4">Submit Request</button>
+                    <button id="btnSubmitTimeOff" onclick="submitTimeOffRequest()" class="btn btn-accent w-full py-4 disabled:opacity-70 disabled:cursor-not-allowed">Submit Request</button>
                 </div>
 
                 <div class="mb-12">
@@ -3542,8 +3542,9 @@
             }
 
             const btn = document.getElementById('btnSubmitTimeOff');
-            const originalText = btn.innerText;
-            btn.innerText = 'Submitting...';
+            const originalText = btn.innerHTML;
+            btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin inline-block"></i> Submitting...`;
+            lucide.createIcons();
             btn.disabled = true;
 
             try {
@@ -3569,8 +3570,9 @@
                     alert("Error submitting request. Please try again.");
                 }
             } finally {
-                btn.innerText = originalText;
+                btn.innerHTML = originalText;
                 btn.disabled = false;
+                lucide.createIcons();
             }
         }
 
@@ -4968,8 +4970,9 @@ function checkAndRenderOrgControls() {
 
             try {
                 const submitBtn = document.querySelector('#createTaskForm button[type="submit"]');
-                const originalText = submitBtn.textContent;
-                submitBtn.textContent = 'Assigning...';
+                const originalText = submitBtn.innerHTML;
+                submitBtn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin inline-block"></i> Assigning...`;
+                lucide.createIcons();
                 submitBtn.disabled = true;
 
                 await db.collection('tasks').add({
@@ -4987,12 +4990,17 @@ function checkAndRenderOrgControls() {
                 showToast("Task assigned successfully!");
                 fetchTasks();
 
-                submitBtn.textContent = originalText;
+                submitBtn.innerHTML = originalText;
                 submitBtn.disabled = false;
+                lucide.createIcons();
             } catch (error) {
                 logManagerError("Error creating task", error);
                 showToast("Error assigning task.");
-                document.querySelector('#createTaskForm button[type="submit"]').disabled = false;
+                const submitBtn = document.querySelector('#createTaskForm button[type="submit"]');
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    lucide.createIcons();
+                }
             }
         }
 
