@@ -3596,6 +3596,9 @@
                         return bTime - aTime;
                     });
 
+                    // ⚡ Bolt Optimization: Replace O(n²) string concatenation inside loop with array map().join('')
+                    let myTasksArr = [];
+                    let orgTasksArr = [];
                     tasks.forEach(task => {
                         let statusColor = task.status === 'Completed' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800';
 
@@ -3612,12 +3615,12 @@
 
                         // Employee specific view (Can mark their own as complete)
                         if (task.assigneeId === currentUser.uid && task.status === 'Pending') {
-                            myTasksHtml += taskCard + `
+                            myTasksArr.push(taskCard + `
                                     <button onclick="updateTaskStatus('${task.id}', 'Completed')" class="btn btn-sm bg-green-500 text-white hover:bg-green-600"><i data-lucide="check" class="w-4 h-4 mr-1"></i>Complete</button>
                                 </div></div>
-                            `;
+                            `);
                         } else if (task.assigneeId === currentUser.uid) {
-                             myTasksHtml += taskCard + `</div></div>`;
+                             myTasksArr.push(taskCard + `</div></div>`);
                         }
 
                         // Manager specific view
@@ -3625,9 +3628,11 @@
                             let deleteBtn = `<button onclick="deleteTask('${task.id}')" class="btn btn-sm btn-outline text-red-500 hover:bg-red-50" aria-label="Delete Task"><i data-lucide="trash-2" class="w-4 h-4"></i></button>`;
                             let revertBtn = task.status === 'Completed' ? `<button onclick="updateTaskStatus('${task.id}', 'Pending')" class="btn btn-sm btn-outline text-yellow-600" aria-label="Mark Pending"><i data-lucide="rotate-ccw" class="w-4 h-4"></i></button>` : '';
 
-                            orgTasksHtml += taskCard + revertBtn + deleteBtn + `</div></div>`;
+                            orgTasksArr.push(taskCard + revertBtn + deleteBtn + `</div></div>`);
                         }
                     });
+                    myTasksHtml = myTasksArr.join('');
+                    orgTasksHtml = orgTasksArr.join('');
 
                     if (myContainer) myContainer.innerHTML = myTasksHtml || '<p class="text-slate-500 text-center py-4">No tasks assigned to you right now. You\'re all caught up!</p>';
                     if (orgContainer && isManager) orgContainer.innerHTML = orgTasksHtml || '<p class="text-slate-500 text-center py-4">No active tasks in the organization.</p>';
@@ -3670,6 +3675,9 @@
 
                  const isManager = currentUserData.orgId === currentUser.uid;
 
+                 // ⚡ Bolt Optimization: Replace O(n²) string concatenation inside loop with array map().join('')
+                 let myRequestsArr = [];
+                 let managerRequestsArr = [];
                  requests.forEach(req => {
                      let statusColor = req.status === 'Approved' ? 'bg-green-100 text-green-800' : (req.status === 'Rejected' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800');
 
@@ -3686,18 +3694,20 @@
 
                      if (req.uid === currentUser.uid) {
                           let cancelBtn = req.status === 'Pending' ? `<button class="btn btn-sm btn-outline text-red-500 hover:bg-red-50 delete-timeoff-btn" data-req-id="${req.id}">Cancel</button>` : '';
-                          myRequestsHtml += reqCard + cancelBtn + `</div></div>`;
+                          myRequestsArr.push(reqCard + cancelBtn + `</div></div>`);
                      }
 
                      if (isManager && req.status === 'Pending') {
-                          managerRequestsHtml += reqCard + `
+                          managerRequestsArr.push(reqCard + `
                                 <button class="btn btn-sm bg-green-500 text-white hover:bg-green-600 update-timeoff-btn" data-req-id="${req.id}" data-req-status="Approved">Approve</button>
                                 <button class="btn btn-sm bg-red-500 text-white hover:bg-red-600 update-timeoff-btn" data-req-id="${req.id}" data-req-status="Rejected">Deny</button>
-                          </div></div>`;
+                          </div></div>`);
                      } else if (isManager) {
-                          managerRequestsHtml += reqCard + `</div></div>`;
+                          managerRequestsArr.push(reqCard + `</div></div>`);
                      }
                  });
+                 myRequestsHtml = myRequestsArr.join('');
+                 managerRequestsHtml = managerRequestsArr.join('');
 
                  if (employeeContainer) employeeContainer.innerHTML = myRequestsHtml || '<p class="text-slate-500">No time off requests found.</p>';
                  if (managerContainer) {
