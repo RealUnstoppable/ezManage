@@ -409,7 +409,7 @@
                 <a href="#" onclick="navTo('welcome')" class="hover:text-sky-600 transition-colors">Home</a>
                 <a href="#" onclick="navTo('tracker')" class="hover:text-sky-600 transition-colors">App</a>
                 <a href="#" onclick="navTo('schedule')" class="hover:text-sky-600 transition-colors">Schedule</a>
-            <a href="#" onclick="navTo('tasks')"
+                            <a href="#" onclick="navTo('announcements')" class="hover:text-sky-600 transition-colors">Notices</a>
                 <a href="#" onclick="navTo('tasks')" class="hover:text-sky-600 transition-colors">Tasks</a>
                 <a href="easy-ai.html" class="hover:text-sky-600 transition-colors text-sky-500">AI Predictor</a>
                 <a href="#" onclick="navTo('pricing')" class="hover:text-sky-600 transition-colors">Pricing</a>
@@ -453,6 +453,10 @@
             <a href="#" onclick="navTo('history')"
                 class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="clock"></i>
                 History</a>
+
+            <a href="#" onclick="navTo('announcements')"
+                class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="megaphone"></i>
+                Announcements</a>
             <a href="#" onclick="navTo('shiftNotes')"
                 class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i
                     data-lucide="clipboard-list"></i>
@@ -958,6 +962,60 @@
 
 
         <!-- View: Tasks -->
+
+        <div id="view-announcements" class="view-section px-6 py-12 hidden">
+            <div class="max-w-4xl mx-auto">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+                    <h1 class="text-4xl font-black flex items-center gap-3"><i data-lucide="megaphone" class="w-8 h-8 text-sky-500"></i> Announcements</h1>
+                    <button id="btnCreateAnnouncement" onclick="document.getElementById('addAnnouncementModal').classList.remove('hidden')"
+                        class="btn btn-primary flex items-center gap-2 px-6 hidden">
+                        <i data-lucide="plus" class="w-5 h-5"></i> New Announcement
+                    </button>
+                </div>
+
+                <div id="addAnnouncementModal"
+                    class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+                    <div class="bg-white dark:bg-slate-900 w-full max-w-lg rounded-3xl shadow-2xl p-8 relative">
+                        <button onclick="document.getElementById('addAnnouncementModal').classList.add('hidden')"
+                            class="absolute top-6 right-6 text-slate-400 hover:text-black dark:hover:text-white">
+                            <i data-lucide="x"></i>
+                        </button>
+                        <h3 class="text-2xl font-black mb-6 text-slate-900 dark:text-white">Create Announcement</h3>
+                        <form id="announcementForm" onsubmit="createAnnouncement(event)" class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-bold mb-1 text-slate-700 dark:text-slate-300">Title</label>
+                                <input type="text" id="announcementTitle" required
+                                    class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500 text-slate-900 dark:text-white"
+                                    placeholder="e.g. New Break Policy">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-bold mb-1 text-slate-700 dark:text-slate-300">Content</label>
+                                <textarea id="announcementContent" required rows="4"
+                                    class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500 text-slate-900 dark:text-white"
+                                    placeholder="Enter details here..."></textarea>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-bold mb-1 text-slate-700 dark:text-slate-300">Priority</label>
+                                <select id="announcementPriority" class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500 text-slate-900 dark:text-white">
+                                    <option value="Normal">Normal</option>
+                                    <option value="High">High</option>
+                                </select>
+                            </div>
+                            <button type="submit"
+                                class="w-full btn btn-primary py-4 font-bold text-lg mt-4 shadow-xl">Post Announcement</button>
+                        </form>
+                    </div>
+                </div>
+
+                <div id="announcementsContainer" class="space-y-6">
+                    <div class="text-center py-8">
+                        <i data-lucide="loader-2" class="w-8 h-8 animate-spin mx-auto text-sky-500 mb-4"></i>
+                        <p class="text-slate-500">Loading announcements...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div id="view-tasks" class="view-section px-6 py-12 hidden max-w-4xl mx-auto">
             <h2 class="text-3xl font-bold mb-6 text-slate-800 dark:text-white flex items-center gap-2">
                 <i data-lucide="check-square" class="w-8 h-8 text-sky-500"></i>
@@ -2279,13 +2337,17 @@
                 localStorage.setItem('navTo', viewId);
                 return;
             }
-            if (!currentUser && (['history', 'presets', 'performance', 'request', 'profile', 'shiftNotes', 'team', 'employees', 'timeoff', 'tasks'].includes(viewId))) {
+            if (!currentUser && (['history', 'presets', 'performance', 'request', 'profile', 'shiftNotes', 'team', 'employees', 'timeoff', 'tasks', 'announcements'].includes(viewId))) {
             if (!currentUser && (['history', 'presets', 'performance', 'request', 'profile', 'shiftNotes', 'employees', 'timeoff', 'team'].includes(viewId))) {
             if (!currentUser && (['history', 'presets', 'performance', 'request', 'profile', 'shiftNotes', 'team', 'employees', 'timeoff'].includes(viewId))) {
                 viewId = 'auth';
             }
             if (viewId === 'maintenance' && currentUser) {
                 fetchMaintenanceTickets();
+            }
+
+            if (viewId === 'announcements' && currentUser) {
+                fetchAnnouncements();
             }
             if (viewId === 'tasks' && currentUser) {
                 fetchTasks();
@@ -4993,6 +5055,156 @@ function checkAndRenderOrgControls() {
                 logManagerError("Error creating task", error);
                 showToast("Error assigning task.");
                 document.querySelector('#createTaskForm button[type="submit"]').disabled = false;
+            }
+        }
+
+
+        let unsubscribeAnnouncements = null;
+
+        async function fetchAnnouncements() {
+            if (!currentUser || !currentUserData) return;
+
+            const container = document.getElementById('announcementsContainer');
+            if (!container) return;
+
+            const isManager = currentUserData.orgId === currentUser.uid;
+            const actualOrgId = currentUserData.orgId || currentUser.uid;
+
+            if (isManager) {
+                document.getElementById('btnCreateAnnouncement').classList.remove('hidden');
+            } else {
+                document.getElementById('btnCreateAnnouncement').classList.add('hidden');
+            }
+
+            try {
+                if (unsubscribeAnnouncements) {
+                    unsubscribeAnnouncements();
+                }
+
+                const query = db.collection('announcements')
+                    .where('orgId', '==', actualOrgId)
+                    .orderBy('createdAt', 'desc');
+
+                unsubscribeAnnouncements = query.onSnapshot((snapshot) => {
+                    container.innerHTML = '';
+
+                    if (snapshot.empty) {
+                        container.innerHTML = `
+                            <div class="text-center py-16 bg-slate-50 dark:bg-slate-900 rounded-3xl border-2 border-dashed border-slate-200 dark:border-slate-800">
+                                <i data-lucide="megaphone" class="w-12 h-12 text-slate-400 mx-auto mb-4 opacity-50"></i>
+                                <h3 class="text-xl font-bold mb-2">No Announcements</h3>
+                                <p class="text-slate-500">There are no company announcements at this time.</p>
+                            </div>
+                        `;
+                        lucide.createIcons();
+                        return;
+                    }
+
+                    const fragment = document.createDocumentFragment();
+
+                    snapshot.forEach(docSnap => {
+                        const data = docSnap.data();
+                        const id = docSnap.id;
+                        const div = document.createElement('div');
+
+                        let priorityBadge = '';
+                        if (data.priority === 'High') {
+                            priorityBadge = '<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-black bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"><i data-lucide="alert-circle" class="w-3 h-3"></i> High Priority</span>';
+                        } else {
+                            priorityBadge = '<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400">Normal</span>';
+                        }
+
+                        const dateStr = data.createdAt ? new Date(data.createdAt.toMillis()).toLocaleString() : 'Just now';
+
+                        div.className = 'card bg-white dark:bg-[#111] p-6 shadow-sm border border-slate-100 dark:border-slate-800/50 rounded-2xl relative group overflow-hidden';
+
+                        const safeTitle = window.escapeHTML ? window.escapeHTML(data.title) : data.title;
+                        const safeContent = window.escapeHTML ? window.escapeHTML(data.content) : data.content;
+                        const safeAuthorName = window.escapeHTML ? window.escapeHTML(data.authorName) : data.authorName;
+
+                        let deleteBtn = '';
+                        if (isManager || currentUser.uid === data.authorId) {
+                            deleteBtn = `
+                                <button onclick="deleteAnnouncement('${id}')" class="absolute top-6 right-6 p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100 z-10" aria-label="Delete announcement">
+                                    <i data-lucide="trash-2" class="w-5 h-5"></i>
+                                </button>
+                            `;
+                        }
+
+                        div.innerHTML = `
+                            ${deleteBtn}
+                            <div class="flex items-start justify-between mb-4 pr-10">
+                                <div>
+                                    <h3 class="text-xl font-bold text-slate-900 dark:text-white mb-2">${safeTitle}</h3>
+                                    <div class="flex items-center gap-3 text-xs text-slate-500">
+                                        <span class="flex items-center gap-1"><i data-lucide="user" class="w-3 h-3"></i> ${safeAuthorName}</span>
+                                        <span>•</span>
+                                        <span class="flex items-center gap-1"><i data-lucide="calendar" class="w-3 h-3"></i> ${dateStr}</span>
+                                        <span>•</span>
+                                        ${priorityBadge}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="prose prose-sm dark:prose-invert max-w-none text-slate-600 dark:text-slate-400 whitespace-pre-wrap">${safeContent}</div>
+                        `;
+                        fragment.appendChild(div);
+                    });
+
+                    container.appendChild(fragment);
+                    lucide.createIcons();
+
+                }, (error) => {
+                    logManagerError('Error listening to announcements:', error);
+                    container.innerHTML = '<div class="text-red-500 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl border border-red-200 dark:border-red-800">Failed to load announcements.</div>';
+                });
+            } catch (error) {
+                logManagerError('Error fetching announcements:', error);
+            }
+        }
+
+        async function createAnnouncement(event) {
+            event.preventDefault();
+            if (!currentUser || !currentUserData) return;
+
+            const btn = event.target.querySelector('button[type="submit"]');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin mx-auto"></i>';
+            btn.disabled = true;
+
+            const title = document.getElementById('announcementTitle').value.trim();
+            const content = document.getElementById('announcementContent').value.trim();
+            const priority = document.getElementById('announcementPriority').value;
+            const actualOrgId = currentUserData.orgId || currentUser.uid;
+
+            try {
+                await db.collection('announcements').add({
+                    orgId: actualOrgId,
+                    title: title,
+                    content: content,
+                    priority: priority,
+                    authorId: currentUser.uid,
+                    authorName: currentUserData.name || 'Manager',
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                document.getElementById('addAnnouncementModal').classList.add('hidden');
+                event.target.reset();
+            } catch (error) {
+                logManagerError("Error creating announcement", error);
+                alert("Failed to create announcement.");
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        }
+
+        async function deleteAnnouncement(id) {
+            if (!confirm('Are you sure you want to delete this announcement?')) return;
+            try {
+                await db.collection('announcements').doc(id).delete();
+            } catch (error) {
+                logManagerError("Error deleting announcement", error);
+                alert("Failed to delete announcement.");
             }
         }
 
