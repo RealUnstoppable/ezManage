@@ -2274,13 +2274,18 @@
             lucide.createIcons();
         }
 
+        let lastTimerString = null;
         function updateTimerUI() {
             if (!shiftStartTime) return;
             const diff = Date.now() - shiftStartTime;
             const h = Math.floor(diff / 3600000);
             const m = Math.floor((diff % 3600000) / 60000);
             const s = Math.floor((diff % 60000) / 1000);
-            document.getElementById('timerDisplay').innerText = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+            const timerString = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+            if (timerString !== lastTimerString) {
+                document.getElementById('timerDisplay').innerText = timerString;
+                lastTimerString = timerString;
+            }
         }
 
         function addDrawerItem(val = "100.00", label = "") {

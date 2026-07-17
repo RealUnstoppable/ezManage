@@ -130,24 +130,36 @@ async function updateCartState(mutationFn, errorMessage) {
 }
 
 async function handleAddToCart(productId) {
-    await updateCartState(() => {
-        cart[productId] = (cart[productId] || 0) + 1;
-    }, "Error adding item to cart");
+    try {
+        await updateCartState(() => {
+            cart[productId] = (cart[productId] || 0) + 1;
+        }, "Error adding item to cart");
+    } catch (error) {
+        logManagerError("Error in handleAddToCart", error);
+    }
 }
 
 async function handleUpdateQuantity(productId, quantity) {
-    if (quantity <= 0) {
-        return handleRemoveFromCart(productId);
+    try {
+        if (quantity <= 0) {
+            return await handleRemoveFromCart(productId);
+        }
+        await updateCartState(() => {
+            cart[productId] = parseInt(quantity, 10);
+        }, "Error updating item quantity");
+    } catch (error) {
+        logManagerError("Error in handleUpdateQuantity", error);
     }
-    await updateCartState(() => {
-        cart[productId] = parseInt(quantity, 10);
-    }, "Error updating item quantity");
 }
 
 async function handleRemoveFromCart(productId) {
-    await updateCartState(() => {
-        delete cart[productId];
-    }, "Error removing item from cart");
+    try {
+        await updateCartState(() => {
+            delete cart[productId];
+        }, "Error removing item from cart");
+    } catch (error) {
+        logManagerError("Error in handleRemoveFromCart", error);
+    }
 }
 
 async function saveCart() {
