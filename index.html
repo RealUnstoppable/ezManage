@@ -409,7 +409,6 @@
                 <a href="#" onclick="navTo('welcome')" class="hover:text-sky-600 transition-colors">Home</a>
                 <a href="#" onclick="navTo('tracker')" class="hover:text-sky-600 transition-colors">App</a>
                 <a href="#" onclick="navTo('schedule')" class="hover:text-sky-600 transition-colors">Schedule</a>
-            <a href="#" onclick="navTo('tasks')"
                 <a href="#" onclick="navTo('tasks')" class="hover:text-sky-600 transition-colors">Tasks</a>
                 <a href="easy-ai.html" class="hover:text-sky-600 transition-colors text-sky-500">AI Predictor</a>
                 <a href="#" onclick="navTo('pricing')" class="hover:text-sky-600 transition-colors">Pricing</a>
@@ -1183,76 +1182,6 @@
             </div>
         </div>
 
-        <div id="view-tasks" class="view-section px-6 py-12 hidden">
-            <div class="max-w-4xl mx-auto">
-                <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-                    <h1 class="text-4xl font-black">Task Manager</h1>
-                    <button onclick="document.getElementById('assignTaskModal').classList.toggle('hidden')"
-                        class="btn btn-primary flex items-center gap-2 px-6">
-                        <i data-lucide="plus-circle" class="w-5 h-5"></i> Assign Task
-                    </button>
-                </div>
-
-                <div id="assignTaskModal"
-                    class="hidden bg-white dark:bg-slate-900 rounded-3xl p-6 md:p-8 shadow-sm border border-slate-100 dark:border-slate-800 mb-12">
-                    <h2 class="text-xl font-bold mb-4">Assign New Task</h2>
-                    <div class="space-y-4">
-                        <input type="text" id="taskTitle" placeholder="Task Title"
-                            class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
-                        <textarea id="taskDesc" placeholder="Task Description..." rows="3"
-                            class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500 resize-none"></textarea>
-
-                        <div class="flex flex-col md:flex-row gap-4">
-                            <select id="taskAssignee" class="flex-1 bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
-                                <option value="" disabled selected>Assign To Employee</option>
-                            </select>
-                            <select id="taskPriority"
-                                class="flex-1 bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
-                                <option value="Low">Low Priority</option>
-                                <option value="Medium">Medium Priority</option>
-                                <option value="High">High Priority</option>
-                                <option value="Critical">Critical</option>
-                            </select>
-                            <input type="date" id="taskDueDate" class="flex-1 bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
-                        </div>
-
-                        <div class="flex justify-end gap-3 pt-2">
-                            <button onclick="document.getElementById('assignTaskModal').classList.add('hidden')"
-                                class="btn btn-outline px-6 py-2">Cancel</button>
-                            <button onclick="submitTask()" class="btn btn-accent px-6 py-2">Assign Task</button>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-                    <div class="flex items-center gap-4 w-full md:w-auto">
-                        <select id="taskFilterStatus" onchange="renderFilteredTasks()" class="bg-slate-50 dark:bg-slate-800 p-2 rounded-xl border-none focus:ring-2 focus:ring-sky-500 text-sm">
-                            <option value="All">All Statuses</option>
-                            <option value="Pending">Pending</option>
-                            <option value="In Progress">In Progress</option>
-                        </select>
-                        <select id="taskFilterAssignee" onchange="renderFilteredTasks()" class="bg-slate-50 dark:bg-slate-800 p-2 rounded-xl border-none focus:ring-2 focus:ring-sky-500 text-sm flex-1 md:flex-none">
-                            <option value="All">All Assignees</option>
-                        </select>
-                    </div>
-                    <button onclick="fetchTasks()"
-                        class="text-sm font-bold text-sky-500 hover:text-sky-600 flex items-center gap-2">
-                        <i data-lucide="refresh-cw" class="w-4 h-4"></i> Refresh
-                    </button>
-                </div>
-
-                <h2 class="text-xl font-black mb-4">Active Tasks</h2>
-                <div id="tasksContainer" class="space-y-4 mb-12">
-                    <!-- Tasks populated via JS -->
-                </div>
-
-                <h2 class="text-xl font-black mb-4 border-t border-slate-200 dark:border-slate-800 pt-8">Completed Tasks</h2>
-                <div id="completedTasksContainer" class="space-y-4 opacity-75">
-                    <!-- Completed Tasks populated via JS -->
-                </div>
-            </div>
-        </div>
-
         <div id="view-maintenance" class="view-section px-6 py-12 hidden">
             <div class="max-w-4xl mx-auto">
                 <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
@@ -1667,43 +1596,6 @@
                 <h3 class="text-xl font-black mb-6 border-b border-slate-200 dark:border-slate-800 pb-2">My Requests
                 </h3>
                 <div id="myFeatureRequests" class="space-y-4"></div>
-            </div>
-        </div>
-
-        <div id="view-tasks" class="view-section px-6 py-12 hidden">
-            <div class="max-w-4xl mx-auto">
-                <div class="card shadow-2xl mb-12" id="managerTaskCreation" style="display: none;">
-                    <h1 class="text-3xl font-black mb-4">Assign Tasks</h1>
-                    <p class="text-slate-500 mb-8">Create specific checklists and tasks for your team to complete during their shifts.</p>
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                        <div>
-                            <label class="block text-sm font-bold mb-2">Task Title</label>
-                            <input type="text" id="taskTitle" class="w-full" placeholder="e.g. Close Registers">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-bold mb-2">Assign To</label>
-                            <select id="taskAssignee" class="w-full">
-                                <option value="">Select Employee</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <label class="block text-sm font-bold mb-2">Description (Optional)</label>
-                    <textarea id="taskDescription" class="h-24 mb-6" placeholder="Provide extra details..."></textarea>
-
-                    <button id="btnSubmitTask" onclick="submitTask()" class="btn btn-accent w-full py-4">Assign Task</button>
-                </div>
-
-                <div class="mb-12">
-                    <h3 class="text-xl font-black mb-6 border-b border-slate-200 dark:border-slate-800 pb-2">My Assigned Tasks</h3>
-                    <div id="myTasksContainer" class="space-y-4"></div>
-                </div>
-
-                <div id="managerTasksSection" style="display: none;">
-                    <h3 class="text-xl font-black mb-6 border-b border-slate-200 dark:border-slate-800 pb-2 text-purple-600"><i data-lucide="shield" class="inline w-5 h-5 mr-2"></i>Organization Tasks</h3>
-                    <div id="orgTasksContainer" class="space-y-4"></div>
-                </div>
             </div>
         </div>
 
