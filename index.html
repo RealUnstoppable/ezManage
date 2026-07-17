@@ -3450,7 +3450,7 @@
                                     </div>
                                     <div class="flex gap-2 items-start">
                                         <span class="px-3 py-1 rounded-full text-xs font-bold ${prioColors[ticket.priority] || prioColors['Low']}">${escapeHTML(ticket.priority)}</span>
-                                        <select class="ticket-status-select px-3 py-1 rounded-full text-xs font-bold border appearance-none cursor-pointer focus:outline-none ${statusColors[ticket.status] || statusColors['Open']}" data-ticket-id="${escapeHTML(ticket.id)}">
+                                        <select aria-label="Update ticket status" class="ticket-status-select px-3 py-1 rounded-full text-xs font-bold border appearance-none cursor-pointer focus:outline-none ${statusColors[ticket.status] || statusColors['Open']}" data-ticket-id="${escapeHTML(ticket.id)}">
                                             <option value="Open" ${ticket.status === 'Open' ? 'selected' : ''}>Open</option>
                                             <option value="In Progress" ${ticket.status === 'In Progress' ? 'selected' : ''}>In Progress</option>
                                             <option value="Resolved" ${ticket.status === 'Resolved' ? 'selected' : ''}>Resolved</option>
@@ -4876,7 +4876,7 @@ function checkAndRenderOrgControls() {
                                 </div>
                                 <div class="flex gap-2 items-start">
                                     <span class="px-3 py-1 rounded-full text-xs font-bold ${prioColors[incident.severity] || prioColors['Low']}">${escapeHTML(incident.severity)}</span>
-                                    <select class="px-3 py-1 rounded-full text-xs font-bold border appearance-none cursor-pointer focus:outline-none incident-status-select ${statusColors[incident.status] || statusColors['Open']}" data-incident-id="${escapeHTML(incident.id)}">
+                                    <select aria-label="Update incident status" class="px-3 py-1 rounded-full text-xs font-bold border appearance-none cursor-pointer focus:outline-none incident-status-select ${statusColors[incident.status] || statusColors['Open']}" data-incident-id="${escapeHTML(incident.id)}">
                                         <option value="Open" ${incident.status === 'Open' ? 'selected' : ''}>Open</option>
                                         <option value="In Progress" ${incident.status === 'In Progress' ? 'selected' : ''}>In Progress</option>
                                         <option value="Resolved" ${incident.status === 'Resolved' ? 'selected' : ''}>Resolved</option>
@@ -5256,7 +5256,7 @@ function checkAndRenderOrgControls() {
 
                     if (canEdit) {
                         statusHtml = `
-                            <select class="text-xs p-1 border rounded bg-slate-50 dark:bg-slate-900 ${statusColor}" onchange="updateTaskStatus('${doc.id}', this.value)">
+                            <select aria-label="Update task status" class="text-xs p-1 border rounded bg-slate-50 dark:bg-slate-900 ${statusColor}" onchange="updateTaskStatus('${doc.id}', this.value)">
                                 <option value="Pending" ${task.status === 'Pending' ? 'selected' : ''}>Pending</option>
                                 <option value="In Progress" ${task.status === 'In Progress' ? 'selected' : ''}>In Progress</option>
                                 <option value="Completed" ${task.status === 'Completed' ? 'selected' : ''}>Completed</option>
@@ -5617,7 +5617,7 @@ function checkAndRenderOrgControls() {
                                 </div>
                                 <div class="flex flex-wrap gap-2 items-start justify-end">
                                     <span class="px-3 py-1 rounded-full text-xs font-bold ${prioColors[task.priority] || prioColors['Low']}">${escapeHTML(task.priority)}</span>
-                                    <select class="px-3 py-1 rounded-full text-xs font-bold border appearance-none cursor-pointer focus:outline-none ${statusColors[task.status] || statusColors['Pending']}"
+                                    <select aria-label="Update task status" class="px-3 py-1 rounded-full text-xs font-bold border appearance-none cursor-pointer focus:outline-none ${statusColors[task.status] || statusColors['Pending']}"
                                         onchange="updateTaskStatus('${task.id}', this.value)">
                                         <option value="Pending" ${task.status === 'Pending' ? 'selected' : ''}>Pending</option>
                                         <option value="In Progress" ${task.status === 'In Progress' ? 'selected' : ''}>In Progress</option>
