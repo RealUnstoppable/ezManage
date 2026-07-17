@@ -1403,7 +1403,7 @@
                 snap.forEach(doc => {
                     const d = doc.data();
                     const isOwner = doc.id === currentUser.uid;
-                    const displayName = d.name || d.email.split('@')[0];
+                    const displayName = escapeHTML(d.name || d.email.split('@')[0]);
                     const color = getManagerColor(displayName);
 
                     // 1. Manager Directory
@@ -1484,8 +1484,8 @@
                       const isOwner = doc.id === currentUser.uid;
                       return `
                         <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
-                            <td class="px-6 py-4 font-black">${d.name || d.email.split('@')[0]} ${isOwner ? '<span class="ml-2 text-[10px] bg-indigo-100 text-indigo-700 px-2 py-1 rounded-full uppercase tracking-widest">Admin</span>' : ''}</td>
-                            <td class="px-6 py-4 text-slate-500">${d.email || 'N/A'}</td>
+                            <td class="px-6 py-4 font-black">${escapeHTML(d.name || d.email.split('@')[0])} ${isOwner ? '<span class="ml-2 text-[10px] bg-indigo-100 text-indigo-700 px-2 py-1 rounded-full uppercase tracking-widest">Admin</span>' : ''}</td>
+                            <td class="px-6 py-4 text-slate-500">${escapeHTML(d.email || 'N/A')}</td>
                             <td class="px-6 py-4"><span class="px-2 py-1 bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 text-[10px] font-black uppercase tracking-widest rounded-full">Active</span></td>
                             <td class="px-6 py-4 text-right">
                                 ${!isOwner ? `<button onclick="removeManager('${doc.id}')" class="text-red-400 hover:text-red-500 font-bold text-sm">Remove</button>` : `<span class="text-slate-300">-</span>`}

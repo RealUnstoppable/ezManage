@@ -101,3 +101,7 @@
 **Vulnerability:** User-controlled input `task.priority` was interpolated directly into `innerHTML` strings when rendering task cards, leading to a Stored XSS vulnerability.
 **Learning:** It is crucial to escape all user-provided data, including seemingly restricted fields like "priority", as data in the database can be manipulated.
 **Prevention:** Consistently apply `escapeHTML` to all dynamic variables embedded within string literals that are assigned to `innerHTML`.
+## $(date +%Y-%m-%d) - Cross-Site Scripting (XSS) via Unescaped Variables in innerHTML
+**Vulnerability:** Several variables originating from user input or external APIs (e.g., `authorName`, `error.message`) were directly interpolated into `.innerHTML` template strings in `index.html` and `company.html` without being properly escaped.
+**Learning:** Even if `escapeHTML` is used in some parts of the codebase, it is easy to overlook other dynamically generated variables embedded within template literals, leading to DOM-based XSS vulnerabilities.
+**Prevention:** Consistently apply `escapeHTML` (or a similar sanitization utility) to all dynamic variables embedded within string literals that are assigned to `.innerHTML`, or prefer using safe DOM manipulation methods like `.textContent` or `document.createElement`.
