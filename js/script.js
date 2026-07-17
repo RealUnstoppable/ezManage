@@ -83,7 +83,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         };
 
-        let lastGreeting = ""; // ⚡ Bolt Optimization: Cache state to prevent layout thrashing
+
 
         const updateGreeting = () => {
             const now = new Date();
@@ -104,11 +104,6 @@ document.addEventListener('DOMContentLoaded', () => {
                      newGreeting = "Good Afternoon.";
                  } else {
                      newGreeting = "Good Evening.";
-                     currentGreeting = "Good Morning.";
-                 } else if (currentHour < 18) {
-                     currentGreeting = "Good Afternoon.";
-                 } else {
-                     currentGreeting = "Good Evening.";
                  }
                  shouldPlayVideo = false;
             }
@@ -142,18 +137,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 lastGreeting = newGreeting;
             }
 
-            if (currentGreeting !== lastGreeting) {
-                greetingElement.textContent = currentGreeting;
-                lastGreeting = currentGreeting;
-            }
 
-            // ⚡ Bolt Performance Optimization:
-            // Only apply DOM updates when the greeting state actually changes to prevent unnecessary re-renders and layout thrashing,
-            // especially when the greeting is static text like "Good Morning".
-            if (newGreeting && newGreeting !== lastGreeting) {
-                greetingElement.textContent = newGreeting;
-                lastGreeting = newGreeting;
-            }
             manageVideoBackground(shouldPlayVideo);
         };
 

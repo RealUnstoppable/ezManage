@@ -42,3 +42,6 @@
 ## 2024-05-27 - Batch DOM insertions with DocumentFragment
 **Learning:** In vanilla JS loops where elements are individually appended to the DOM (e.g. \`tbody.appendChild(tr)\`), layout thrashing can occur causing performance issues, specifically for lists with many items.
 **Action:** Always batch DOM insertions using a \`DocumentFragment\` when appending multiple elements in a loop.
+## 2026-05-13 - [Interval Layout Thrashing in Audio Player]
+**Learning:** Frequent interval updates (like `timeupdate` on an audio element, running multiple times a second) that write to the DOM (`element.textContent = value`) force the browser to recalculate layout and repaint, even if the new text value is identical to the old one, leading to unnecessary battery drain and layout thrashing.
+**Action:** Always cache the formatted output string (e.g., `"1:23"`) locally and wrap the DOM assignment in a strict equality check (`if (newValue !== lastValue)`) so the browser only repaints when the actual visible content changes.

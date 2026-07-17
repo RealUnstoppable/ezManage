@@ -365,13 +365,28 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // ⚡ Bolt Optimization: Cache formatted time to prevent layout thrashing on timeupdate
+    let lastCurrentTimeFormatted = "";
+    let lastTotalTimeFormatted = "";
+
     function updateProgress() {
         const { duration, currentTime } = audioPlayer;
         if (duration) {
             const percent = (currentTime / duration) * 100;
             progress.style.width = `${percent}%`;
-            currentTimeEl.textContent = formatTime(currentTime);
-            totalTimeEl.textContent = formatTime(duration);
+
+            const currentFormatted = formatTime(currentTime);
+            const totalFormatted = formatTime(duration);
+
+            if (currentFormatted !== lastCurrentTimeFormatted) {
+                currentTimeEl.textContent = currentFormatted;
+                lastCurrentTimeFormatted = currentFormatted;
+            }
+
+            if (totalFormatted !== lastTotalTimeFormatted) {
+                totalTimeEl.textContent = totalFormatted;
+                lastTotalTimeFormatted = totalFormatted;
+            }
         }
     }
 
