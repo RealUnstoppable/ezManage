@@ -566,12 +566,12 @@
 
                     <div id="managerAdmin" class="card bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-2xl mb-8">
                         <h2 class="text-xl font-bold mb-4"><i data-lucide="users" class="inline w-5 h-5 mr-2 text-sky-500"></i> Manager Administration</h2>
-                        <form id="createManagerForm" class="flex gap-4 mb-6">
-                            <input type="email" id="newManagerEmail" placeholder="Manager Email" aria-label="Manager Email" class="input input-bordered flex-1" required>
-                            <button type="submit" class="btn btn-primary"><i data-lucide="user-plus" class="w-4 h-4 mr-2"></i> Add Manager</button>
-                        <form id="createManagerForm" class="flex flex-col md:flex-row gap-4 mb-6">
-                            <input type="email" id="newManagerEmail" placeholder="Manager Email" class="input input-bordered w-full md:flex-1" required>
-                            <button type="submit" class="btn btn-primary whitespace-nowrap"><i data-lucide="user-plus" class="w-4 h-4 mr-2"></i> Add Manager</button>
+                        <form id="createManagerForm" class="flex flex-col md:flex-row gap-4 mb-6 items-end">
+                            <div class="flex-1 w-full">
+                                <label for="newManagerEmail" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Manager Email <span class="text-red-500">*</span></label>
+                                <input type="email" id="newManagerEmail" placeholder="admin@example.com" class="input input-bordered w-full" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary whitespace-nowrap mb-1"><i data-lucide="user-plus" class="w-4 h-4 mr-2"></i> Add Manager</button>
                         </form>
                         <div class="overflow-x-auto">
                             <table class="w-full text-left text-sm text-slate-600 dark:text-slate-400">
