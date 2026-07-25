@@ -1,4 +1,4 @@
-import { getFirebaseErrorMessage, logManagerError } from './utils.js';
+import { getFirebaseErrorMessage, logManagerError, escapeHTML } from './utils.js';
 
 
 
@@ -59,7 +59,7 @@ auth.onAuthStateChanged(async (user) => {
 
                 if (membershipStatusContainer) {
                     const level = userData.membershipLevel || 'free';
-                    membershipStatusContainer.innerHTML = `<span class="membership-status ${level}">${level}</span>`;
+                    membershipStatusContainer.innerHTML = `<span class="membership-status ${escapeHTML(level)}">${escapeHTML(level)}</span>`;
                 }
             }
         } catch (error) {
