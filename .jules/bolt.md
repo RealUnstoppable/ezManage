@@ -45,3 +45,6 @@
 ## 2026-06-25 - [Repeated Firebase DB Docs Fetch]
 **Learning:** Functions invoked via callbacks from listeners that span multiple files (e.g., \`auth.onAuthStateChanged\`) will fire simultaneously. Without a caching layer, they execute redundant concurrent network fetch queries (like \`db.collection('users').doc(uid).get()\`), causing latency and blocking operations.
 **Action:** Always wrap independent multi-listener fetched resources with a generic memoization layer using a \`Map\` cache to immediately resolve redundant Promise requests.
+## 2024-07-25 - [Audio Player DOM Property Updates]
+**Learning:** High-frequency events like `timeupdate` on HTMLAudioElement fire continuously during playback. Unconditionally updating DOM properties (like `textContent`) on every tick causes unnecessary layout thrashing and repaint cycles, even if the formatted time string has not changed.
+**Action:** Always cache the formatted string state when handling high-frequency time updates. Update the DOM property only when the new string strictly differs from the cached state.
