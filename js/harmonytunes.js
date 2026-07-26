@@ -365,13 +365,28 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    let lastCurrentTimeString = "";
+    let lastTotalTimeString = "";
+
     function updateProgress() {
         const { duration, currentTime } = audioPlayer;
         if (duration) {
             const percent = (currentTime / duration) * 100;
             progress.style.width = `${percent}%`;
-            currentTimeEl.textContent = formatTime(currentTime);
-            totalTimeEl.textContent = formatTime(duration);
+
+            // ⚡ Bolt Optimization: Cache formatted strings to prevent textContent layout thrashing
+            const formattedCurrent = formatTime(currentTime);
+            const formattedTotal = formatTime(duration);
+
+            if (formattedCurrent !== lastCurrentTimeString) {
+                currentTimeEl.textContent = formattedCurrent;
+                lastCurrentTimeString = formattedCurrent;
+            }
+
+            if (formattedTotal !== lastTotalTimeString) {
+                totalTimeEl.textContent = formattedTotal;
+                lastTotalTimeString = formattedTotal;
+            }
         }
     }
 
