@@ -51,3 +51,6 @@
 ## 2024-07-03 - Icon-only buttons with partial text missing ARIA labels
 **Learning:** Buttons that appear to have text but primarily rely on icons for their meaning (like "Add Manager" or "Invite" buttons with Lucide icons) can still benefit from explicit `aria-label`s, especially when they are dynamically rendered or placed in complex UI structures where standard screen readers might struggle to interpret the inline text content alongside the SVG/icon properly. Adding `aria-label` provides a robust, fail-safe announcement.
 **Action:** Even if a button contains visible text, if its primary visual affordance is an icon (especially injected via `data-lucide`), consider adding an explicit `aria-label` to ensure unambiguous screen reader support, taking care not to unnecessarily duplicate information if the text is perfectly semantic.
+## 2024-06-25 - Icon-only close buttons missing ARIA labels
+**Learning:** Icon-only close buttons in modals (like those using Lucide `x` icons) often lack `aria-label` attributes because standard testing might miss them inside complex DOM trees. This makes them completely inaccessible for screen reader users, failing to provide context to the action.
+**Action:** Always add explicit `aria-label="Close"` attributes to icon-only close buttons in modals to ensure reliable accessibility announcements.
