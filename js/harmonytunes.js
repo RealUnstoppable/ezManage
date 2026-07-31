@@ -365,13 +365,30 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // ⚡ Bolt Optimization: Cache formatted time strings for timeupdate event
+    // The timeupdate event fires frequently (e.g. 4 times per second).
+    // Updating DOM properties like textContent on every tick causes layout thrashing.
+    // By caching the formatted strings, we only update the DOM when the visible text actually changes.
+    let lastCurrentTimeStr = "";
+    let lastTotalTimeStr = "";
+
     function updateProgress() {
         const { duration, currentTime } = audioPlayer;
         if (duration) {
             const percent = (currentTime / duration) * 100;
             progress.style.width = `${percent}%`;
-            currentTimeEl.textContent = formatTime(currentTime);
-            totalTimeEl.textContent = formatTime(duration);
+
+            const currentFormatted = formatTime(currentTime);
+            if (currentFormatted !== lastCurrentTimeStr) {
+                currentTimeEl.textContent = currentFormatted;
+                lastCurrentTimeStr = currentFormatted;
+            }
+
+            const totalFormatted = formatTime(duration);
+            if (totalFormatted !== lastTotalTimeStr) {
+                totalTimeEl.textContent = totalFormatted;
+                lastTotalTimeStr = totalFormatted;
+            }
         }
     }
 
