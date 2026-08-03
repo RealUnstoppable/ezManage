@@ -976,7 +976,7 @@
                 <div id="addAnnouncementModal"
                     class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
                     <div class="bg-white dark:bg-slate-900 w-full max-w-lg rounded-3xl shadow-2xl p-8 relative">
-                        <button onclick="document.getElementById('addAnnouncementModal').classList.add('hidden')"
+                        <button aria-label="Close announcement modal" onclick="document.getElementById('addAnnouncementModal').classList.add('hidden')"
                             class="absolute top-6 right-6 text-slate-400 hover:text-black dark:hover:text-white">
                             <i data-lucide="x"></i>
                         </button>
@@ -5873,7 +5873,7 @@ function checkAndRenderOrgControls() {
     <div id="orgTutorialModal"
         class="hidden fixed inset-0 z-[100] bg-black/80 flex items-center justify-center p-6 backdrop-blur-sm no-print">
         <div class="bg-white dark:bg-slate-900 w-full max-w-2xl rounded-2xl p-8 shadow-2xl relative border border-slate-200 dark:border-slate-800">
-            <button onclick="document.getElementById('orgTutorialModal').classList.add('hidden')" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:hover:text-white">
+            <button aria-label="Close tutorial" onclick="document.getElementById('orgTutorialModal').classList.add('hidden')" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 dark:hover:text-white">
                 <i data-lucide="x"></i>
             </button>
             <h2 class="text-2xl font-black mb-6 text-sky-600 flex items-center gap-2"><i data-lucide="info"></i> How to Connect with Your Store</h2>
