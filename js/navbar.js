@@ -3,37 +3,11 @@ import { auth, db, getUserRedirectPath } from './auth.js';
 
 
 export function loadNavbar() {
-    const headerHTML = `
-    <nav class="navbar">
-        <div class="flex items-center gap-3">
-            <button onclick="if(window.toggleSidebar){window.toggleSidebar();}" class="p-1.5 text-slate-300 hover:text-sky-400 transition-colors cursor-pointer" aria-label="Toggle Menu">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></svg>
-            </button>
-            <a href="index.html" class="nav-logo">ez<span>Manage</span></a>
-        </div>
-        <ul class="nav-links">
-            <li><a href="index.html">Overview</a></li>
-            <li><a href="unstoppable.html">Unstoppable</a></li>
-            <li><a href="dreamstimeskip.html">Dreams TimeSkip</a></li>
-            <li><a href="harmonytunes.html">HarmonyTunes</a></li>
-            <li><a href="shop.html">Shop</a></li>
-            <li><a href="memberships.html">Memberships</a></li>
-            <li><a href="blog.html">Blog</a></li>
-            <li><a href="portfolio.html">About Me</a></li>
-            <li><a href="uds.html">UDS</a></li>
-            <li><a href="index.html#incidents" onclick="if(window.navTo){event.preventDefault();window.navTo('incidents');}">Incident Reports</a></li>
-            <li><a href="sign in beta.html" id="auth-link">Sign In / Sign Up</a></li>
-        </ul>
-        <button class="hamburger sm:hidden" aria-label="Open menu">
-            <span class="bar"></span><span class="bar"></span><span class="bar"></span>
-        </button>
-    </nav>`;
-
+    // ezManage has its own native fixed navbar (nav.glass-nav).
+    // Leave main-header empty to prevent duplicate navbar elements from realunstoppable.store.
     const header = document.querySelector('.main-header');
     if (header) {
-        header.innerHTML = headerHTML;
-        attachNavEvents();
-        updateAuthLink();
+        header.innerHTML = '';
     }
 }
 

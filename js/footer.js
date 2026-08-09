@@ -7,15 +7,13 @@ export function loadFooter() {
                 <div class="footer-column">
                     <h5>Navigate</h5>
                     <ul>
-                        <li><a href="index.html#bento">Overview</a></li>
-                        <li><a href="unstoppable.html">Unstoppable</a></li>
-                        <li><a href="dreamstimeskip.html">Dreams TimeSkip</a></li>
-                        <li><a href="harmonytunes.html">HarmonyTunes</a></li>
-                        <li><a href="shop.html">Shop</a></li>
-                        <li><a href="memberships.html">Memberships</a></li>
-                        <li><a href="blog.html">Blog</a></li>
-                        <li><a href="portfolio.html">About Me</a></li>
-                        <li><a href="uds.html">UDS</a></li>
+                        <li><a href="index.html#welcome" onclick="if(window.navTo){event.preventDefault();window.navTo('welcome');}">Home</a></li>
+                        <li><a href="index.html#tracker" onclick="if(window.navTo){event.preventDefault();window.navTo('tracker');}">Active Tracker</a></li>
+                        <li><a href="index.html#schedule" onclick="if(window.navTo){event.preventDefault();window.navTo('schedule');}">Shift Schedule</a></li>
+                        <li><a href="index.html#announcements" onclick="if(window.navTo){event.preventDefault();window.navTo('announcements');}">Notices</a></li>
+                        <li><a href="index.html#tasks" onclick="if(window.navTo){event.preventDefault();window.navTo('tasks');}">Task Manager</a></li>
+                        <li><a href="easy-ai.html">AI Predictor</a></li>
+                        <li><a href="index.html#pricing" onclick="if(window.navTo){event.preventDefault();window.navTo('pricing');}">Pricing Plans</a></li>
                     </ul>
                 </div>
                 <div class="footer-column">
@@ -30,15 +28,16 @@ export function loadFooter() {
                 <div class="footer-column">
                     <h5>Company</h5>
                     <ul>
-                        <li><a href="tracker.html">About Us</a></li>
-                        <li><a href="blog.html">Blog</a></li>
-                        <li><a href="shop.html">Shop</a></li>
-                        <li><a href="mailto:unstoppableplays2016@hotmail.com">Contact</a></li>
+                        <li><a href="company.html">Corporate Portal</a></li>
+                        <li><a href="panel-ai-admin.html">Admin Intelligence</a></li>
+                        <li><a href="admin.html">Dashboard</a></li>
+                        <li><a href="index.html#incidents" onclick="if(window.navTo){event.preventDefault();window.navTo('incidents');}">Incident Reports</a></li>
+                        <li><a href="mailto:unstoppableplays2016@hotmail.com">Contact Support</a></li>
                     </ul>
                 </div>
                 <div class="footer-column footer-newsletter">
                     <h5>Stay in the Loop</h5>
-                    <p>Sign up for news, announcements, and exclusive beta access.</p>
+                    <p>Sign up for news, announcements, and exclusive beta access for ezManage features.</p>
                     <form class="signup-form">
                         <input type="email" placeholder="your.email@example.com" required aria-label="Email for newsletter">
                         <button type="submit">Sign Up</button>
@@ -48,7 +47,7 @@ export function loadFooter() {
             </div>
 
             <div class="footer-bottom">
-                <p>&copy; 2026 Unstoppable LLC. All Rights Reserved.</p>
+                <p>&copy; 2026 Unstoppable LLC. All Rights Reserved. ezManage Store Management System.</p>
                 <p>Designed in collaboration with Unstoppable Design, LLC.</p>
             </div>
         </div>
