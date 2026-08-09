@@ -15,7 +15,7 @@ export function loadNavbar() {
             <li><a href="blog.html">Blog</a></li>
             <li><a href="portfolio.html">About Me</a></li>
             <li><a href="uds.html">UDS</a></li>
-            <li><a href="#" onclick="navTo('incidents')">Incident Reports</a></li>
+            <li><a href="index.html#incidents" onclick="if(window.navTo){event.preventDefault();window.navTo('incidents');}">Incident Reports</a></li>
             <li><a href="sign in beta.html" id="auth-link">Sign In / Sign Up</a></li>
         </ul>
         <button class="hamburger" aria-label="Open menu">
