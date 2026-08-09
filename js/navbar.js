@@ -46,6 +46,13 @@ function updateAuthLink() {
     const authLink = document.getElementById('auth-link');
     if (!authLink) return;
 
+    authLink.addEventListener('click', (e) => {
+        if (typeof window.handleNavAccountClick === 'function') {
+            e.preventDefault();
+            window.handleNavAccountClick();
+        }
+    });
+
     if (auth && auth.onAuthStateChanged) {
         auth.onAuthStateChanged(async (user) => {
             if (user) {
