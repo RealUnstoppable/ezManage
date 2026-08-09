@@ -16,7 +16,13 @@
 
     <script src="https://cdn.tailwindcss.com"></script>
     <script type="module">
-        import { escapeHTML } from '/js/utils.js';
+        import { escapeHTML } from './js/utils.js';
+        import { loadNavbar } from './js/navbar.js';
+        import { loadFooter } from './js/footer.js';
+        document.addEventListener('DOMContentLoaded', () => {
+            loadNavbar();
+            loadFooter();
+        });
         window.escapeHTML = escapeHTML;
     </script>
     <script>
@@ -155,6 +161,7 @@
 </head>
 
 <body x-data="{ mobileMenu: false }">
+    <header class="main-header"></header>
 
     <nav class="fixed w-full z-50 glass-nav border-b border-slate-200/50 top-0 no-print">
         <div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
@@ -887,6 +894,7 @@
             }
         }
     </script>
+    <footer class="main-footer"></footer>
 </body>
 
 </html>

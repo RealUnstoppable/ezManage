@@ -14,6 +14,15 @@
     </script>
     <script src="https://unpkg.com/lucide@latest"></script>
 
+    <link rel="stylesheet" href="./css/style.css">
+    <script type="module">
+        import { loadNavbar } from './js/navbar.js';
+        import { loadFooter } from './js/footer.js';
+        document.addEventListener('DOMContentLoaded', () => {
+            loadNavbar();
+            loadFooter();
+        });
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -94,6 +103,7 @@
     </style>
 </head>
 <body class="min-h-screen hidden" id="bodyEl">
+    <header class="main-header"></header>
 
     <!-- Top Navigation -->
     <nav class="fixed top-0 w-full z-50 bg-white/80 dark:bg-slate-950/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800">
@@ -253,5 +263,6 @@
             }
         }
     </script>
+    <footer class="main-footer"></footer>
 </body>
 </html>
