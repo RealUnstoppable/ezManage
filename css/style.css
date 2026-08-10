@@ -413,10 +413,12 @@ p.section-subtitle {
 }
 
 .main-footer {
-    background-color: #000;
-    color: var(--text-secondary);
-    padding: 80px 40px 40px;
-    border-top: 1px solid var(--border-color);
+    background-color: #090d16;
+    color: #94a3b8;
+    padding: 60px 20px 40px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    position: relative;
+    z-index: 20;
 }
 
 .footer-container {
