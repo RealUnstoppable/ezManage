@@ -10,8 +10,8 @@ export function loadFooter() {
                     </div>
                     <div>
                         <div class="flex items-center gap-2">
-                            <span class="text-2xl font-black tracking-tight text-white uppercase">ezManage</span>
-                            <span class="text-[10px] font-black uppercase tracking-widest bg-sky-500/20 text-sky-400 border border-sky-500/30 px-2 py-0.5 rounded-full">Store OS</span>
+                            <span class="text-2xl font-black tracking-tight text-black bg-white px-3 py-1 rounded-xl shadow-md uppercase">ezManage</span>
+                            <span class="text-[10px] font-black uppercase tracking-widest bg-sky-500/20 text-sky-400 border border-sky-500/30 px-2.5 py-1 rounded-full">Store OS</span>
                         </div>
                         <p class="text-xs text-slate-400 font-medium mt-0.5">The #1 Zero-Latency Floor Management & Shift Tracking Platform</p>
                     </div>
