@@ -5442,21 +5442,27 @@ function checkAndRenderOrgControls() {
                     snap.forEach(doc => employees.push({id: doc.id, ...doc.data()}));
                     employees.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
 
+                    // ⚡ Bolt Optimization: Batch DOM insertions to prevent layout thrashing and speed up rendering.
+                    // Expected Impact: Reduces O(N) reflows/repaints to O(1) for both dropdowns.
+                    const fragment1 = document.createDocumentFragment();
                     employees.forEach(emp => {
                         const opt = document.createElement('option');
                         opt.value = emp.name;
                         opt.textContent = `${emp.name} (${emp.role})`;
-                        select.appendChild(opt);
+                        fragment1.appendChild(opt);
                     });
+                    select.appendChild(fragment1);
 
                     const filterSelect = document.getElementById('taskFilterAssignee');
                     filterSelect.innerHTML = '<option value="All">All Assignees</option>';
+                    const fragment2 = document.createDocumentFragment();
                     employees.forEach(emp => {
                         const opt = document.createElement('option');
                         opt.value = emp.name;
                         opt.textContent = emp.name;
-                        filterSelect.appendChild(opt);
+                        fragment2.appendChild(opt);
                     });
+                    filterSelect.appendChild(fragment2);
                 })
                 .catch(err => console.error("Error populating task assignee dropdown:", err));
         }
