@@ -1,8 +1,6 @@
-import { logManagerError } from './utils.js';
+import { logManagerError, escapeHTML } from './utils.js';
 
 import { auth, db } from './auth.js';
-import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
-import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
 
 export const products = [
     {
@@ -66,10 +64,10 @@ const navLinks = document.querySelector('.nav-links');
 function renderProducts() {
     productGrid.innerHTML = products.map(product => `
         <div class="product-card">
-            <img src="${product.imageUrl}" alt="${product.name}" class="product-image" loading="lazy">
+            <img src="${escapeHTML(product.imageUrl)}" alt="${escapeHTML(product.name)}" class="product-image" loading="lazy">
             <div class="product-info">
-                <h3>${product.name}</h3>
-                <p>${product.description}</p>
+                <h3>${escapeHTML(product.name)}</h3>
+                <p>${escapeHTML(product.description)}</p>
                 <div class="product-footer">
                     <span class="product-price">$${product.price.toFixed(2)}</span>
                     <button class="add-to-cart-btn" data-id="${product.id}">Add to Cart</button>
@@ -90,9 +88,9 @@ function renderCart() {
             if (!product) return '';
             return `
                 <div class="cart-item">
-                    <img src="${product.imageUrl}" alt="${product.name}" class="cart-item-img" loading="lazy">
+                    <img src="${escapeHTML(product.imageUrl)}" alt="${escapeHTML(product.name)}" class="cart-item-img" loading="lazy">
                     <div class="cart-item-info">
-                        <h4>${product.name}</h4>
+                        <h4>${escapeHTML(product.name)}</h4>
                         <p>$${product.price.toFixed(2)}</p>
                     </div>
                     <div class="cart-item-actions">
@@ -153,8 +151,7 @@ async function handleRemoveFromCart(productId) {
 async function saveCart() {
     if (currentUser) {
         try {
-            const userCartRef = doc(db, 'carts', currentUser.uid);
-            await setDoc(userCartRef, { items: cart });
+            await db.collection('carts').doc(currentUser.uid).set({ items: cart });
         } catch (error) {
             logManagerError("Error saving cart to Firestore for uid: " + currentUser.uid, error);
 
@@ -218,16 +215,16 @@ document.addEventListener('DOMContentLoaded', () => {
     renderProducts();
     setupEventListeners();
 
-    onAuthStateChanged(auth, async (user) => {
+    if (auth && auth.onAuthStateChanged) {
+    auth.onAuthStateChanged(async (user) => {
         currentUser = user;
         const localCartData = localStorage.getItem('localCart');
         const localCart = localCartData ? JSON.parse(localCartData) : {};
 
         if (user) {
             try {
-                const userCartRef = doc(db, 'carts', user.uid);
-                const docSnap = await getDoc(userCartRef);
-                const firestoreCart = docSnap.exists() ? docSnap.data().items : {};
+                const docSnap = await db.collection('carts').doc(user.uid).get();
+                const firestoreCart = docSnap.exists ? docSnap.data().items : {};
 
                 const mergedCart = { ...firestoreCart };
                 for (const [productId, quantity] of Object.entries(localCart)) {
@@ -250,4 +247,5 @@ document.addEventListener('DOMContentLoaded', () => {
         updateUserNav(user);
         renderCart();
     });
+    }
 });
