@@ -600,12 +600,9 @@
 
                     <div id="managerAdmin" class="card bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-2xl mb-8">
                         <h2 class="text-xl font-bold mb-4"><i data-lucide="users" class="inline w-5 h-5 mr-2 text-sky-500"></i> Manager Administration</h2>
-                        <form id="createManagerForm" class="flex gap-4 mb-6">
-                            <input type="email" id="newManagerEmail" placeholder="Manager Email" aria-label="Manager Email" class="input input-bordered flex-1" required>
-                            <button type="submit" class="btn btn-primary"><i data-lucide="user-plus" class="w-4 h-4 mr-2"></i> Add Manager</button>
                         <form id="createManagerForm" class="flex flex-col md:flex-row gap-4 mb-6">
-                            <input type="email" id="newManagerEmail" placeholder="Manager Email" class="input input-bordered w-full md:flex-1" required>
-                            <button type="submit" class="btn btn-primary whitespace-nowrap"><i data-lucide="user-plus" class="w-4 h-4 mr-2"></i> Add Manager</button>
+                            <input type="email" id="newManagerEmail" placeholder="Manager Email" aria-label="Manager Email" class="input input-bordered w-full md:flex-1" required>
+                            <button type="submit" class="btn btn-primary whitespace-nowrap disabled:opacity-70 disabled:cursor-not-allowed"><i data-lucide="user-plus" class="w-4 h-4 mr-2"></i> Add Manager</button>
                         </form>
                         <div class="overflow-x-auto">
                             <table class="w-full text-left text-sm text-slate-600 dark:text-slate-400">
@@ -1738,6 +1735,12 @@
                     const email = document.getElementById('newManagerEmail').value.trim();
                     if (!email) return;
 
+                    const btn = form.querySelector('button[type="submit"]');
+                    const originalBtnContent = btn.innerHTML;
+                    btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 mr-2 animate-spin inline-block"></i> Adding...`;
+                    btn.disabled = true;
+                    if (window.lucide) window.lucide.createIcons();
+
                     try {
                         const newUid = db.collection('users').doc().id;
                         await db.collection('users').doc(newUid).set({
@@ -1750,6 +1753,10 @@
                         window.fetchGlobalMetrics();
                     } catch(err) {
                         alert("Error adding manager: " + err.message);
+                    } finally {
+                        btn.innerHTML = originalBtnContent;
+                        btn.disabled = false;
+                        if (window.lucide) window.lucide.createIcons();
                     }
                 });
             }
