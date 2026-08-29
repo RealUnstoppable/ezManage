@@ -45,3 +45,6 @@
 ## 2026-06-25 - [Repeated Firebase DB Docs Fetch]
 **Learning:** Functions invoked via callbacks from listeners that span multiple files (e.g., \`auth.onAuthStateChanged\`) will fire simultaneously. Without a caching layer, they execute redundant concurrent network fetch queries (like \`db.collection('users').doc(uid).get()\`), causing latency and blocking operations.
 **Action:** Always wrap independent multi-listener fetched resources with a generic memoization layer using a \`Map\` cache to immediately resolve redundant Promise requests.
+## 2024-05-24 - [Input Debouncing and DOM Fragment Batching in Vanilla JS]
+**Learning:** High-frequency input events (like `oninput` on forms) that trigger expensive operations (e.g., `triggerDraftSync` or DOM manipulations) must be debounced using `setTimeout` to prevent layout thrashing and excessive syncs. Furthermore, replacing iterative `appendChild` calls with `DocumentFragment` batching prevents repetitive reflows and repaints when populating dropdown options.
+**Action:** Always debounce frequent input handlers and use `DocumentFragment` to batch DOM insertions when rendering lists in vanilla JS loops.
