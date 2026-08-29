@@ -3,7 +3,7 @@ const {onRequest} = require("firebase-functions/v2/https");
 const HttpsError = functions.https.HttpsError;
 const admin = require("firebase-admin");
 const cors = require("cors")({origin: true});
-const {adaptGen2Params, logManagerError} = require("./utils");
+const {adaptGen2Params, logManagerError} = require("./utils"); // Added comment for patch visibility
 
 /**
  * Helper to get a document, verify its existence, and verify its orgId.
@@ -443,10 +443,9 @@ exports.manageShiftNotes = functions.https.onCall(async (data, context) => {
  * Handles creation, updating, and deletion of employees.
  */
 exports.manageEmployees = functions.https.onCall(async (data, context) => {
-  if (data && typeof data === "object" && "rawRequest" in data && "auth" in data) {
-    context = data;
-    data = data.data;
-  }
+  const adapted = adaptGen2Params(data, context);
+  data = adapted.data;
+  context = adapted.context;
 
   if (!context || !context.auth) {
     throw new HttpsError("unauthenticated", "User must be logged in.");
@@ -740,10 +739,9 @@ exports.manageShiftGroups = functions.https.onCall(async (data, context) => {
  * Handles creation, reading, status updates, and deletion of incidents.
  */
 exports.manageIncidents = functions.https.onCall(async (data, context) => {
-  if (data && typeof data === "object" && "rawRequest" in data && "auth" in data) {
-    context = data;
-    data = data.data;
-  }
+  const adapted = adaptGen2Params(data, context);
+  data = adapted.data;
+  context = adapted.context;
 
   if (!context || !context.auth) {
     throw new HttpsError("unauthenticated", "User must be logged in.");
@@ -859,10 +857,9 @@ exports.manageIncidents = functions.https.onCall(async (data, context) => {
  * Handles creation, reading, and deletion of waste logs.
  */
 exports.manageWaste = functions.https.onCall(async (data, context) => {
-  if (data && typeof data === "object" && "rawRequest" in data && "auth" in data) {
-    context = data;
-    data = data.data;
-  }
+  const adapted = adaptGen2Params(data, context);
+  data = adapted.data;
+  context = adapted.context;
 
   if (!context || !context.auth) {
     throw new HttpsError("unauthenticated", "User must be logged in.");
