@@ -4124,20 +4124,27 @@
                         taskSelect.innerHTML = '<option value="">Select Employee...</option>';
                     }
 
+                    // ⚡ Bolt Optimization: Batch DOM insertions with DocumentFragment to prevent layout thrashing
+                    const empFragment = document.createDocumentFragment();
+                    const taskFragment = document.createDocumentFragment();
                     employees.forEach(emp => {
                         const opt = document.createElement('option');
                         opt.value = emp.name;
                         opt.textContent = `${emp.name} (${emp.role})`;
                         opt.dataset.role = emp.role;
-                        select.appendChild(opt);
+                        empFragment.appendChild(opt);
 
                         if (taskSelect) {
                             const taskOpt = document.createElement('option');
                             taskOpt.value = emp.docId; // Use docId for tasks reference
                             taskOpt.textContent = emp.name;
-                            taskSelect.appendChild(taskOpt);
+                            taskFragment.appendChild(taskOpt);
                         }
                     });
+                    select.appendChild(empFragment);
+                    if (taskSelect) {
+                        taskSelect.appendChild(taskFragment);
+                    }
                 })
                 .catch(err => console.error("Manager Troubleshooting: Error populating dropdown:", err));
         }
@@ -5414,12 +5421,15 @@ function checkAndRenderOrgControls() {
             const currentVal = select.value;
             select.innerHTML = '<option value="">Select Employee...</option>';
 
+            // ⚡ Bolt Optimization: Batch DOM insertions with DocumentFragment to prevent layout thrashing
+            const activeFragment = document.createDocumentFragment();
             activeEmployeesList.forEach(emp => {
                 const opt = document.createElement('option');
                 opt.value = emp.name;
                 opt.textContent = emp.name + " (" + emp.role + ")";
-                select.appendChild(opt);
+                activeFragment.appendChild(opt);
             });
+            select.appendChild(activeFragment);
 
             if (currentVal && Array.from(select.options).some(o => o.value === currentVal)) {
                 select.value = currentVal;
@@ -5442,21 +5452,27 @@ function checkAndRenderOrgControls() {
                     snap.forEach(doc => employees.push({id: doc.id, ...doc.data()}));
                     employees.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
 
+                    // ⚡ Bolt Optimization: Batch DOM insertions with DocumentFragment to prevent layout thrashing
+                    const selectFragment = document.createDocumentFragment();
                     employees.forEach(emp => {
                         const opt = document.createElement('option');
                         opt.value = emp.name;
                         opt.textContent = `${emp.name} (${emp.role})`;
-                        select.appendChild(opt);
+                        selectFragment.appendChild(opt);
                     });
+                    select.appendChild(selectFragment);
 
                     const filterSelect = document.getElementById('taskFilterAssignee');
                     filterSelect.innerHTML = '<option value="All">All Assignees</option>';
+
+                    const filterFragment = document.createDocumentFragment();
                     employees.forEach(emp => {
                         const opt = document.createElement('option');
                         opt.value = emp.name;
                         opt.textContent = emp.name;
-                        filterSelect.appendChild(opt);
+                        filterFragment.appendChild(opt);
                     });
+                    filterSelect.appendChild(filterFragment);
                 })
                 .catch(err => console.error("Error populating task assignee dropdown:", err));
         }
