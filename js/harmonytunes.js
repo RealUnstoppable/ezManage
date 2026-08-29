@@ -2,7 +2,7 @@ import { logManagerError } from './utils.js';
 import { auth, db } from './auth.js';
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
 import { doc, getDoc, setDoc, updateDoc, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
-import { showToast } from './utils.js';
+import { showToast, escapeHTML } from './utils.js';
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -145,9 +145,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         containerTikToks.innerHTML = tiktokData.map(tk => `
             <div class="tiktok-card" onclick="window.open('${tk.url}', '_blank')">
-                <img src="${tk.img}" alt="${tk.title}" loading="lazy">
+                <img src="${tk.img}" alt="${escapeHTML(tk.title)}" loading="lazy">
                 <div class="tiktok-overlay">
-                    <div class="tiktok-title">${tk.title}</div>
+                    <div class="tiktok-title">${escapeHTML(tk.title)}</div>
                 </div>
             </div>
         `).join('');
@@ -159,11 +159,11 @@ document.addEventListener('DOMContentLoaded', () => {
         containerPlaylists.innerHTML = playlists.map(pl => `
             <div class="music-card" onclick="window.loadPlaylistView('${pl.id}')">
                 <div class="card-img-wrapper">
-                    <img src="/images/harmony-tunes-card.jpg" alt="${pl.title}" loading="lazy">
+                    <img src="/images/harmony-tunes-card.jpg" alt="${escapeHTML(pl.title)}" loading="lazy">
                     <button class="card-play-btn">▶</button>
                 </div>
-                <div class="card-title">${pl.title}</div>
-                <div class="card-desc">${pl.desc}</div>
+                <div class="card-title">${escapeHTML(pl.title)}</div>
+                <div class="card-desc">${escapeHTML(pl.desc)}</div>
             </div>
         `).join('');
 
@@ -184,11 +184,11 @@ document.addEventListener('DOMContentLoaded', () => {
         return `
             <div class="music-card" data-song-id="${song.id}" onclick="playSongById('${song.id}')">
                 <div class="card-img-wrapper">
-                    <img src="${song.art}" alt="${song.title}" loading="lazy">
+                    <img src="${song.art}" alt="${escapeHTML(song.title)}" loading="lazy">
                     <button class="card-play-btn">▶</button>
                 </div>
-                <div class="card-title">${song.title}</div>
-                <div class="card-desc">${song.artist}</div>
+                <div class="card-title">${escapeHTML(song.title)}</div>
+                <div class="card-desc">${escapeHTML(song.artist)}</div>
             </div>
         `;
     }
@@ -220,9 +220,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     <span class="song-index" style="${isActive ? 'display:none' : ''}">${index + 1}</span>
                     <span class="playing-icon" style="${isActive ? 'display:inline' : 'display:none'}">▶</span>
                 </td>
-                <td class="song-title">${song.title}</td>
-                <td>${song.artist}</td>
-                <td style="text-align: right;">${song.duration}</td>
+                <td class="song-title">${escapeHTML(song.title)}</td>
+                <td>${escapeHTML(song.artist)}</td>
+                <td style="text-align: right;">${escapeHTML(song.duration)}</td>
             `;
 
             row.addEventListener('click', () => {

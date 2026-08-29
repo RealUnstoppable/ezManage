@@ -360,8 +360,8 @@
         // ⚡ Bolt Optimization: Batch DOM insertions to prevent O(n²) layout thrashing
         grid.innerHTML = kpis.map(k => `
             <div class="card" style="display:flex;flex-direction:column;gap:6px;">
-                <div class="card-title">${k.label}</div>
-                <div class="card-value ${k.color}">${k.value}</div>
+                <div class="card-title">${escapeHTML(k.label)}</div>
+                <div class="card-value ${escapeHTML(k.color)}">${escapeHTML(k.value)}</div>
             </div>`).join('');
 
         /* Day chart */
