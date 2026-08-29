@@ -229,11 +229,6 @@
                     <p class="text-slate-500">Manage your stores, managers, and insights from one central dashboard.</p>
                 </div>
                 <form onsubmit="handleLogin(event)" class="card space-y-4 p-8">
-                    <input type="email" id="loginEmail" required placeholder="Corporate Email" aria-label="Corporate Email"
-                        class="w-full bg-slate-50 dark:bg-slate-800 p-4 rounded-xl border-none focus:ring-2 focus:ring-indigo-500">
-                    <input type="password" id="loginPass" required placeholder="Password" aria-label="Password"
-                        class="w-full bg-slate-50 dark:bg-slate-800 p-4 rounded-xl border-none focus:ring-2 focus:ring-indigo-500">
-                    <button type="submit" class="btn btn-primary w-full py-4 text-lg">Sign In</button>
                     <div>
                         <label for="loginEmail" class="block text-sm font-bold mb-1 text-slate-700 dark:text-slate-300">Corporate Email</label>
                         <input type="email" id="loginEmail" required placeholder="Corporate Email"
@@ -600,11 +595,8 @@
 
                     <div id="managerAdmin" class="card bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-2xl mb-8">
                         <h2 class="text-xl font-bold mb-4"><i data-lucide="users" class="inline w-5 h-5 mr-2 text-sky-500"></i> Manager Administration</h2>
-                        <form id="createManagerForm" class="flex gap-4 mb-6">
-                            <input type="email" id="newManagerEmail" placeholder="Manager Email" aria-label="Manager Email" class="input input-bordered flex-1" required>
-                            <button type="submit" class="btn btn-primary"><i data-lucide="user-plus" class="w-4 h-4 mr-2"></i> Add Manager</button>
                         <form id="createManagerForm" class="flex flex-col md:flex-row gap-4 mb-6">
-                            <input type="email" id="newManagerEmail" placeholder="Manager Email" class="input input-bordered w-full md:flex-1" required>
+                            <input type="email" id="newManagerEmail" placeholder="Manager Email" aria-label="Manager Email" class="input input-bordered w-full md:flex-1" required>
                             <button type="submit" class="btn btn-primary whitespace-nowrap"><i data-lucide="user-plus" class="w-4 h-4 mr-2"></i> Add Manager</button>
                         </form>
                         <div class="overflow-x-auto">
