@@ -5414,12 +5414,15 @@ function checkAndRenderOrgControls() {
             const currentVal = select.value;
             select.innerHTML = '<option value="">Select Employee...</option>';
 
+            // ⚡ Bolt Optimization: Replace sequential appendChild loop with batched insertions using a DocumentFragment
+            const fragment = document.createDocumentFragment();
             activeEmployeesList.forEach(emp => {
                 const opt = document.createElement('option');
                 opt.value = emp.name;
                 opt.textContent = emp.name + " (" + emp.role + ")";
-                select.appendChild(opt);
+                fragment.appendChild(opt);
             });
+            select.appendChild(fragment);
 
             if (currentVal && Array.from(select.options).some(o => o.value === currentVal)) {
                 select.value = currentVal;
@@ -5442,21 +5445,27 @@ function checkAndRenderOrgControls() {
                     snap.forEach(doc => employees.push({id: doc.id, ...doc.data()}));
                     employees.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
 
+                    // ⚡ Bolt Optimization: Replace sequential appendChild loop with batched insertions using a DocumentFragment
+                    const assignFragment = document.createDocumentFragment();
                     employees.forEach(emp => {
                         const opt = document.createElement('option');
                         opt.value = emp.name;
                         opt.textContent = `${emp.name} (${emp.role})`;
-                        select.appendChild(opt);
+                        assignFragment.appendChild(opt);
                     });
+                    select.appendChild(assignFragment);
 
                     const filterSelect = document.getElementById('taskFilterAssignee');
                     filterSelect.innerHTML = '<option value="All">All Assignees</option>';
+
+                    const filterFragment = document.createDocumentFragment();
                     employees.forEach(emp => {
                         const opt = document.createElement('option');
                         opt.value = emp.name;
                         opt.textContent = emp.name;
-                        filterSelect.appendChild(opt);
+                        filterFragment.appendChild(opt);
                     });
+                    filterSelect.appendChild(filterFragment);
                 })
                 .catch(err => console.error("Error populating task assignee dropdown:", err));
         }
