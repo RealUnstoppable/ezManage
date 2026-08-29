@@ -365,13 +365,26 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    let lastCurrentTimeText = ""; // ⚡ Bolt Optimization: Cache state to prevent layout thrashing
+    let lastTotalTimeText = "";
+
     function updateProgress() {
         const { duration, currentTime } = audioPlayer;
         if (duration) {
             const percent = (currentTime / duration) * 100;
             progress.style.width = `${percent}%`;
-            currentTimeEl.textContent = formatTime(currentTime);
-            totalTimeEl.textContent = formatTime(duration);
+
+            const newCurrentTimeText = formatTime(currentTime);
+            if (newCurrentTimeText !== lastCurrentTimeText) {
+                currentTimeEl.textContent = newCurrentTimeText;
+                lastCurrentTimeText = newCurrentTimeText;
+            }
+
+            const newTotalTimeText = formatTime(duration);
+            if (newTotalTimeText !== lastTotalTimeText) {
+                totalTimeEl.textContent = newTotalTimeText;
+                lastTotalTimeText = newTotalTimeText;
+            }
         }
     }
 
