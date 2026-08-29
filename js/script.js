@@ -85,8 +85,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         };
 
-        let lastGreeting = ""; // ⚡ Bolt Optimization: Cache state to prevent layout thrashing
-
         const updateGreeting = () => {
             const now = new Date();
             let newGreeting = "";
@@ -95,8 +93,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const newYear2026 = new Date('January 1, 2026 00:00:00');
             const endOfCelebration = new Date('January 1, 2026 23:59:59');
             const revertDate = new Date('January 2, 2026 00:00:00');
-
-            let newGreetingText = "";
 
             if (now >= revertDate) {
                  const currentHour = now.getHours();
