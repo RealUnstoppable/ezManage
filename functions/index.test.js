@@ -114,7 +114,7 @@ describe("createCheckoutSession", () => {
     const mockFirestore = require("firebase-admin").firestore;
     mockFirestore().collection().doc().get.mockResolvedValueOnce({
       exists: true,
-      data: () => ({ hasPromoCode: true })
+      data: () => ({hasPromoCode: true}),
     });
 
     mockStripeMock.checkout.sessions.create.mockResolvedValue({url: "https://checkout.url"});
@@ -134,7 +134,7 @@ describe("createCheckoutSession", () => {
           currency: "usd",
           product: "prod_UFnBrTwFCgb54A",
           recurring: {interval: "year"},
-            unit_amount: 18600, // 207 * 0.9 = 186.3 -> floored to 186 -> * 100 = 18600
+          unit_amount: 18600, // 207 * 0.9 = 186.3 -> floored to 186 -> * 100 = 18600
           unit_amount: 18600,
         },
         quantity: 1,

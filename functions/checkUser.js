@@ -1,4 +1,4 @@
-const { logManagerError } = require("./utils");
+const {logManagerError} = require("./utils");
 const admin = require("firebase-admin");
 
 admin.initializeApp({
