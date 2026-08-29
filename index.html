@@ -2043,7 +2043,7 @@
                     </div>
                     <label for="timeoffReason" class="block text-sm font-bold mb-2">Reason</label>
                     <textarea id="timeoffReason" class="h-24 mb-6" placeholder="e.g. Vacation, Medical appointment..."></textarea>
-                    <button id="btnSubmitTimeOff" onclick="submitTimeOffRequest()" class="btn btn-accent w-full py-4">Submit Request</button>
+                    <button id="btnSubmitTimeOff" onclick="submitTimeOffRequest()" class="btn btn-accent w-full py-4 disabled:opacity-70 disabled:cursor-not-allowed">Submit Request</button>
                 </div>
 
                 <div class="mb-12">
@@ -3794,7 +3794,8 @@
 
             const btn = document.getElementById('btnSubmitTimeOff');
             const originalText = btn.innerText;
-            btn.innerText = 'Submitting...';
+            btn.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin inline-block"></i> Submitting...';
+            lucide.createIcons();
             btn.disabled = true;
 
             try {
@@ -3820,7 +3821,8 @@
                     alert("Error submitting request. Please try again.");
                 }
             } finally {
-                btn.innerText = originalText;
+                btn.innerHTML = originalText;
+                lucide.createIcons();
                 btn.disabled = false;
             }
         }
