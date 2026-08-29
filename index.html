@@ -2602,13 +2602,19 @@
             lucide.createIcons();
         }
 
+        let lastTimerText = ""; // ⚡ Bolt Optimization: Cache text content to prevent interval layout thrashing
         function updateTimerUI() {
             if (!shiftStartTime) return;
             const diff = Date.now() - shiftStartTime;
             const h = Math.floor(diff / 3600000);
             const m = Math.floor((diff % 3600000) / 60000);
             const s = Math.floor((diff % 60000) / 1000);
-            document.getElementById('timerDisplay').innerText = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+            const newText = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+
+            if (newText !== lastTimerText) {
+                document.getElementById('timerDisplay').innerText = newText;
+                lastTimerText = newText;
+            }
         }
 
         function addDrawerItem(val = "100.00", label = "") {
