@@ -15,8 +15,9 @@ global.firebase = mockFirebase;
 
 jest.unstable_mockModule('../../js/auth.js', () => ({
   auth: { onAuthStateChanged: jest.fn() },
-  db: { collection: jest.fn(() => ({ doc: jest.fn(() => ({ get: jest.fn() })) })) },
-  getUserRedirectPath: (userData) => userData && userData.isAdmin ? 'admin.html' : 'index.html'
+  getUserRedirectPath: (userData) => userData && userData.isAdmin ? "admin.html" : "index.html",
+  fetchUserDoc: jest.fn(),
+  db: { collection: jest.fn(() => ({ doc: jest.fn(() => ({ get: jest.fn() })) })) }
 }));
 
 const mockOnAuthStateChanged = jest.fn();
@@ -31,7 +32,7 @@ jest.unstable_mockModule('https://www.gstatic.com/firebasejs/9.15.0/firebase-fir
 }));
 
 const { loadNavbar } = await import('../../js/navbar.js');
-const { auth, db } = await import('../../js/auth.js');
+const { auth, fetchUserDoc } = await import('../../js/auth.js');
 
 describe('loadNavbar', () => {
   beforeEach(() => {
@@ -49,12 +50,8 @@ describe('loadNavbar', () => {
 
     const mockUser = { uid: '123' };
 
-    const mockGet = jest.fn().mockResolvedValueOnce({
-      exists: true,
-      data: () => ({ isAdmin: false })
-    });
-    const mockDoc = jest.fn().mockReturnValue({ get: mockGet });
-    db.collection = jest.fn().mockReturnValue({ doc: mockDoc });
+    const mockUserDoc = { exists: true, data: () => ({ isAdmin: false }) };
+    fetchUserDoc.mockResolvedValueOnce(mockUserDoc);
 
     const authCallback = auth.onAuthStateChanged.mock.calls[0][0];
     await authCallback(mockUser);
