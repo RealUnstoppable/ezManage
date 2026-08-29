@@ -51,3 +51,6 @@
 ## 2024-07-03 - Icon-only buttons with partial text missing ARIA labels
 **Learning:** Buttons that appear to have text but primarily rely on icons for their meaning (like "Add Manager" or "Invite" buttons with Lucide icons) can still benefit from explicit `aria-label`s, especially when they are dynamically rendered or placed in complex UI structures where standard screen readers might struggle to interpret the inline text content alongside the SVG/icon properly. Adding `aria-label` provides a robust, fail-safe announcement.
 **Action:** Even if a button contains visible text, if its primary visual affordance is an icon (especially injected via `data-lucide`), consider adding an explicit `aria-label` to ensure unambiguous screen reader support, taking care not to unnecessarily duplicate information if the text is perfectly semantic.
+## 2024-07-20 - Maintaining alignment in flex-row forms with new labels
+**Learning:** When addressing accessibility for form inputs by adding a visible `<label>` above an `<input>` in a responsive flex-row form (e.g., in `company.html` Manager Administration), the added height of the label can misalign the adjacent action buttons.
+**Action:** Use the Tailwind class `items-end` on the parent flex container to ensure the input field and adjacent action buttons remain horizontally aligned despite the new label's added height.
