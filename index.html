@@ -4858,7 +4858,8 @@ function checkAndRenderOrgControls() {
                 }
             } catch (error) {
                 console.error("Error fetching waste logs:", error);
-                container.innerHTML = `<div class="text-red-500 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl text-center">Failed to load waste logs: ${error.message}</div>`;
+                // Sentinel Security Enhancement: Prevent DOM-based XSS by escaping dynamic error messages before injecting into innerHTML
+                container.innerHTML = `<div class="text-red-500 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl text-center">Failed to load waste logs: ${escapeHTML(error.message)}</div>`;
             }
         }
 
@@ -5015,7 +5016,8 @@ function checkAndRenderOrgControls() {
                 }
             } catch (error) {
                 console.error("Error fetching incidents:", error);
-                container.innerHTML = `<div class="text-red-500 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl text-center">Failed to load incidents: ${error.message}</div>`;
+                // Sentinel Security Enhancement: Prevent DOM-based XSS by escaping dynamic error messages before injecting into innerHTML
+                container.innerHTML = `<div class="text-red-500 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl text-center">Failed to load incidents: ${escapeHTML(error.message)}</div>`;
             }
         }
 
@@ -5560,7 +5562,8 @@ function checkAndRenderOrgControls() {
                     renderFilteredTasks();
                 }, err => {
                     console.error("Error fetching tasks:", err);
-                    container.innerHTML = `<div class="text-red-500 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl text-center">Failed to load tasks: ${err.message}</div>`;
+                    // Sentinel Security Enhancement: Prevent DOM-based XSS by escaping dynamic error messages before injecting into innerHTML
+                    container.innerHTML = `<div class="text-red-500 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl text-center">Failed to load tasks: ${escapeHTML(err.message)}</div>`;
                 });
         }
 
