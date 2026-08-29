@@ -24,6 +24,7 @@ export function getUserRedirectPath(userData) {
 const userDocCache = new Map(); // ⚡ Bolt Optimization: Cache user document fetches
 
 export async function fetchUserDoc(uid) {
+    // ⚡ Bolt Optimization: Cache user document fetches to prevent N+1 query bottlenecks on auth state change
     if (userDocCache.has(uid)) {
         return userDocCache.get(uid);
     }
@@ -137,7 +138,7 @@ if (document.getElementById('auth-form')) {
         } else {
             try {
                 const userCredential = await auth.signInWithEmailAndPassword(email, password);
-                const userDoc = await db.collection("users").doc(userCredential.user.uid).get();
+                const userDoc = await fetchUserDoc(userCredential.user.uid);
 
                 if (userDoc.exists && userDoc.data().isBanned !== true) {
                     const destination = getUserRedirectPath(userDoc.data());
