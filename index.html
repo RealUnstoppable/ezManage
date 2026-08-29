@@ -1109,7 +1109,6 @@
                                 <option value="Driver">Driver</option>
                                 <option value="Other">Other</option>
                             </select>
-                            <input type="text" id="empPhone" placeholder="Phone Number (Optional)" aria-label="Phone Number"
                             <input type="text" id="empPhone" placeholder="Phone Number (Optional)" aria-label="Employee Phone Number"
                                 class="flex-1 bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
                         </div>
@@ -1192,7 +1191,7 @@
             </div>
         </div>
 
-        <div id="view-tasks" class="view-section px-6 py-12 hidden max-w-4xl mx-auto">
+        <div id="view-tasks-1" class="view-section px-6 py-12 hidden max-w-4xl mx-auto">
             <h2 class="text-3xl font-bold mb-6 text-slate-800 dark:text-white flex items-center gap-2">
                 <i data-lucide="check-square" class="w-8 h-8 text-sky-500"></i>
                 Task Management
@@ -1205,21 +1204,21 @@
                     <form id="createTaskForm" class="space-y-4" onsubmit="event.preventDefault(); createTask();">
                         <div>
                             <label for="taskTitle" class="block text-sm font-medium mb-1">Task Title</label>
-                            <input type="text" id="taskTitle" class="w-full" placeholder="e.g. Clean fryers" required>
+                            <input type="text" id="taskTitle1" class="w-full" placeholder="e.g. Clean fryers" required>
                         </div>
                         <div>
                             <label for="taskDesc" class="block text-sm font-medium mb-1">Description (Optional)</label>
-                            <textarea id="taskDesc" class="w-full h-24" placeholder="Task details..."></textarea>
+                            <textarea id="taskDesc1" class="w-full h-24" placeholder="Task details..."></textarea>
                         </div>
                         <div>
                             <label for="taskAssignee" class="block text-sm font-medium mb-1">Assign To</label>
-                            <select id="taskAssignee" class="w-full" required>
+                            <select id="taskAssignee2" class="w-full" required>
                                 <option value="">Select Employee...</option>
                             </select>
                         </div>
                         <div>
                             <label for="taskDueDate" class="block text-sm font-medium mb-1">Due Date</label>
-                            <input type="date" id="taskDueDate" class="w-full" required>
+                            <input type="date" id="taskDueDate2" class="w-full" required>
                         </div>
                         <button type="submit" class="btn btn-primary w-full">Assign Task</button>
                     </form>
@@ -1229,7 +1228,7 @@
                 <div class="lg:col-span-2">
                     <div class="flex justify-between items-center mb-4">
                         <h3 class="text-xl font-semibold text-slate-800 dark:text-white">Assigned Tasks</h3>
-                        <select id="taskFilterStatus" class="text-sm p-1 border rounded" onchange="fetchTasks()">
+                        <select id="taskFilterStatus2" class="text-sm p-1 border rounded" onchange="fetchTasks()">
                             <option value="All">All Tasks</option>
                             <option value="Pending">Pending</option>
                             <option value="In Progress">In Progress</option>
@@ -1346,9 +1345,6 @@
                     <p class="text-sm text-slate-500 mb-6">Create a group to share shift notes with other managers
                         securely.</p>
                     <div class="space-y-4">
-                        <input type="text" id="newGroupName" placeholder="Group Name (e.g. Store #1234)" aria-label="Group Name"
-                            class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
-                        <input type="password" id="newGroupPassword" placeholder="Group Password" aria-label="Group Password"
                         <input type="text" id="newGroupName" placeholder="Group Name (e.g. Store #1234)" aria-label="New Group Name"
                             class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
                         <input type="password" id="newGroupPassword" placeholder="Group Password" aria-label="New Group Password"
@@ -1366,9 +1362,6 @@
                     <h2 class="text-xl font-bold mb-4">Join a Management Group</h2>
                     <p class="text-sm text-slate-500 mb-6">Ask your store owner/GM for the Group ID and Password.</p>
                     <div class="space-y-4">
-                        <input type="text" id="joinGroupId" placeholder="Group ID" aria-label="Group ID"
-                            class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
-                        <input type="password" id="joinGroupPassword" placeholder="Group Password" aria-label="Group Password"
                         <input type="text" id="joinGroupId" placeholder="Group ID" aria-label="Join Group ID"
                             class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
                         <input type="password" id="joinGroupPassword" placeholder="Group Password" aria-label="Join Group Password"
@@ -1420,7 +1413,7 @@
             </div>
         </div>
 
-        <div id="view-tasks" class="view-section px-6 py-12 hidden">
+        <div id="view-tasks-2" class="view-section px-6 py-12 hidden">
             <div class="max-w-4xl mx-auto">
                 <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
                     <h1 class="text-4xl font-black">Task Manager</h1>
@@ -1434,13 +1427,13 @@
                     class="hidden bg-white dark:bg-slate-900 rounded-3xl p-6 md:p-8 shadow-sm border border-slate-100 dark:border-slate-800 mb-12">
                     <h2 class="text-xl font-bold mb-4">Assign New Task</h2>
                     <div class="space-y-4">
-                        <input type="text" id="taskTitle" placeholder="Task Title"
+                        <input type="text" id="taskTitle2" placeholder="Task Title"
                             class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
-                        <textarea id="taskDesc" placeholder="Task Description..." rows="3"
+                        <textarea id="taskDesc2" placeholder="Task Description..." rows="3"
                             class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500 resize-none"></textarea>
 
                         <div class="flex flex-col md:flex-row gap-4">
-                            <select id="taskAssignee" class="flex-1 bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
+                            <select id="taskAssignee1" class="flex-1 bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
                                 <option value="" disabled selected>Assign To Employee</option>
                             </select>
                             <select id="taskPriority"
@@ -1450,7 +1443,7 @@
                                 <option value="High">High Priority</option>
                                 <option value="Critical">Critical</option>
                             </select>
-                            <input type="date" id="taskDueDate" class="flex-1 bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
+                            <input type="date" id="taskDueDate1" class="flex-1 bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
                         </div>
 
                         <div class="flex justify-end gap-3 pt-2">
@@ -1463,7 +1456,7 @@
 
                 <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
                     <div class="flex items-center gap-4 w-full md:w-auto">
-                        <select id="taskFilterStatus" onchange="renderFilteredTasks()" class="bg-slate-50 dark:bg-slate-800 p-2 rounded-xl border-none focus:ring-2 focus:ring-sky-500 text-sm">
+                        <select id="taskFilterStatus1" onchange="renderFilteredTasks()" class="bg-slate-50 dark:bg-slate-800 p-2 rounded-xl border-none focus:ring-2 focus:ring-sky-500 text-sm">
                             <option value="All">All Statuses</option>
                             <option value="Pending">Pending</option>
                             <option value="In Progress">In Progress</option>
@@ -1563,7 +1556,6 @@
                     class="hidden bg-white dark:bg-slate-900 rounded-3xl p-6 md:p-8 shadow-sm border border-slate-100 dark:border-slate-800 mb-12">
                     <h2 class="text-xl font-bold mb-4">Report New Issue</h2>
                     <div class="space-y-4">
-                        <input type="text" id="maintenanceTitle" placeholder="Equipment or Issue Name" aria-label="Equipment or Issue Name"
                         <input type="text" id="maintenanceTitle" placeholder="Equipment or Issue Name" aria-label="Maintenance Title"
                             class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
                         <textarea id="maintenanceDesc" placeholder="Describe the problem..." aria-label="Maintenance Description" rows="3"
@@ -1925,28 +1917,19 @@
                     class="hidden bg-white dark:bg-slate-900 rounded-3xl p-6 md:p-8 shadow-sm border border-slate-100 dark:border-slate-800 mb-12">
                     <h2 class="text-xl font-bold mb-4">Add New Employee</h2>
                     <div class="space-y-4">
-                        <input type="text" id="empName" placeholder="Full Name" aria-label="Full Name"
+                        <input type="text" id="staffName" placeholder="Full Name" aria-label="Employee Full Name"
                             class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
-                        <input type="text" id="empRole" placeholder="Role (e.g. Cashier, Cook)" aria-label="Role"
-                            class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
-
-                        <div class="grid md:grid-cols-2 gap-4">
-                            <input type="tel" id="empPhone" placeholder="Phone Number" aria-label="Phone Number"
-                                class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
-                            <input type="email" id="empEmail" placeholder="Email Address" aria-label="Email Address"
-                        <input type="text" id="empName" placeholder="Full Name" aria-label="Employee Full Name"
-                            class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
-                        <input type="text" id="empRole" placeholder="Role (e.g. Cashier, Cook)" aria-label="Employee Role"
+                        <input type="text" id="staffRole" placeholder="Role (e.g. Cashier, Cook)" aria-label="Employee Role"
                             class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
 
                         <div class="grid md:grid-cols-2 gap-4">
-                            <input type="tel" id="empPhone" placeholder="Phone Number" aria-label="Employee Phone Number"
+                            <input type="tel" id="staffPhone" placeholder="Phone Number" aria-label="Employee Phone Number"
                                 class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
-                            <input type="email" id="empEmail" placeholder="Email Address" aria-label="Employee Email Address"
+                            <input type="email" id="staffEmail" placeholder="Email Address" aria-label="Employee Email Address"
                                 class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
                         </div>
 
-                        <select id="empStatus" aria-label="Employee Status" class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
+                        <select id="staffStatus" aria-label="Employee Status" class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
                             <option value="Active">Active</option>
                             <option value="Inactive">Inactive</option>
                         </select>
@@ -1989,7 +1972,7 @@
             </div>
         </div>
 
-        <div id="view-tasks" class="view-section px-6 py-12 hidden">
+        <div id="view-tasks-3" class="view-section px-6 py-12 hidden">
             <div class="max-w-4xl mx-auto">
                 <div class="card shadow-2xl mb-12" id="managerTaskCreation" style="display: none;">
                     <h1 class="text-3xl font-black mb-4">Assign Tasks</h1>
@@ -1998,18 +1981,18 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                         <div>
                             <label class="block text-sm font-bold mb-2">Task Title</label>
-                            <input type="text" id="taskTitle" class="w-full" placeholder="e.g. Close Registers">
+                            <input type="text" id="taskTitle3" class="w-full" placeholder="e.g. Close Registers">
                         </div>
                         <div>
                             <label class="block text-sm font-bold mb-2">Assign To</label>
-                            <select id="taskAssignee" class="w-full">
+                            <select id="taskAssignee3" class="w-full">
                                 <option value="">Select Employee</option>
                             </select>
                         </div>
                     </div>
 
                     <label class="block text-sm font-bold mb-2">Description (Optional)</label>
-                    <textarea id="taskDescription" class="h-24 mb-6" placeholder="Provide extra details..."></textarea>
+                    <textarea id="taskDescription3" class="h-24 mb-6" placeholder="Provide extra details..."></textarea>
 
                     <button id="btnSubmitTask" onclick="submitTask()" class="btn btn-accent w-full py-4">Assign Task</button>
                 </div>
@@ -2123,6 +2106,14 @@
 
     <script>
 
+        // Initialization is handled by firebase.js, we just get references
+        const app = window.firebase.app();
+        const auth = window.firebase.auth();
+        const db = window.firebase.firestore();
+        const cloudFunctions = window.firebase.functions();
+
+        // Wait, since this script is not a module, we need to make sure firebase.js runs before it.
+        // Let's just make the inline script check for singleton.
         const firebaseConfig = {
             apiKey: "AIzaSyBgrI9HwJPSc5b4pu2Egsv4DE7shNwptSw",
             authDomain: "ezmanage.realunstoppable.store",
@@ -2132,17 +2123,11 @@
             appId: "1:48345990988:web:e3662c9b508168546471e9",
             measurementId: "G-ZN3YJPHVGX"
         };
-
         const app = !window.firebase.apps.length ? window.firebase.initializeApp(firebaseConfig) : window.firebase.app();
         const auth = window.firebase.auth();
-
-        window.firebase.firestore().settings({
-            experimentalForceLongPolling: true
-        });
+        window.firebase.firestore().settings({ experimentalForceLongPolling: true });
         const db = window.firebase.firestore();
-
         const cloudFunctions = window.firebase.functions();
-
         db.enablePersistence().catch(err => console.error("Offline sync error:", err));
 
         let currentUser = null;
@@ -4615,7 +4600,9 @@ function checkAndRenderOrgControls() {
                 if (result.data.success) {
                     alert(`Group Created! Share your Group ID: ${result.data.groupId} and password with other managers.`);
                     document.getElementById('createGroupModal').classList.add('hidden');
-                    // Force refresh user data
+
+                    // Await fetching updated user doc to ensure orgId is ready before reloading
+                    await fetchUserDoc(currentUser.uid);
                     window.location.reload();
                 }
             } catch (e) {

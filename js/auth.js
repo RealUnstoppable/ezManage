@@ -2,20 +2,9 @@ import { getFirebaseErrorMessage, logManagerError } from './utils.js';
 
 
 
-const firebaseConfig = {
-  apiKey: "AIzaSyBgrI9HwJPSc5b4pu2Egsv4DE7shNwptSw",
-  authDomain: "ezmanage.realunstoppable.store",
-  projectId: "dts-hub-website",
-  storageBucket: "dts-hub-website.firebasestorage.app",
-  messagingSenderId: "48345990988",
-  appId: "1:48345990988:web:e3662c9b508168546471e9",
-  measurementId: "G-ZN3YJPHVGX"
-};
+import { auth, db } from '../firebase.js';
 
-if (!window.firebase) { console.error("Firebase Compat SDK must be loaded before auth.js"); }
-
-export const auth = window.firebase ? window.firebase.auth() : {};
-export const db = window.firebase ? window.firebase.firestore() : {};
+export { auth, db };
 
 export function getUserRedirectPath(userData) {
     return userData && userData.isAdmin ? 'admin.html' : 'index.html';
