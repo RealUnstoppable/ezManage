@@ -365,13 +365,26 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    let lastCurrentTimeStr = "";
+    let lastTotalTimeStr = "";
+
     function updateProgress() {
         const { duration, currentTime } = audioPlayer;
         if (duration) {
             const percent = (currentTime / duration) * 100;
             progress.style.width = `${percent}%`;
-            currentTimeEl.textContent = formatTime(currentTime);
-            totalTimeEl.textContent = formatTime(duration);
+
+            const currentStr = formatTime(currentTime);
+            if (currentStr !== lastCurrentTimeStr) {
+                currentTimeEl.textContent = currentStr;
+                lastCurrentTimeStr = currentStr;
+            }
+
+            const totalStr = formatTime(duration);
+            if (totalStr !== lastTotalTimeStr) {
+                totalTimeEl.textContent = totalStr;
+                lastTotalTimeStr = totalStr;
+            }
         }
     }
 

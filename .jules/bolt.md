@@ -45,3 +45,6 @@
 ## 2026-06-25 - [Repeated Firebase DB Docs Fetch]
 **Learning:** Functions invoked via callbacks from listeners that span multiple files (e.g., \`auth.onAuthStateChanged\`) will fire simultaneously. Without a caching layer, they execute redundant concurrent network fetch queries (like \`db.collection('users').doc(uid).get()\`), causing latency and blocking operations.
 **Action:** Always wrap independent multi-listener fetched resources with a generic memoization layer using a \`Map\` cache to immediately resolve redundant Promise requests.
+## 2024-05-27 - [Timeupdate DOM Updates Avoidance]
+**Learning:** Performance Anti-pattern: When updating DOM text based on high-frequency events (like timeupdate on audio/video players), do not unconditionally update textContent on every tick. It causes layout thrashing and unnecessary repaints.
+**Action:** Cache the formatted string and only update the DOM when the string changes to prevent continuous layout thrashing.
