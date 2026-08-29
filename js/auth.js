@@ -59,7 +59,11 @@ auth.onAuthStateChanged(async (user) => {
 
                 if (membershipStatusContainer) {
                     const level = userData.membershipLevel || 'free';
-                    membershipStatusContainer.innerHTML = `<span class="membership-status ${level}">${level}</span>`;
+                    membershipStatusContainer.innerHTML = '';
+                    const span = document.createElement('span');
+                    span.className = 'membership-status ' + level;
+                    span.textContent = level;
+                    membershipStatusContainer.appendChild(span);
                 }
             }
         } catch (error) {
