@@ -365,13 +365,29 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    let lastCurrentSeconds = -1; // ⚡ Bolt Optimization: Cache seconds to avoid function calls
+    let lastDurationSeconds = -1; // ⚡ Bolt Optimization: Cache seconds to avoid function calls
+
     function updateProgress() {
         const { duration, currentTime } = audioPlayer;
         if (duration) {
             const percent = (currentTime / duration) * 100;
             progress.style.width = `${percent}%`;
-            currentTimeEl.textContent = formatTime(currentTime);
-            totalTimeEl.textContent = formatTime(duration);
+
+            // ⚡ Bolt Performance Optimization:
+            // Bypass string formatting and DOM updates if the current seconds haven't changed.
+            // This prevents layout thrashing on high-frequency timeupdate events.
+            const currentSeconds = Math.floor(currentTime);
+            if (currentSeconds !== lastCurrentSeconds) {
+                currentTimeEl.textContent = formatTime(currentTime);
+                lastCurrentSeconds = currentSeconds;
+            }
+
+            const durationSeconds = Math.floor(duration);
+            if (durationSeconds !== lastDurationSeconds) {
+                totalTimeEl.textContent = formatTime(duration);
+                lastDurationSeconds = durationSeconds;
+            }
         }
     }
 
