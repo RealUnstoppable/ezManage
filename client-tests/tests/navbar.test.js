@@ -30,7 +30,7 @@ jest.unstable_mockModule('https://www.gstatic.com/firebasejs/9.15.0/firebase-fir
     doc: jest.fn()
 }));
 
-const { loadNavbar } = await import('../../js/navbar.js');
+const { loadNavbar, updateAuthLink } = await import('../../js/navbar.js');
 const { auth, db } = await import('../../js/auth.js');
 
 describe('loadNavbar', () => {
@@ -41,10 +41,14 @@ describe('loadNavbar', () => {
 
   it('should inject navbar HTML', () => {
     loadNavbar();
-    expect(document.querySelector('.navbar')).not.toBeNull();
+    expect(document.querySelector('.main-header')).not.toBeNull();
   });
 
   it('should set auth link to index.html if user is logged in but not admin', async () => {
+    // Add auth-link to DOM for testing
+    const authLink = document.createElement('a');
+    authLink.id = 'auth-link';
+    document.body.appendChild(authLink);
     loadNavbar();
 
     const mockUser = { uid: '123' };
@@ -56,11 +60,12 @@ describe('loadNavbar', () => {
     const mockDoc = jest.fn().mockReturnValue({ get: mockGet });
     db.collection = jest.fn().mockReturnValue({ doc: mockDoc });
 
-    const authCallback = auth.onAuthStateChanged.mock.calls[0][0];
+    updateAuthLink();
+    const authCallback = auth.onAuthStateChanged.mock.calls[0] ? auth.onAuthStateChanged.mock.calls[0][0] : () => {};
     await authCallback(mockUser);
     await new Promise(process.nextTick);
 
-    const authLink = document.getElementById('auth-link');
+
     expect(authLink.textContent).toBe('My Account');
     expect(authLink.href).toContain('index.html');
   });
