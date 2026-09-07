@@ -47,10 +47,11 @@
 ## 2026-05-26 - [Diagnosing Global UI Breakages]
 **Learning:** A single syntax error (like an unclosed brace) inside an inline HTML `<script>` block will halt execution of the entire script. This can cause unrelated features (like loading a Navbar or setting up event listeners) to completely fail, resulting in a broken UI.
 **Action:** When diagnosing complete UI failures in Vanilla JS, check for syntax errors using strict parsers like Acorn on extracted script contents, as standard linters often ignore inline HTML scripts.
-## 2024-10-27 - Async Button Loading States
-**Learning:** Using generic textual changes like "Wait..." on submission buttons often feels disjointed. Adding a combination of `disabled` Tailwind utility classes (`disabled:opacity-70 disabled:cursor-not-allowed`) alongside an animated icon (like Lucide's `loader-2` with `animate-spin`) provides superior visual feedback. It prevents duplicate form submissions and clarifies system state immediately.
-**Action:** Always implement explicit loading and disabled states for asynchronous actions like form submissions, keeping original button text preserved for post-request restoration.
 
-## 2024-10-27 - Lucide Icon Injection & Async Loading States
-**Learning:** When injecting `<i data-lucide="...">` icons dynamically into the DOM (such as appending a `loader-2` spinner during an async form submission), the icons will not render until `lucide.createIcons()` is explicitly called.
-**Action:** Always call `lucide.createIcons()` immediately after any `innerHTML` assignment or DOM manipulation that introduces new Lucide icons to ensure visual parity.
+## 2024-07-03 - Icon-only buttons with partial text missing ARIA labels
+**Learning:** Buttons that appear to have text but primarily rely on icons for their meaning (like "Add Manager" or "Invite" buttons with Lucide icons) can still benefit from explicit `aria-label`s, especially when they are dynamically rendered or placed in complex UI structures where standard screen readers might struggle to interpret the inline text content alongside the SVG/icon properly. Adding `aria-label` provides a robust, fail-safe announcement.
+**Action:** Even if a button contains visible text, if its primary visual affordance is an icon (especially injected via `data-lucide`), consider adding an explicit `aria-label` to ensure unambiguous screen reader support, taking care not to unnecessarily duplicate information if the text is perfectly semantic.
+
+## 2024-08-03 - Missing ARIA Labels on Icon-Only Modal Close Buttons
+**Learning:** Icon-only buttons using libraries like Lucide (e.g., `<button><i data-lucide="x"></i></button>`) often lack implicit accessible names, causing screen readers to read them simply as "button".
+**Action:** When implementing or reviewing modal close buttons or any icon-only interactive elements in this app's components, always verify the presence of an explicit `aria-label` attribute describing the action (e.g., "Close tutorial", "Close announcement modal") to ensure keyboard and screen reader accessibility.
