@@ -284,13 +284,9 @@ exports.manageTasks = functions.https.onCall(async (data, context) => {
   }
 
   try {
-    const userDoc = await admin.firestore().collection("users").doc(uid).get();
-    if (!userDoc.exists) {
-      throw new HttpsError("not-found", "User not found");
-    }
-
-    const isManager = userDoc.data().orgId === uid;
-    const actualOrgId = userDoc.data().orgId || uid;
+    const userOrgId = await getActualOrgId(admin, uid);
+    const isManager = userOrgId === uid;
+    const actualOrgId = userOrgId || uid;
 
     if (action === "create") {
       if (!isManager) {
@@ -767,11 +763,7 @@ exports.manageIncidents = functions.https.onCall(async (data, context) => {
   }
 
   try {
-    const userDoc = await admin.firestore().collection("users").doc(uid).get();
-    if (!userDoc.exists) {
-      throw new HttpsError("not-found", "User not found");
-    }
-    const actualOrgId = userDoc.data().orgId || null;
+    const actualOrgId = await getActualOrgId(admin, uid);
 
     if (!actualOrgId) {
       throw new HttpsError("permission-denied", "User must be part of an organization to report incidents.");
@@ -886,11 +878,7 @@ exports.manageWaste = functions.https.onCall(async (data, context) => {
   }
 
   try {
-    const userDoc = await admin.firestore().collection("users").doc(uid).get();
-    if (!userDoc.exists) {
-      throw new HttpsError("not-found", "User not found");
-    }
-    const actualOrgId = userDoc.data().orgId || null;
+    const actualOrgId = await getActualOrgId(admin, uid);
 
     if (!actualOrgId) {
       throw new HttpsError("permission-denied", "User must be part of an organization to log waste.");
