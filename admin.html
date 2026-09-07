@@ -2,9 +2,15 @@
 <html lang="en">
 
 <head>
-  <script type="module" src="/js/theme-loader.js"></script>
+  <script type="module" src="./js/theme-loader.js"></script>
   <script type="module">
-    import { escapeHTML } from '/js/utils.js';
+    import { escapeHTML } from './js/utils.js';
+    import { loadNavbar } from './js/navbar.js';
+    import { loadFooter } from './js/footer.js';
+    document.addEventListener('DOMContentLoaded', () => {
+        loadNavbar();
+        loadFooter();
+    });
     window.escapeHTML = escapeHTML;
   </script>
   <meta charset="UTF-8">
@@ -15,7 +21,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <link rel="stylesheet" href="/css/themes.css">
+  <link rel="stylesheet" href="./css/style.css">
+  <link rel="stylesheet" href="./css/themes.css">
   <style>
     :root {
       --accent-blue: #2563EB;
@@ -340,6 +347,7 @@
 </head>
 
 <body style="display: none;">
+  <header class="main-header"></header>
   <div class="mobile-header">
     <h2 style="margin:0; color: var(--accent-blue);">Admin</h2>
     <button class="hamburger-btn" aria-label="Toggle Menu" onclick="document.getElementById('sidebar').classList.toggle('open'); document.body.classList.toggle('overflow-hidden');">☰</button>
@@ -979,6 +987,7 @@ function initializeAdminPage(adminUser) {
       document.getElementById('sign-out').addEventListener('click', () => { signOut(auth); });
     }
   </script>
+  <footer class="main-footer"></footer>
 </body>
 
 </html>
