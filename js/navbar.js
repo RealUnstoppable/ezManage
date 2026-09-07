@@ -22,7 +22,7 @@ function attachNavEvents() {
     }
 }
 
-function updateAuthLink() {
+export function updateAuthLink() {
     const authLink = document.getElementById('auth-link');
     if (!authLink) return;
 
