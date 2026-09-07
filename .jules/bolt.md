@@ -45,3 +45,7 @@
 ## 2026-06-25 - [Repeated Firebase DB Docs Fetch]
 **Learning:** Functions invoked via callbacks from listeners that span multiple files (e.g., \`auth.onAuthStateChanged\`) will fire simultaneously. Without a caching layer, they execute redundant concurrent network fetch queries (like \`db.collection('users').doc(uid).get()\`), causing latency and blocking operations.
 **Action:** Always wrap independent multi-listener fetched resources with a generic memoization layer using a \`Map\` cache to immediately resolve redundant Promise requests.
+
+## 2026-09-07 - Optimize Firestore sequential writes to batch writes
+**Learning:** Sequential Firestore `add` or `set` calls inside a loop can cause an N+1 write pattern, increasing network latency and delaying UI feedback.
+**Action:** Always refactor sequential Firestore database writes inside a loop into a single `batch()` operation to improve performance. Ensure a document reference is generated using `.doc()` when migrating from `.add()` to `.batch().set()`.
