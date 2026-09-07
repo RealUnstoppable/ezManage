@@ -2,7 +2,7 @@ import { logManagerError } from './utils.js';
 import { auth, db } from './auth.js';
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
 import { doc, getDoc, setDoc, updateDoc, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
-import { showToast } from './utils.js';
+import { showToast, escapeHTML } from './utils.js';
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -220,8 +220,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     <span class="song-index" style="${isActive ? 'display:none' : ''}">${index + 1}</span>
                     <span class="playing-icon" style="${isActive ? 'display:inline' : 'display:none'}">▶</span>
                 </td>
-                <td class="song-title">${song.title}</td>
-                <td>${song.artist}</td>
+                <td class="song-title">${escapeHTML(song.title)}</td>
+                <td>${escapeHTML(song.artist)}</td>
                 <td style="text-align: right;">${song.duration}</td>
             `;
 
@@ -365,8 +365,8 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    let lastCurrentTimeString = "";
-    let lastTotalTimeString = "";
+    let lastCurrentTimeStr = "";
+    let lastTotalTimeStr = "";
 
     function updateProgress() {
         const { duration, currentTime } = audioPlayer;
@@ -374,18 +374,16 @@ document.addEventListener('DOMContentLoaded', () => {
             const percent = (currentTime / duration) * 100;
             progress.style.width = `${percent}%`;
 
-            // ⚡ Bolt Optimization: Cache formatted strings to prevent textContent layout thrashing
-            const formattedCurrent = formatTime(currentTime);
-            const formattedTotal = formatTime(duration);
+            const currentStr = formatTime(currentTime);
+            const totalStr = formatTime(duration);
 
-            if (formattedCurrent !== lastCurrentTimeString) {
-                currentTimeEl.textContent = formattedCurrent;
-                lastCurrentTimeString = formattedCurrent;
+            if (currentStr !== lastCurrentTimeStr) {
+                currentTimeEl.textContent = currentStr;
+                lastCurrentTimeStr = currentStr;
             }
-
-            if (formattedTotal !== lastTotalTimeString) {
-                totalTimeEl.textContent = formattedTotal;
-                lastTotalTimeString = formattedTotal;
+            if (totalStr !== lastTotalTimeStr) {
+                totalTimeEl.textContent = totalStr;
+                lastTotalTimeStr = totalStr;
             }
         }
     }
