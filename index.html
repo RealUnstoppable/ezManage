@@ -2780,7 +2780,12 @@
             return state;
         }
 
-        document.getElementById('trackerForm').addEventListener('input', triggerDraftSync);
+        let inputDebounceTimeout;
+        document.getElementById('trackerForm').addEventListener('input', () => {
+            clearTimeout(inputDebounceTimeout);
+            // ⚡ Bolt Optimization: Debounce input events to prevent layout thrashing and excessive syncs
+            inputDebounceTimeout = setTimeout(triggerDraftSync, 300);
+        });
 
         function triggerDraftSync() {
             if (!initialDraftLoaded || !currentUser) return;
@@ -4108,20 +4113,31 @@
                         taskSelect.innerHTML = '<option value="">Select Employee...</option>';
                     }
 
+                    const selectFragment = document.createDocumentFragment();
+                    let taskSelectFragment = null;
+                    if (taskSelect) {
+                        taskSelectFragment = document.createDocumentFragment();
+                    }
+
                     employees.forEach(emp => {
                         const opt = document.createElement('option');
                         opt.value = emp.name;
                         opt.textContent = `${emp.name} (${emp.role})`;
                         opt.dataset.role = emp.role;
-                        select.appendChild(opt);
+                        selectFragment.appendChild(opt);
 
-                        if (taskSelect) {
+                        if (taskSelect && taskSelectFragment) {
                             const taskOpt = document.createElement('option');
                             taskOpt.value = emp.docId; // Use docId for tasks reference
                             taskOpt.textContent = emp.name;
-                            taskSelect.appendChild(taskOpt);
+                            taskSelectFragment.appendChild(taskOpt);
                         }
                     });
+
+                    select.appendChild(selectFragment);
+                    if (taskSelect && taskSelectFragment) {
+                        taskSelect.appendChild(taskSelectFragment);
+                    }
                 })
                 .catch(err => console.error("Manager Troubleshooting: Error populating dropdown:", err));
         }
@@ -5438,6 +5454,8 @@ function checkAndRenderOrgControls() {
                         assignFragment.appendChild(opt);
                     });
                     select.appendChild(assignFragment);
+
+                    select.appendChild(selectFragment);
 
                     const filterSelect = document.getElementById('taskFilterAssignee');
                     filterSelect.innerHTML = '<option value="All">All Assignees</option>';
