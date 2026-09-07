@@ -135,7 +135,6 @@ describe("createCheckoutSession", () => {
           product: "prod_UFnBrTwFCgb54A",
           recurring: {interval: "year"},
           unit_amount: 18600, // 207 * 0.9 = 186.3 -> floored to 186 -> * 100 = 18600
-          unit_amount: 18600,
         },
         quantity: 1,
       }],

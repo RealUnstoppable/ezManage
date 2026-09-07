@@ -7,6 +7,12 @@ const {adaptGen2Params, logManagerError} = require("./utils");
 
 /**
  * Helper to get a document, verify its existence, and verify its orgId.
+ * @param {string} collection - The collection name
+ * @param {string} docId - The document ID
+ * @param {string} expectedOrgId - The expected organization ID
+ * @param {string} notFoundMessage - Message if not found
+ * @param {string} unauthorizedMessage - Message if unauthorized
+ * @return {Promise<Object>} The document reference and snapshot
  */
 async function verifyDocAndAuth(collection, docId, expectedOrgId, notFoundMessage, unauthorizedMessage) {
   const docRef = admin.firestore().collection(collection).doc(docId);
@@ -36,6 +42,9 @@ const stripe = require("stripe")(stripeKey);
 
 /**
  * Helper to get the actual organization ID for a user.
+ * @param {Object} admin - The firebase admin instance
+ * @param {string} uid - The user ID
+ * @return {Promise<string>} The actual organization ID
  */
 async function getActualOrgId(admin, uid) {
   const userDoc = await admin.firestore().collection("users").doc(uid).get();
@@ -212,7 +221,7 @@ exports.stripeWebhook = onRequest({invoker: "public"}, async (req, res) => {
         .where("subscription.customerId", "==", sub.customer)
         .get();
 
-    for (const doc of snapshot.docs) {
+    const updatePromises = snapshot.docs.map(async (doc) => {
       // Revert the user back to the free plan
       try {
         await doc.ref.update({
@@ -224,7 +233,9 @@ exports.stripeWebhook = onRequest({invoker: "public"}, async (req, res) => {
       } catch (err) {
         logManagerError(`Error reverting user ${doc.id} back to Free plan:`, err);
       }
-    }
+    });
+
+    await Promise.all(updatePromises);
   }
 
   res.json({received: true});
@@ -273,13 +284,9 @@ exports.manageTasks = functions.https.onCall(async (data, context) => {
   }
 
   try {
-    const userDoc = await admin.firestore().collection("users").doc(uid).get();
-    if (!userDoc.exists) {
-      throw new HttpsError("not-found", "User not found");
-    }
-
-    const isManager = userDoc.data().orgId === uid;
-    const actualOrgId = userDoc.data().orgId || uid;
+    const userOrgId = await getActualOrgId(admin, uid);
+    const isManager = userOrgId === uid;
+    const actualOrgId = userOrgId || uid;
 
     if (action === "create") {
       if (!isManager) {
@@ -756,11 +763,7 @@ exports.manageIncidents = functions.https.onCall(async (data, context) => {
   }
 
   try {
-    const userDoc = await admin.firestore().collection("users").doc(uid).get();
-    if (!userDoc.exists) {
-      throw new HttpsError("not-found", "User not found");
-    }
-    const actualOrgId = userDoc.data().orgId || null;
+    const actualOrgId = await getActualOrgId(admin, uid);
 
     if (!actualOrgId) {
       throw new HttpsError("permission-denied", "User must be part of an organization to report incidents.");
@@ -875,11 +878,7 @@ exports.manageWaste = functions.https.onCall(async (data, context) => {
   }
 
   try {
-    const userDoc = await admin.firestore().collection("users").doc(uid).get();
-    if (!userDoc.exists) {
-      throw new HttpsError("not-found", "User not found");
-    }
-    const actualOrgId = userDoc.data().orgId || null;
+    const actualOrgId = await getActualOrgId(admin, uid);
 
     if (!actualOrgId) {
       throw new HttpsError("permission-denied", "User must be part of an organization to log waste.");
