@@ -1,4 +1,4 @@
-import { getFirebaseErrorMessage, logManagerError } from './utils.js';
+import { getFirebaseErrorMessage, logManagerError, escapeHTML } from './utils.js';
 
 
 
@@ -27,7 +27,7 @@ export async function fetchUserDoc(uid) {
     return fetchPromise;
 }
 
-const ADMIN_EMAIL = null;
+
 
 if (auth && auth.onAuthStateChanged) {
 auth.onAuthStateChanged(async (user) => {
@@ -48,7 +48,7 @@ auth.onAuthStateChanged(async (user) => {
 
                 if (membershipStatusContainer) {
                     const level = userData.membershipLevel || 'free';
-                    membershipStatusContainer.innerHTML = `<span class="membership-status ${level}">${level}</span>`;
+                    membershipStatusContainer.innerHTML = `<span class="membership-status ${escapeHTML(level)}">${escapeHTML(level)}</span>`;
                 }
             }
         } catch (error) {

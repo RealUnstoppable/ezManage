@@ -28,3 +28,37 @@ describe('Firebase Initialization', () => {
     expect(global.firebase.firestore).toHaveBeenCalled();
   });
 });
+
+describe('getUserRedirectPath', () => {
+    let getUserRedirectPath;
+
+    beforeAll(async () => {
+        const authModule = await import("../auth.js");
+        getUserRedirectPath = authModule.getUserRedirectPath;
+    });
+
+    it('should return "admin.html" if user data exists and isAdmin is true', () => {
+        const result = getUserRedirectPath({ isAdmin: true });
+        expect(result).toBe('admin.html');
+    });
+
+    it('should return "index.html" if user data exists and isAdmin is false', () => {
+        const result = getUserRedirectPath({ isAdmin: false });
+        expect(result).toBe('index.html');
+    });
+
+    it('should return "index.html" if user data exists but isAdmin is not defined', () => {
+        const result = getUserRedirectPath({ someOtherField: true });
+        expect(result).toBe('index.html');
+    });
+
+    it('should return "index.html" if user data is null', () => {
+        const result = getUserRedirectPath(null);
+        expect(result).toBe('index.html');
+    });
+
+    it('should return "index.html" if user data is undefined', () => {
+        const result = getUserRedirectPath(undefined);
+        expect(result).toBe('index.html');
+    });
+});
