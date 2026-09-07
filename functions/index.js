@@ -949,4 +949,121 @@ exports.manageWaste = functions.https.onCall(async (data, context) => {
   }
 });
 
+/**
+ * Manage Recognitions API
+ * Handles creation, reading, and deletion of recognitions (Kudos / Private Feedback).
+ */
+exports.manageRecognitions = functions.https.onCall(async (data, context) => {
+  if (data && typeof data === "object" && "rawRequest" in data && "auth" in data) {
+    context = data;
+    data = data.data;
+  }
+
+  if (!context || !context.auth) {
+    throw new HttpsError("unauthenticated", "User must be logged in.");
+  }
+
+  const {action, payload} = data;
+  const uid = context.auth.uid;
+
+  if (!action || !payload) {
+    throw new HttpsError("invalid-argument", "Missing action or payload");
+  }
+
+  try {
+    const userDoc = await admin.firestore().collection("users").doc(uid).get();
+    if (!userDoc.exists) {
+      throw new HttpsError("not-found", "User not found");
+    }
+    const actualOrgId = userDoc.data().orgId || null;
+
+    if (!actualOrgId) {
+      throw new HttpsError("permission-denied", "User must be part of an organization to manage recognitions.");
+    }
+
+    if (action === "create") {
+      const {receiverId, receiverName, message, type} = payload;
+
+      if (!receiverId || !receiverName || !message || !type) {
+        throw new HttpsError("invalid-argument", "Missing required recognition details");
+      }
+
+      const validTypes = ["Kudos", "Private Feedback"];
+      const recognitionType = validTypes.includes(type) ? type : "Kudos";
+
+      const newRecognition = {
+        senderId: uid,
+        senderName: userDoc.data().name || "Anonymous",
+        receiverId,
+        receiverName,
+        message,
+        type: recognitionType,
+        orgId: actualOrgId,
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      };
+
+      const docRef = await admin.firestore().collection("recognitions").add(newRecognition);
+      return {success: true, id: docRef.id};
+    }
+
+    if (action === "get") {
+      const snapshot = await admin.firestore().collection("recognitions")
+          .where("orgId", "==", actualOrgId)
+          .orderBy("createdAt", "desc")
+          .limit(100)
+          .get();
+
+      const recognitions = [];
+      const isManager = userDoc.data().orgId === uid;
+
+      snapshot.forEach((doc) => {
+        const rec = {id: doc.id, ...doc.data()};
+
+        // Properly isolate Private Feedback on the server side
+        if (rec.type === "Private Feedback") {
+          if (isManager || rec.receiverId === uid || rec.senderId === uid) {
+            recognitions.push(rec);
+          }
+        } else {
+          recognitions.push(rec);
+        }
+      });
+      return {success: true, recognitions};
+    }
+
+    if (action === "delete") {
+      const {recognitionId} = payload;
+      if (!recognitionId) {
+        throw new HttpsError("invalid-argument", "Missing recognition ID");
+      }
+
+      const recRef = admin.firestore().collection("recognitions").doc(recognitionId);
+      const recDoc = await recRef.get();
+
+      if (!recDoc.exists) {
+        throw new HttpsError("not-found", "Recognition not found");
+      }
+
+      if (recDoc.data().orgId !== actualOrgId) {
+        throw new HttpsError("permission-denied", "Unauthorized to delete this recognition");
+      }
+
+      if (recDoc.data().senderId !== uid && userDoc.data().orgId !== uid) {
+        throw new HttpsError("permission-denied", "Only the sender or an admin can delete a recognition.");
+      }
+
+      await recRef.delete();
+      return {success: true};
+    }
+
+    throw new HttpsError("invalid-argument", "Invalid action");
+  } catch (error) {
+    logManagerError(`Manage Recognitions Error for uid: ${uid}`, error);
+    if (error instanceof HttpsError) {
+      throw error;
+    }
+    throw new HttpsError("internal", error.message);
+  }
+});
+
 exports.trainGlobalAI = require("./trainGlobalAI").trainGlobalAI;
