@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About Me | Unstoppable Portfolio</title>
+    <link rel="icon" type="image/jpeg" href="ManagerPro.jpg">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/themes.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script type="module">
+        import { loadNavbar } from './js/navbar.js';
+        import { loadFooter } from './js/footer.js';
+        document.addEventListener('DOMContentLoaded', () => {
+            loadNavbar();
+            loadFooter();
+            if (window.lucide) window.lucide.createIcons();
+        });
+    </script>
+</head>
+<body class="bg-slate-950 text-slate-100 font-sans min-h-screen flex flex-col pt-20">
+    <header class="main-header"></header>
+
+    <main class="flex-grow max-w-5xl mx-auto px-6 py-12 w-full">
+        <div class="bg-slate-900 rounded-3xl p-8 md:p-12 border border-slate-800 shadow-2xl mb-12">
+            <div class="flex flex-col md:flex-row items-center gap-8 mb-8">
+                <div class="w-28 h-28 rounded-2xl bg-gradient-to-tr from-sky-500 via-indigo-500 to-purple-500 p-1 shrink-0 shadow-xl">
+                    <img src="ManagerPro.jpg" alt="Unstoppable Avatar" class="w-full h-full object-cover rounded-xl">
+                </div>
+                <div>
+                    <span class="inline-flex items-center gap-2 px-3 py-1 text-xs font-black uppercase tracking-widest text-sky-400 bg-sky-950 rounded-full mb-2">
+                        Creator & Lead Developer
+                    </span>
+                    <h1 class="text-3xl md:text-5xl font-black text-white">Unstoppable</h1>
+                    <p class="text-slate-400 font-medium text-lg mt-1">Founder of Unstoppable LLC & Lead Architect of ezManage</p>
+                </div>
+            </div>
+
+            <div class="space-y-6 text-slate-300 font-medium leading-relaxed border-t border-slate-800 pt-8">
+                <p>
+                    Hello! I'm the creator behind **ezManage**, **HarmonyTunes**, **Dreams TimeSkip**, and the **Unstoppable Design System (UDS)**. With years of experience working directly on fast-paced retail and kitchen floors, I build software that eliminates admin headaches and empowers managers to focus on leadership.
+                </p>
+                <p>
+                    My goal is simple: create hyper-intuitive, zero-latency tools designed for real-world speed.
+                </p>
+            </div>
+
+            <div class="flex flex-wrap gap-4 mt-8 pt-8 border-t border-slate-800">
+                <a href="mailto:unstoppableplays2016@hotmail.com" class="bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold px-6 py-3 rounded-xl text-sm transition-all flex items-center gap-2">
+                    <i data-lucide="mail" class="w-4 h-4"></i> Get in Touch
+                </a>
+                <a href="https://github.com/RealUnstoppable/ezManage" target="_blank" rel="noopener noreferrer" class="bg-slate-800 hover:bg-slate-700 text-white font-bold px-6 py-3 rounded-xl text-sm transition-all flex items-center gap-2 border border-slate-700">
+                    <i data-lucide="github" class="w-4 h-4"></i> GitHub Profile
+                </a>
+            </div>
+        </div>
+    </main>
+
+    <footer class="main-footer"></footer>
+</body>
+</html>
