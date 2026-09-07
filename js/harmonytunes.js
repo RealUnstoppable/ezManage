@@ -2,7 +2,7 @@ import { logManagerError } from './utils.js';
 import { auth, db } from './auth.js';
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
 import { doc, getDoc, setDoc, updateDoc, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
-import { showToast } from './utils.js';
+import { showToast, escapeHTML } from './utils.js';
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -220,8 +220,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     <span class="song-index" style="${isActive ? 'display:none' : ''}">${index + 1}</span>
                     <span class="playing-icon" style="${isActive ? 'display:inline' : 'display:none'}">▶</span>
                 </td>
-                <td class="song-title">${song.title}</td>
-                <td>${song.artist}</td>
+                <td class="song-title">${escapeHTML(song.title)}</td>
+                <td>${escapeHTML(song.artist)}</td>
                 <td style="text-align: right;">${song.duration}</td>
             `;
 
@@ -365,13 +365,26 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    let lastCurrentTimeStr = "";
+    let lastTotalTimeStr = "";
+
     function updateProgress() {
         const { duration, currentTime } = audioPlayer;
         if (duration) {
             const percent = (currentTime / duration) * 100;
             progress.style.width = `${percent}%`;
-            currentTimeEl.textContent = formatTime(currentTime);
-            totalTimeEl.textContent = formatTime(duration);
+
+            const currentStr = formatTime(currentTime);
+            const totalStr = formatTime(duration);
+
+            if (currentStr !== lastCurrentTimeStr) {
+                currentTimeEl.textContent = currentStr;
+                lastCurrentTimeStr = currentStr;
+            }
+            if (totalStr !== lastTotalTimeStr) {
+                totalTimeEl.textContent = totalStr;
+                lastTotalTimeStr = totalStr;
+            }
         }
     }
 
