@@ -48,3 +48,9 @@
 ## 2026-07-08 - Safe Firebase Initialization with React and JS Fallbacks
 **Learning:** Hard-removing process.env from configuration files shared between Node environments (like Jest/Functions) and browser environments can cause module resolution or variable loading failures, breaking CI/CD tests. Furthermore, when ensuring singleton Firebase init across multiple loaded scripts, ensure `firebaseConfig` is correctly available across modules without re-declaring them or overriding the init state.
 **Action:** When dealing with hybrid or test environments, always use a fallback `typeof process !== 'undefined'` check before accessing `process.env` variables to maintain browser safety while supporting Node.js builds.
+## 2024-05-23 - Batch Firestore Writes in Onboarding Loop
+**Learning:** Sequential Firestore adds (e.g., `db.collection('invites').add()`) within iterative loops cause significant performance bottlenecks due to accumulated network latency for each operation, particularly in high-volume onboarding scripts.
+**Action:** Always utilize `db.batch()` to group multiple write operations together, converting N+1 sequential writes into a single network request to minimize latency and optimize performance.
+## 2024-11-09 - Duplicate state declaration
+**Learning:** Avoid duplicate cache state variable declarations within the same scope. The layout thrashing prevention code was throwing due to `let lastGreeting = ""` declared twice within `script.js`'s `updateGreeting` logic.
+**Action:** Remove the inner redundant declaration while keeping the cache check `newGreeting !== lastGreeting` functional.
