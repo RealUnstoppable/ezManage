@@ -38,7 +38,7 @@ export async function fetchUserDoc(uid) {
     return fetchPromise;
 }
 
-const ADMIN_EMAIL = null;
+
 
 if (auth && auth.onAuthStateChanged) {
 auth.onAuthStateChanged(async (user) => {
