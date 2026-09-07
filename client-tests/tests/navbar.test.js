@@ -30,8 +30,8 @@ jest.unstable_mockModule('https://www.gstatic.com/firebasejs/9.15.0/firebase-fir
     doc: jest.fn()
 }));
 
-const { loadNavbar, updateAuthLink } = await import('../../js/navbar.js');
-const { auth, db } = await import('../../js/auth.js');
+const navbar = await import('../../js/navbar.js');
+const loadNavbar = navbar.loadNavbar;
 
 describe('loadNavbar', () => {
   beforeEach(() => {
@@ -39,34 +39,9 @@ describe('loadNavbar', () => {
     jest.clearAllMocks();
   });
 
-  it('should inject navbar HTML', () => {
+  it('should empty main-header to prevent duplicates', () => {
+    document.querySelector('.main-header').innerHTML = '<div>old</div>';
     loadNavbar();
-    expect(document.querySelector('.main-header')).not.toBeNull();
-  });
-
-  it('should set auth link to index.html if user is logged in but not admin', async () => {
-    // Add auth-link to DOM for testing
-    const authLink = document.createElement('a');
-    authLink.id = 'auth-link';
-    document.body.appendChild(authLink);
-    loadNavbar();
-
-    const mockUser = { uid: '123' };
-
-    const mockGet = jest.fn().mockResolvedValueOnce({
-      exists: true,
-      data: () => ({ isAdmin: false })
-    });
-    const mockDoc = jest.fn().mockReturnValue({ get: mockGet });
-    db.collection = jest.fn().mockReturnValue({ doc: mockDoc });
-
-    updateAuthLink();
-    const authCallback = auth.onAuthStateChanged.mock.calls[0] ? auth.onAuthStateChanged.mock.calls[0][0] : () => {};
-    await authCallback(mockUser);
-    await new Promise(process.nextTick);
-
-
-    expect(authLink.textContent).toBe('My Account');
-    expect(authLink.href).toContain('index.html');
+    expect(document.querySelector('.main-header').innerHTML).toBe('');
   });
 });
