@@ -244,7 +244,10 @@
         const err   = document.getElementById('gateErr');
         err.textContent = '';
         auth.signInWithEmailAndPassword(email, pass)
-            .catch(e => { err.textContent = e.message; });
+            .catch(e => {
+                console.error("Manager Troubleshooting: Error during admin sign in", e);
+                err.textContent = e.message;
+            });
     }
     document.getElementById('gPass').addEventListener('keydown', e => { if(e.key==='Enter') gateSignIn(); });
 
@@ -438,7 +441,7 @@
         document.getElementById('dashboard').style.display = 'block';
         lucide.createIcons();
         } catch (error) {
-            console.error('Error loading dashboard:', error);
+            console.error("Manager Troubleshooting: Error loading admin dashboard", error);
             document.getElementById('loadingSpinner').innerHTML = '<p style="color:var(--danger);">Failed to load dashboard. Please try again.</p>';
         }
     }
