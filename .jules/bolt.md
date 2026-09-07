@@ -45,6 +45,9 @@
 ## 2026-06-25 - [Repeated Firebase DB Docs Fetch]
 **Learning:** Functions invoked via callbacks from listeners that span multiple files (e.g., \`auth.onAuthStateChanged\`) will fire simultaneously. Without a caching layer, they execute redundant concurrent network fetch queries (like \`db.collection('users').doc(uid).get()\`), causing latency and blocking operations.
 **Action:** Always wrap independent multi-listener fetched resources with a generic memoization layer using a \`Map\` cache to immediately resolve redundant Promise requests.
-## 2024-07-25 - [Dropdown Populating Bottleneck]
-**Learning:** Sequential `appendChild` calls within loops for populating options in `<select>` elements (e.g., `populateTaskAssigneeDropdown` and `updateScheduleEmployeeDropdown`) cause layout thrashing and repaint cycles on the main thread.
-**Action:** Replace sequential `appendChild` inside loops with a single batched DOM insertion using a `DocumentFragment` (`document.createDocumentFragment()`) to maintain XSS safety via `.textContent` while improving rendering performance.
+## 2024-05-23 - Batch Firestore Writes in Onboarding Loop
+**Learning:** Sequential Firestore adds (e.g., `db.collection('invites').add()`) within iterative loops cause significant performance bottlenecks due to accumulated network latency for each operation, particularly in high-volume onboarding scripts.
+**Action:** Always utilize `db.batch()` to group multiple write operations together, converting N+1 sequential writes into a single network request to minimize latency and optimize performance.
+## 2024-11-09 - Duplicate state declaration
+**Learning:** Avoid duplicate cache state variable declarations within the same scope. The layout thrashing prevention code was throwing due to `let lastGreeting = ""` declared twice within `script.js`'s `updateGreeting` logic.
+**Action:** Remove the inner redundant declaration while keeping the cache check `newGreeting !== lastGreeting` functional.
