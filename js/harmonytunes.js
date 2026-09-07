@@ -1,4 +1,4 @@
-import { logManagerError } from './utils.js';
+import { logManagerError, escapeHTML } from './utils.js';
 import { auth, db } from './auth.js';
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
 import { doc, getDoc, setDoc, updateDoc, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
@@ -144,7 +144,7 @@ document.addEventListener('DOMContentLoaded', () => {
         containerRecommended.innerHTML = recommended.map(song => createSongCard(song)).join('');
 
         containerTikToks.innerHTML = tiktokData.map(tk => `
-            <div class="tiktok-card" onclick="window.open('${tk.url}', '_blank')">
+            <div class="tiktok-card" onclick="window.open('${escapeHTML(tk.url)}', '_blank')">
                 <img src="${tk.img}" alt="${escapeHTML(tk.title)}" loading="lazy">
                 <div class="tiktok-overlay">
                     <div class="tiktok-title">${escapeHTML(tk.title)}</div>
@@ -222,7 +222,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 </td>
                 <td class="song-title">${escapeHTML(song.title)}</td>
                 <td>${escapeHTML(song.artist)}</td>
-                <td style="text-align: right;">${escapeHTML(song.duration)}</td>
+                <td style="text-align: right;">${song.duration}</td>
             `;
 
             row.addEventListener('click', () => {
@@ -365,13 +365,26 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    let lastCurrentTimeStr = "";
+    let lastTotalTimeStr = "";
+
     function updateProgress() {
         const { duration, currentTime } = audioPlayer;
         if (duration) {
             const percent = (currentTime / duration) * 100;
             progress.style.width = `${percent}%`;
-            currentTimeEl.textContent = formatTime(currentTime);
-            totalTimeEl.textContent = formatTime(duration);
+
+            const currentStr = formatTime(currentTime);
+            const totalStr = formatTime(duration);
+
+            if (currentStr !== lastCurrentTimeStr) {
+                currentTimeEl.textContent = currentStr;
+                lastCurrentTimeStr = currentStr;
+            }
+            if (totalStr !== lastTotalTimeStr) {
+                totalTimeEl.textContent = totalStr;
+                lastTotalTimeStr = totalStr;
+            }
         }
     }
 

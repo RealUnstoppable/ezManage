@@ -66,13 +66,13 @@ const navLinks = document.querySelector('.nav-links');
 function renderProducts() {
     productGrid.innerHTML = products.map(product => `
         <div class="product-card">
-            <img src="${product.imageUrl}" alt="${escapeHTML(product.name)}" class="product-image" loading="lazy">
+            <img src="${escapeHTML(product.imageUrl)}" alt="${escapeHTML(product.name)}" class="product-image" loading="lazy">
             <div class="product-info">
                 <h3>${escapeHTML(product.name)}</h3>
                 <p>${escapeHTML(product.description)}</p>
                 <div class="product-footer">
                     <span class="product-price">$${product.price.toFixed(2)}</span>
-                    <button class="add-to-cart-btn" data-id="${product.id}">Add to Cart</button>
+                    <button class="add-to-cart-btn" data-id="${escapeHTML(product.id)}">Add to Cart</button>
                 </div>
             </div>
         </div>
@@ -90,14 +90,14 @@ function renderCart() {
             if (!product) return '';
             return `
                 <div class="cart-item">
-                    <img src="${product.imageUrl}" alt="${escapeHTML(product.name)}" class="cart-item-img" loading="lazy">
+                    <img src="${escapeHTML(product.imageUrl)}" alt="${escapeHTML(product.name)}" class="cart-item-img" loading="lazy">
                     <div class="cart-item-info">
                         <h4>${escapeHTML(product.name)}</h4>
                         <p>$${product.price.toFixed(2)}</p>
                     </div>
                     <div class="cart-item-actions">
-                        <input type="number" value="${quantity}" min="1" data-id="${productId}" class="item-quantity-input">
-                        <button class="remove-item-btn" data-id="${productId}">&#128465;</button>
+                        <input type="number" value="${escapeHTML(quantity)}" min="1" data-id="${escapeHTML(productId)}" class="item-quantity-input">
+                        <button class="remove-item-btn" data-id="${escapeHTML(productId)}">&#128465;</button>
                     </div>
                 </div>
             `;
