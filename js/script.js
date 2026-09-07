@@ -1,7 +1,8 @@
-// js/script.js
+
+import { logManagerError } from './utils.js';
+
 document.addEventListener('DOMContentLoaded', () => {
 
-    // --- Mobile Menu Toggle ---
     const hamburger = document.querySelector('.hamburger');
     const navLinks = document.querySelector('.nav-links');
 
@@ -11,7 +12,6 @@ document.addEventListener('DOMContentLoaded', () => {
             navLinks.classList.toggle('active');
         });
 
-        // Close menu when a link is clicked
         document.querySelectorAll('.nav-links a').forEach(link => {
             link.addEventListener('click', () => {
                 hamburger.classList.remove('active');
@@ -20,7 +20,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // --- Scroll Reveal Animation ---
     const revealElements = document.querySelectorAll('.reveal');
     const scrollObserver = new IntersectionObserver((entries, observer) => {
         entries.forEach(entry => {
@@ -35,7 +34,6 @@ document.addEventListener('DOMContentLoaded', () => {
         scrollObserver.observe(el);
     });
 
-    // --- Parallax for Brand Sections ---
     const brandSections = document.querySelectorAll('.brand-section');
     const sectionObserver = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
@@ -51,33 +49,35 @@ document.addEventListener('DOMContentLoaded', () => {
         sectionObserver.observe(section);
     });
 
-    // --- Dynamic Greeting & New Year Video Background ---
     const greetingElement = document.getElementById('dynamic-greeting');
     const heroSection = document.querySelector('.hero');
 
     if (greetingElement && heroSection) {
-        
-        // Helper function to manage the video element
+        let lastGreeting = "";
+        let lastShouldPlay = null;
+
         const manageVideoBackground = (shouldPlay) => {
+            if (shouldPlay === lastShouldPlay) return;
+            lastShouldPlay = shouldPlay;
+
             let videoBg = document.getElementById('new-year-video');
-            
+
             if (shouldPlay) {
                 if (!videoBg) {
                     videoBg = document.createElement('video');
                     videoBg.id = 'new-year-video';
-                    videoBg.src = '/fireworks-bg.mp4'; // Points to root based on your path
+                    videoBg.src = '/fireworks-bg.mp4';
                     videoBg.autoplay = true;
                     videoBg.loop = true;
-                    videoBg.muted = true; // Required for autoplay
+                    videoBg.muted = true;
                     videoBg.playsInline = true;
                     videoBg.classList.add('new-year-video');
-                    
-                    // Prepend to ensure it sits behind content but follows z-index rules
+
                     heroSection.appendChild(videoBg);
                 }
-                // Ensure it's playing
-                if (videoBg.paused) videoBg.play().catch(e => console.log("Autoplay blocked:", e));
-                
+
+                if (videoBg.paused) videoBg.play().catch(e => logManagerError("Error playing video background:", e));
+
             } else {
                 if (videoBg) {
                     videoBg.remove();
@@ -85,67 +85,92 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         };
 
+        let lastGreeting = ""; // ⚡ Bolt Optimization: Cache state to prevent layout thrashing
+
         const updateGreeting = () => {
             const now = new Date();
-            
-            // Define key dates for the event
+            let newGreeting = "";
+            let shouldPlayVideo = false;
+
             const newYear2026 = new Date('January 1, 2026 00:00:00');
             const endOfCelebration = new Date('January 1, 2026 23:59:59');
             const revertDate = new Date('January 2, 2026 00:00:00');
 
-            // STATE 1: Revert to normal after Jan 1st, 2026 (Jan 2nd onwards)
+            let newGreetingText = "";
+
             if (now >= revertDate) {
                  const currentHour = now.getHours();
                  if (currentHour < 12) {
-                     greetingElement.textContent = "Good Morning.";
+                     newGreeting = "Good Morning.";
                  } else if (currentHour < 18) {
-                     greetingElement.textContent = "Good Afternoon.";
+                     newGreeting = "Good Afternoon.";
                  } else {
-                     greetingElement.textContent = "Good Evening.";
+                     newGreeting = "Good Evening.";
                  }
-                 manageVideoBackground(false);
-            } 
-            // STATE 2: New Year's Day Celebration (Jan 1st, 2026)
+                 shouldPlayVideo = false;
+            }
+
             else if (now >= newYear2026 && now <= endOfCelebration) {
-                greetingElement.textContent = "Happy New Year!";
-                manageVideoBackground(true);
-            } 
-            // STATE 3: Countdown to 2026 (Right Now)
+                newGreeting = "Happy New Year!";
+                shouldPlayVideo = true;
+            }
+
             else {
                 const diff = newYear2026 - now;
-                
+
                 if (diff > 0) {
                     const days = Math.floor(diff / (1000 * 60 * 60 * 24));
                     const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
                     const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
                     const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-                    
-                    greetingElement.textContent = `New Years Countdown: ${days}d ${hours}h ${minutes}m ${seconds}s`;
+
+                    newGreeting = `New Years Countdown: ${days}d ${hours}h ${minutes}m ${seconds}s`;
                 }
-                manageVideoBackground(false);
+                shouldPlayVideo = false;
             }
+
+            // ⚡ Bolt Performance Optimization:
+            // Only apply DOM updates when the greeting state actually changes to prevent unnecessary re-renders and layout thrashing,
+            // especially when the greeting is static text like "Good Morning".
+            if (newGreeting !== lastGreeting) {
+                greetingElement.textContent = newGreeting;
+                lastGreeting = newGreeting;
+            }
+
+            manageVideoBackground(shouldPlayVideo);
         };
 
-        // Initialize immediately and update every second
+
         updateGreeting();
         setInterval(updateGreeting, 1000);
     }
 
-    // --- Bento Card 3D Tilt Effect ---
     const bentoCards = document.querySelectorAll('.bento-card');
     bentoCards.forEach(card => {
+        let ticking = false; // ⚡ Bolt Optimization: State flag for requestAnimationFrame
+
         card.addEventListener('mousemove', (e) => {
-            const rect = card.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
+            // ⚡ Bolt Performance Optimization:
+            // Throttling the high-frequency mousemove event using requestAnimationFrame.
+            // This syncs DOM measurements (getBoundingClientRect) and style updates with the display refresh rate,
+            // reducing layout thrashing and jank on lower-end devices.
+            if (!ticking) {
+                window.requestAnimationFrame(() => {
+                    const rect = card.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    const y = e.clientY - rect.top;
 
-            const centerX = rect.width / 2;
-            const centerY = rect.height / 2;
+                    const centerX = rect.width / 2;
+                    const centerY = rect.height / 2;
 
-            const rotateX = ((y - centerY) / centerY) * -5; // Max 5deg rotation
-            const rotateY = ((x - centerX) / centerX) * 5;  // Max 5deg rotation
+                    const rotateX = ((y - centerY) / centerY) * -5; // Max 5deg rotation
+                    const rotateY = ((x - centerX) / centerX) * 5;  // Max 5deg rotation
 
-            card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-4px)`;
+                    card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-4px)`;
+                    ticking = false;
+                });
+                ticking = true;
+            }
         });
 
         card.addEventListener('mouseleave', () => {
@@ -153,7 +178,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // --- Cookie Consent Banner ---
     const cookieConsentBanner = document.getElementById('cookie-consent-banner');
     const cookieConsentButton = document.getElementById('cookie-consent-button');
 

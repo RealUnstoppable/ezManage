@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <link rel="manifest" href="manifest.json">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ezManage | AI Stock Predictions</title>
+
+    <link rel="icon" type="image/jpeg" href="ManagerPro.jpg?v=2">
+    <link rel="apple-touch-icon" href="ManagerPro.jpg?v=2">
+
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="ezManage AI">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script type="module">
+        import { escapeHTML } from './js/utils.js';
+        import { loadNavbar } from './js/navbar.js';
+        import { loadFooter } from './js/footer.js';
+        document.addEventListener('DOMContentLoaded', () => {
+            loadNavbar();
+            loadFooter();
+        });
+        window.escapeHTML = escapeHTML;
+    </script>
+    <script>
+        tailwind.config = {
+            darkMode: ['class', '.dark-mode'],
+        }
+    </script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
+
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-storage-compat.js"></script>
+
+    <script src="https://unpkg.com/brain.js@2.0.0-beta.23/dist/browser.js"></script>
+
+
+    <style>
+        :root {
+            --brand-sky: #87ceeb;
+            --brand-dark: #0f172a;
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --primary: #0f172a;
+            --accent: #0ea5e9;
+            --accent-hover: #0284c7;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --radius: 24px;
+            --nav-height: 80px;
+        }
+
+        body.dark-mode {
+            --bg-color: #000000;
+            --card-bg: #0a0a0a;
+            --primary: #ffffff;
+            --text-main: #f1f5f9;
+            --text-muted: #94a3b8;
+            --border: #1a1a1a;
+            --input-bg: #111111;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            transition: background-color 0.3s, color 0.3s;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        [x-cloak] {
+            display: none !important;
+        }
+
+        .glass-nav {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+
+        .dark-mode .glass-nav {
+            background: rgba(0, 0, 0, 0.7);
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: var(--radius);
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+            border: 1px solid var(--border);
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.8rem 1.8rem;
+            border-radius: 9999px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 0.95rem;
+            gap: 0.5rem;
+        }
+
+        .btn-accent {
+            background: var(--accent);
+            color: white;
+            border: 2px solid var(--accent);
+        }
+
+        .btn-accent:hover {
+            background: var(--accent-hover);
+            border-color: var(--accent-hover);
+            transform: translateY(-1px);
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 2px solid var(--border);
+            color: var(--text-main);
+        }
+
+        .btn-outline:hover {
+            border-color: var(--text-main);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 10px;
+        }
+
+        #sidebar {
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transform: translateX(-100%);
+        }
+
+        #sidebar.open {
+            transform: translateX(0);
+        }
+    </style>
+</head>
+
+<body x-data="{ mobileMenu: false }">
+    <header class="main-header"></header>
+
+    <nav class="fixed w-full z-50 glass-nav border-b border-slate-200/50 top-0 no-print">
+        <div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+            <div class="flex items-center space-x-3 cursor-pointer" onclick="window.location.href='index.html'">
+                <div class="relative group">
+                    <img src="ManagerPro.jpg" alt="ezManage Logo"
+                        class="w-10 h-10 rounded-xl shadow-sm border border-white transform transition-transform group-hover:rotate-6">
+                </div>
+                <span class="text-xl font-black tracking-tighter text-slate-900 dark:text-white uppercase">ezManage
+                    <span class="text-sky-500">AI</span></span>
+            </div>
+            <div class="flex items-center space-x-6">
+                <div class="hidden md:flex items-center gap-2 px-3 py-1 bg-slate-100 dark:bg-slate-800 rounded-full">
+                    <div id="statusIndicator" class="w-2 h-2 rounded-full bg-slate-300"></div>
+                    <span class="text-[10px] font-black uppercase tracking-widest text-slate-500">Initializing</span>
+                </div>
+                <button onclick="toggleSidebar()" class="text-black dark:text-white hover:text-sky-500 transition-colors"
+                    aria-label="Open sidebar menu">
+                    <i data-lucide="menu" class="w-6 h-6"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <div id="aiRestrictionModal"
+        class="fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-md hidden flex items-center justify-center p-6">
+        <div
+            class="bg-white dark:bg-slate-900 p-8 md:p-12 rounded-3xl max-w-lg w-full shadow-2xl border border-slate-200 dark:border-slate-800 text-center animate-fadeIn">
+            <div
+                class="w-20 h-20 bg-amber-100 dark:bg-amber-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
+                <i data-lucide="shield-alert" class="w-10 h-10 text-amber-500"></i>
+            </div>
+            <h2 class="text-3xl font-black text-slate-900 dark:text-white mb-4 tracking-tight">AI Training Disabled</h2>
+            <p class="text-slate-500 dark:text-slate-400 mb-8 leading-relaxed">
+                To access the AI Predictor, you must explicitly opt-in to <b>Enterprise Cloud Sync</b> and <b>Allow AI
+                    Training</b> in your profile settings. This ensures you maintain full control over your data.
+            </p>
+            <div class="space-y-3">
+                <button onclick="navTo('profile')" class="btn w-full py-4 text-white font-bold rounded-xl"
+                    style="background: var(--accent);">
+                    Enable in Profile Settings
+                </button>
+                <button onclick="navTo('tracker')" class="btn btn-outline w-full py-4 rounded-xl">
+                    Return to Tracker
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <aside id="sidebar"
+        class="fixed inset-y-0 left-0 w-80 bg-white dark:bg-slate-950 z-[60] shadow-2xl border-r border-slate-100 dark:border-slate-800 no-print flex flex-col">
+        
+        <div class="flex justify-between items-center p-8 pb-4 shrink-0">
+            <span class="font-black uppercase tracking-widest text-xs">Menu</span>
+            <button onclick="toggleSidebar()" class="p-2 text-black dark:text-white hover:text-sky-500" aria-label="Close menu"><i data-lucide="x"></i></button>
+        </div>
+
+        <div class="flex-1 overflow-y-auto overscroll-contain px-8 py-4 custom-scrollbar">
+            <nav class="space-y-6">
+            <a href="#" onclick="navTo('tracker')"
+                class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="edit-3"></i> Active
+                Tracker</a>
+            <a href="#" onclick="navTo('schedule')"
+                class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="calendar"></i>
+                Schedule</a>
+            <a href="easy-ai.html" class="flex items-center gap-4 font-bold text-lg text-sky-500 hover:text-sky-600"><i
+                    data-lucide="brain"></i> AI Predictor</a>
+            <a href="#" onclick="navTo('presets')"
+                class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="layout"></i>
+                Templates</a>
+            <a href="#" onclick="navTo('history')"
+                class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="clock"></i>
+                History</a>
+            <a href="#" onclick="navTo('shiftNotes')"
+                class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i
+                    data-lucide="clipboard-list"></i>
+                Shift Notes</a>
+            <a href="#" onclick="navTo('team')"
+                class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="users"></i>
+                Team Directory</a>
+            <a href="#" onclick="navTo('employees')"
+                class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i
+                    data-lucide="users"></i>
+                Team Roster</a>
+            <a href="#" onclick="navTo('maintenance')"
+                class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="wrench"></i>
+                Maintenance</a>
+            <a href="#" onclick="navTo('performance')"
+                class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="bar-chart-3"></i>
+                Performance</a>
+            <div class="h-px bg-slate-100 dark:bg-slate-800 my-8"></div>
+            <a href="#" onclick="handleNavAccountClick()"
+                class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="user"></i> My
+                Profile</a>
+            <a href="#" onclick="navTo('pricing')"
+                class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="credit-card"></i>
+                Pricing & Plans</a>
+
+            <a href="#" onclick="navTo('timeoff')"
+                class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="calendar-clock"></i>
+                Time Off</a>
+
+            <a href="#" onclick="navTo('request')"
+                class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="lightbulb"></i>
+                Feature Request</a>
+            </nav>
+        </div>
+
+        <div class="p-8 pt-4 border-t border-slate-100 dark:border-slate-800 shrink-0 bg-white dark:bg-slate-950">
+            <div
+                class="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800">
+                <span class="text-xs font-bold uppercase tracking-widest">AMOLED Dark</span>
+                <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" id="themeToggle" class="sr-only peer" aria-label="Toggle theme" onchange="toggleTheme()">
+                    <div
+                        class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:bg-sky-500 after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all">
+                    </div>
+                </label>
+            </div>
+            <button onclick="signOut()"
+                class="w-full mt-4 text-xs font-black uppercase tracking-[0.2em] text-red-500 hover:text-red-600">Sign
+                Out</button>
+        </div>
+    </aside>
+
+    <main class="pt-[var(--nav-height)] min-h-screen pb-20">
+        <div class="max-w-5xl mx-auto px-6 mt-12">
+
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
+                <div>
+                    <h1 class="text-4xl font-black tracking-tight">AI Stock Forecasting</h1>
+                    <p class="text-slate-500 font-medium mt-2">Powered by neural networks trained on your history.</p>
+                </div>
+            </div>
+
+            <div class="grid md:grid-cols-3 gap-6 mb-8">
+                <div class="card text-center relative overflow-hidden">
+                    <div class="absolute inset-0 bg-sky-50 dark:bg-sky-900/10 -z-10"></div>
+                    <div class="text-4xl font-black text-sky-500 mb-2" id="statShiftsFound">0</div>
+                    <div class="text-[10px] font-black uppercase tracking-widest text-slate-400">Past Shifts Analyzed
+                    </div>
+                </div>
+                <div class="card text-center relative overflow-hidden">
+                    <div class="absolute inset-0 bg-purple-50 dark:bg-purple-900/10 -z-10"></div>
+                    <div class="text-4xl font-black text-purple-500 mb-2" id="statItemsTracked">0</div>
+                    <div class="text-[10px] font-black uppercase tracking-widest text-slate-400">Unique Items Tracked
+                    </div>
+                </div>
+                <div class="card text-center relative overflow-hidden md:col-span-1 col-span-full">
+                    <div class="absolute inset-0 bg-emerald-50 dark:bg-emerald-900/10 -z-10"></div>
+                    <div class="text-4xl font-black text-emerald-500 mb-2" id="predictionDay">Today</div>
+                    <div class="text-[10px] font-black uppercase tracking-widest text-slate-400">Forecasting For</div>
+                </div>
+            </div>
+
+            <div class="card p-0 overflow-hidden">
+                <div
+                    class="p-6 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <i data-lucide="brain" class="text-sky-500"></i>
+                        <h3 class="text-xl font-black">AI Prediction Results</h3>
+                    </div>
+                    <button id="importAllBtn" onclick="importAllPredictions()"
+                        class="btn btn-sm btn-accent hidden">Import All</button>
+                </div>
+
+                <div id="resultsContainer" class="p-6">
+                    <div class="text-center py-12 text-slate-500 font-medium" id="resultsPlaceholder">
+                        Authenticating and fetching shift data...
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+
+    <script>
+        function parseNum(val) {
+            if (!val) return 0;
+            const parsed = parseFloat(val.toString().replace(/[^0-9.]/g, ""));
+            return isNaN(parsed) ? 0 : parsed;
+        }
+
+        function normalizeItemName(name, existingKeys = []) {
+            const lower = name.toLowerCase().trim();
+            if (lower.includes('mac') && (lower.includes('cheese') || lower.includes('chs') || lower.includes('chz'))) return 'Mac & Cheese';
+            if (lower.includes('bacon')) return 'Bacon';
+            
+            for (let key of existingKeys) {
+                const keyLower = key.toLowerCase();
+                if (keyLower === lower) return key;
+                
+                if (keyLower === lower + 's' || lower === keyLower + 's') return key;
+                if (keyLower === lower + 'es' || lower === keyLower + 'es') return key;
+                
+                const keyWords = keyLower.split(' ');
+                const lowerWords = lower.split(' ');
+                if (keyWords[0] === lowerWords[0] && Math.abs(keyLower.length - lower.length) <= 4) {
+                    if (keyLower.includes(lower) || lower.includes(keyLower)) {
+                        return key;
+                    }
+                }
+            }
+            return name.trim();
+        }
+
+        function getDayOfWeek(dateString) {
+            if (!dateString) return -1;
+            let d;
+            if (dateString.includes("-")) {
+                const [yyyy, mm, dd] = dateString.split("-");
+                d = new Date(parseInt(yyyy), parseInt(mm) - 1, parseInt(dd));
+            } else {
+                d = new Date(dateString);
+            }
+            if (isNaN(d.getTime())) return -1;
+            return d.getDay();
+        }
+        lucide.createIcons();
+
+
+
+        const savedTheme = localStorage.getItem('managerProTheme');
+        if (savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.body.classList.add('dark-mode');
+        }
+
+        function toggleSidebar() { 
+            document.getElementById('sidebar').classList.toggle('open'); 
+            document.body.classList.toggle('overflow-hidden');
+        }
+        function navTo(viewId) { localStorage.setItem('navTo', viewId); window.location.href = 'index.html'; }
+        function handleNavAccountClick() { navTo('profile'); }
+        function signOut() { auth.signOut().then(() => window.location.href = 'index.html'); }
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBgrI9HwJPSc5b4pu2Egsv4DE7shNwptSw",
+            authDomain: "dts-hub-website.firebaseapp.com",
+            projectId: "dts-hub-website",
+            storageBucket: "dts-hub-website.firebasestorage.app",
+            messagingSenderId: "48345990988",
+            appId: "1:48345990988:web:e3662c9b508168546471e9",
+            measurementId: "G-ZN3YJPHVGX"
+        };
+
+        const app = !window.firebase.apps.length ? window.firebase.initializeApp(firebaseConfig) : window.firebase.app();
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+        db.settings({ experimentalForceLongPolling: true });
+        const storage = firebase.storage();
+
+        let maxValues = {};
+        let uniqueItems = new Set();
+        let trainingData = [];
+
+
+
+        let currentUser = null;
+        let currentUserData = null;
+        let latestPrediction = null;
+
+        (function () {
+            const tempUid = localStorage.getItem('ezManage_lastUid');
+            if (tempUid) {
+                const localAI = localStorage.getItem(`ezManage_aiEnabled_${tempUid}`);
+                const localCloud = localStorage.getItem(`ezManage_cloudEnabled_${tempUid}`);
+                if (localAI === 'false' || localCloud === 'false') {
+                    document.getElementById('aiRestrictionModal').classList.remove('hidden');
+                }
+            }
+        })();
+
+        auth.onAuthStateChanged((user) => {
+            currentUser = user;
+            if (user) {
+                localStorage.setItem('ezManage_lastUid', user.uid);
+                db.collection("users").doc(user.uid).onSnapshot(doc => {
+                    if (doc.exists) {
+                        currentUserData = doc.data();
+                        checkAIRestrictions(currentUserData);
+                    }
+                });
+                updateStatus('Fetching Data', 'amber');
+            } else {
+                updateStatus('Not Logged In', 'red');
+                document.getElementById('resultsPlaceholder').innerHTML = `
+                    <p class="mb-4">You must be logged in to view your AI stock predictions.</p>
+                    <a href="index.html" class="btn btn-outline">Go to Login</a>
+                `;
+            }
+        });
+
+
+
+        function updateStatus(text, color) {
+            const ind = document.getElementById('statusIndicator');
+            const isPulsing = color === 'amber' || color === 'sky';
+
+            ind.innerHTML = '';
+            const span = document.createElement('span');
+            span.className = `w-2 h-2 rounded-full shadow-[0_0_8px_rgba(var(--tw-colors-${color}-500),0.8)]`;
+
+            if (color === 'sky') span.classList.add('bg-sky-500');
+            else if (color === 'emerald') span.classList.add('bg-emerald-500');
+            else if (color === 'amber') span.classList.add('bg-amber-500');
+            else if (color === 'red') span.classList.add('bg-red-500');
+            else span.classList.add(`bg-${color}-500`);
+
+            if (isPulsing) span.classList.add('animate-pulse');
+
+            ind.appendChild(span);
+            ind.appendChild(document.createTextNode(' ' + text));
+        }
+
+        function checkAIRestrictions(data) {
+            const modal = document.getElementById('aiRestrictionModal');
+            if (!data.cloudSyncEnabled || data.aiTrainingEnabled === false) {
+                updateStatus('AI Disabled', 'amber');
+                modal.classList.remove('hidden');
+                document.getElementById('resultsPlaceholder').innerHTML = `Access Restricted.`;
+                return false;
+            } else {
+                modal.classList.add('hidden');
+            }
+
+            if (document.getElementById('statShiftsFound').innerText === '0') {
+                fetchHistoryData(currentUser.uid);
+            }
+            return true;
+        }
+
+        function fetchHistoryData(uid) {
+            db.collection("users").doc(uid).get().then(async doc => {
+                if (doc.exists) {
+                    const data = doc.data();
+
+                    if (!checkAIRestrictions(data)) return;
+
+                    const history = data.shiftHistory || [];
+                    document.getElementById('statShiftsFound').innerText = history.length;
+
+                    updateStatus('Connecting to Global Model...', 'sky');
+                    try {
+                        const url = await storage.ref('models/global_model.json').getDownloadURL();
+                        const response = await fetch(url);
+                        if (response.ok) {
+                            const globalData = await response.json();
+                            runGlobalModel(globalData);
+                            return;
+                        }
+                    } catch (e) {
+                        console.log("No global model found or failed to load.", e);
+                        if (e.code !== 'storage/object-not-found') {
+                            updateStatus('Storage Uninitialized', 'red');
+                            document.getElementById('resultsPlaceholder').innerHTML = `
+                                <div class="bg-red-50 dark:bg-red-900/20 p-4 rounded-xl text-left border border-red-100 dark:border-red-900/50 mb-4">
+                                    <h4 class="font-black text-red-600 dark:text-red-400 mb-1"><i data-lucide="server-crash" class="w-4 inline mr-1"></i> Firebase Storage Not Set Up!</h4>
+                                    <p class="text-sm text-red-700 dark:text-red-300">The AI predictor requires Firebase Storage to store the global model. Please go to your <a href="https://console.firebase.google.com/project/dts-hub-website/storage" target="_blank" class="underline font-bold">Firebase Console</a> and click <b>Get Started</b> on the Storage tab, then apply the <code>storage.rules</code> file.</p>
+                                </div>
+                            `;
+                            lucide.createIcons();
+                            return;
+                        }
+                    }
+
+                    if (history.length < 3) {
+                        updateStatus('Insufficient Data', 'amber');
+                        document.getElementById('resultsPlaceholder').innerHTML = `
+                            <p class="text-amber-600 dark:text-amber-400 mb-2">Not enough shift history.</p>
+                            <p class="text-sm">The AI needs at least 3 completed shifts with inventory data to find meaningful patterns locally, and the Community Model is currently training.</p>
+                        `;
+                        return;
+                    }
+
+                    processDataForNN(history);
+                }
+            }).catch(err => {
+                console.error(err);
+                updateStatus('Error', 'red');
+                document.getElementById('resultsPlaceholder').innerText = 'Failed to load data from Firebase.';
+            });
+        }
+
+        function runGlobalModel(globalData) {
+            updateStatus('Running Community AI', 'sky');
+            const net = new brain.NeuralNetwork();
+            net.fromJSON(globalData.model);
+
+            maxValues = globalData.maxValues;
+            uniqueItems = new Set(globalData.uniqueItems);
+
+            document.getElementById('statShiftsFound').innerText = globalData.totalShifts + "+";
+            document.getElementById('statItemsTracked').innerText = uniqueItems.size;
+
+            runPrediction(net);
+        }
+
+
+
+        function processDataForNN(history) {
+            updateStatus('Training Model...', 'sky');
+
+            history.forEach(shift => {
+                if (shift.inventory && Array.isArray(shift.inventory)) {
+                    shift.inventory.forEach(item => {
+                        if (!item.name) return;
+                        const name = item.name.trim();
+                        uniqueItems.add(name);
+
+                        if (!maxValues[name]) maxValues[name] = { bl: 0, cl: 0, fr: 0 };
+
+                        const bl = parseNum(item.bl);
+                        const cl = parseNum(item.cl);
+                        const fr = parseNum(item.fr);
+
+                        if (bl > maxValues[name].bl) maxValues[name].bl = bl;
+                        if (cl > maxValues[name].cl) maxValues[name].cl = cl;
+                        if (fr > maxValues[name].fr) maxValues[name].fr = fr;
+                    });
+                }
+            });
+
+            document.getElementById('statItemsTracked').innerText = uniqueItems.size;
+
+            Object.keys(maxValues).forEach(k => {
+                if (maxValues[k].bl === 0) maxValues[k].bl = 1;
+                if (maxValues[k].cl === 0) maxValues[k].cl = 1;
+                if (maxValues[k].fr === 0) maxValues[k].fr = 1;
+            });
+
+            trainingData = [];
+            history.forEach(shift => {
+                const day = getDayOfWeek(shift.dateSaved);
+                if (day === -1) return;
+
+                const input = {
+                    sun: day === 0 ? 1 : 0,
+                    mon: day === 1 ? 1 : 0,
+                    tue: day === 2 ? 1 : 0,
+                    wed: day === 3 ? 1 : 0,
+                    thu: day === 4 ? 1 : 0,
+                    fri: day === 5 ? 1 : 0,
+                    sat: day === 6 ? 1 : 0
+                };
+
+                const output = {};
+                Array.from(uniqueItems).forEach(name => {
+                    output[`${name}_bl`] = 0;
+                    output[`${name}_cl`] = 0;
+                    output[`${name}_fr`] = 0;
+                });
+
+                if (shift.inventory) {
+                    shift.inventory.forEach(item => {
+                        if (!item.name) return;
+                        const name = item.name.trim();
+                        output[`${name}_bl`] = parseNum(item.bl) / maxValues[name].bl;
+                        output[`${name}_cl`] = parseNum(item.cl) / maxValues[name].cl;
+                        output[`${name}_fr`] = parseNum(item.fr) / maxValues[name].fr;
+                    });
+                }
+                trainingData.push({ input, output });
+            });
+
+            setTimeout(() => {
+                const net = new brain.NeuralNetwork({ hiddenLayers: [10, 10] });
+                net.train(trainingData, { iterations: 2000, errorThresh: 0.011 });
+                runPrediction(net);
+            }, 100);
+        }
+
+        function runPrediction(net) {
+            const todayDay = new Date().getDay();
+            const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+            document.getElementById('predictionDay').innerText = days[todayDay];
+
+            const input = {
+                sun: todayDay === 0 ? 1 : 0,
+                mon: todayDay === 1 ? 1 : 0,
+                tue: todayDay === 2 ? 1 : 0,
+                wed: todayDay === 3 ? 1 : 0,
+                thu: todayDay === 4 ? 1 : 0,
+                fri: todayDay === 5 ? 1 : 0,
+                sat: todayDay === 6 ? 1 : 0
+            };
+
+            const prediction = net.run(input);
+            latestPrediction = prediction;
+            displayResults(prediction);
+            updateStatus('Analysis Complete', 'emerald');
+            document.getElementById('statusIndicator').querySelector('span').classList.remove('animate-pulse');
+        }
+
+        function displayResults(prediction) {
+            const container = document.getElementById('resultsContainer');
+            container.innerHTML = `
+                <div class="hidden md:grid grid-cols-5 gap-4 px-4 mb-4 text-[10px] font-black uppercase tracking-widest text-slate-400 border-b border-slate-100 dark:border-slate-800 pb-2">
+                    <div class="col-span-1">Item Name</div>
+                    <div>Est. Backline</div>
+                    <div>Est. Cooler</div>
+                    <div>Est. Freezer</div>
+                    <div class="text-right">Action</div>
+                </div>
+                <div class="space-y-3" id="predictionsList"></div>
+            `;
+
+            const list = document.getElementById('predictionsList');
+            const fragment = document.createDocumentFragment();
+            let addedCount = 0;
+            
+            let groupedItems = {}; 
+            
+            Array.from(uniqueItems).sort().forEach(name => {
+                const bl = Math.round((prediction[`${name}_bl`] || 0) * maxValues[name].bl);
+                const cl = Math.round((prediction[`${name}_cl`] || 0) * maxValues[name].cl);
+                const fr = Math.round((prediction[`${name}_fr`] || 0) * maxValues[name].fr);
+
+                if (bl === 0 && cl === 0 && fr === 0) return;
+
+                const canonical = normalizeItemName(name, Object.keys(groupedItems));
+                if (!groupedItems[canonical]) {
+                    groupedItems[canonical] = { bl: 0, cl: 0, fr: 0, originalNames: new Set() };
+                }
+                
+                groupedItems[canonical].bl = Math.max(groupedItems[canonical].bl, bl);
+                groupedItems[canonical].cl = Math.max(groupedItems[canonical].cl, cl);
+                groupedItems[canonical].fr = Math.max(groupedItems[canonical].fr, fr);
+                if (name !== canonical) {
+                    groupedItems[canonical].originalNames.add(name);
+                }
+            });
+
+            window.latestGroupedPredictions = groupedItems;
+
+            Object.keys(groupedItems).sort().forEach(canonical => {
+                const item = groupedItems[canonical];
+                const bl = item.bl;
+                const cl = item.cl;
+                const fr = item.fr;
+
+                const div = document.createElement('div');
+                div.className = "flex flex-col bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm transition-colors hover:border-sky-300 dark:hover:border-sky-700";
+                
+                const mainRow = document.createElement('div');
+                mainRow.className = "grid grid-cols-2 md:grid-cols-4 gap-3 p-4 items-center";
+                
+                let originalNamesHtml = '';
+                let toggleBtnHtml = '';
+                if (item.originalNames.size > 0) {
+                    toggleBtnHtml = `
+                        <button class="text-[10px] uppercase font-bold text-slate-400 hover:text-sky-500 flex items-center gap-1 mt-1 toggle-variants-btn">
+                            <i data-lucide="chevron-down" class="w-3 h-3 transition-transform duration-200"></i> ${item.originalNames.size} Variations
+                        </button>
+                    `;
+                    const variantsList = Array.from(item.originalNames).map(n => `<span class="px-2 py-1 bg-slate-100 dark:bg-slate-800 rounded-md text-xs text-slate-600 dark:text-slate-300">${escapeHTML(n)}</span>`).join(' ');
+                    originalNamesHtml = `
+                        <div class="variants-container hidden px-4 pb-4 pt-2 border-t border-slate-100 dark:border-slate-800">
+                            <div class="text-xs font-semibold text-slate-500 mb-2">Combined Items:</div>
+                            <div class="flex flex-wrap gap-2">${variantsList}</div>
+                        </div>
+                    `;
+                }
+
+                mainRow.innerHTML = `
+                    <div class="col-span-2 md:col-span-1">
+                        <div class="font-bold text-slate-800 dark:text-slate-200">${escapeHTML(canonical)}</div>
+                        ${toggleBtnHtml}
+                    </div>
+
+                    <div class="flex flex-col">
+                        <span class="md:hidden text-[9px] font-black uppercase text-slate-400 mb-1">Backline</span>
+                        <span class="font-mono bg-slate-50 dark:bg-slate-800 px-3 py-1 rounded-lg border border-slate-100 dark:border-slate-700 w-full text-center">${escapeHTML(bl)}</span>
+                    </div>
+
+                    <div class="flex flex-col">
+                        <span class="md:hidden text-[9px] font-black uppercase text-slate-400 mb-1">Cooler</span>
+                        <span class="font-mono bg-sky-50 dark:bg-sky-900/20 text-sky-700 dark:text-sky-300 px-3 py-1 rounded-lg border border-sky-100 dark:border-sky-800 w-full text-center">${escapeHTML(cl)}</span>
+                    </div>
+
+                    <div class="flex flex-col">
+                        <span class="md:hidden text-[9px] font-black uppercase text-slate-400 mb-1">Freezer</span>
+                        <span class="font-mono bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-300 px-3 py-1 rounded-lg border border-indigo-100 dark:border-indigo-800 w-full text-center">${escapeHTML(fr)}</span>
+                    </div>
+
+                    <div class="col-span-2 md:col-span-1 flex justify-end">
+                        <button class="btn btn-sm btn-accent w-full md:w-auto import-btn">Import</button>
+                    </div>
+                `;
+
+                div.appendChild(mainRow);
+                
+                if (originalNamesHtml) {
+                    const variantsDiv = document.createElement('div');
+                    variantsDiv.innerHTML = originalNamesHtml;
+                    div.appendChild(variantsDiv.firstElementChild);
+                    
+                    const toggleBtn = mainRow.querySelector('.toggle-variants-btn');
+                    if (toggleBtn) {
+                        toggleBtn.onclick = () => {
+                            const container = div.querySelector('.variants-container');
+                            const icon = toggleBtn.querySelector('i');
+                            if (container.classList.contains('hidden')) {
+                                container.classList.remove('hidden');
+                                icon.classList.add('rotate-180');
+                            } else {
+                                container.classList.add('hidden');
+                                icon.classList.remove('rotate-180');
+                            }
+                        };
+                    }
+                }
+
+                mainRow.querySelector('.import-btn').onclick = () => importPrediction(canonical, bl, cl, fr);
+
+                fragment.appendChild(div);
+                addedCount++;
+            });
+
+            if (addedCount === 0) {
+                list.innerHTML = `<p class="text-center py-8 text-slate-500">The AI could not confidently predict any stock levels above 0. Try logging more data!</p>`;
+                document.getElementById('importAllBtn').classList.add('hidden');
+            } else {
+                list.appendChild(fragment);
+                document.getElementById('importAllBtn').classList.remove('hidden');
+                if (window.lucide) window.lucide.createIcons();
+            }
+        }
+
+        function importPrediction(name, bl, cl, fr) {
+            if (!currentUser) return alert("Please sign in to import data.");
+
+            if (confirm(`Import ${name} predictions to your active shift tracker? This will update your current draft.`)) {
+                const draft = getDraft();
+                if (!draft) return;
+
+                applyPredictionToDraft(draft, name, bl, cl, fr);
+                saveDraft(draft, `${name} imported!`);
+            }
+        }
+
+        function importAllPredictions() {
+            if (!currentUser || !window.latestGroupedPredictions) return;
+
+            if (confirm("Import ALL predictions to your active shift tracker? This will update your current draft for all items shown below.")) {
+                const draft = getDraft();
+                if (!draft) return;
+
+                Object.keys(window.latestGroupedPredictions).forEach(canonical => {
+                    const item = window.latestGroupedPredictions[canonical];
+                    if (item.bl > 0 || item.cl > 0 || item.fr > 0) {
+                        applyPredictionToDraft(draft, canonical, item.bl, item.cl, item.fr);
+                    }
+                });
+
+                saveDraft(draft, "All predictions imported to your tracker!");
+            }
+        }
+
+        function getDraft() {
+            const draftKey = `ezManage_draft_${currentUser.uid}`;
+            let draft = localStorage.getItem(draftKey);
+            if (draft) {
+                try {
+                    return JSON.parse(draft);
+                } catch (e) {
+                    console.error("Draft parse error", e);
+                }
+            }
+            alert("No active draft found. Please open the Tracker first.");
+            return null;
+        }
+
+        function applyPredictionToDraft(draft, name, bl, cl, fr) {
+            if (!draft.inventory) draft.inventory = [];
+            let itemFound = false;
+
+            draft.inventory.forEach(item => {
+                if (item.name.trim().toLowerCase() === name.trim().toLowerCase()) {
+                    item.bl = bl.toString();
+                    item.cl = cl.toString();
+                    item.fr = fr.toString();
+                    itemFound = true;
+                }
+            });
+
+            if (!itemFound) {
+                draft.inventory.push({
+                    name: name,
+                    bl: bl.toString(),
+                    cl: cl.toString(),
+                    fr: fr.toString()
+                });
+            }
+        }
+
+        function saveDraft(draft, successMsg) {
+            const draftKey = `ezManage_draft_${currentUser.uid}`;
+            localStorage.setItem(draftKey, JSON.stringify(draft));
+
+            if (currentUserData && currentUserData.cloudSyncEnabled) {
+                db.collection('users').doc(currentUser.uid).set({ trackerDraft: draft }, { merge: true })
+                    .then(() => alert(successMsg + " (Cloud & Local Sync Complete)"))
+                    .catch(err => {
+                        console.error("Cloud sync error", err);
+                        alert(successMsg + " (Saved locally, but cloud sync failed)");
+                    });
+            } else {
+                alert(successMsg + " (Saved to local tracker)");
+            }
+        }
+
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('./sw.js')
+                .then(() => console.log("Service Worker Registered"))
+                .catch(err => console.error("Service Worker Registration Failed:", err));
+        }
+
+        window.addEventListener('offline', updateNetworkStatus);
+        window.addEventListener('online', updateNetworkStatus);
+        updateNetworkStatus();
+
+        function updateNetworkStatus() {
+            const ind = document.getElementById('statusIndicator');
+            if (!navigator.onLine) {
+                ind.innerHTML = `<span class="w-2 h-2 rounded-full bg-red-500 shadow-[0_0_8px_rgba(var(--tw-colors-red-500),0.8)]"></span> Offline - Predictions Unavailable`;
+            } else if (currentUser) {
+                // Not updating innerHTML with dynamic strings to prevent XSS
+                updateStatus('Analysis Complete', 'emerald');
+            }
+        }
+    </script>
+    <footer class="main-footer"></footer>
+</body>
+
+</html>
