@@ -5760,13 +5760,16 @@ function checkAndRenderOrgControls() {
                     snap.forEach(doc => employees.push({id: doc.id, ...doc.data()}));
                     employees.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
 
+                    // ⚡ Bolt Optimization: Batch DOM insertions with DocumentFragment to prevent layout thrashing
+                    const fragment = document.createDocumentFragment();
                     employees.forEach(emp => {
                         const opt = document.createElement('option');
                         opt.value = emp.id;
                         opt.dataset.name = emp.name;
                         opt.textContent = `${emp.name} (${emp.role})`;
-                        select.appendChild(opt);
+                        fragment.appendChild(opt);
                     });
+                    select.appendChild(fragment);
                 })
                 .catch(err => console.error("Error populating recognition dropdown:", err));
         }
