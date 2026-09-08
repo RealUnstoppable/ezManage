@@ -114,3 +114,7 @@
 **Vulnerability:** DOM-based XSS where unescaped user input (song.title and song.artist) is appended to the DOM via innerHTML.
 **Learning:** External data should always be escaped before being injected into the DOM via innerHTML to prevent XSS.
 **Prevention:** Use the `escapeHTML` utility function to sanitize user-provided strings before DOM injection using innerHTML.
+## 2024-05-18 - Missing orgId Diff Checks in Firestore Rules
+**Vulnerability:** Several Firestore collections (tasks, maintenance_logs, waste_logs, time_off_requests, announcements) allowed updates without explicitly preventing modification of the `orgId` field via diff checks. This could allow users to bypass multi-tenant isolation by reassigning records to other organizations.
+**Learning:** To prevent authorization bypasses in Firebase multi-tenant apps, it is critical to explicitly restrict modifications to data segmentation fields like `orgId` during `update` operations using a diff check.
+**Prevention:** Always append `&& !request.resource.data.diff(resource.data).affectedKeys().hasAny(['orgId']);` to the end of `allow update` rules in collections that isolate data by `orgId`.
