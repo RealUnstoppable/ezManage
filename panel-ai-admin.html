@@ -251,6 +251,7 @@
     }
     document.getElementById('gPass').addEventListener('keydown', e => { if(e.key==='Enter') gateSignIn(); });
 
+    let isDashboardLoaded = false;
     auth.onAuthStateChanged(user => {
         if (!user) { document.getElementById('gate').style.display = 'flex'; document.getElementById('app').style.display = 'none'; return; }
         if (user.email !== ADMIN_EMAIL) {
@@ -267,7 +268,10 @@
         document.getElementById('gate').style.display = 'none';
         document.getElementById('app').style.display = 'block';
         document.getElementById('navEmail').textContent = user.email;
-        loadDashboard();
+        if (!isDashboardLoaded) {
+            loadDashboard();
+            isDashboardLoaded = true;
+        }
     });
 
     /* ---------- CHARTS ---------- */
