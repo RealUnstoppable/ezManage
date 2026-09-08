@@ -47,6 +47,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-messaging-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-functions-compat.js"></script>
+    <script src="js/firebase-config.js"></script>
 
     <style>
         :root {
@@ -2123,16 +2124,7 @@
 
     <script>
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyBgrI9HwJPSc5b4pu2Egsv4DE7shNwptSw",
-            authDomain: "ezmanage.realunstoppable.store",
-            projectId: "dts-hub-website",
-            storageBucket: "dts-hub-website.firebasestorage.app",
-            messagingSenderId: "48345990988",
-            appId: "1:48345990988:web:e3662c9b508168546471e9",
-            measurementId: "G-ZN3YJPHVGX"
-        };
-
+        const firebaseConfig = window.ezManageFirebaseConfig;
         const app = !window.firebase.apps.length ? window.firebase.initializeApp(firebaseConfig) : window.firebase.app();
         const auth = window.firebase.auth();
 
