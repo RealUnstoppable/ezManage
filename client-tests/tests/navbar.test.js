@@ -16,7 +16,8 @@ global.firebase = mockFirebase;
 jest.unstable_mockModule('../../js/auth.js', () => ({
   auth: { onAuthStateChanged: jest.fn() },
   db: { collection: jest.fn(() => ({ doc: jest.fn(() => ({ get: jest.fn() })) })) },
-  getUserRedirectPath: (userData) => userData && userData.isAdmin ? 'admin.html' : 'index.html'
+  getUserRedirectPath: (userData) => userData && userData.isAdmin ? 'admin.html' : 'index.html',
+  fetchUserDoc: jest.fn(() => Promise.resolve({ exists: true, data: () => ({ isAdmin: false }) }))
 }));
 
 const mockOnAuthStateChanged = jest.fn();
