@@ -1,11 +1,10 @@
-import { getFirebaseErrorMessage, logManagerError } from './utils.js';
+import { getFirebaseErrorMessage, logManagerError, escapeHTML } from './utils.js';
 
 
 
-if (!window.firebase) { console.error("Firebase Compat SDK must be loaded before auth.js"); }
+import { auth, db } from '../firebase.js';
 
-export const auth = window.firebase ? window.firebase.auth() : {};
-export const db = window.firebase ? window.firebase.firestore() : {};
+export { auth, db };
 
 export function getUserRedirectPath(userData) {
     return userData && userData.isAdmin ? 'admin.html' : 'index.html';
@@ -49,7 +48,7 @@ auth.onAuthStateChanged(async (user) => {
 
                 if (membershipStatusContainer) {
                     const level = userData.membershipLevel || 'free';
-                    membershipStatusContainer.innerHTML = `<span class="membership-status ${level}">${level}</span>`;
+                    membershipStatusContainer.innerHTML = `<span class="membership-status ${escapeHTML(level)}">${escapeHTML(level)}</span>`;
                 }
             }
         } catch (error) {
