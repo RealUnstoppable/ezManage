@@ -54,3 +54,6 @@
 ## 2024-11-09 - Duplicate state declaration
 **Learning:** Avoid duplicate cache state variable declarations within the same scope. The layout thrashing prevention code was throwing due to `let lastGreeting = ""` declared twice within `script.js`'s `updateGreeting` logic.
 **Action:** Remove the inner redundant declaration while keeping the cache check `newGreeting !== lastGreeting` functional.
+## $(date +%Y-%m-%d) - [Repeated Firebase DB Docs Fetch]
+**Learning:** Functions invoked via callbacks from listeners that span multiple files (e.g., `auth.onAuthStateChanged`) will fire simultaneously. Without a caching layer, they execute redundant concurrent network fetch queries (like `db.collection('users').doc(uid).get()`), causing latency and blocking operations.
+**Action:** Always wrap independent multi-listener fetched resources with a generic memoization layer using a `Map` cache to immediately resolve redundant Promise requests.
