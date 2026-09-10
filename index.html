@@ -5909,7 +5909,7 @@ function checkAndRenderOrgControls() {
                 }
             } catch (error) {
                 console.error("Error fetching recognitions:", error);
-                container.innerHTML = `<div class="text-red-500 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl text-center">Failed to load recognitions: ${error.message}</div>`;
+                container.innerHTML = `<div class="text-red-500 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl text-center">Failed to load recognitions: ${escapeHTML(error.message)}</div>`;
             }
         }
 
