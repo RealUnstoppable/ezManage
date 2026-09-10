@@ -114,3 +114,7 @@
 **Vulnerability:** DOM-based XSS where unescaped user input (song.title and song.artist) is appended to the DOM via innerHTML.
 **Learning:** External data should always be escaped before being injected into the DOM via innerHTML to prevent XSS.
 **Prevention:** Use the `escapeHTML` utility function to sanitize user-provided strings before DOM injection using innerHTML.
+## 2025-02-20 - DOM-based XSS via Error Messages
+**Vulnerability:** DOM-based Cross-Site Scripting (XSS) vulnerability was found where `error.message` was unsafely interpolated into the DOM using `innerHTML` template literals.
+**Learning:** Even though `escapeHTML` was widely used for other user inputs, error messages (which can contain arbitrary strings reflecting user input from backend responses) were overlooked.
+**Prevention:** Always apply the `escapeHTML` utility to dynamically generated error messages before inserting them into the DOM using `innerHTML`.
