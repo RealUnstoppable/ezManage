@@ -47,6 +47,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-messaging-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-functions-compat.js"></script>
+    <script src="js/firebase-config.js"></script>
 
     <style>
         :root {
@@ -5912,7 +5913,7 @@ function checkAndRenderOrgControls() {
                 }
             } catch (error) {
                 console.error("Error fetching recognitions:", error);
-                container.innerHTML = `<div class="text-red-500 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl text-center">Failed to load recognitions: ${error.message}</div>`;
+                container.innerHTML = `<div class="text-red-500 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl text-center">Failed to load recognitions: ${escapeHTML(error.message)}</div>`;
             }
         }
 

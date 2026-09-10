@@ -15,18 +15,24 @@ const {adaptGen2Params, logManagerError} = require("./utils");
  * @return {Promise<Object>} The document reference and snapshot
  */
 async function verifyDocAndAuth(collection, docId, expectedOrgId, notFoundMessage, unauthorizedMessage) {
-  const docRef = admin.firestore().collection(collection).doc(docId);
-  const docSnap = await docRef.get();
+  try {
+    const docRef = admin.firestore().collection(collection).doc(docId);
+    const docSnap = await docRef.get();
 
-  if (!docSnap.exists) {
-    throw new HttpsError("not-found", notFoundMessage);
+    if (!docSnap.exists) {
+      throw new HttpsError("not-found", notFoundMessage);
+    }
+
+    if (docSnap.data().orgId !== expectedOrgId) {
+      throw new HttpsError("permission-denied", unauthorizedMessage);
+    }
+
+    return {docRef, docSnap};
+  } catch (error) {
+    logManagerError(`Error verifying document auth for ${collection}/${docId}:`, error);
+    if (error instanceof HttpsError) throw error;
+    throw new HttpsError("internal", "Unable to verify document permissions");
   }
-
-  if (docSnap.data().orgId !== expectedOrgId) {
-    throw new HttpsError("permission-denied", unauthorizedMessage);
-  }
-
-  return {docRef, docSnap};
 }
 
 admin.initializeApp();
@@ -47,11 +53,17 @@ const stripe = require("stripe")(stripeKey);
  * @return {Promise<string>} The actual organization ID
  */
 async function getActualOrgId(admin, uid) {
-  const userDoc = await admin.firestore().collection("users").doc(uid).get();
-  if (!userDoc.exists) {
-    throw new HttpsError("not-found", "User not found");
+  try {
+    const userDoc = await admin.firestore().collection("users").doc(uid).get();
+    if (!userDoc.exists) {
+      throw new HttpsError("not-found", "User not found");
+    }
+    return userDoc.data().orgId || null;
+  } catch (error) {
+    logManagerError("Error fetching user organization data for uid: " + uid, error);
+    if (error instanceof HttpsError) throw error;
+    throw new HttpsError("internal", "Unable to verify user organization");
   }
-  return userDoc.data().orgId || null;
 }
 
 exports.createCheckoutSession = onRequest({invoker: "public"}, (req, res) => {
