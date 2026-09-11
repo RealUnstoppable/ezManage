@@ -4831,8 +4831,7 @@ function checkAndRenderOrgControls() {
             lucide.createIcons();
 
             try {
-                const manageWaste = cloudFunctions.httpsCallable('manageWaste');
-                await manageWaste({
+                await callCloudFunction('manageWaste', {
                     action: "create",
                     payload: { itemName, quantity, cost, reason }
                 });
@@ -4876,8 +4875,7 @@ function checkAndRenderOrgControls() {
             lucide.createIcons();
 
             try {
-                const manageWaste = cloudFunctions.httpsCallable('manageWaste');
-                const result = await manageWaste({ action: "get", payload: {} });
+                const result = await callCloudFunction('manageWaste', { action: "get", payload: {} });
 
                 if (result.data.success) {
                     const logs = result.data.logs || [];
@@ -4930,8 +4928,7 @@ function checkAndRenderOrgControls() {
         async function deleteWasteLog(logId) {
             if (!confirm("Are you sure you want to permanently delete this waste log entry?")) return;
             try {
-                const manageWaste = cloudFunctions.httpsCallable('manageWaste');
-                await manageWaste({ action: "delete", payload: { logId } });
+                await callCloudFunction('manageWaste', { action: "delete", payload: { logId } });
                 fetchWasteLogs();
             } catch (err) {
                 console.error("Error deleting waste log:", err);
@@ -4965,8 +4962,7 @@ function checkAndRenderOrgControls() {
             lucide.createIcons();
 
             try {
-                const manageIncidents = cloudFunctions.httpsCallable('manageIncidents');
-                await manageIncidents({
+                await callCloudFunction('manageIncidents', {
                     action: "create",
                     payload: { title, description: desc, severity, type }
                 });
@@ -5015,8 +5011,7 @@ function checkAndRenderOrgControls() {
             lucide.createIcons();
 
             try {
-                const manageIncidents = cloudFunctions.httpsCallable('manageIncidents');
-                const result = await manageIncidents({ action: "get", payload: {} });
+                const result = await callCloudFunction('manageIncidents', { action: "get", payload: {} });
 
                 if (result.data.success) {
                     const incidents = result.data.incidents || [];
@@ -5087,8 +5082,7 @@ function checkAndRenderOrgControls() {
         async function deleteIncident(incidentId) {
             if (!confirm("Are you sure you want to permanently delete this incident report?")) return;
             try {
-                const manageIncidents = cloudFunctions.httpsCallable('manageIncidents');
-                await manageIncidents({ action: "delete", payload: { incidentId } });
+                await callCloudFunction('manageIncidents', { action: "delete", payload: { incidentId } });
                 fetchIncidents();
             } catch (err) {
                 console.error("Error deleting incident:", err);
@@ -5108,8 +5102,7 @@ function checkAndRenderOrgControls() {
 
         async function updateIncidentStatus(incidentId, newStatus) {
             try {
-                const manageIncidents = cloudFunctions.httpsCallable('manageIncidents');
-                await manageIncidents({
+                await callCloudFunction('manageIncidents', {
                     action: "updateStatus",
                     payload: { incidentId, status: newStatus }
                 });
@@ -5241,7 +5234,7 @@ function checkAndRenderOrgControls() {
                 submitBtn.disabled = false;
                 lucide.createIcons();
             } catch (error) {
-                logManagerError("Error creating task", error);
+                logManagerError("Error creating task for assignerId: " + currentUser.uid, error);
                 showToast("Error assigning task.");
                 const submitBtn = document.querySelector('#createTaskForm button[type="submit"]');
                 if (submitBtn) {
