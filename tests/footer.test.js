@@ -17,7 +17,7 @@ describe('loadFooter', () => {
 
         const footer = document.querySelector('.main-footer');
         expect(footer).not.toBeNull();
-        expect(footer.innerHTML).toContain('class="footer-container"');
+        expect(footer.innerHTML).toContain('class="footer-container max-w-7xl mx-auto px-6 py-12"');
         expect(footer.innerHTML).toContain('Navigate');
         expect(footer.innerHTML).toContain('Connect');
         expect(footer.innerHTML).toContain('Company');
