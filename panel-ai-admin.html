@@ -25,6 +25,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+    <script src="js/firebase-config.js"></script>
 
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -222,15 +223,8 @@
         return isNaN(parsed) ? 0 : parsed;
     }
 
-    const firebaseConfig = {
-        apiKey: "AIzaSyBgrI9HwJPSc5b4pu2Egsv4DE7shNwptSw",
-        authDomain: "dts-hub-website.firebaseapp.com",
-        projectId: "dts-hub-website",
-        storageBucket: "dts-hub-website.firebasestorage.app",
-        messagingSenderId: "48345990988",
-        appId: "1:48345990988:web:e3662c9b508168546471e9"
-    };
-    const app = !window.firebase.apps.length ? window.firebase.initializeApp(firebaseConfig) : window.firebase.app();
+    const firebaseConfig = window.ezManageFirebaseConfig;
+        const app = !window.firebase.apps.length ? window.firebase.initializeApp(firebaseConfig) : window.firebase.app();
     const auth = firebase.auth();
     const db   = firebase.firestore();
     db.settings({ experimentalForceLongPolling: true });
@@ -244,10 +238,14 @@
         const err   = document.getElementById('gateErr');
         err.textContent = '';
         auth.signInWithEmailAndPassword(email, pass)
-            .catch(e => { err.textContent = e.message; });
+            .catch(e => {
+                console.error("Manager Troubleshooting: Error during admin sign in", e);
+                err.textContent = e.message;
+            });
     }
     document.getElementById('gPass').addEventListener('keydown', e => { if(e.key==='Enter') gateSignIn(); });
 
+    let isDashboardLoaded = false;
     auth.onAuthStateChanged(user => {
         if (!user) { document.getElementById('gate').style.display = 'flex'; document.getElementById('app').style.display = 'none'; return; }
         if (user.email !== ADMIN_EMAIL) {
@@ -264,7 +262,10 @@
         document.getElementById('gate').style.display = 'none';
         document.getElementById('app').style.display = 'block';
         document.getElementById('navEmail').textContent = user.email;
-        loadDashboard();
+        if (!isDashboardLoaded) {
+            loadDashboard();
+            isDashboardLoaded = true;
+        }
     });
 
     /* ---------- CHARTS ---------- */
@@ -360,8 +361,8 @@
         // ⚡ Bolt Optimization: Batch DOM insertions to prevent O(n²) layout thrashing
         grid.innerHTML = kpis.map(k => `
             <div class="card" style="display:flex;flex-direction:column;gap:6px;">
-                <div class="card-title">${k.label}</div>
-                <div class="card-value ${k.color}">${k.value}</div>
+                <div class="card-title">${escapeHTML(k.label)}</div>
+                <div class="card-value ${escapeHTML(k.color)}">${escapeHTML(k.value)}</div>
             </div>`).join('');
 
         /* Day chart */
@@ -438,7 +439,7 @@
         document.getElementById('dashboard').style.display = 'block';
         lucide.createIcons();
         } catch (error) {
-            console.error('Error loading dashboard:', error);
+            console.error("Manager Troubleshooting: Error loading admin dashboard", error);
             document.getElementById('loadingSpinner').innerHTML = '<p style="color:var(--danger);">Failed to load dashboard. Please try again.</p>';
         }
     }
