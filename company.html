@@ -194,7 +194,7 @@
     <nav
         class="fixed top-0 w-full z-50 bg-white/80 dark:bg-slate-950/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 transition-colors">
         <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
-            <div class="flex items-center gap-3">
+            <div class="flex items-center gap-3 cursor-pointer" onclick="window.location.href='index.html'">
                 <div
                     class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white shadow-lg">
                     <i data-lucide="building-2" class="w-6 h-6"></i>
@@ -206,7 +206,9 @@
                 </div>
             </div>
             <div class="flex items-center gap-4">
-                <button onclick="toggleTheme()" aria-label="Toggle theme" class="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                <button onclick="window.location.href='index.html'" class="btn btn-outline py-1.5 px-4 text-sm hidden md:flex items-center gap-2">
+                    <i data-lucide="arrow-left" class="w-4 h-4"></i> Back to ezManage
+                </button>
                 <button onclick="toggleTheme()" aria-label="Toggle Theme"
                     class="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
                     <i data-lucide="moon" id="themeIcon"></i>
@@ -271,20 +273,21 @@
                 <div id="onboardingSteps" class="relative overflow-hidden min-h-[400px]">
                     <!-- Step 1: Welcome -->
                     <div id="step-1" class="onboarding-step transition-all duration-500 ease-in-out transform w-full">
-                        <div class="text-center">
+                        <div class="text-center card max-w-lg mx-auto shadow-2xl p-10">
                             <div
-                                class="w-24 h-24 bg-indigo-100 dark:bg-indigo-900/50 rounded-full flex items-center justify-center mx-auto mb-8 shadow-inner border border-indigo-200 dark:border-indigo-800">
-                                <i data-lucide="rocket" class="w-12 h-12 text-indigo-500"></i>
+                                class="w-24 h-24 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-8 shadow-[0_0_30px_rgba(99,102,241,0.5)] border border-white/20 transform hover:scale-105 transition-transform">
+                                <i data-lucide="building-2" class="w-12 h-12 text-white"></i>
                             </div>
-                            <h2 class="text-4xl md:text-5xl font-black mb-6">Let's build your workspace.</h2>
-                            <p class="text-lg text-slate-500 dark:text-slate-400 mb-10">We'll set up your corporate
-                                organization in just a few quick steps.</p>
+                            <h2 class="text-3xl md:text-4xl font-black mb-4 text-white tracking-tight">Let's build your workspace.</h2>
+                            <p class="text-base text-slate-300 mb-8 font-medium">We'll set up your corporate organization in just a few quick steps. Get ready to streamline your operations.</p>
                             <button type="button" onclick="nextOnboardingStep(2)"
-                                class="btn btn-primary w-full py-5 text-xl rounded-2xl shadow-[0_8px_30px_rgba(99,102,241,0.3)] animate-[pulse_2s_infinite] hover:animate-none">Get
-                                Started</button>
-                            <button onclick="navTo('login')"
-                                class="mt-6 text-sm font-bold text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300">Already
-                                have an account? Login</button>
+                                class="btn w-full py-4 text-lg rounded-xl font-bold bg-white text-indigo-900 hover:bg-slate-100 shadow-[0_0_20px_rgba(255,255,255,0.3)] transition-all hover:scale-[1.02] active:scale-95">
+                                Get Started
+                            </button>
+                            <button id="login-link-step-1" onclick="navTo('login')"
+                                class="mt-6 text-sm font-semibold text-slate-400 hover:text-white transition-colors">
+                                Already have an account? <span class="text-sky-400">Login</span>
+                            </button>
                         </div>
                     </div>
 
@@ -867,6 +870,8 @@
         auth.onAuthStateChanged(async (user) => {
             currentUser = user;
             if (user) {
+                const loginLink = document.getElementById('login-link-step-1');
+                if (loginLink) loginLink.classList.add('hidden');
                 document.getElementById('authContainer').innerHTML = `
                     <div class="relative group" id="profileDropdownContainer">
                         <button class="w-10 h-10 rounded-full bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center font-black text-indigo-600 dark:text-indigo-400 shadow-sm border border-indigo-200 dark:border-indigo-800 focus:outline-none transition-transform hover:scale-105" onclick="document.getElementById('profileDropdown').classList.toggle('opacity-0'); document.getElementById('profileDropdown').classList.toggle('invisible'); document.getElementById('profileDropdown').classList.toggle('scale-95'); document.getElementById('profileDropdown').classList.toggle('scale-100');" onblur="setTimeout(() => { const pd = document.getElementById('profileDropdown'); if(pd) { pd.classList.add('opacity-0', 'invisible', 'scale-95'); pd.classList.remove('scale-100'); } }, 200)">
@@ -905,6 +910,8 @@
                     await initializeCorporateWorkspace(user);
                 }
             } else {
+                const loginLink = document.getElementById('login-link-step-1');
+                if (loginLink) loginLink.classList.remove('hidden');
                 document.getElementById('authContainer').innerHTML = `<button onclick="navTo('login')" class="btn btn-outline btn-sm">Login</button>`;
                 document.getElementById('dashboard-shell').classList.add('hidden');
                 navTo('login');
