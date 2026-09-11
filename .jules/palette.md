@@ -55,3 +55,7 @@
 ## 2024-08-03 - Missing ARIA Labels on Icon-Only Modal Close Buttons
 **Learning:** Icon-only buttons using libraries like Lucide (e.g., `<button><i data-lucide="x"></i></button>`) often lack implicit accessible names, causing screen readers to read them simply as "button".
 **Action:** When implementing or reviewing modal close buttons or any icon-only interactive elements in this app's components, always verify the presence of an explicit `aria-label` attribute describing the action (e.g., "Close tutorial", "Close announcement modal") to ensure keyboard and screen reader accessibility.
+
+## 2024-10-27 - Form accessibility enhancements on mismatched labels
+**Learning:** Some explicitly rendered `<label>` elements were missing the `for` attribute completely, or mapping to the wrong `id` (e.g. `taskTitle` instead of `taskTitle1` or `taskDesc` instead of `taskDesc1`). Adding `aria-label`s to these input fields that already have explicitly rendered labels causes screen readers to read redundant tags.
+**Action:** When adding accessibility to form inputs, always verify if there is already a label rendered above the element. If so, fix the `for` and `id` mapping instead of slapping a redundant `aria-label` attribute on the element.

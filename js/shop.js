@@ -96,8 +96,8 @@ function renderCart() {
                         <p>$${product.price.toFixed(2)}</p>
                     </div>
                     <div class="cart-item-actions">
-                        <input type="number" value="${escapeHTML(quantity)}" min="1" data-id="${escapeHTML(productId)}" class="item-quantity-input">
-                        <button class="remove-item-btn" data-id="${escapeHTML(productId)}">&#128465;</button>
+                        <input type="number" aria-label="Item Quantity" value="${escapeHTML(quantity)}" min="1" data-id="${escapeHTML(productId)}" class="item-quantity-input">
+                        <button class="remove-item-btn" aria-label="Remove Item" data-id="${escapeHTML(productId)}">&#128465;</button>
                     </div>
                 </div>
             `;

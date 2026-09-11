@@ -114,7 +114,11 @@
 **Vulnerability:** DOM-based XSS where unescaped user input (song.title and song.artist) is appended to the DOM via innerHTML.
 **Learning:** External data should always be escaped before being injected into the DOM via innerHTML to prevent XSS.
 **Prevention:** Use the `escapeHTML` utility function to sanitize user-provided strings before DOM injection using innerHTML.
-## 2024-05-18 - Missing orgId Diff Checks in Firestore Rules
-**Vulnerability:** Several Firestore collections (tasks, maintenance_logs, waste_logs, time_off_requests, announcements) allowed updates without explicitly preventing modification of the `orgId` field via diff checks. This could allow users to bypass multi-tenant isolation by reassigning records to other organizations.
-**Learning:** To prevent authorization bypasses in Firebase multi-tenant apps, it is critical to explicitly restrict modifications to data segmentation fields like `orgId` during `update` operations using a diff check.
-**Prevention:** Always append `&& !request.resource.data.diff(resource.data).affectedKeys().hasAny(['orgId']);` to the end of `allow update` rules in collections that isolate data by `orgId`.
+## 2024-05-24 - Centralize Public Firebase Configuration
+**Vulnerability:** Security scanners often flag hardcoded Firebase API keys in source files as a vulnerability.
+**Learning:** While Firebase API keys are designed to be public client-side identifiers (with real security handled by Firebase Rules), scattering hardcoded configurations across multiple HTML and JS files pollutes the codebase and continuously triggers static analysis warnings. Furthermore, removing a purely unused configuration block (as was found in `js/auth.js`) instantly resolves localized warnings.
+**Prevention:** Rather than attempting to introduce a complex build step or backend endpoint for a purely static frontend app, centralize the configuration in a single file (e.g., `js/firebase-config.js`), assign it to a global variable (e.g., `window.ezManageFirebaseConfig`), and reference it throughout the application. Ensure any completely unused configuration definitions are deleted entirely.
+## 2025-02-20 - DOM-based XSS via Error Messages
+**Vulnerability:** DOM-based Cross-Site Scripting (XSS) vulnerability was found where `error.message` was unsafely interpolated into the DOM using `innerHTML` template literals.
+**Learning:** Even though `escapeHTML` was widely used for other user inputs, error messages (which can contain arbitrary strings reflecting user input from backend responses) were overlooked.
+**Prevention:** Always apply the `escapeHTML` utility to dynamically generated error messages before inserting them into the DOM using `innerHTML`.
