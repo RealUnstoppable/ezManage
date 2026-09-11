@@ -1,6 +1,6 @@
 import { logManagerError } from './utils.js';
 
-import { auth, db } from './auth.js';
+import { auth, db, fetchUserDoc } from './auth.js';
 
 (function() {
     const localTheme = localStorage.getItem('userTheme');
@@ -23,7 +23,7 @@ if (auth && auth.onAuthStateChanged) {
     auth.onAuthStateChanged(async (user) => {
         if (user) {
             try {
-                const userDoc = await db.collection("users").doc(user.uid).get();
+                const userDoc = await fetchUserDoc(user.uid);
                 if (userDoc.exists) {
                     const userData = userDoc.data();
                     applyTheme(userData.theme, userData.accentColor);
