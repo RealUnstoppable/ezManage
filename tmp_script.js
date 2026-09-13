@@ -17,15 +17,7 @@
 
         
 
-        function escapeHTML(str) {
-            if (!str && str !== 0) return "";
-            return String(str)
-                .replace(/&/g, "&amp;")
-                .replace(/</g, "&lt;")
-                .replace(/>/g, "&gt;")
-                .replace(/"/g, "&quot;")
-                .replace(/'/g, "&#039;");
-        }
+
 
         // --- Navigation ---
         function navTo(viewId) {
@@ -421,14 +413,19 @@
                 }, { merge: true });
 
                 // Invite roles if any
-                for (let role of onboardingRoles) {
-                    await db.collection('invites').add({
-                        groupId: groupId,
-                        email: role.email,
-                        priority: role.priority,
-                        status: 'Pending',
-                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                    });
+                if (onboardingRoles && onboardingRoles.length > 0) {
+                    const batch = db.batch();
+                    for (let role of onboardingRoles) {
+                        const inviteRef = db.collection('invites').doc();
+                        batch.set(inviteRef, {
+                            groupId: groupId,
+                            email: role.email,
+                            priority: role.priority,
+                            status: 'Pending',
+                            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                    }
+                    await batch.commit();
                 }
 
                 clearInterval(sim);
