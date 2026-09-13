@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shop | Unstoppable Official Store</title>
+    <link rel="icon" type="image/jpeg" href="ManagerPro.jpg">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/themes.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script type="module">
+        import { loadNavbar } from './js/navbar.js';
+        import { loadFooter } from './js/footer.js';
+        import { products } from './js/shop.js';
+        document.addEventListener('DOMContentLoaded', () => {
+            loadNavbar();
+            loadFooter();
+            if (window.lucide) window.lucide.createIcons();
+        });
+    </script>
+</head>
+<body class="bg-slate-950 text-slate-100 font-sans min-h-screen flex flex-col pt-20">
+    <header class="main-header"></header>
+
+    <main class="flex-grow max-w-7xl mx-auto px-6 py-12 w-full">
+        <!-- Hero Header -->
+        <div class="text-center max-w-3xl mx-auto mb-16">
+            <span class="inline-flex items-center gap-2 px-3 py-1 text-xs font-black uppercase tracking-widest text-emerald-400 bg-emerald-950/80 rounded-full mb-4 border border-emerald-800/50">
+                <i data-lucide="shopping-bag" class="w-3.5 h-3.5"></i> Official Apparel & Merch
+            </span>
+            <h1 class="text-4xl md:text-6xl font-black text-white tracking-tight mb-4">
+                Unstoppable <span class="text-sky-400">Merch Shop</span>
+            </h1>
+            <p class="text-slate-400 text-lg">
+                Gear up with high-quality hoodies, tees, caps, and gaming accessories built for creators and leaders.
+            </p>
+        </div>
+
+        <!-- Product Grid -->
+        <div id="product-grid" class="grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
+            <div class="bg-slate-900 rounded-3xl p-6 border border-slate-800 flex flex-col justify-between hover:border-sky-500/50 transition-all">
+                <div>
+                    <div class="w-full h-56 bg-slate-800 rounded-2xl flex items-center justify-center mb-6 overflow-hidden">
+                        <i data-lucide="shirt" class="w-20 h-20 text-sky-400 opacity-80"></i>
+                    </div>
+                    <h3 class="font-bold text-xl text-white mb-2">Unstoppable Hoodie</h3>
+                    <p class="text-slate-400 text-sm mb-4">Premium black hoodie with embroidered logo. Ultra-soft interior.</p>
+                </div>
+                <div class="flex items-center justify-between pt-4 border-t border-slate-800">
+                    <span class="text-2xl font-black text-white">$59.99</span>
+                    <button class="bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold px-4 py-2.5 rounded-xl text-sm transition-all flex items-center gap-2">
+                        <i data-lucide="shopping-cart" class="w-4 h-4"></i> Add to Cart
+                    </button>
+                </div>
+            </div>
+
+            <div class="bg-slate-900 rounded-3xl p-6 border border-slate-800 flex flex-col justify-between hover:border-sky-500/50 transition-all">
+                <div>
+                    <div class="w-full h-56 bg-slate-800 rounded-2xl flex items-center justify-center mb-6 overflow-hidden">
+                        <i data-lucide="sparkles" class="w-20 h-20 text-purple-400 opacity-80"></i>
+                    </div>
+                    <h3 class="font-bold text-xl text-white mb-2">DTS Model Tee</h3>
+                    <p class="text-slate-400 text-sm mb-4">Iconic tee featuring official Dreams TimeSkip character artwork.</p>
+                </div>
+                <div class="flex items-center justify-between pt-4 border-t border-slate-800">
+                    <span class="text-2xl font-black text-white">$24.99</span>
+                    <button class="bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold px-4 py-2.5 rounded-xl text-sm transition-all flex items-center gap-2">
+                        <i data-lucide="shopping-cart" class="w-4 h-4"></i> Add to Cart
+                    </button>
+                </div>
+            </div>
+
+            <div class="bg-slate-900 rounded-3xl p-6 border border-slate-800 flex flex-col justify-between hover:border-sky-500/50 transition-all">
+                <div>
+                    <div class="w-full h-56 bg-slate-800 rounded-2xl flex items-center justify-center mb-6 overflow-hidden">
+                        <i data-lucide="headphones" class="w-20 h-20 text-amber-400 opacity-80"></i>
+                    </div>
+                    <h3 class="font-bold text-xl text-white mb-2">HarmonyTunes Cap</h3>
+                    <p class="text-slate-400 text-sm mb-4">Dark cap with HarmonyTunes music badge. Adjustable fit.</p>
+                </div>
+                <div class="flex items-center justify-between pt-4 border-t border-slate-800">
+                    <span class="text-2xl font-black text-white">$24.99</span>
+                    <button class="bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold px-4 py-2.5 rounded-xl text-sm transition-all flex items-center gap-2">
+                        <i data-lucide="shopping-cart" class="w-4 h-4"></i> Add to Cart
+                    </button>
+                </div>
+            </div>
+
+            <div class="bg-slate-900 rounded-3xl p-6 border border-slate-800 flex flex-col justify-between hover:border-sky-500/50 transition-all">
+                <div>
+                    <div class="w-full h-56 bg-slate-800 rounded-2xl flex items-center justify-center mb-6 overflow-hidden">
+                        <i data-lucide="gamepad-2" class="w-20 h-20 text-emerald-400 opacity-80"></i>
+                    </div>
+                    <h3 class="font-bold text-xl text-white mb-2">Unstoppable Mousepad</h3>
+                    <p class="text-slate-400 text-sm mb-4">High-precision speed surface mousepad for competitive gaming.</p>
+                </div>
+                <div class="flex items-center justify-between pt-4 border-t border-slate-800">
+                    <span class="text-2xl font-black text-white">$19.99</span>
+                    <button class="bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold px-4 py-2.5 rounded-xl text-sm transition-all flex items-center gap-2">
+                        <i data-lucide="shopping-cart" class="w-4 h-4"></i> Add to Cart
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="main-footer"></footer>
+</body>
+</html>
