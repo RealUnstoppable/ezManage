@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HarmonyTunes | Music Player & Streaming</title>
+    <link rel="icon" type="image/jpeg" href="ManagerPro.jpg">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/themes.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script type="module">
+        import { loadNavbar } from './js/navbar.js';
+        import { loadFooter } from './js/footer.js';
+        document.addEventListener('DOMContentLoaded', () => {
+            loadNavbar();
+            loadFooter();
+            if (window.lucide) window.lucide.createIcons();
+        });
+    </script>
+</head>
+<body class="bg-slate-950 text-slate-100 font-sans min-h-screen flex flex-col pt-20">
+    <header class="main-header"></header>
+
+    <main class="flex-grow max-w-7xl mx-auto px-6 py-12 w-full">
+        <!-- Top Hero Banner -->
+        <div class="relative rounded-3xl overflow-hidden bg-gradient-to-r from-purple-900/40 via-sky-900/30 to-slate-900 border border-slate-800 p-8 md:p-12 mb-12 shadow-2xl">
+            <div class="max-w-2xl relative z-10">
+                <span class="inline-flex items-center gap-2 px-3 py-1 text-xs font-black uppercase tracking-widest text-sky-400 bg-sky-950/80 rounded-full mb-4 border border-sky-800/50">
+                    <i data-lucide="music" class="w-3.5 h-3.5"></i> HarmonyTunes Player
+                </span>
+                <h1 class="text-4xl md:text-6xl font-black tracking-tight text-white mb-4 leading-tight">
+                    Immersive Sound.<br><span class="text-sky-400">Zero Distractions.</span>
+                </h1>
+                <p class="text-slate-300 text-lg mb-8 font-medium">
+                    Stream original tracks, curated remixes, and trending TikTok audio in high fidelity.
+                </p>
+                <div class="flex flex-wrap gap-4">
+                    <button id="nav-home" class="nav-pill active btn bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold px-6 py-3 rounded-xl flex items-center gap-2 transition-all">
+                        <i data-lucide="play" class="w-4 h-4 fill-current"></i> Listen Now
+                    </button>
+                    <button id="nav-favorites" class="nav-pill btn bg-slate-800 hover:bg-slate-700 text-white font-bold px-6 py-3 rounded-xl flex items-center gap-2 transition-all border border-slate-700">
+                        <i data-lucide="heart" class="w-4 h-4 text-red-400"></i> My Favorites
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Music Views -->
+        <div id="view-home" class="space-y-12">
+            <!-- Featured Tracks -->
+            <section>
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-black text-white flex items-center gap-3">
+                        <i data-lucide="disc" class="text-sky-400"></i> Featured Tracks
+                    </h2>
+                </div>
+                <div id="container-jump-back-in" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div class="bg-slate-900/80 p-5 rounded-2xl border border-slate-800 hover:border-sky-500/50 transition-all group cursor-pointer">
+                        <div class="flex items-center gap-4">
+                            <div class="w-16 h-16 rounded-xl bg-gradient-to-br from-sky-500 to-indigo-600 flex items-center justify-center font-black text-2xl text-white shadow-lg shrink-0 group-hover:scale-105 transition-transform">
+                                🎵
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-white text-lg group-hover:text-sky-400 transition-colors">Deorc Decuple</h3>
+                                <p class="text-slate-400 text-sm">FormantX • 3:45</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-slate-900/80 p-5 rounded-2xl border border-slate-800 hover:border-sky-500/50 transition-all group cursor-pointer">
+                        <div class="flex items-center gap-4">
+                            <div class="w-16 h-16 rounded-xl bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center font-black text-2xl text-white shadow-lg shrink-0 group-hover:scale-105 transition-transform">
+                                🔥
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-white text-lg group-hover:text-sky-400 transition-colors">No Pole x Where Have You Been</h3>
+                                <p class="text-slate-400 text-sm">Remix • 2:30</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TikTok Audio Feeds -->
+            <section id="container-tiktoks-section">
+                <h2 class="text-2xl font-black text-white mb-6 flex items-center gap-3">
+                    <i data-lucide="video" class="text-purple-400"></i> Trending TikTok Sounds
+                </h2>
+                <div id="container-tiktoks" class="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    <a href="https://www.tiktok.com/@harmonytunesofficial" target="_blank" rel="noopener noreferrer" class="bg-slate-900 p-4 rounded-xl border border-slate-800 hover:border-purple-500 transition-all block text-center">
+                        <div class="w-12 h-12 bg-purple-900/50 text-purple-400 rounded-full flex items-center justify-center mx-auto mb-3">
+                            <i data-lucide="music-2"></i>
+                        </div>
+                        <h4 class="font-bold text-white text-sm">Viral Hit #1</h4>
+                        <p class="text-xs text-slate-400 mt-1">@harmonytunesofficial</p>
+                    </a>
+                    <a href="https://www.tiktok.com/@harmonytunesofficial" target="_blank" rel="noopener noreferrer" class="bg-slate-900 p-4 rounded-xl border border-slate-800 hover:border-purple-500 transition-all block text-center">
+                        <div class="w-12 h-12 bg-purple-900/50 text-purple-400 rounded-full flex items-center justify-center mx-auto mb-3">
+                            <i data-lucide="mic"></i>
+                        </div>
+                        <h4 class="font-bold text-white text-sm">Studio Vibes</h4>
+                        <p class="text-xs text-slate-400 mt-1">@harmonytunesofficial</p>
+                    </a>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <footer class="main-footer"></footer>
+</body>
+</html>
