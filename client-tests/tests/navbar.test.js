@@ -13,6 +13,11 @@ const mockFirebase = {
 global.window.firebase = mockFirebase;
 global.firebase = mockFirebase;
 
+const mockGet = jest.fn().mockResolvedValue({
+  exists: true,
+  data: () => ({ isAdmin: false })
+});
+
 jest.unstable_mockModule('../../js/auth.js', () => ({
   auth: { onAuthStateChanged: jest.fn() },
   db: { collection: jest.fn(() => ({ doc: jest.fn(() => ({ get: jest.fn() })) })) },
