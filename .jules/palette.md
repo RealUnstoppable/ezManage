@@ -47,6 +47,15 @@
 ## 2026-05-26 - [Diagnosing Global UI Breakages]
 **Learning:** A single syntax error (like an unclosed brace) inside an inline HTML `<script>` block will halt execution of the entire script. This can cause unrelated features (like loading a Navbar or setting up event listeners) to completely fail, resulting in a broken UI.
 **Action:** When diagnosing complete UI failures in Vanilla JS, check for syntax errors using strict parsers like Acorn on extracted script contents, as standard linters often ignore inline HTML scripts.
-## 2024-05-18 - Input Fields Associated by DOM Proximity but Lacking Explicit Labels
-**Learning:** When inputs lack an explicit `<label for="...">` linking or placeholder text that acts as a label, an `aria-label` must be provided. However, one must be cautious to not append an `aria-label` when the input is already visually paired to a preceding DOM `<label for="...">` because the `aria-label` will completely override the visible text label for screen readers. Furthermore, providing an `aria-label` that doesn't exactly match the visible text string is a WCAG 2.5.3 (Label in Name) violation.
-**Action:** When asked to add `aria-label`s to un-labeled inputs, carefully verify whether the `<input>` already has a preceding `<label for="[id]">` by reading the raw HTML context. If it does, do *not* add an `aria-label` as it will override the screen reader announcement and cause WCAG violations. Only add `aria-label` to genuinely orphaned inputs.
+
+## 2024-07-03 - Icon-only buttons with partial text missing ARIA labels
+**Learning:** Buttons that appear to have text but primarily rely on icons for their meaning (like "Add Manager" or "Invite" buttons with Lucide icons) can still benefit from explicit `aria-label`s, especially when they are dynamically rendered or placed in complex UI structures where standard screen readers might struggle to interpret the inline text content alongside the SVG/icon properly. Adding `aria-label` provides a robust, fail-safe announcement.
+**Action:** Even if a button contains visible text, if its primary visual affordance is an icon (especially injected via `data-lucide`), consider adding an explicit `aria-label` to ensure unambiguous screen reader support, taking care not to unnecessarily duplicate information if the text is perfectly semantic.
+
+## 2024-08-03 - Missing ARIA Labels on Icon-Only Modal Close Buttons
+**Learning:** Icon-only buttons using libraries like Lucide (e.g., `<button><i data-lucide="x"></i></button>`) often lack implicit accessible names, causing screen readers to read them simply as "button".
+**Action:** When implementing or reviewing modal close buttons or any icon-only interactive elements in this app's components, always verify the presence of an explicit `aria-label` attribute describing the action (e.g., "Close tutorial", "Close announcement modal") to ensure keyboard and screen reader accessibility.
+
+## 2024-10-27 - Form accessibility enhancements on mismatched labels
+**Learning:** Some explicitly rendered `<label>` elements were missing the `for` attribute completely, or mapping to the wrong `id` (e.g. `taskTitle` instead of `taskTitle1` or `taskDesc` instead of `taskDesc1`). Adding `aria-label`s to these input fields that already have explicitly rendered labels causes screen readers to read redundant tags.
+**Action:** When adding accessibility to form inputs, always verify if there is already a label rendered above the element. If so, fix the `for` and `id` mapping instead of slapping a redundant `aria-label` attribute on the element.
