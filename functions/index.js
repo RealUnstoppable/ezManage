@@ -535,8 +535,6 @@ exports.manageEmployees = functions.https.onCall(async (data, context) => {
       if (phone !== undefined) updates.phone = phone;
       if (status !== undefined) updates.status = status;
 
-      await empRef.update(updates);
-      return {success: true};
     }
 
     if (action === "delete") {
