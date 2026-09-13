@@ -44,7 +44,7 @@ export function updateAuthLink() {
                 } catch (e) {
                     logManagerError(`Navbar auth state error for uid: ${user.uid}`, e);
                 }
-            } else {
+                        } else {
                 authLink.href = 'sign in beta.html';
                 authLink.textContent = "Sign In / Sign Up";
             }
