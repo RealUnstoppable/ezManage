@@ -4245,7 +4245,7 @@
                         // Employee specific view (Can mark their own as complete)
                         if (task.assigneeId === currentUser.uid && task.status === 'Pending') {
                             myTasksHtml.push(taskCard + `
-                                    <button onclick="updateTaskStatus('${task.id}', 'Completed')" class="btn btn-sm bg-green-500 text-white hover:bg-green-600"><i data-lucide="check" class="w-4 h-4 mr-1"></i>Complete</button>
+                                    <button data-action="updateTaskStatus" data-id="${task.id}" data-status="Completed" class="btn btn-sm bg-green-500 text-white hover:bg-green-600"><i data-lucide="check" class="w-4 h-4 mr-1"></i>Complete</button>
                                 </div></div>
                             `);
                         } else if (task.assigneeId === currentUser.uid) {
@@ -6255,7 +6255,7 @@ function checkAndRenderOrgControls() {
 
         // Global event delegation for dynamically created buttons to prevent XSS from inline handlers
         document.addEventListener('click', (e) => {
-            const btn = e.target.closest('button[data-action]');
+            const btn = e.target.closest('[data-action]');
             if (!btn) return;
             const action = btn.dataset.action;
             const id = btn.dataset.id;
@@ -6270,6 +6270,25 @@ function checkAndRenderOrgControls() {
             else if (action === 'updateTimeOffStatus') updateTimeOffStatus(id, status);
             else if (action === 'deleteTimeOffRequest') deleteTimeOffRequest(id);
             else if (action === 'removeShift') removeShift(btn.dataset.index);
+            else if (action === 'deleteTask') deleteTask(id);
+            else if (action === 'deleteWasteLog') deleteWasteLog(id);
+            else if (action === 'deleteIncident') deleteIncident(id);
+            else if (action === 'updateTaskStatus') {
+                if (status) {
+                    updateTaskStatus(id, status);
+                }
+            }
+        });
+
+        document.addEventListener('change', (e) => {
+            const select = e.target.closest('select[data-action]');
+            if (!select) return;
+            const action = select.dataset.action;
+            const id = select.dataset.id;
+
+            if (action === 'updateTaskStatus') {
+                updateTaskStatus(id, select.value);
+            }
         });
 
         // The second event listener was unclosed
