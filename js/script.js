@@ -86,7 +86,6 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
 
-
         const updateGreeting = () => {
             const now = new Date();
             let newGreeting = "";
