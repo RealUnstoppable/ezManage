@@ -65,6 +65,8 @@ auth.onAuthStateChanged(async (user) => {
     }
 });
 
+}
+
 if (document.getElementById('auth-form')) {
     const form = document.getElementById('auth-form');
     const formTitle = document.getElementById('form-title');

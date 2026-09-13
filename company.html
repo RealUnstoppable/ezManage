@@ -1433,7 +1433,7 @@
                 snap.forEach(doc => {
                     const d = doc.data();
                     const isOwner = doc.id === currentUser.uid;
-                    const displayName = d.name || d.email.split('@')[0];
+                    const displayName = escapeHTML(d.name || d.email.split('@')[0]);
                     const color = getManagerColor(displayName);
 
                     // 1. Manager Directory
