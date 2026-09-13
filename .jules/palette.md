@@ -51,6 +51,11 @@
 ## 2024-07-03 - Icon-only buttons with partial text missing ARIA labels
 **Learning:** Buttons that appear to have text but primarily rely on icons for their meaning (like "Add Manager" or "Invite" buttons with Lucide icons) can still benefit from explicit `aria-label`s, especially when they are dynamically rendered or placed in complex UI structures where standard screen readers might struggle to interpret the inline text content alongside the SVG/icon properly. Adding `aria-label` provides a robust, fail-safe announcement.
 **Action:** Even if a button contains visible text, if its primary visual affordance is an icon (especially injected via `data-lucide`), consider adding an explicit `aria-label` to ensure unambiguous screen reader support, taking care not to unnecessarily duplicate information if the text is perfectly semantic.
-## 2024-07-26 - Consolidating duplicate form structures
-**Learning:** Duplicate HTML form structures (e.g., duplicated `<form id="createManagerForm">` blocks for desktop vs mobile layouts) cause unintended behavior in vanilla JavaScript event listeners, as `getElementById` or form submission events may bind to the wrong or hidden element. This breaks both functionality and accessibility.
-**Action:** Consolidate duplicated form layouts using responsive CSS classes (`flex-col md:flex-row`, `w-full md:flex-1`) instead of duplicating the entire DOM structure, ensuring a single source of truth for both screen readers and JavaScript handlers.
+
+## 2024-08-03 - Missing ARIA Labels on Icon-Only Modal Close Buttons
+**Learning:** Icon-only buttons using libraries like Lucide (e.g., `<button><i data-lucide="x"></i></button>`) often lack implicit accessible names, causing screen readers to read them simply as "button".
+**Action:** When implementing or reviewing modal close buttons or any icon-only interactive elements in this app's components, always verify the presence of an explicit `aria-label` attribute describing the action (e.g., "Close tutorial", "Close announcement modal") to ensure keyboard and screen reader accessibility.
+
+## 2024-10-27 - Form accessibility enhancements on mismatched labels
+**Learning:** Some explicitly rendered `<label>` elements were missing the `for` attribute completely, or mapping to the wrong `id` (e.g. `taskTitle` instead of `taskTitle1` or `taskDesc` instead of `taskDesc1`). Adding `aria-label`s to these input fields that already have explicitly rendered labels causes screen readers to read redundant tags.
+**Action:** When adding accessibility to form inputs, always verify if there is already a label rendered above the element. If so, fix the `for` and `id` mapping instead of slapping a redundant `aria-label` attribute on the element.
