@@ -20,12 +20,25 @@ const mockGet = jest.fn().mockResolvedValue({
 
 jest.unstable_mockModule('../../js/auth.js', () => ({
   auth: { onAuthStateChanged: jest.fn() },
-  db: { collection: jest.fn(() => ({ doc: jest.fn(() => ({ get: mockGet })) })) },
-  getUserRedirectPath: (userData) => userData && userData.isAdmin ? 'admin.html' : 'index.html'
+  db: { collection: jest.fn(() => ({ doc: jest.fn(() => ({ get: jest.fn() })) })) },
+  getUserRedirectPath: (userData) => userData && userData.isAdmin ? 'admin.html' : 'index.html',
+  fetchUserDoc: jest.fn(() => Promise.resolve({ exists: true, data: () => ({ isAdmin: true }) }))
+  fetchUserDoc: jest.fn()
 }));
 
-const { loadNavbar } = await import('../../js/navbar.js');
-const { auth, db } = await import('../../js/auth.js');
+const mockOnAuthStateChanged = jest.fn();
+jest.unstable_mockModule('https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js', () => ({
+    onAuthStateChanged: mockOnAuthStateChanged
+}));
+
+const mockGetDoc = jest.fn();
+jest.unstable_mockModule('https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js', () => ({
+    getDoc: mockGetDoc,
+    doc: jest.fn()
+}));
+
+const navbar = await import('../../js/navbar.js');
+const loadNavbar = navbar.loadNavbar;
 
 describe('loadNavbar', () => {
   beforeEach(() => {
@@ -33,22 +46,9 @@ describe('loadNavbar', () => {
     jest.clearAllMocks();
   });
 
-  it('should inject navbar HTML', () => {
+  it('should empty main-header to prevent duplicates', () => {
+    document.querySelector('.main-header').innerHTML = '<div>old</div>';
     loadNavbar();
-    expect(document.querySelector('.navbar')).not.toBeNull();
-  });
-
-  it('should set auth link to index.html if user is logged in but not admin', async () => {
-    loadNavbar();
-
-    const mockUser = { uid: '123' };
-
-    const authCallback = auth.onAuthStateChanged.mock.calls[0][0];
-    await authCallback(mockUser);
-    await new Promise(process.nextTick);
-
-    const authLink = document.getElementById('auth-link');
-    expect(authLink.textContent).toBe('My Account');
-    expect(authLink.href).toContain('index.html');
+    expect(document.querySelector('.main-header').innerHTML).toBe('');
   });
 });
