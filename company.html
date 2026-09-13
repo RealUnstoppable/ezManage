@@ -1734,6 +1734,12 @@
                     const email = document.getElementById('newManagerEmail').value.trim();
                     if (!email) return;
 
+                    const btn = form.querySelector('button[type="submit"]');
+                    const originalBtnContent = btn.innerHTML;
+                    btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 mr-2 animate-spin inline-block"></i> Adding...`;
+                    btn.disabled = true;
+                    if (window.lucide) window.lucide.createIcons();
+
                     try {
                         const newUid = db.collection('users').doc().id;
                         await db.collection('users').doc(newUid).set({
@@ -1746,6 +1752,10 @@
                         window.fetchGlobalMetrics();
                     } catch(err) {
                         alert("Error adding manager: " + err.message);
+                    } finally {
+                        btn.innerHTML = originalBtnContent;
+                        btn.disabled = false;
+                        if (window.lucide) window.lucide.createIcons();
                     }
                 });
             }
