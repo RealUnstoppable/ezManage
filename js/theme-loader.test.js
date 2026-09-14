@@ -45,7 +45,8 @@ jest.unstable_mockModule('./auth.js', () => ({
   db: {},
   onAuthStateChanged: jest.fn(),
   doc: jest.fn(),
-  getDoc: jest.fn()
+  getDoc: jest.fn(),
+  fetchUserDoc: jest.fn()
 }));
 
 const { applyTheme } = await import('./theme-loader.js');
