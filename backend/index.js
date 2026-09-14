@@ -3,7 +3,7 @@ const {onRequest} = require("firebase-functions/v2/https");
 const HttpsError = functions.https.HttpsError;
 const admin = require("firebase-admin");
 const cors = require("cors")({origin: true});
-const {adaptGen2Params, logManagerError} = require("./utils"); // Added comment for patch visibility
+const {adaptGen2Params, logManagerError, checkRequiredFields} = require("./utils"); // Added comment for patch visibility
 
 /**
  * Helper to get a document, verify its existence, and verify its orgId.
@@ -192,26 +192,30 @@ exports.stripeWebhook = onRequest({invoker: "public"}, async (req, res) => {
     event.type === "customer.subscription.canceled") {
     const sub = event.data.object;
 
-    const snapshot = await admin.firestore()
-        .collection("users")
-        .where("subscription.customerId", "==", sub.customer)
-        .get();
+    try {
+      const snapshot = await admin.firestore()
+          .collection("users")
+          .where("subscription.customerId", "==", sub.customer)
+          .get();
 
-    const updatePromises = snapshot.docs.map(async (doc) => {
-      // Revert the user back to the free plan
-      try {
-        await doc.ref.update({
-          "plan": "Free",
-          "subscription.status": "canceled",
-          "updatedAt": admin.firestore.FieldValue.serverTimestamp(),
-        });
-        console.log(`❌ Reverted user ${doc.id} back to Free plan.`);
-      } catch (err) {
-        logManagerError(`Error reverting user ${doc.id} back to Free plan:`, err);
-      }
-    });
+      const updatePromises = snapshot.docs.map(async (doc) => {
+        // Revert the user back to the free plan
+        try {
+          await doc.ref.update({
+            "plan": "Free",
+            "subscription.status": "canceled",
+            "updatedAt": admin.firestore.FieldValue.serverTimestamp(),
+          });
+          console.log(`❌ Reverted user ${doc.id} back to Free plan.`);
+        } catch (err) {
+          logManagerError(`Error reverting user ${doc.id} back to Free plan:`, err);
+        }
+      });
 
-    await Promise.all(updatePromises);
+      await Promise.all(updatePromises);
+    } catch (webhookError) {
+      logManagerError("Error processing Stripe webhook subscription cancellation:", webhookError);
+    }
   }
 
   res.json({received: true});
@@ -269,9 +273,7 @@ exports.manageTasks = functions.https.onCall(async (data, context) => {
         throw new HttpsError("permission-denied", "Only managers can create tasks");
       }
       const {title, description, assigneeId, assigneeName} = payload;
-      if (!title || !assigneeId) {
-        throw new HttpsError("invalid-argument", "Missing required fields");
-      }
+      checkRequiredFields(payload, ['title', 'assigneeId']);
       const newTask = {
         title,
         description: description || "",
@@ -388,10 +390,7 @@ exports.manageShiftNotes = functions.https.onCall(async (data, context) => {
     if (action === "resolve") {
       const {noteId, resolvedBy} = payload;
 
-      if (!noteId || !resolvedBy) {
-        throw new HttpsError(
-            "invalid-argument", "Missing required fields");
-      }
+      checkRequiredFields(payload, ['noteId', 'resolvedBy']);
 
       // 🛡️ Verify the user resolving the note is in the same organization
       const {docRef: noteRef} = await verifyDocAndAuth(
@@ -450,9 +449,7 @@ exports.manageEmployees = functions.https.onCall(async (data, context) => {
     if (action === "create") {
       const {name, role, phone} = payload;
 
-      if (!name || !role) {
-        throw new HttpsError("invalid-argument", "Missing required employee details");
-      }
+      checkRequiredFields(payload, ['name', 'role'], 'Missing required employee details');
 
       const newEmployee = {
         name,
@@ -556,10 +553,7 @@ exports.manageShiftGroups = functions.https.onCall(async (data, context) => {
     if (action === "create") {
       const {authorId, orgId, ownerName, groupName, password} = payload;
 
-      if (!groupName || !password) {
-        throw new HttpsError(
-            "invalid-argument", "Missing required fields");
-      }
+      checkRequiredFields(payload, ['groupName', 'password']);
 
       const newGroup = {
         ownerId: authorId || uid,
@@ -586,10 +580,7 @@ exports.manageShiftGroups = functions.https.onCall(async (data, context) => {
     if (action === "request_join") {
       const {userName, groupId, password} = payload;
 
-      if (!groupId || !password) {
-        throw new HttpsError(
-            "invalid-argument", "Missing required fields");
-      }
+      checkRequiredFields(payload, ['groupId', 'password']);
 
       const groupDoc = await admin.firestore()
           .collection("shift_groups").doc(groupId).get();
@@ -640,10 +631,7 @@ exports.manageShiftGroups = functions.https.onCall(async (data, context) => {
     if (action === "approve_join") {
       const {requestId} = payload;
 
-      if (!requestId) {
-        throw new HttpsError(
-            "invalid-argument", "Missing required fields");
-      }
+      checkRequiredFields(payload, ['requestId']);
 
       const requestDocRef = admin.firestore()
           .collection("shift_group_requests").doc(requestId);
@@ -682,10 +670,7 @@ exports.manageShiftGroups = functions.https.onCall(async (data, context) => {
     if (action === "remove_manager") {
       const {userId, groupId} = payload;
 
-      if (!userId || !groupId) {
-        throw new HttpsError(
-            "invalid-argument", "Missing required fields");
-      }
+      checkRequiredFields(payload, ['userId', 'groupId']);
 
       const groupDoc = await admin.firestore()
           .collection("shift_groups").doc(groupId).get();
@@ -744,9 +729,7 @@ exports.manageIncidents = functions.https.onCall(async (data, context) => {
     if (action === "create") {
       const {title, description, severity, type} = payload;
 
-      if (!title || !description || !severity || !type) {
-        throw new HttpsError("invalid-argument", "Missing required incident details");
-      }
+      checkRequiredFields(payload, ['title', 'description', 'severity', 'type'], 'Missing required incident details');
 
       const newIncident = {
         title,
@@ -965,9 +948,7 @@ exports.manageWaste = functions.https.onCall(async (data, context) => {
     if (action === "create") {
       const {itemName, quantity, cost, reason} = payload;
 
-      if (!itemName || !quantity || !cost || !reason) {
-        throw new HttpsError("invalid-argument", "Missing required waste log details");
-      }
+      checkRequiredFields(payload, ['itemName', 'quantity', 'cost', 'reason'], 'Missing required waste log details');
 
       const newLog = {
         itemName,
@@ -1062,9 +1043,7 @@ exports.manageRecognitions = functions.https.onCall(async (data, context) => {
     if (action === "create") {
       const {receiverId, receiverName, message, type} = payload;
 
-      if (!receiverId || !receiverName || !message || !type) {
-        throw new HttpsError("invalid-argument", "Missing required recognition details");
-      }
+      checkRequiredFields(payload, ['receiverId', 'receiverName', 'message', 'type'], 'Missing required recognition details');
 
       const validTypes = ["Kudos", "Private Feedback"];
       const recognitionType = validTypes.includes(type) ? type : "Kudos";
