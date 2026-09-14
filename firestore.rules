@@ -2,53 +2,342 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    // Helper Functions
+    function isAdmin() {
+       return request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('isAdmin', false) == true;
+    }
+
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+
     // Default deny
     match /{document=**} {
       allow read, write: if false;
     }
 
-    // Users Collection
+    // USERS
     match /users/{userId} {
-      // User can read their own profile
-      allow read: if request.auth != null && request.auth.uid == userId;
-
-      // Allow users to create their own profile during signup, but prevent them from setting themselves as admin
-      allow create: if request.auth != null && request.auth.uid == userId
-                    && (!request.resource.data.keys().hasAny(['isAdmin', 'isBanned', 'membershipLevel'])
-                        || (request.resource.data.isAdmin == false && request.resource.data.isBanned == false && request.resource.data.membershipLevel == 'free'));
-
-      // Allow users to update their own profile, but prevent modifying critical fields
-      allow update: if request.auth != null && request.auth.uid == userId
-                    && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['isAdmin', 'isBanned', 'membershipLevel', 'plan', 'subscription']);
+      allow read: if isOwner(userId) || isAdmin() || (request.auth != null && resource.data.get('orgId', null) == request.auth.uid);
+      allow create: if request.auth != null
+                    && (isOwner(userId) || request.resource.data.get('orgId', null) == request.auth.uid)
+                    && (request.resource.data.get('orgId', null) == null || request.resource.data.get('orgId', null) == request.auth.uid)
+                    && request.resource.data.get('isAdmin', false) == false
+                    && (!request.resource.data.keys().hasAny(['orgId']) || request.resource.data.get('orgId', null) == request.auth.uid)
+                    && !request.resource.data.keys().hasAny(['isBanned', 'membershipLevel', 'plan', 'subscription']);
+      allow update: if request.auth != null
+                    && (isOwner(userId) || resource.data.get('orgId', null) == request.auth.uid || isAdmin())
+                    && (isAdmin() || (
+                        request.resource.data.get('isAdmin', false) == resource.data.get('isAdmin', false)
+                        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['isBanned', 'membershipLevel', 'plan', 'subscription', 'orgId'])
+                    ));
+      allow delete: if isOwner(userId) || isAdmin(); 
     }
 
-    // Carts Collection
+
+    // GROUPS (Added as requested by user, or handling shift_groups to act as groups)
+    match /groups/{groupId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null && request.resource.data.get('authorId', null) == request.auth.uid;
+      allow update: if request.auth != null && (
+          resource.data.get('authorId', null) == request.auth.uid ||
+          isAdmin()
+      );
+      allow delete: if request.auth != null && (
+          resource.data.get('authorId', null) == request.auth.uid ||
+          resource.data.get('orgId', null) == request.auth.uid ||
+          isAdmin()
+      );
+    }
+
+
+    // CARTS
     match /carts/{userId} {
-      // Users can only read and write to their own cart
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read: if isOwner(userId) || isAdmin();
+      allow create, update, delete: if isOwner(userId) || isAdmin();
     }
 
-    // Orders Collection
+    // ORDERS
     match /orders/{orderId} {
-      // Users can create an order, and read their own orders (assuming orderId starts with userId, as per checkout.js: doc(db, "orders", `${currentUser.uid}-${Date.now()}`))
-      // Also ensuring that userId in document matches their own uid.
-      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
-      allow read: if request.auth != null && resource.data.userId == request.auth.uid;
+      allow create: if request.auth != null 
+                    && request.resource.data.userId == request.auth.uid
+                    && request.resource.data.status == 'Processing';
+       
+      allow read: if request.auth != null && (resource.data.get('userId', null) == request.auth.uid || isAdmin());
+       
+      allow update, delete: if isAdmin();
     }
 
-    // Product Stats Collection
+    // SONG REQUESTS
+    match /song_requests/{requestId} {
+      allow create: if request.auth != null;
+      allow read: if request.auth != null;
+      allow update: if isAdmin();
+    }
+
+    // PRODUCT STATS
     match /product_stats/{productId} {
-      // Anyone can read product stats
       allow read: if true;
-      // Anyone can update it (or create if it doesn't exist)
-      allow create, update: if true;
+      allow create: if request.auth != null 
+                    && request.resource.data.keys().hasOnly(['orderedCount'])
+                    && request.resource.data.orderedCount is number;
+      allow update: if request.auth != null 
+                    && request.resource.data.orderedCount > resource.data.orderedCount
+                    && request.resource.data.orderedCount is number;
     }
-
-    // Newsletter Subscribers Collection
+    
+    // NEWSLETTER
     match /newsletterSubscribers/{email} {
-      // Anyone can add their email
-      allow create: if request.resource.data.email == email;
+      allow create, update: if request.resource.data.email == email;
+      allow read, delete: if isAdmin();
+    }
+    
+    // SITE STATS
+    match /site_stats/{docId} {
+        allow read: if true;
+        allow create, update, delete: if isAdmin();
     }
 
+    // SHIFT NOTES
+    match /shift_notes/{noteId} {
+      allow read: if request.auth != null && (
+          resource == null ||
+          resource.data.authorId == request.auth.uid ||
+          resource.data.orgId == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.orgId ||
+          isAdmin()
+      );
+      allow create: if request.auth != null
+                    && request.resource.data.get('authorId', null) == request.auth.uid
+                    && request.resource.data.get('orgId', null) == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('orgId', null);
+      allow update: if request.auth != null && (
+          resource.data.get('authorId', null) == request.auth.uid ||
+          (resource.data.get('orgId', null) != null && (resource.data.get('orgId', null) == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('orgId', null) || resource.data.get('orgId', null) == request.auth.uid)) ||
+          isAdmin()
+      ) && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['orgId']);
+      allow delete: if request.auth != null && (
+          resource.data.get('authorId', null) == request.auth.uid ||
+          (resource.data.get('orgId', null) != null && resource.data.get('orgId', null) == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('orgId', null)) ||
+          isAdmin()
+      ) && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['orgId']);
+    }
+
+    // SHIFT GROUPS
+    match /shift_groups/{groupId} {
+      allow read: if request.auth != null && (
+          resource == null ||
+          resource.data.get('ownerId', null) == request.auth.uid ||
+          groupId == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('orgId', null)
+      );
+      allow create: if request.auth != null;
+      allow update: if request.auth != null && resource.data.get('ownerId', null) == request.auth.uid && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['orgId']);
+    }
+    
+    // SHIFT GROUP REQUESTS
+    match /shift_group_requests/{requestId} {
+      allow read: if request.auth != null && (
+          resource == null ||
+          resource.data.get('userId', null) == request.auth.uid ||
+          get(/databases/$(database)/documents/shift_groups/$(resource.data.get('groupId', null))).data.get('ownerId', null) == request.auth.uid
+      );
+      allow create: if request.auth != null;
+      allow update, delete: if request.auth != null && get(/databases/$(database)/documents/shift_groups/$(resource.data.get('groupId', null))).data.get('ownerId', null) == request.auth.uid;
+    }
+
+    // SCHEDULES
+    match /schedules/{scheduleId} {
+      allow read: if request.auth != null && (
+          resource == null ||
+          resource.data.uid == request.auth.uid ||
+          resource.data.authorId == request.auth.uid ||
+          resource.data.orgId == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.orgId ||
+          scheduleId[0:request.auth.uid.size()] == request.auth.uid ||
+          isAdmin()
+      );
+      allow create: if request.auth != null
+                    && (request.resource.data.uid == request.auth.uid || request.resource.data.authorId == request.auth.uid);
+      allow update: if request.auth != null && (
+          resource.data.uid == request.auth.uid ||
+          resource.data.authorId == request.auth.uid ||
+          resource.data.orgId == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.orgId ||
+          isAdmin()
+      ) && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['orgId']);
+      allow delete: if request.auth != null && (
+          resource.data.uid == request.auth.uid ||
+          resource.data.authorId == request.auth.uid ||
+          isAdmin()
+      );
+    }
+
+    // TASKS
+    match /tasks/{taskId} {
+      allow read: if request.auth != null && (
+          resource == null ||
+          resource.data.get('assigneeId', null) == request.auth.uid ||
+          resource.data.get('assignerId', null) == request.auth.uid ||
+          (resource.data.get('orgId', null) != null && resource.data.get('orgId', null) == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('orgId', null)) ||
+          isAdmin()
+      );
+      allow create: if request.auth != null && request.resource.data.get('orgId', null) == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('orgId', null);
+      allow update: if request.auth != null && (
+          (resource.data.get('assigneeId', null) == request.auth.uid && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])) ||
+          resource.data.get('assignerId', null) == request.auth.uid ||
+          (resource.data.get('orgId', null) != null && resource.data.get('orgId', null) == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('orgId', null)) ||
+          isAdmin()
+      ) && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['orgId']);
+      allow delete: if request.auth != null && (
+          resource.data.get('authorId', null) == request.auth.uid ||
+          resource.data.get('assignerId', null) == request.auth.uid ||
+          isAdmin()
+      );
+    }
+
+    // MAINTENANCE LOGS
+    // INCIDENT REPORTS
+    match /incident_reports/{reportId} {
+      allow read: if request.auth != null && (
+          resource == null ||
+          resource.data.get('reportedByUid', null) == request.auth.uid ||
+          (resource.data.get('orgId', null) != null && resource.data.get('orgId', null) == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('orgId', null)) ||
+          isAdmin()
+      );
+      allow create: if request.auth != null
+                    && request.resource.data.get('reportedByUid', null) == request.auth.uid
+                    && request.resource.data.get('orgId', null) == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('orgId', null);
+      allow update: if request.auth != null && (
+          resource.data.get('reportedByUid', null) == request.auth.uid ||
+          (resource.data.get('orgId', null) != null && resource.data.get('orgId', null) == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('orgId', null)) ||
+          isAdmin()
+      ) && request.resource.data.get('orgId', resource.data.get('orgId', null)) == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('orgId', null);
+      allow delete: if request.auth != null && (resource.data.get('reportedByUid', null) == request.auth.uid || isAdmin());
+    }
+
+        // MAINTENANCE LOGS
+    match /maintenance_logs/{logId} {
+      allow read: if request.auth != null && (
+          resource == null ||
+          resource.data.reportedByUid == request.auth.uid ||
+          resource.data.orgId == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.orgId ||
+          isAdmin()
+      );
+      allow create: if request.auth != null
+                    && request.resource.data.reportedByUid == request.auth.uid
+                    && request.resource.data.orgId == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.orgId;
+      allow update: if request.auth != null && (
+          resource.data.reportedByUid == request.auth.uid ||
+          resource.data.orgId == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.orgId ||
+          isAdmin()
+      ) && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['orgId']);
+      allow delete: if request.auth != null && (resource.data.reportedByUid == request.auth.uid || isAdmin());
+    }
+
+    // WASTE LOGS
+    match /waste_logs/{logId} {
+      allow read: if request.auth != null && (
+          resource == null ||
+          resource.data.get('loggedByUid', null) == request.auth.uid ||
+          (resource.data.get('orgId', null) != null && resource.data.get('orgId', null) == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('orgId', null)) ||
+          isAdmin()
+      );
+      allow create: if request.auth != null
+                    && request.resource.data.get('loggedByUid', null) == request.auth.uid
+                    && request.resource.data.get('orgId', null) == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('orgId', null);
+      allow update: if request.auth != null && (
+          resource.data.get('loggedByUid', null) == request.auth.uid ||
+          (resource.data.get('orgId', null) != null && resource.data.get('orgId', null) == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('orgId', null)) ||
+          isAdmin()
+      ) && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['orgId']);
+      allow delete: if request.auth != null && (resource.data.get('loggedByUid', null) == request.auth.uid || isAdmin());
+    }
+
+    // TIME LOGS
+    match /time_logs/{logId} {
+      allow read: if request.auth != null && (
+          resource == null ||
+          resource.data.get('uid', null) == request.auth.uid ||
+          request.auth.uid == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('orgId', null) ||
+          isAdmin()
+      );
+      allow create: if request.auth != null
+                    && request.resource.data.get('uid', null) == request.auth.uid
+                    && request.resource.data.get('orgId', null) == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('orgId', null);
+      allow update: if request.auth != null && (
+          (resource.data.get('uid', null) == request.auth.uid) ||
+          (resource.data.get('orgId', null) != null && resource.data.get('orgId', null) == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('orgId', null)) ||
+          isAdmin()
+      );
+      allow delete: if request.auth != null && (resource.data.get('uid', null) == request.auth.uid || isAdmin());
+    }
+
+    // EMPLOYEES
+    match /employees/{empId} {
+      allow read: if request.auth != null && (
+          resource == null ||
+          (resource.data.get('orgId', null) != null && resource.data.get('orgId', null) == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('orgId', null)) ||
+          isAdmin()
+      );
+      allow create: if request.auth != null && request.resource.data.get('orgId', null) == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('orgId', null);
+      allow update: if request.auth != null && resource.data.get('orgId', null) == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('orgId', null) && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['orgId']);
+      allow delete: if request.auth != null && resource.data.get('orgId', null) == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('orgId', null);
+    }
+
+    // RECOGNITIONS
+    match /recognitions/{recognitionId} {
+      allow read: if request.auth != null && (
+          resource == null ||
+          resource.data.get('orgId', null) == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('orgId', null) ||
+          isAdmin()
+      );
+      allow create: if request.auth != null && request.resource.data.get('orgId', null) == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('orgId', null);
+      allow update: if request.auth != null && (
+          resource.data.get('senderId', null) == request.auth.uid ||
+          isAdmin()
+      ) && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['orgId']);
+      allow delete: if request.auth != null && (
+          resource.data.get('senderId', null) == request.auth.uid ||
+          isAdmin()
+      );
+    }
+
+    // TIME OFF REQUESTS
+    match /time_off_requests/{requestId} {
+      allow read: if request.auth != null && (
+          resource == null ||
+          resource.data.get('uid', null) == request.auth.uid ||
+          (resource.data.get('orgId', null) == request.auth.uid) ||
+          isAdmin()
+      );
+      allow create: if request.auth != null
+                    && request.resource.data.get('uid', null) == request.auth.uid
+                    && request.resource.data.get('orgId', null) == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('orgId', null);
+      allow update: if request.auth != null && (
+          (resource.data.get('uid', null) == request.auth.uid && request.resource.data.get('status', null) == 'Pending') ||
+          (resource.data.get('orgId', null) == request.auth.uid) ||
+          isAdmin()
+      ) && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['orgId']);
+      allow delete: if request.auth != null && (
+          (resource.data.get('uid', null) == request.auth.uid && resource.data.get('status', null) == 'Pending') ||
+          isAdmin()
+      );
+    }
+
+    // ANNOUNCEMENTS
+    match /announcements/{announcementId} {
+      allow read: if request.auth != null && (
+          resource == null ||
+          (resource.data.get('orgId', null) != null && resource.data.get('orgId', null) == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('orgId', null)) ||
+          isAdmin()
+      );
+      allow create: if request.auth != null
+                    && request.resource.data.get('orgId', null) == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('orgId', null)
+                    && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('orgId', null) == request.auth.uid;
+      allow update: if request.auth != null && (
+          (resource.data.get('orgId', null) != null && resource.data.get('orgId', null) == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('orgId', null) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('orgId', null) == request.auth.uid) ||
+          isAdmin()
+      ) && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['orgId']);
+      allow delete: if request.auth != null && (
+          (resource.data.get('orgId', null) != null && resource.data.get('orgId', null) == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('orgId', null) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('orgId', null) == request.auth.uid) ||
+          isAdmin()
+      );
+    }
   }
 }

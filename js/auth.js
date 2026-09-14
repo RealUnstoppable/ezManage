@@ -1,63 +1,73 @@
-// js/auth.js
-import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
-import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, sendEmailVerification } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
-import { getFirestore, doc, setDoc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
+import { getFirebaseErrorMessage, logManagerError, escapeHTML } from './utils.js';
 
-// Your web app's Firebase configuration
-const firebaseConfig = {
-  apiKey: "AIzaSyBgrI9HwJPSc5b4pu2Egsv4DE7shNwptSw",
-  authDomain: "dts-hub-website.firebaseapp.com",
-  projectId: "dts-hub-website",
-  storageBucket: "dts-hub-website.firebasestorage.app",
-  messagingSenderId: "48345990988",
-  appId: "1:48345990988:web:e3662c9b508168546471e9",
-  measurementId: "G-ZN3YJPHVGX"
-};
 
-// Initialize Firebase and export the instances for other scripts to use
-export const app = initializeApp(firebaseConfig);
-export const auth = getAuth(app);
-export const db = getFirestore(app);
-export { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
-export { doc, getDoc } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
 
-// Admin status is verified securely via Firebase Custom Claims or Firestore User Data
-const ADMIN_EMAIL = null;
+import { auth, db } from '../firebase.js';
 
-onAuthStateChanged(auth, async (user) => {
+export { auth, db };
+
+export function getUserRedirectPath(userData) {
+    return userData && userData.isAdmin ? 'admin.html' : 'index.html';
+}
+
+const userDocCache = new Map(); // ⚡ Bolt Optimization: Cache user document fetches
+
+export async function fetchUserDoc(uid) {
+    // ⚡ Bolt Optimization: Cache user document fetches to prevent N+1 query bottlenecks on auth state change
+    if (userDocCache.has(uid)) {
+        return userDocCache.get(uid);
+    }
+
+    const fetchPromise = db.collection("users").doc(uid).get().catch(error => {
+        logManagerError("Error fetching user document in fetchUserDoc for uid: " + uid, error);
+        userDocCache.delete(uid); // Remove from cache on error so we can retry later
+        throw error;
+    });
+
+    userDocCache.set(uid, fetchPromise);
+    return fetchPromise;
+}
+
+
+
+if (auth && auth.onAuthStateChanged) {
+auth.onAuthStateChanged(async (user) => {
     const authLink = document.getElementById('auth-link');
     const membershipStatusContainer = document.getElementById('membership-status-container');
 
     if (user) {
-        // User is signed in
-        const userDocRef = doc(db, "users", user.uid);
-        const userDoc = await getDoc(userDocRef);
+        try {
+            const userDoc = await fetchUserDoc(user.uid);
+            if (userDoc.exists) {
+                const userData = userDoc.data();
+                const destination = getUserRedirectPath(userData);
 
-        if (userDoc.exists()) {
-            const userData = userDoc.data();
-            const destination = userData.isAdmin ? 'admin.html' : 'account.html';
+                if (authLink) {
+                    authLink.href = destination;
+                    authLink.textContent = "My Account";
+                }
 
-            if (authLink) {
-                authLink.href = destination;
-                authLink.textContent = "My Account";
+                if (membershipStatusContainer) {
+                    const level = userData.membershipLevel || 'free';
+                    membershipStatusContainer.innerHTML = `<span class="membership-status ${escapeHTML(level)}">${escapeHTML(level)}</span>`;
+                }
             }
-
-            if (membershipStatusContainer) {
-                membershipStatusContainer.innerHTML = `<span class="membership-status ${userData.membershipLevel}">${userData.membershipLevel}</span>`;
-            }
+        } catch (error) {
+            logManagerError("Error fetching user document in auth state change for uid:", user.uid, error);
         }
     } else {
-        // User is signed out
         if (authLink) {
             authLink.href = 'sign in beta.html';
             authLink.textContent = "Sign In / Sign Up";
         }
-
         if (membershipStatusContainer) {
-            membershipStatusContainer.innerHTML = '';
+            membershipStatusContainer.textContent = '';
         }
     }
 });
+}
+
+}
 
 if (document.getElementById('auth-form')) {
     const form = document.getElementById('auth-form');
@@ -100,58 +110,49 @@ if (document.getElementById('auth-form')) {
                 return;
             }
             try {
-                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-                await setDoc(doc(db, "users", userCredential.user.uid), {
+                const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+                await db.collection("users").doc(userCredential.user.uid).set({
                     username: username || "User",
                     email,
-                    signupDate: serverTimestamp(),
-                    isBanned: false,
-                    isAdmin: false, 
-                    membershipLevel: 'free'
+                    signupDate: window.firebase.firestore.FieldValue.serverTimestamp()
                 });
                 sessionStorage.setItem('newUser', 'true');
-                window.location.replace('account.html');
+                window.location.replace('index.html');
             } catch (error) {
-                showMessage(getFirebaseErrorMessage(error));
+                logManagerError("Sign up error for email: " + email, error);
+                if (error.code === 'auth/network-request-failed' || error.code === 'unavailable' || error.code === 'firestore/unavailable') {
+                    showMessage("Network error: Please check your connection or whitelist our domain.");
+                } else {
+                    showMessage(getFirebaseErrorMessage(error));
+                }
                 submitBtn.disabled = false;
             }
         } else {
             try {
-                const userCredential = await signInWithEmailAndPassword(auth, email, password);
-                const userDoc = await getDoc(doc(db, "users", userCredential.user.uid));
+                const userCredential = await auth.signInWithEmailAndPassword(email, password);
+                const userDoc = await fetchUserDoc(userCredential.user.uid);
 
-                if (userDoc.exists() && !userDoc.data().isBanned) {
-                    const destination = userDoc.data().isAdmin ? 'admin.html' : 'account.html';
+                if (userDoc.exists && userDoc.data().isBanned !== true) {
+                    const destination = getUserRedirectPath(userDoc.data());
                     window.location.replace(destination);
                 } else {
-                    await signOut(auth);
+                    await auth.signOut();
                     showMessage("This account is suspended or does not exist.");
                     submitBtn.disabled = false;
                 }
             } catch (error) {
-                showMessage(getFirebaseErrorMessage(error));
+                logManagerError("Sign in error for email: " + email, error);
+                if (error.code === 'auth/network-request-failed' || error.code === 'unavailable' || error.code === 'firestore/unavailable') {
+                    showMessage("Network error: Please check your connection or whitelist our domain.");
+                } else {
+                    showMessage(getFirebaseErrorMessage(error));
+                }
                 submitBtn.disabled = false;
             }
         }
     });
 
-    function getFirebaseErrorMessage(error) {
-        switch (error.code) {
-            case 'auth/invalid-email':
-                return 'Please enter a valid email address.';
-            case 'auth/user-not-found':
-            case 'auth/wrong-password':
-            case 'auth/invalid-credential':
-                return 'Invalid email or password.';
-            case 'auth/email-already-in-use':
-                return 'An account with this email already exists.';
-            case 'auth/weak-password':
-                return 'Password should be at least 6 characters.';
-            default:
-                return 'An unexpected error occurred. Please try again.';
-        }
-    }
-
     function showMessage(msg) { messageEl.textContent = msg; }
     updateFormView();
+}
 }
