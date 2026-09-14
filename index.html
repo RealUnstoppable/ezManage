@@ -2582,7 +2582,7 @@
         function signInWithGoogle() {
             const provider = new firebase.auth.GoogleAuthProvider();
             auth.signInWithPopup(provider).then(cred => {
-                db.collection("users").doc(cred.user.uid).get().then(doc => {
+                fetchUserDoc(cred.user.uid).then(doc => {
                     if (!doc.exists) navTo('setup');
                 });
             }).catch(err => alert(err.message));
@@ -5409,6 +5409,14 @@ function checkAndRenderOrgControls() {
 
         // Event delegation for incident status updates
         document.addEventListener('change', function(e) {
+            const select = e.target.closest('select[data-action]');
+            if (select) {
+                const action = select.dataset.action;
+                const id = select.dataset.id;
+                if (action === 'updateTaskStatus') {
+                    updateTaskStatus(id, select.value);
+                }
+            }
             if (e.target && e.target.classList.contains('incident-status-select')) {
                 const incidentId = e.target.getAttribute('data-incident-id');
                 if (incidentId) {
@@ -6273,6 +6281,8 @@ function checkAndRenderOrgControls() {
             else if (action === 'toggleEmployeeStatus') toggleEmployeeStatus(id, status);
             else if (action === 'updateTimeOffStatus') updateTimeOffStatus(id, status);
             else if (action === 'deleteTimeOffRequest') deleteTimeOffRequest(id);
+            else if (action === 'updateTaskStatus') updateTaskStatus(id, status);
+            else if (action === 'deleteTask') deleteTask(id);
             else if (action === 'removeShift') removeShift(btn.dataset.index);
             else if (action === 'deleteTask') deleteTask(id);
             else if (action === 'deleteWasteLog') deleteWasteLog(id);
