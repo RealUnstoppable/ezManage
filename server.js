@@ -3,14 +3,11 @@ const cors = require("cors");
 const Stripe = require("stripe");
 
 const app = express();
-const corsOptions = {
-  origin: "http://localhost:3000",
-  optionsSuccessStatus: 200
-};
-app.use(cors(corsOptions));
+app.use(cors());
 app.use(express.json());
 
-const stripe = Stripe(""); // 🔴 replace
+require("dotenv").config();
+const stripe = Stripe(process.env.STRIPE_SECRET || "sk_test_placeholder");
 
 app.post("/create-checkout-session", async (req, res) => {
   const { plan } = req.body;
@@ -40,4 +37,5 @@ app.post("/create-checkout-session", async (req, res) => {
   }
 });
 
+app.use(express.static(__dirname));
 app.listen(3000, () => console.log("Server running on port 3000"));

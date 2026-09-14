@@ -2,7 +2,7 @@ import { loadFooter } from '../js/footer.js';
 
 describe('loadFooter', () => {
     beforeEach(() => {
-        // Setup document body
+
         document.body.innerHTML = `
             <div class="main-footer"></div>
         `;
@@ -17,7 +17,7 @@ describe('loadFooter', () => {
 
         const footer = document.querySelector('.main-footer');
         expect(footer).not.toBeNull();
-        expect(footer.innerHTML).toContain('class="footer-container"');
+        expect(footer.innerHTML).toContain('class="footer-container max-w-7xl mx-auto px-6 py-12"');
         expect(footer.innerHTML).toContain('Navigate');
         expect(footer.innerHTML).toContain('Connect');
         expect(footer.innerHTML).toContain('Company');
@@ -32,7 +32,6 @@ describe('loadFooter', () => {
 
         expect(() => loadFooter()).not.toThrow();
 
-        // Also verify that nothing was unexpectedly added to the body
         expect(document.querySelector('.main-footer')).toBeNull();
     });
 });
