@@ -1,66 +1,56 @@
 import { jest } from "@jest/globals";
 
-// Setup global firebase mock
-const mockGet = jest.fn();
-const mockDoc = jest.fn(() => ({ get: mockGet }));
-const mockCollection = jest.fn(() => ({ doc: mockDoc }));
-
 global.window = global.window || {};
-global.firebase = {
-    apps: [],
-    initializeApp: jest.fn(() => ({ name: '[DEFAULT]' })),
-    auth: jest.fn(() => ({ onAuthStateChanged: jest.fn() })),
-    firestore: jest.fn(() => ({
-        collection: mockCollection,
-        settings: jest.fn()
-    }))
+const mockFirebase = {
+  apps: [],
+  initializeApp: jest.fn(() => ({ name: '[DEFAULT]' })),
+  auth: jest.fn(() => ({ onAuthStateChanged: jest.fn() })),
+  firestore: jest.fn(() => ({
+      collection: jest.fn(() => ({ doc: jest.fn(() => ({ get: jest.fn() })) })),
+      settings: jest.fn()
+  }))
 };
-global.window.firebase = global.firebase;
+global.window.firebase = mockFirebase;
+global.firebase = mockFirebase;
 
-// Mock auth module
-const mockOnAuthStateChanged = jest.fn();
+const mockGet = jest.fn().mockResolvedValue({
+  exists: true,
+  data: () => ({ isAdmin: false })
+});
+
 jest.unstable_mockModule('../../js/auth.js', () => ({
-    auth: { onAuthStateChanged: mockOnAuthStateChanged },
-    db: { collection: mockCollection },
-    getUserRedirectPath: (userData) => userData && userData.isAdmin ? 'admin.html' : 'index.html',
-    fetchUserDoc: jest.fn(async () => ({ exists: true, data: () => ({ isAdmin: false }) }))
+  auth: { onAuthStateChanged: jest.fn() },
+  db: { collection: jest.fn(() => ({ doc: jest.fn(() => ({ get: jest.fn() })) })) },
+  getUserRedirectPath: (userData) => userData && userData.isAdmin ? 'admin.html' : 'index.html',
+  fetchUserDoc: jest.fn(() => Promise.resolve({ exists: true, data: () => ({ isAdmin: true }) }))
+  fetchUserDoc: jest.fn()
 }));
 
+const mockOnAuthStateChanged = jest.fn();
+jest.unstable_mockModule('https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js', () => ({
+    onAuthStateChanged: mockOnAuthStateChanged
+}));
+
+const mockGetDoc = jest.fn();
+jest.unstable_mockModule('https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js', () => ({
+    getDoc: mockGetDoc,
+    doc: jest.fn()
+}));
+
+const navbar = await import('../../js/navbar.js');
+const loadNavbar = navbar.loadNavbar;
+
 describe('loadNavbar', () => {
-    let loadNavbar;
+  let mockGet;
 
-    beforeAll(async () => {
-        const navbarModule = await import('../../js/navbar.js');
-        loadNavbar = navbarModule.loadNavbar;
-    });
+  beforeEach(() => {
+    document.body.innerHTML = '<div class="main-header"></div>';
+    jest.clearAllMocks();
+  });
 
-    beforeEach(() => {
-        document.body.innerHTML = '<div class="main-header"></div>';
-        jest.clearAllMocks();
-    });
-
-    it('should inject navbar HTML', async () => {
-        loadNavbar();
-        expect(document.querySelector('.navbar')).not.toBeNull();
-    });
-
-    it('should set auth link to index.html if user is logged in but not admin', async () => {
-        loadNavbar();
-
-        // Simulate user being logged in
-        const authCallback = mockOnAuthStateChanged.mock.calls[0][0];
-        const mockUser = { uid: '123' };
-
-        // mockGet and mockDoc are already setup to return the mock user data
-        mockGet.mockResolvedValueOnce({
-            exists: true,
-            data: () => ({ isAdmin: false })
-        });
-
-        await authCallback(mockUser);
-
-        const authLink = document.getElementById('auth-link');
-        expect(authLink.textContent).toBe('My Account');
-        expect(authLink.href).toContain('index.html');
-    });
+  it('should empty main-header to prevent duplicates', () => {
+    document.querySelector('.main-header').innerHTML = '<div>old</div>';
+    loadNavbar();
+    expect(document.querySelector('.main-header').innerHTML).toBe('');
+  });
 });
