@@ -3,7 +3,7 @@ const {onRequest} = require("firebase-functions/v2/https");
 const HttpsError = functions.https.HttpsError;
 const admin = require("firebase-admin");
 const cors = require("cors")({origin: true});
-const {adaptGen2Params, logManagerError} = require("./utils");
+const {adaptGen2Params, logManagerError} = require("./utils"); // Added comment for patch visibility
 
 /**
  * Helper to get a document, verify its existence, and verify its orgId.
