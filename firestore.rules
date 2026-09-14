@@ -23,6 +23,7 @@ service cloud.firestore {
                     && (isOwner(userId) || request.resource.data.get('orgId', null) == request.auth.uid)
                     && (request.resource.data.get('orgId', null) == null || request.resource.data.get('orgId', null) == request.auth.uid)
                     && request.resource.data.get('isAdmin', false) == false
+                    && (!request.resource.data.keys().hasAny(['orgId']) || request.resource.data.get('orgId', null) == request.auth.uid)
                     && !request.resource.data.keys().hasAny(['isBanned', 'membershipLevel', 'plan', 'subscription']);
       allow update: if request.auth != null
                     && (isOwner(userId) || resource.data.get('orgId', null) == request.auth.uid || isAdmin())
