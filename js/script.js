@@ -85,6 +85,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         };
 
+
         const updateGreeting = () => {
             const now = new Date();
             let newGreeting = "";
@@ -105,12 +106,10 @@ document.addEventListener('DOMContentLoaded', () => {
                  }
                  shouldPlayVideo = false;
             }
-
             else if (now >= newYear2026 && now <= endOfCelebration) {
                 newGreeting = "Happy New Year!";
                 shouldPlayVideo = true;
             }
-
             else {
                 const diff = newYear2026 - now;
 
@@ -131,6 +130,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (newGreeting !== lastGreeting) {
                 greetingElement.textContent = newGreeting;
                 lastGreeting = newGreeting;
+                manageVideoBackground(shouldPlayVideo);
             }
 
             manageVideoBackground(shouldPlayVideo);

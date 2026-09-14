@@ -45,12 +45,15 @@
 ## 2026-06-25 - [Repeated Firebase DB Docs Fetch]
 **Learning:** Functions invoked via callbacks from listeners that span multiple files (e.g., \`auth.onAuthStateChanged\`) will fire simultaneously. Without a caching layer, they execute redundant concurrent network fetch queries (like \`db.collection('users').doc(uid).get()\`), causing latency and blocking operations.
 **Action:** Always wrap independent multi-listener fetched resources with a generic memoization layer using a \`Map\` cache to immediately resolve redundant Promise requests.
-## 2026-07-09 - [Cloud Functions Parameter Adaptation]
-**Learning:** Duplicating the boilerplate `if (data && typeof data === 'object' && 'rawRequest' in data && 'auth' in data)` parameter adaptation logic across multiple Cloud Functions violates the DRY principle and increases the risk of subtle bugs if the format changes.
-**Action:** Always use the shared `adaptGen2Params(data, context)` utility function to parse and adapt the Gen2 Cloud Function arguments consistently.
-## 2026-07-09 - [Optimistic UI Error Swallowing]
-**Learning:** If an underlying network wrapper function (like `saveCart`) uses a try/catch block to log an error but does not re-throw it, callers further up the stack (like `updateCartState`) that depend on receiving the error to rollback the Optimistic UI state will silently fail, leaving the UI out of sync with the backend.
-**Action:** Always ensure that network layer wrapper functions explicitly re-throw errors (`throw error;`) after logging or handling them if upper layers rely on the error to trigger rollback mechanisms.
-## 2026-07-09 - [Syntax Errors in Scripts]
-**Learning:** Duplicate variable declarations (e.g., using `let` twice for the same variable in the same block) will cause a `SyntaxError: Identifier has already been declared`. This prevents the entire script from being parsed and executed, leading to total UI breakdown.
-**Action:** When refactoring, always verify that variable declarations are unique within their scope and that unused declarations are cleanly removed.
+## 2026-07-08 - Safe Firebase Initialization with React and JS Fallbacks
+**Learning:** Hard-removing process.env from configuration files shared between Node environments (like Jest/Functions) and browser environments can cause module resolution or variable loading failures, breaking CI/CD tests. Furthermore, when ensuring singleton Firebase init across multiple loaded scripts, ensure `firebaseConfig` is correctly available across modules without re-declaring them or overriding the init state.
+**Action:** When dealing with hybrid or test environments, always use a fallback `typeof process !== 'undefined'` check before accessing `process.env` variables to maintain browser safety while supporting Node.js builds.
+## 2024-05-23 - Batch Firestore Writes in Onboarding Loop
+**Learning:** Sequential Firestore adds (e.g., `db.collection('invites').add()`) within iterative loops cause significant performance bottlenecks due to accumulated network latency for each operation, particularly in high-volume onboarding scripts.
+**Action:** Always utilize `db.batch()` to group multiple write operations together, converting N+1 sequential writes into a single network request to minimize latency and optimize performance.
+## 2024-11-09 - Duplicate state declaration
+**Learning:** Avoid duplicate cache state variable declarations within the same scope. The layout thrashing prevention code was throwing due to `let lastGreeting = ""` declared twice within `script.js`'s `updateGreeting` logic.
+**Action:** Remove the inner redundant declaration while keeping the cache check `newGreeting !== lastGreeting` functional.
+## $(date +%Y-%m-%d) - [Repeated Firebase DB Docs Fetch]
+**Learning:** Functions invoked via callbacks from listeners that span multiple files (e.g., `auth.onAuthStateChanged`) will fire simultaneously. Without a caching layer, they execute redundant concurrent network fetch queries (like `db.collection('users').doc(uid).get()`), causing latency and blocking operations.
+**Action:** Always wrap independent multi-listener fetched resources with a generic memoization layer using a `Map` cache to immediately resolve redundant Promise requests.
