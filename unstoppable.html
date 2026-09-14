@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Unstoppable | Platform & Ecosystem</title>
+    <link rel="icon" type="image/jpeg" href="ManagerPro.jpg">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/themes.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script type="module">
+        import { loadNavbar } from './js/navbar.js';
+        import { loadFooter } from './js/footer.js';
+        document.addEventListener('DOMContentLoaded', () => {
+            loadNavbar();
+            loadFooter();
+            if (window.lucide) window.lucide.createIcons();
+        });
+    </script>
+</head>
+<body class="bg-slate-950 text-slate-100 font-sans min-h-screen flex flex-col pt-20">
+    <header class="main-header"></header>
+
+    <main class="flex-grow max-w-7xl mx-auto px-6 py-12 w-full">
+        <div class="relative rounded-3xl overflow-hidden bg-gradient-to-r from-sky-950 via-slate-900 to-indigo-950 border border-slate-800 p-8 md:p-16 mb-16 shadow-2xl text-center">
+            <h1 class="text-4xl md:text-7xl font-black text-white tracking-tight mb-6">
+                The <span class="text-sky-400">Unstoppable</span> Ecosystem
+            </h1>
+            <p class="text-slate-300 text-lg md:text-2xl max-w-3xl mx-auto mb-8 font-medium">
+                Combining store management software, streaming music, creative media, and merchandise into one connected experience.
+            </p>
+            <div class="flex flex-wrap justify-center gap-4">
+                <a href="index.html" class="bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold px-8 py-4 rounded-xl text-base transition-all flex items-center gap-2">
+                    <i data-lucide="layout" class="w-5 h-5"></i> Explore ezManage
+                </a>
+                <a href="harmonytunes.html" class="bg-slate-800 hover:bg-slate-700 text-white font-bold px-8 py-4 rounded-xl text-base transition-all flex items-center gap-2 border border-slate-700">
+                    <i data-lucide="music" class="w-5 h-5"></i> Open HarmonyTunes
+                </a>
+            </div>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-8">
+            <div class="bg-slate-900 rounded-3xl p-8 border border-slate-800">
+                <div class="w-12 h-12 rounded-2xl bg-sky-950 text-sky-400 flex items-center justify-center font-black mb-6">
+                    <i data-lucide="check-circle-2"></i>
+                </div>
+                <h3 class="text-2xl font-black text-white mb-3">ezManage</h3>
+                <p class="text-slate-400">The strategic toolkit for modern managers. Digitized shift logs, real-time statistics, and team scheduling.</p>
+            </div>
+
+            <div class="bg-slate-900 rounded-3xl p-8 border border-slate-800">
+                <div class="w-12 h-12 rounded-2xl bg-purple-950 text-purple-400 flex items-center justify-center font-black mb-6">
+                    <i data-lucide="headphones"></i>
+                </div>
+                <h3 class="text-2xl font-black text-white mb-3">HarmonyTunes</h3>
+                <p class="text-slate-400">High-fidelity music streaming, original track releases, and TikTok viral audio feeds for creators.</p>
+            </div>
+
+            <div class="bg-slate-900 rounded-3xl p-8 border border-slate-800">
+                <div class="w-12 h-12 rounded-2xl bg-emerald-950 text-emerald-400 flex items-center justify-center font-black mb-6">
+                    <i data-lucide="gamepad-2"></i>
+                </div>
+                <h3 class="text-2xl font-black text-white mb-3">Dreams TimeSkip</h3>
+                <p class="text-slate-400">Next-generation immersive story experiences and gaming media crafted by Unstoppable LLC.</p>
+            </div>
+        </div>
+    </main>
+
+    <footer class="main-footer"></footer>
+</body>
+</html>
