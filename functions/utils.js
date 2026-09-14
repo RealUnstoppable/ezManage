@@ -1,3 +1,6 @@
+const functions = require('firebase-functions');
+const HttpsError = functions.https.HttpsError;
+
 /**
  * Utility functions shared across Cloud Functions
  */
@@ -47,6 +50,12 @@ function escapeHTML(str) {
 }
 
 
+/**
+ * Adapts Gen2 parameters to a common format.
+ * @param {Object} data - The data object
+ * @param {Object} context - The context object
+ * @return {Object} The adapted parameters
+ */
 function adaptGen2Params(data, context) {
   if (data && typeof data === "object" && "rawRequest" in data && "auth" in data) {
     return {data: data.data, context: data};
@@ -54,11 +63,18 @@ function adaptGen2Params(data, context) {
   return {data, context};
 }
 
+/**
+ * Logs a manager error.
+ * @param {string} actionMessage - The action message
+ * @param {Error} error - The error object
+ */
 function logManagerError(actionMessage, error) {
   console.error("Manager Troubleshooting: " + actionMessage, error);
 }
 
 module.exports = {
+  verifyDocAndAuth,
+  getActualOrgId,
   logManagerError,
   parseNum,
   getDayOfWeek,

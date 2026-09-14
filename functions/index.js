@@ -7,20 +7,32 @@ const {adaptGen2Params, logManagerError} = require("./utils");
 
 /**
  * Helper to get a document, verify its existence, and verify its orgId.
+ * @param {string} collection - The collection name
+ * @param {string} docId - The document ID
+ * @param {string} expectedOrgId - The expected organization ID
+ * @param {string} notFoundMessage - Message if not found
+ * @param {string} unauthorizedMessage - Message if unauthorized
+ * @return {Promise<Object>} The document reference and snapshot
  */
 async function verifyDocAndAuth(collection, docId, expectedOrgId, notFoundMessage, unauthorizedMessage) {
-  const docRef = admin.firestore().collection(collection).doc(docId);
-  const docSnap = await docRef.get();
+  try {
+    const docRef = admin.firestore().collection(collection).doc(docId);
+    const docSnap = await docRef.get();
 
-  if (!docSnap.exists) {
-    throw new HttpsError("not-found", notFoundMessage);
+    if (!docSnap.exists) {
+      throw new HttpsError("not-found", notFoundMessage);
+    }
+
+    if (docSnap.data().orgId !== expectedOrgId) {
+      throw new HttpsError("permission-denied", unauthorizedMessage);
+    }
+
+    return {docRef, docSnap};
+  } catch (error) {
+    logManagerError(`Error verifying document auth for ${collection}/${docId}:`, error);
+    if (error instanceof HttpsError) throw error;
+    throw new HttpsError("internal", "Unable to verify document permissions");
   }
-
-  if (docSnap.data().orgId !== expectedOrgId) {
-    throw new HttpsError("permission-denied", unauthorizedMessage);
-  }
-
-  return {docRef, docSnap};
 }
 
 admin.initializeApp();
@@ -36,13 +48,22 @@ const stripe = require("stripe")(stripeKey);
 
 /**
  * Helper to get the actual organization ID for a user.
+ * @param {Object} admin - The firebase admin instance
+ * @param {string} uid - The user ID
+ * @return {Promise<string>} The actual organization ID
  */
 async function getActualOrgId(admin, uid) {
-  const userDoc = await admin.firestore().collection("users").doc(uid).get();
-  if (!userDoc.exists) {
-    throw new HttpsError("not-found", "User not found");
+  try {
+    const userDoc = await admin.firestore().collection("users").doc(uid).get();
+    if (!userDoc.exists) {
+      throw new HttpsError("not-found", "User not found");
+    }
+    return userDoc.data().orgId || null;
+  } catch (error) {
+    logManagerError("Error fetching user organization data for uid: " + uid, error);
+    if (error instanceof HttpsError) throw error;
+    throw new HttpsError("internal", "Unable to verify user organization");
   }
-  return userDoc.data().orgId || null;
 }
 
 exports.createCheckoutSession = onRequest({invoker: "public"}, (req, res) => {
@@ -97,42 +118,6 @@ exports.createCheckoutSession = onRequest({invoker: "public"}, (req, res) => {
     }
 
     try {
-      let finalPrice = null;
-
-      if (uid) {
-        const userDoc = await admin.firestore().collection("users").doc(uid).get();
-        if (userDoc.exists) {
-          const userData = userDoc.data();
-          if (userData && userData.hasPromoCode) {
-            const basePrice = (plan === "Business Pro") ? 207 : 61;
-            finalPrice = basePrice * 0.9;
-          }
-        }
-      }
-
-      if (finalPrice !== null) {
-        finalPrice = Math.floor(finalPrice);
-        const productId = plan === "Business Pro" ?
-          "prod_UFnBrTwFCgb54A" :
-          "prod_UFn8zqZ0mwyy5r";
-        lineItems = [{
-          price_data: {
-            currency: "usd",
-            product: productId,
-            recurring: {interval: "year"},
-            // Stripe requires amounts in cents
-            unit_amount: Math.round(finalPrice * 100),
-          },
-          quantity: 1,
-        }];
-      } else {
-        // 🔴 Fallback to Actual Price IDs if no custom amount was provided
-        const priceId = plan === "Business Pro" ?
-          "price_1THHbVBp2C5GdKaKvCVoMf1X" :
-          "price_1THHYPBp2C5GdKaKxNpqndNE";
-        lineItems = [{price: priceId, quantity: 1}];
-      }
-
       const session = await stripe.checkout.sessions.create({
         mode: "subscription",
         client_reference_id: uid,
@@ -212,7 +197,7 @@ exports.stripeWebhook = onRequest({invoker: "public"}, async (req, res) => {
         .where("subscription.customerId", "==", sub.customer)
         .get();
 
-    for (const doc of snapshot.docs) {
+    const updatePromises = snapshot.docs.map(async (doc) => {
       // Revert the user back to the free plan
       try {
         await doc.ref.update({
@@ -224,7 +209,9 @@ exports.stripeWebhook = onRequest({invoker: "public"}, async (req, res) => {
       } catch (err) {
         logManagerError(`Error reverting user ${doc.id} back to Free plan:`, err);
       }
-    }
+    });
+
+    await Promise.all(updatePromises);
   }
 
   res.json({received: true});
@@ -273,8 +260,9 @@ exports.manageTasks = functions.https.onCall(async (data, context) => {
   }
 
   try {
-    const actualOrgId = await getActualOrgId(admin, uid) || uid;
-    const isManager = actualOrgId === uid;
+    const userOrgId = await getActualOrgId(admin, uid);
+    const isManager = userOrgId === uid;
+    const actualOrgId = userOrgId || uid;
 
     if (action === "create") {
       if (!isManager) {
@@ -510,8 +498,6 @@ exports.manageEmployees = functions.https.onCall(async (data, context) => {
       if (phone !== undefined) updates.phone = phone;
       if (status !== undefined) updates.status = status;
 
-      await empRef.update(updates);
-      return {success: true};
     }
 
     if (action === "delete") {
@@ -927,6 +913,123 @@ exports.manageWaste = functions.https.onCall(async (data, context) => {
     throw new HttpsError("invalid-argument", "Invalid action");
   } catch (error) {
     logManagerError(`Manage Waste Error for uid: ${uid}`, error);
+    if (error instanceof HttpsError) {
+      throw error;
+    }
+    throw new HttpsError("internal", error.message);
+  }
+});
+
+/**
+ * Manage Recognitions API
+ * Handles creation, reading, and deletion of recognitions (Kudos / Private Feedback).
+ */
+exports.manageRecognitions = functions.https.onCall(async (data, context) => {
+  if (data && typeof data === "object" && "rawRequest" in data && "auth" in data) {
+    context = data;
+    data = data.data;
+  }
+
+  if (!context || !context.auth) {
+    throw new HttpsError("unauthenticated", "User must be logged in.");
+  }
+
+  const {action, payload} = data;
+  const uid = context.auth.uid;
+
+  if (!action || !payload) {
+    throw new HttpsError("invalid-argument", "Missing action or payload");
+  }
+
+  try {
+    const userDoc = await admin.firestore().collection("users").doc(uid).get();
+    if (!userDoc.exists) {
+      throw new HttpsError("not-found", "User not found");
+    }
+    const actualOrgId = userDoc.data().orgId || null;
+
+    if (!actualOrgId) {
+      throw new HttpsError("permission-denied", "User must be part of an organization to manage recognitions.");
+    }
+
+    if (action === "create") {
+      const {receiverId, receiverName, message, type} = payload;
+
+      if (!receiverId || !receiverName || !message || !type) {
+        throw new HttpsError("invalid-argument", "Missing required recognition details");
+      }
+
+      const validTypes = ["Kudos", "Private Feedback"];
+      const recognitionType = validTypes.includes(type) ? type : "Kudos";
+
+      const newRecognition = {
+        senderId: uid,
+        senderName: userDoc.data().name || "Anonymous",
+        receiverId,
+        receiverName,
+        message,
+        type: recognitionType,
+        orgId: actualOrgId,
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      };
+
+      const docRef = await admin.firestore().collection("recognitions").add(newRecognition);
+      return {success: true, id: docRef.id};
+    }
+
+    if (action === "get") {
+      const snapshot = await admin.firestore().collection("recognitions")
+          .where("orgId", "==", actualOrgId)
+          .orderBy("createdAt", "desc")
+          .limit(100)
+          .get();
+
+      const recognitions = [];
+      const isManager = userDoc.data().orgId === uid;
+
+      snapshot.forEach((doc) => {
+        const rec = {id: doc.id, ...doc.data()};
+
+        // Properly isolate Private Feedback on the server side
+        if (rec.type === "Private Feedback") {
+          if (isManager || rec.receiverId === uid || rec.senderId === uid) {
+            recognitions.push(rec);
+          }
+        } else {
+          recognitions.push(rec);
+        }
+      });
+      return {success: true, recognitions};
+    }
+
+    if (action === "delete") {
+      const {recognitionId} = payload;
+      if (!recognitionId) {
+        throw new HttpsError("invalid-argument", "Missing recognition ID");
+      }
+
+      const recRef = admin.firestore().collection("recognitions").doc(recognitionId);
+      const recDoc = await recRef.get();
+
+      if (!recDoc.exists) {
+        throw new HttpsError("not-found", "Recognition not found");
+      }
+
+      if (recDoc.data().orgId !== actualOrgId) {
+        throw new HttpsError("permission-denied", "Unauthorized to delete this recognition");
+      }
+
+      if (recDoc.data().senderId !== uid && userDoc.data().orgId !== uid) {
+        throw new HttpsError("permission-denied", "Only the sender or an admin can delete a recognition.");
+      }
+
+      await recRef.delete();
+      return {success: true};
+    }
+
+    throw new HttpsError("invalid-argument", "Invalid action");
+  } catch (error) {
+    logManagerError(`Manage Recognitions Error for uid: ${uid}`, error);
     if (error instanceof HttpsError) {
       throw error;
     }
