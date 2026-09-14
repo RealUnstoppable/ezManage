@@ -111,6 +111,7 @@ function updateCartSummary() {
 
     cartItemCountEl.textContent = itemCount;
     cartTotalPriceEl.textContent = `$${totalPrice.toFixed(2)}`;
+    cartButton.setAttribute('aria-label', `Open Cart, ${itemCount} items`);
 }
 
 async function updateCartState(mutationFn, errorMessage) {
