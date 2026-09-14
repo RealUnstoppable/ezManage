@@ -1,0 +1,4 @@
+owner: RealUnstoppable
+repo: ezManage
+provider: github
+updaterCacheDirName: ezmanage-app-updater

@@ -1,8 +1,7 @@
-// js/checkout.js
+import { logManagerError } from './utils.js';
+
 import { auth, db } from './auth.js';
-import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
-import { doc, getDoc, setDoc, serverTimestamp, runTransaction } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
-import { products } from './shop.js';
+import { products, productMap, calculateCartTotal } from './shop.js';
 
 let currentUser = null;
 let userCart = {};
@@ -15,11 +14,8 @@ function renderCheckoutPage() {
         return;
     }
 
-    const subtotal = Object.entries(userCart).reduce((sum, [productId, quantity]) => {
-        const product = products.find(p => p.id === productId);
-        return sum + (product.price * quantity);
-    }, 0);
-    const tax = subtotal * 0.07; // 7% tax
+    const subtotal = calculateCartTotal(userCart, productMap);
+    const tax = subtotal * 0.07;
     const total = subtotal + tax;
 
     checkoutContainer.innerHTML = `
@@ -57,7 +53,8 @@ function renderCheckoutPage() {
                 <h3>Order Summary</h3>
                 <div id="summary-items">
                     ${Object.entries(userCart).map(([productId, quantity]) => {
-        const product = products.find(p => p.id === productId);
+
+        const product = productMap[productId];
         return `<div class="summary-item"><span>${quantity}x ${product.name}</span> <span>$${(product.price * quantity).toFixed(2)}</span></div>`;
     }).join('')}
                 </div>
@@ -83,7 +80,7 @@ async function handlePlaceOrder(e) {
     const orderDetails = {
         userId: currentUser.uid,
         items: userCart,
-        orderDate: serverTimestamp(),
+        orderDate: window.firebase.firestore.FieldValue.serverTimestamp(),
         status: 'Processing',
         shippingInfo: {
             name: document.getElementById('name').value,
@@ -94,27 +91,28 @@ async function handlePlaceOrder(e) {
     };
 
     try {
-        // New Feature: Use a transaction to ensure atomicity
-        await runTransaction(db, async (transaction) => {
-            // 1. Pre-fetch all necessary read documents before any writes
-            const cartEntries = Object.entries(userCart);
+
+        await db.runTransaction(async (transaction) => {
+            // ⚡ Bolt Performance Optimization:
+            // Pre-fetch all product_stats documents concurrently before writing to prevent N+1 query bottlenecks
+            // and satisfy Firestore's strict read-before-write transaction constraints.
             const statDocs = await Promise.all(
-                cartEntries.map(([productId]) => {
-                    const productStatRef = doc(db, "product_stats", productId);
-                    return transaction.get(productStatRef);
-                })
+                Object.keys(userCart).map(productId =>
+                    transaction.get(db.collection("product_stats").doc(productId))
+                )
             );
 
-            // 2. Create a new order document
-            const newOrderRef = doc(db, "orders", `${currentUser.uid}-${Date.now()}`);
+            // 1. Create a new order document
+            const newOrderRef = db.collection("orders").doc(`${currentUser.uid}-${Date.now()}`);
             transaction.set(newOrderRef, orderDetails);
 
-            // 3. Update product order counts
-            cartEntries.forEach(([productId, quantity], index) => {
-                const statDoc = statDocs[index];
-                const productStatRef = doc(db, "product_stats", productId);
+            // 2. Update product order counts
+            statDocs.forEach((statDoc) => {
+                const productId = statDoc.id;
+                const quantity = userCart[productId];
+                const productStatRef = db.collection("product_stats").doc(productId);
 
-                if (!statDoc.exists()) {
+                if (!statDoc.exists) {
                     transaction.set(productStatRef, { orderedCount: quantity });
                 } else {
                     const newCount = statDoc.data().orderedCount + quantity;
@@ -122,8 +120,8 @@ async function handlePlaceOrder(e) {
                 }
             });
 
-            // 4. Clear the user's cart
-            const userCartRef = doc(db, 'carts', currentUser.uid);
+            // 3. Clear the user's cart
+            const userCartRef = db.collection('carts').doc(currentUser.uid);
             transaction.set(userCartRef, { items: {} });
         });
 
@@ -132,7 +130,8 @@ async function handlePlaceOrder(e) {
         setTimeout(() => window.location.href = './account.html', 3000);
 
     } catch (error) {
-        console.error("Error placing order:", error);
+        logManagerError("Error processing checkout for uid:", currentUser.uid, error);
+
         messageEl.textContent = 'There was an error placing your order. Please try again.';
         messageEl.style.color = 'var(--accent-red)';
         placeOrderBtn.disabled = false;
@@ -140,12 +139,18 @@ async function handlePlaceOrder(e) {
     }
 }
 
-onAuthStateChanged(auth, async (user) => {
+auth.onAuthStateChanged(async (user) => {
     if (user) {
         currentUser = user;
-        const userCartRef = doc(db, 'carts', user.uid);
-        const docSnap = await getDoc(userCartRef);
-        userCart = docSnap.exists() ? docSnap.data().items : {};
+        try {
+            const userCartRef = db.collection('carts').doc(user.uid);
+            const docSnap = await userCartRef.get();
+            userCart = docSnap.exists ? docSnap.data().items : {};
+        } catch (error) {
+            logManagerError("Error loading cart for uid:", user.uid, error);
+
+            userCart = {};
+        }
         renderCheckoutPage();
     } else {
         window.location.replace('/sign in beta.html');
