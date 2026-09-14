@@ -28,8 +28,3 @@ global.firebase = {
   })
 };
 
-import { TextEncoder, TextDecoder } from 'util';
-Object.assign(global, { TextDecoder, TextEncoder });
-
-global.firebase = window.firebase;
-globalThis.firebase = window.firebase;
