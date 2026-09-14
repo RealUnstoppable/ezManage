@@ -6278,6 +6278,11 @@ function checkAndRenderOrgControls() {
             else if (action === 'approveGroupRequest') approveGroupRequest(id);
             else if (action === 'retractGroupRequest') retractGroupRequest(id);
             else if (action === 'openEditEmployeeModal') openEditEmployeeModal(id);
+            else if (action === 'deleteTask') deleteTask(id);
+            else if (action === 'deleteWasteLog') deleteWasteLog(id);
+            else if (action === 'deleteIncident') deleteIncident(id);
+            else if (action === 'updateTaskStatus') updateTaskStatus(id, status);
+
             else if (action === 'deleteEmployee') deleteEmployee(id);
             else if (action === 'toggleEmployeeStatus') toggleEmployeeStatus(id, status);
             else if (action === 'updateTimeOffStatus') updateTimeOffStatus(id, status);
