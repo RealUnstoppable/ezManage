@@ -1,5 +1,5 @@
 import { logManagerError } from './utils.js';
-import { auth, db, getUserRedirectPath } from './auth.js';
+import { auth, db, getUserRedirectPath, fetchUserDoc } from './auth.js';
 
 
 export function loadNavbar() {
@@ -37,14 +37,14 @@ export function updateAuthLink() {
         auth.onAuthStateChanged(async (user) => {
             if (user) {
                 try {
-                    const userDoc = await db.collection("users").doc(user.uid).get();
+                    const userDoc = await fetchUserDoc(user.uid);
                     const destination = userDoc.exists ? getUserRedirectPath(userDoc.data()) : 'account.html';
                     authLink.href = destination;
                     authLink.textContent = "My Account";
                 } catch (e) {
-                    logManagerError(`Navbar auth state error for uid: ${user.uid}`, e);
+                    logManagerError("Navbar auth state error for uid:", user.uid, e);
                 }
-            } else {
+                        } else {
                 authLink.href = 'sign in beta.html';
                 authLink.textContent = "Sign In / Sign Up";
             }

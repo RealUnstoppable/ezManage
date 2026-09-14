@@ -1,8 +1,6 @@
 import { logManagerError, escapeHTML } from './utils.js';
 
 import { auth, db } from './auth.js';
-import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
-import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
 
 export const products = [
     {
@@ -96,8 +94,8 @@ function renderCart() {
                         <p>$${product.price.toFixed(2)}</p>
                     </div>
                     <div class="cart-item-actions">
-                        <input type="number" value="${escapeHTML(quantity)}" min="1" data-id="${escapeHTML(productId)}" class="item-quantity-input">
-                        <button class="remove-item-btn" data-id="${escapeHTML(productId)}">&#128465;</button>
+                        <input type="number" aria-label="Item Quantity" value="${escapeHTML(quantity)}" min="1" data-id="${escapeHTML(productId)}" class="item-quantity-input">
+                        <button class="remove-item-btn" aria-label="Remove Item" data-id="${escapeHTML(productId)}">&#128465;</button>
                     </div>
                 </div>
             `;
@@ -113,12 +111,14 @@ function updateCartSummary() {
 
     cartItemCountEl.textContent = itemCount;
     cartTotalPriceEl.textContent = `$${totalPrice.toFixed(2)}`;
+    cartButton.setAttribute('aria-label', `Open Cart, ${itemCount} items`);
 }
 
 async function updateCartState(mutationFn, errorMessage) {
     const originalCart = { ...cart };
     try {
         mutationFn();
+        if (JSON.stringify(cart) === JSON.stringify(originalCart)) return;
         renderCart();
         await saveCart();
     } catch (error) {
@@ -130,34 +130,46 @@ async function updateCartState(mutationFn, errorMessage) {
 }
 
 async function handleAddToCart(productId) {
-    await updateCartState(() => {
-        cart[productId] = (cart[productId] || 0) + 1;
-    }, "Error adding item to cart");
+    try {
+        await updateCartState(() => {
+            cart[productId] = (cart[productId] || 0) + 1;
+        }, "Error adding item to cart");
+    } catch (error) {
+        logManagerError("Error in handleAddToCart", error);
+    }
 }
 
 async function handleUpdateQuantity(productId, quantity) {
-    if (quantity <= 0) {
-        return handleRemoveFromCart(productId);
+    try {
+        if (quantity <= 0) {
+            return await handleRemoveFromCart(productId);
+        }
+        await updateCartState(() => {
+            cart[productId] = parseInt(quantity, 10);
+        }, "Error updating item quantity");
+    } catch (error) {
+        logManagerError("Error in handleUpdateQuantity", error);
     }
-    await updateCartState(() => {
-        cart[productId] = parseInt(quantity, 10);
-    }, "Error updating item quantity");
 }
 
 async function handleRemoveFromCart(productId) {
-    await updateCartState(() => {
-        delete cart[productId];
-    }, "Error removing item from cart");
+    try {
+        await updateCartState(() => {
+            delete cart[productId];
+        }, "Error removing item from cart");
+    } catch (error) {
+        logManagerError("Error in handleRemoveFromCart", error);
+    }
 }
 
 async function saveCart() {
     if (currentUser) {
         try {
-            const userCartRef = doc(db, 'carts', currentUser.uid);
-            await setDoc(userCartRef, { items: cart });
+            const userCartRef = db.collection('carts').doc(currentUser.uid);
+            await userCartRef.set({ items: cart });
         } catch (error) {
             logManagerError("Error saving cart to Firestore for uid: " + currentUser.uid, error);
-
+            throw error;
         }
     } else {
         localStorage.setItem('localCart', JSON.stringify(cart));
@@ -218,16 +230,16 @@ document.addEventListener('DOMContentLoaded', () => {
     renderProducts();
     setupEventListeners();
 
-    onAuthStateChanged(auth, async (user) => {
+    auth.onAuthStateChanged(async (user) => {
         currentUser = user;
         const localCartData = localStorage.getItem('localCart');
         const localCart = localCartData ? JSON.parse(localCartData) : {};
 
         if (user) {
             try {
-                const userCartRef = doc(db, 'carts', user.uid);
-                const docSnap = await getDoc(userCartRef);
-                const firestoreCart = docSnap.exists() ? docSnap.data().items : {};
+                const userCartRef = db.collection('carts').doc(user.uid);
+                const docSnap = await userCartRef.get();
+                const firestoreCart = docSnap.exists ? docSnap.data().items : {};
 
                 const mergedCart = { ...firestoreCart };
                 for (const [productId, quantity] of Object.entries(localCart)) {
