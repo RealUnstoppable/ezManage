@@ -1,6 +1,18 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <link rel="stylesheet" href="./css/style.css">
+  <script type="module">
+    import { escapeHTML } from './js/utils.js';
+    import { loadNavbar } from './js/navbar.js';
+    import { loadFooter } from './js/footer.js';
+    document.addEventListener('DOMContentLoaded', () => {
+        loadNavbar();
+        loadFooter();
+    });
+    window.escapeHTML = escapeHTML;
+  </script>
+
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ezManage | Admin Intelligence Panel</title>
@@ -9,13 +21,12 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script type="module">
-        import { parseNum } from './js/utils/parseUtils.js';
-        window.parseNum = parseNum;
-    </script>
+
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+    <script src="js/firebase-config.js"></script>
+
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         :root {
@@ -113,6 +124,7 @@
     </style>
 </head>
 <body>
+<header class="main-header"></header>
 
 <!-- AUTH GATE -->
 <div id="gate">
@@ -203,23 +215,19 @@
     </main>
 </div>
 
-<script type="module">
-    import { parseNum, getDayOfWeek } from "./js/utils.js";
-    window.parseNum = parseNum;
-    window.getDayOfWeek = getDayOfWeek;
-</script>
+
 <script>
-    const firebaseConfig = {
-        apiKey: "AIzaSyBgrI9HwJPSc5b4pu2Egsv4DE7shNwptSw",
-        authDomain: "dts-hub-website.firebaseapp.com",
-        projectId: "dts-hub-website",
-        storageBucket: "dts-hub-website.firebasestorage.app",
-        messagingSenderId: "48345990988",
-        appId: "1:48345990988:web:e3662c9b508168546471e9"
-    };
-    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    function parseNum(val) {
+        if (!val) return 0;
+        const parsed = parseFloat(val.toString().replace(/[^0-9.]/g, ""));
+        return isNaN(parsed) ? 0 : parsed;
+    }
+
+    const firebaseConfig = window.ezManageFirebaseConfig;
+        const app = !window.firebase.apps.length ? window.firebase.initializeApp(firebaseConfig) : window.firebase.app();
     const auth = firebase.auth();
-    const db   = firebase.firestore();
+    firebase.firestore().settings({ experimentalForceLongPolling: true });
+        const db = firebase.firestore();
 
     const ADMIN_EMAIL = 'catalinandrian1@gmail.com';
 
@@ -230,21 +238,34 @@
         const err   = document.getElementById('gateErr');
         err.textContent = '';
         auth.signInWithEmailAndPassword(email, pass)
-            .catch(e => { err.textContent = e.message; });
+            .catch(e => {
+                console.error("Manager Troubleshooting: Error during admin sign in", e);
+                err.textContent = e.message;
+            });
     }
     document.getElementById('gPass').addEventListener('keydown', e => { if(e.key==='Enter') gateSignIn(); });
 
+    let isDashboardLoaded = false;
     auth.onAuthStateChanged(user => {
         if (!user) { document.getElementById('gate').style.display = 'flex'; document.getElementById('app').style.display = 'none'; return; }
         if (user.email !== ADMIN_EMAIL) {
-            auth.signOut();
-            document.getElementById('gateErr').textContent = 'Access denied. Admin only.';
+            document.getElementById('gate').style.display = 'flex';
+            document.getElementById('app').style.display = 'none';
+            document.getElementById('gate').innerHTML = `
+                <div style="font-size:2.5rem; margin-bottom:4px;">⛔</div>
+                <h1>Access Denied</h1>
+                <p>This panel is restricted to Administrators only.</p>
+                <button onclick="window.location.href='index.html'" style="margin-top:16px;">Return to Main App</button>
+            `;
             return;
         }
         document.getElementById('gate').style.display = 'none';
         document.getElementById('app').style.display = 'block';
         document.getElementById('navEmail').textContent = user.email;
-        loadDashboard();
+        if (!isDashboardLoaded) {
+            loadDashboard();
+            isDashboardLoaded = true;
+        }
     });
 
     /* ---------- CHARTS ---------- */
@@ -340,8 +361,8 @@
         // ⚡ Bolt Optimization: Batch DOM insertions to prevent O(n²) layout thrashing
         grid.innerHTML = kpis.map(k => `
             <div class="card" style="display:flex;flex-direction:column;gap:6px;">
-                <div class="card-title">${k.label}</div>
-                <div class="card-value ${k.color}">${k.value}</div>
+                <div class="card-title">${escapeHTML(k.label)}</div>
+                <div class="card-value ${escapeHTML(k.color)}">${escapeHTML(k.value)}</div>
             </div>`).join('');
 
         /* Day chart */
@@ -367,17 +388,7 @@
                backgroundColor: planLabels.map((_,i)=>palettes[i % palettes.length]),
                borderWidth: 2, borderColor:'#0d0d14' }]);
 
-        function escapeHTML(str) {
-            if (!str && str !== 0) return "";
-            return String(str)
-                .replace(/&/g, "&amp;")
-                .replace(/</g, "&lt;")
-                .replace(/>/g, "&gt;")
-                .replace(/"/g, "&quot;")
-                .replace(/'/g, "&#039;");
-        }
-
-        /* Top items bars */
+/* Top items bars */
         const topItems = Object.entries(itemCount).sort((a,b)=>b[1]-a[1]).slice(0, 12);
         const maxCount = topItems[0]?.[1] || 1;
         const wrap = document.getElementById('topItems');
@@ -389,7 +400,7 @@
                 const pct = Math.round((cnt/maxCount)*100);
                 return `
                 <div class="item-bar">
-                    <div class="item-bar-label" title="${name}">${name}</div>
+                    <div class="item-bar-label" title="${escapeHTML(name)}">${escapeHTML(name)}</div>
                     <div class="item-bar-track"><div class="item-bar-fill" style="width:${pct}%"></div></div>
                     <div class="item-bar-val">${cnt}</div>
                 </div>`;
@@ -399,19 +410,6 @@
         /* User table */
         document.getElementById('userCount').textContent = `${users.length} users`;
         const tbody = document.getElementById('userTableBody');
-
-        // ⚡ Bolt Performance Optimization:
-        // Replaced document.createElement('p') sanitization with regex to eliminate GC overhead in loops.
-        function escapeHTML(str) {
-            if (!str) return "";
-            // ⚡ Bolt Optimization: Use regex-based replacement instead of document.createElement for faster escaping and lower memory overhead
-            return String(str)
-                .replace(/&/g, "&amp;")
-                .replace(/</g, "&lt;")
-                .replace(/>/g, "&gt;")
-                .replace(/"/g, "&quot;")
-                .replace(/'/g, "&#039;");
-        }
 
         // ⚡ Bolt Optimization: Batch DOM insertions to prevent O(n²) layout thrashing
         tbody.innerHTML = users.sort((a,b) => (b.shiftHistory||[]).length - (a.shiftHistory||[]).length)
@@ -441,10 +439,11 @@
         document.getElementById('dashboard').style.display = 'block';
         lucide.createIcons();
         } catch (error) {
-            console.error('Error loading dashboard:', error);
+            console.error("Manager Troubleshooting: Error loading admin dashboard", error);
             document.getElementById('loadingSpinner').innerHTML = '<p style="color:var(--danger);">Failed to load dashboard. Please try again.</p>';
         }
     }
 </script>
+<footer class="main-footer"></footer>
 </body>
 </html>
