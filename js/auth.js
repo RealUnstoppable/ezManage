@@ -61,7 +61,7 @@ auth.onAuthStateChanged(async (user) => {
             authLink.textContent = "Sign In / Sign Up";
         }
         if (membershipStatusContainer) {
-            membershipStatusContainer.innerHTML = '';
+            membershipStatusContainer.textContent = '';
         }
     }
 });
