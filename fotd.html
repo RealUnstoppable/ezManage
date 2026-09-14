@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Fact of the Day | DreamsTimekip Hub</title>
     <meta name="description" content="Explore and save a new fact for every day with our interactive calendar.">
-    
+
     <link rel="icon" type="image/png" href="/images/dreams-favicon.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -40,7 +40,7 @@
         .orb-text { color: white; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-size: 1rem; text-decoration: none; opacity: 0; transition: opacity 0.3s ease 0.4s; white-space: nowrap; transform: translateY(20px); }
         #siri-orb.expanded .orb-text { opacity: 1; transform: translateY(0); }
 
-      
+
         /* --- Main Content --- */
         .fotd-section { padding: 4rem 1rem; }
         .container { max-width: 1200px; margin: 0 auto; padding: 0 1rem; }
@@ -80,7 +80,7 @@
         .date-square span:first-child { font-size: 0.7rem; text-transform: uppercase; opacity: 0.7; pointer-events: none; }
         .date-square span:last-child { font-size: 1.5rem; font-weight: 600; pointer-events: none; }
         .date-square.active { border: 2px solid var(--accent-color); background-color: rgba(0, 123, 255, 0.1); color: var(--accent-color); font-weight: bold; }
-        
+
         /* --- Fact Display Area --- */
         #fact-container { text-align: center; padding: 40px 20px; background-color: var(--card-background); border-radius: 12px; border: 1px solid var(--border-color); }
         #fact-date { color: var(--accent-color); margin-bottom: 1rem; font-size: 1.5rem; font-weight: 700; }
@@ -131,7 +131,7 @@
 
     <header class="main-header">
         <nav class="navbar">
-           
+
             <button class="hamburger" aria-label="Open menu"><span class="bar"></span><span class="bar"></span><span class="bar"></span></button>
         </nav>
     </header>
@@ -158,10 +158,10 @@
             <div id="calendar-grid-container"></div>
         </div>
     </div>
-    
+
     <div id="fact-tooltip"></div>
 
-   <footer class="main-footer"></footer> 
+   <footer class="main-footer"></footer>
 
     <div id="siri-orb">
         <a href="https://www.dreamstimeskip.com/" class="orb-text">Return Home?</a>
@@ -170,7 +170,7 @@
    <script type="module">
         import { loadNavbar } from './js/navbar.js';
         import { loadFooter } from './js/footer.js'; // Add this line
-        
+
         document.addEventListener('DOMContentLoaded', () => {
             loadNavbar();
             loadFooter(); // Add this line
@@ -241,7 +241,7 @@
             const calendarGridContainer = document.getElementById('calendar-grid-container');
             const factTooltip = document.getElementById('fact-tooltip');
             const dateScroller = document.getElementById('date-scroller-container');
-            
+
             // --- 2. Global State & Caching ---
             const today = new Date();
             let factCache = JSON.parse(localStorage.getItem('factCache')) || {};
@@ -261,13 +261,13 @@
                 if (factCache[dateString]) {
                     return factCache[dateString];
                 }
-                
+
                 // Get all facts that have already been used.
                 const usedFacts = new Set(Object.values(factCache));
-                
+
                 // Find all facts from our local list that haven't been used yet.
                 const availableFacts = localFacts.filter(fact => !usedFacts.has(fact));
-                
+
                 let newFact;
                 if (availableFacts.length > 0) {
                     // Pick a random fact from the available ones.
@@ -280,7 +280,7 @@
                 // Cache the new fact for the given date and save to local storage.
                 factCache[dateString] = newFact;
                 localStorage.setItem('factCache', JSON.stringify(factCache));
-                
+
                 return newFact;
             };
 
@@ -289,9 +289,9 @@
                 factTextEl.textContent = 'Loading...';
                 const [year, month, day] = dateString.split('-').map(Number);
                 const date = new Date(year, month - 1, day);
-                
+
                 const fact = getFactForDate(dateString); // No 'await' needed
-                
+
                 const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
                 factDateEl.textContent = `Fact for ${date.toLocaleDateString('en-US', options)}`;
                 factTextEl.textContent = fact;
@@ -312,14 +312,14 @@
                     square.className = 'date-square';
                     square.dataset.date = dateString;
                     if (i === 0) square.classList.add('active');
-                    
+
                     const month = date.toLocaleString('en-US', { month: 'short' });
                     const dayNum = date.getDate();
                     square.innerHTML = `<span>${month}</span><span>${dayNum}</span>`;
                     dateScroller.appendChild(square);
                 }
             };
-            
+
             const generateFullCalendar = () => {
                 const startDate = new Date('2025-01-01');
                 let currentDate = new Date(startDate);
@@ -389,11 +389,11 @@
             closeModalBtn.addEventListener('click', toggleModal);
             calendarGridContainer.addEventListener('mouseover', showTooltip);
             calendarGridContainer.addEventListener('mouseout', hideTooltip);
-            calendarGridContainer.addEventListener('click', (e) => { 
+            calendarGridContainer.addEventListener('click', (e) => {
                 if (e.target.dataset.date) {
                     displayFact(e.target.dataset.date);
                     toggleModal();
-                } 
+                }
             });
             document.querySelector('.hamburger').addEventListener('click', () => {
                 document.querySelector('.hamburger').classList.toggle('active');
@@ -409,7 +409,7 @@
                     inactivityTimeout = setTimeout(() => siriOrb.classList.remove('expanded'), 5000);
                 }
             });
-            
+
             // --- 7. INITIALIZE PAGE ---
             const initializePage = () => {
                 generateHorizontalScroller();
@@ -430,6 +430,6 @@
         }
       });
     </script>
-    
+
 </body>
 </html>
