@@ -1,4 +1,6 @@
 
+import { logManagerError } from './utils.js';
+
 document.addEventListener('DOMContentLoaded', () => {
 
     const hamburger = document.querySelector('.hamburger');
@@ -74,7 +76,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     heroSection.appendChild(videoBg);
                 }
 
-                if (videoBg.paused) videoBg.play().catch(() => {});
+                if (videoBg.paused) videoBg.play().catch(e => logManagerError("Error playing video background:", e));
 
             } else {
                 if (videoBg) {
@@ -82,7 +84,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
         };
-
 
 
         const updateGreeting = () => {
@@ -94,7 +95,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const endOfCelebration = new Date('January 1, 2026 23:59:59');
             const revertDate = new Date('January 2, 2026 00:00:00');
 
-            let currentGreeting = "";
+            let newGreetingText = "";
 
             if (now >= revertDate) {
                  const currentHour = now.getHours();
@@ -107,14 +108,10 @@ document.addEventListener('DOMContentLoaded', () => {
                  }
                  shouldPlayVideo = false;
             }
-
             else if (now >= newYear2026 && now <= endOfCelebration) {
                 newGreeting = "Happy New Year!";
                 shouldPlayVideo = true;
-                currentGreeting = "Happy New Year!";
-                manageVideoBackground(true);
             }
-
             else {
                 const diff = newYear2026 - now;
 
@@ -125,18 +122,18 @@ document.addEventListener('DOMContentLoaded', () => {
                     const seconds = Math.floor((diff % (1000 * 60)) / 1000);
 
                     newGreeting = `New Years Countdown: ${days}d ${hours}h ${minutes}m ${seconds}s`;
-                    currentGreeting = `New Years Countdown: ${days}d ${hours}h ${minutes}m ${seconds}s`;
                 }
                 shouldPlayVideo = false;
             }
 
-            // ⚡ Bolt Optimization: Only update DOM if the state actually changed
+            // ⚡ Bolt Performance Optimization:
+            // Only apply DOM updates when the greeting state actually changes to prevent unnecessary re-renders and layout thrashing,
+            // especially when the greeting is static text like "Good Morning".
             if (newGreeting !== lastGreeting) {
                 greetingElement.textContent = newGreeting;
-                manageVideoBackground(shouldPlayVideo);
                 lastGreeting = newGreeting;
+                manageVideoBackground(shouldPlayVideo);
             }
-
 
             manageVideoBackground(shouldPlayVideo);
         };
