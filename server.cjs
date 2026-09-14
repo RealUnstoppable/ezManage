@@ -3,22 +3,19 @@ const cors = require("cors");
 const Stripe = require("stripe");
 
 const app = express();
-const path = require("path");
-const corsOptions = {
-  origin: "http://localhost:3000",
-  optionsSuccessStatus: 200
-};
-app.use(cors(corsOptions));
+app.use(cors());
 app.use(express.json());
-app.use(express.static(path.join(__dirname)));
-const stripe = Stripe("sk_test_placeholder"); // 🔴 replace with real key later
+
+require("dotenv").config();
+const stripe = Stripe(process.env.STRIPE_SECRET || "sk_test_placeholder");
+
 app.post("/create-checkout-session", async (req, res) => {
   const { plan } = req.body;
 
   try {
     const priceId =
       plan === "Business Pro"
-        ? ""
+        ? ""   // 🔴 from Stripe dashboard
         : "price_individual_id";
 
     const session = await stripe.checkout.sessions.create({
@@ -40,4 +37,5 @@ app.post("/create-checkout-session", async (req, res) => {
   }
 });
 
+app.use(express.static(__dirname));
 app.listen(3000, () => console.log("Server running on port 3000"));

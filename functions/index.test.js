@@ -5,15 +5,28 @@ const functionsTest = require("firebase-functions-test")();
 jest.mock("firebase-admin", () => {
   const firestoreMock = {
     collection: jest.fn().mockReturnThis(),
-    doc: jest.fn().mockReturnThis(),
-    set: jest.fn(),
+    doc: jest.fn((uid) => {
+      firestoreMock._lastUid = uid;
+      return firestoreMock;
+    }),
     where: jest.fn().mockReturnThis(),
-    get: jest.fn(),
-    update: jest.fn(),
+    get: jest.fn().mockImplementation(() => {
+      return Promise.resolve({
+        exists: true,
+        data: () => ({
+          email: "test@example.com",
+          hasPromoCode: firestoreMock._lastUid !== "no_promo_uid",
+        }),
+        docs: [],
+      });
+    }),
+    update: jest.fn().mockResolvedValue({}),
+    set: jest.fn().mockResolvedValue({}),
+    add: jest.fn().mockResolvedValue({id: "docId123"}),
   };
   return {
     initializeApp: jest.fn(),
-    firestore: jest.fn(() => firestoreMock),
+    firestore: Object.assign(jest.fn(() => firestoreMock), {FieldValue: {serverTimestamp: jest.fn()}}),
   };
 });
 admin.firestore.FieldValue = {
@@ -83,7 +96,7 @@ describe("createCheckoutSession", () => {
         uid: "test_uid",
         email: "test@example.com",
         plan: "Business Pro",
-        amount: 150,
+        amount: 150, // Should be ignored now
       },
       headers: {origin: true},
       get: jest.fn(),
@@ -96,6 +109,13 @@ describe("createCheckoutSession", () => {
       json: jest.fn(),
       send: jest.fn(),
     };
+
+    // We mock firestore to return a user doc with a promo code
+    const mockFirestore = require("firebase-admin").firestore;
+    mockFirestore().collection().doc().get.mockResolvedValueOnce({
+      exists: true,
+      data: () => ({hasPromoCode: true}),
+    });
 
     mockStripeMock.checkout.sessions.create.mockResolvedValue({url: "https://checkout.url"});
 
@@ -114,7 +134,7 @@ describe("createCheckoutSession", () => {
           currency: "usd",
           product: "prod_UFnBrTwFCgb54A",
           recurring: {interval: "year"},
-          unit_amount: 15000,
+          unit_amount: 18600, // 207 * 0.9 = 186.3 -> floored to 186 -> * 100 = 18600
         },
         quantity: 1,
       }],
@@ -138,6 +158,12 @@ describe("createCheckoutSession", () => {
   });
 
   it("should create session successfully with default price ID when no amount is provided", async () => {
+    // override get to simulate no promo
+    jest.spyOn(require("firebase-admin").firestore().collection("users").doc("no_promo_uid"), "get").mockResolvedValueOnce({
+      exists: true,
+      data: () => ({hasPromoCode: false}),
+    });
+
     const req = {
       method: "POST",
       body: {
@@ -171,7 +197,10 @@ describe("createCheckoutSession", () => {
       client_reference_id: "test_uid",
       payment_method_types: ["card"],
       customer_email: "test2@example.com",
-      line_items: [{price: "price_1THHYPBp2C5GdKaKxNpqndNE", quantity: 1}],
+      line_items: [{
+        price: "price_1THHYPBp2C5GdKaKxNpqndNE",
+        quantity: 1,
+      }],
       subscription_data: {
         trial_period_days: 7,
         metadata: {
@@ -223,7 +252,8 @@ describe("createCheckoutSession", () => {
     });
 
     expect(mockStripeMock.checkout.sessions.create).toHaveBeenCalled();
-    expect(consoleSpy).toHaveBeenCalledWith("Checkout Error:", expect.any(Error));
+
+    expect(consoleSpy).toHaveBeenCalledWith("Manager Troubleshooting: Checkout Error for uid:", req.body.uid, expect.any(Error));
     expect(res.status).toHaveBeenCalledWith(500);
     expect(res.json).toHaveBeenCalledWith({error: errorMessage});
 
@@ -348,8 +378,9 @@ describe("stripeWebhook", () => {
 
     mockStripeMock.webhooks.constructEvent.mockReturnValue(mockEvent);
 
-    const mockUpdate = jest.fn();
     const mockDocs = {
+      empty: false,
+      size: 2,
       docs: [
         {id: "user_1", ref: {update: mockUpdate}},
         {id: "user_2", ref: {update: mockUpdate}},
@@ -358,18 +389,18 @@ describe("stripeWebhook", () => {
 
     const firestoreMock = admin.firestore();
     firestoreMock.get.mockResolvedValue(mockDocs);
+    const mockBatch = firestoreMock.batch();
 
     await stripeWebhook(req, res);
 
     expect(res.json).toHaveBeenCalledWith({received: true});
 
     expect(firestoreMock.where).toHaveBeenCalledWith("subscription.customerId", "==", "cus_123");
-    expect(mockUpdate).toHaveBeenCalledTimes(2);
-    expect(mockUpdate).toHaveBeenCalledWith({
-      "plan": "Free",
-      "subscription.status": "canceled",
-      "updatedAt": admin.firestore.FieldValue.serverTimestamp(),
-    });
+    expect(firestoreMock.batch).toHaveBeenCalled();
+    expect(mockBatch.update).toHaveBeenCalledTimes(2);
+    expect(mockBatch.update).toHaveBeenCalledWith("ref_1", expect.any(Object));
+    expect(mockBatch.update).toHaveBeenCalledWith("ref_2", expect.any(Object));
+    expect(mockBatch.commit).toHaveBeenCalled();
   });
 
   it("should process customer.subscription.canceled", async () => {
@@ -384,8 +415,9 @@ describe("stripeWebhook", () => {
 
     mockStripeMock.webhooks.constructEvent.mockReturnValue(mockEvent);
 
-    const mockUpdate = jest.fn();
     const mockDocs = {
+      empty: false,
+      size: 1,
       docs: [
         {id: "user_3", ref: {update: mockUpdate}},
       ],
@@ -393,18 +425,19 @@ describe("stripeWebhook", () => {
 
     const firestoreMock = admin.firestore();
     firestoreMock.get.mockResolvedValue(mockDocs);
+    const mockBatch = firestoreMock.batch();
 
     await stripeWebhook(req, res);
 
     expect(res.json).toHaveBeenCalledWith({received: true});
 
     expect(firestoreMock.where).toHaveBeenCalledWith("subscription.customerId", "==", "cus_456");
-    expect(mockUpdate).toHaveBeenCalledTimes(1);
-    expect(mockUpdate).toHaveBeenCalledWith({
+    expect(mockBatch.update).toHaveBeenCalledWith("ref_3", {
       "plan": "Free",
       "subscription.status": "canceled",
       "updatedAt": admin.firestore.FieldValue.serverTimestamp(),
     });
+    expect(mockBatch.commit).toHaveBeenCalled();
   });
 
   it("should ignore unhandled event types", async () => {
