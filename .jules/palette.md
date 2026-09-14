@@ -29,3 +29,33 @@
 ## 2024-05-24 - ARIA labels for dynamic inputs and textareas lacking visible labels
 **Learning:** Inputs (`<input>`) and textareas (`<textarea>`) that lack a visible `<label>` but use a `placeholder` attribute are inaccessible for screen readers. This applies to UI components like `newRoutineTask`, `customPresetName`, `featureReqText`, and `shiftNoteContent` in `index.html`. Placeholders do not replace explicit labels.
 **Action:** Always provide an explicit `aria-label` attribute on form inputs and textareas if screen space prohibits a visible `<label>`. This ensures the purpose of the input is clearly communicated to screen reader users.
+## 2024-06-09 - Alpine.js dynamic binding for accessibility attributes
+**Learning:** When using Alpine.js (`x-data`, `x-show`), static aria attributes won't update when the state changes.
+**Action:** Use Alpine's dynamic binding (`:aria-label="expanded ? 'Close' : 'Open'"`) to ensure screen readers get the current state description.
+## 2026-06-06 - Form accessibility enhancements and malformed HTML
+**Learning:** Malformed HTML blocks (like duplicated IDs and unclosed select tags) can co-exist alongside accessibility issues (missing `for` attributes). Duplicate IDs break JavaScript's `getElementById` and accessibility mapping simultaneously. Also, properly mapped labels increase the clickable hit area for inputs, significantly improving UX on mobile.
+**Action:** When fixing accessibility mapping via explicit `for` attributes, always verify the surrounding HTML structure is not malformed, and ensure duplicate IDs are removed so the mapping correctly binds to the right element.
+
+## 2024-06-05 - Form Accessibility Broken Tags
+**Learning:** When addressing accessibility for form inputs (like adding explicit `for` attributes to labels), standard HTML validation can sometimes miss duplicated or malformed block structures in inline templates. This can cause the `for` attribute to map to duplicated `id` fields or break standard tab order.
+**Action:** Always verify the surrounding HTML tags using strict parsing or manual verification before asserting that `for` to `id` mapping effectively improves accessibility, and fix underlying malformed HTML alongside accessibility improvements.
+## 2024-05-18 - Missing Input Labels
+
+**Learning:** Various input elements, especially form fields and selects across modals (like adding employees, shift notes, maintenance tickets), lack explicit `for` attribute linkages or `aria-label`s, which compromises accessibility. `id` and `for` linkages are preferred when visible text exists, while `aria-label` provides a fallback where a visible label is missing or less strictly associated.
+
+**Action:** Consistently add `aria-label`s or correctly link `label` elements to their target `id` using the `for` attribute when introducing or modifying form fields.
+## 2026-05-26 - [Diagnosing Global UI Breakages]
+**Learning:** A single syntax error (like an unclosed brace) inside an inline HTML `<script>` block will halt execution of the entire script. This can cause unrelated features (like loading a Navbar or setting up event listeners) to completely fail, resulting in a broken UI.
+**Action:** When diagnosing complete UI failures in Vanilla JS, check for syntax errors using strict parsers like Acorn on extracted script contents, as standard linters often ignore inline HTML scripts.
+
+## 2024-07-03 - Icon-only buttons with partial text missing ARIA labels
+**Learning:** Buttons that appear to have text but primarily rely on icons for their meaning (like "Add Manager" or "Invite" buttons with Lucide icons) can still benefit from explicit `aria-label`s, especially when they are dynamically rendered or placed in complex UI structures where standard screen readers might struggle to interpret the inline text content alongside the SVG/icon properly. Adding `aria-label` provides a robust, fail-safe announcement.
+**Action:** Even if a button contains visible text, if its primary visual affordance is an icon (especially injected via `data-lucide`), consider adding an explicit `aria-label` to ensure unambiguous screen reader support, taking care not to unnecessarily duplicate information if the text is perfectly semantic.
+
+## 2024-08-03 - Missing ARIA Labels on Icon-Only Modal Close Buttons
+**Learning:** Icon-only buttons using libraries like Lucide (e.g., `<button><i data-lucide="x"></i></button>`) often lack implicit accessible names, causing screen readers to read them simply as "button".
+**Action:** When implementing or reviewing modal close buttons or any icon-only interactive elements in this app's components, always verify the presence of an explicit `aria-label` attribute describing the action (e.g., "Close tutorial", "Close announcement modal") to ensure keyboard and screen reader accessibility.
+
+## 2024-10-27 - Form accessibility enhancements on mismatched labels
+**Learning:** Some explicitly rendered `<label>` elements were missing the `for` attribute completely, or mapping to the wrong `id` (e.g. `taskTitle` instead of `taskTitle1` or `taskDesc` instead of `taskDesc1`). Adding `aria-label`s to these input fields that already have explicitly rendered labels causes screen readers to read redundant tags.
+**Action:** When adding accessibility to form inputs, always verify if there is already a label rendered above the element. If so, fix the `for` and `id` mapping instead of slapping a redundant `aria-label` attribute on the element.

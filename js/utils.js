@@ -59,6 +59,6 @@ export function getFirebaseErrorMessage(error) {
     }
 }
 
-export function logManagerError(actionMessage, error) {
-    console.error("Manager Troubleshooting: " + actionMessage, error);
+export function logManagerError(actionMessage, ...args) {
+    console.error("Manager Troubleshooting: " + actionMessage, ...args);
 }
