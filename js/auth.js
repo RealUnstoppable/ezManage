@@ -53,7 +53,7 @@ auth.onAuthStateChanged(async (user) => {
                 }
             }
         } catch (error) {
-            logManagerError("Error fetching user document in auth state change for uid: " + user.uid, error);
+            logManagerError("Error fetching user document in auth state change for uid:", user.uid, error);
         }
     } else {
         if (authLink) {

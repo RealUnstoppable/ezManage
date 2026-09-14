@@ -145,7 +145,7 @@ exports.createCheckoutSession = onRequest({invoker: "public"}, (req, res) => {
 
       res.status(200).json({url: session.url});
     } catch (err) {
-      logManagerError("Checkout Error for uid: " + uid, err);
+      logManagerError("Checkout Error for uid:", uid, err);
       res.status(500).json({error: err.message});
     }
   });
@@ -233,7 +233,7 @@ exports.cancelSubscription = onRequest({invoker: "public"}, (req, res) => {
       );
       res.status(200).json({success: true});
     } catch (err) {
-      logManagerError(`Cancel Error for customerId: ${customerId}`, err);
+      logManagerError("Cancel Error for customerId:", customerId, err);
       res.status(500).json({error: err.message});
     }
   });
@@ -320,7 +320,7 @@ exports.manageTasks = functions.https.onCall(async (data, context) => {
 
     throw new HttpsError("invalid-argument", "Invalid action");
   } catch (error) {
-    logManagerError(`Manage Tasks Error for uid: ${uid}`, error);
+    logManagerError("Manage Tasks Error for uid:", uid, error);
     if (error instanceof HttpsError) {
       throw error;
     }
@@ -414,7 +414,7 @@ exports.manageShiftNotes = functions.https.onCall(async (data, context) => {
     throw new HttpsError(
         "invalid-argument", "Invalid action");
   } catch (error) {
-    logManagerError("Shift Note Error for uid: " + uid, error);
+    logManagerError("Shift Note Error for uid:", uid, error);
 
     throw new HttpsError("internal", error.message);
   }
@@ -521,7 +521,7 @@ exports.manageEmployees = functions.https.onCall(async (data, context) => {
 
     throw new HttpsError("invalid-argument", "Invalid action");
   } catch (error) {
-    logManagerError("Manage Employees Error for uid: " + uid, error);
+    logManagerError("Manage Employees Error for uid:", uid, error);
     if (error instanceof HttpsError) {
       throw error;
     }
@@ -704,7 +704,7 @@ exports.manageShiftGroups = functions.https.onCall(async (data, context) => {
 
     throw new HttpsError("invalid-argument", "Invalid action");
   } catch (error) {
-    logManagerError("Shift Groups Error for uid: " + uid, error);
+    logManagerError("Shift Groups Error for uid:", uid, error);
 
     if (error instanceof HttpsError) {
       throw error;
@@ -820,7 +820,7 @@ exports.manageIncidents = functions.https.onCall(async (data, context) => {
 
     throw new HttpsError("invalid-argument", "Invalid action");
   } catch (error) {
-    logManagerError(`Manage Incidents Error for uid: ${uid}`, error);
+    logManagerError("Manage Incidents Error for uid:", uid, error);
     if (error instanceof HttpsError) {
       throw error;
     }

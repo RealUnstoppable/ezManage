@@ -130,7 +130,7 @@ async function handlePlaceOrder(e) {
         setTimeout(() => window.location.href = './account.html', 3000);
 
     } catch (error) {
-        logManagerError("Error processing checkout for uid: " + currentUser.uid, error);
+        logManagerError("Error processing checkout for uid:", currentUser.uid, error);
 
         messageEl.textContent = 'There was an error placing your order. Please try again.';
         messageEl.style.color = 'var(--accent-red)';
@@ -147,7 +147,7 @@ auth.onAuthStateChanged(async (user) => {
             const docSnap = await userCartRef.get();
             userCart = docSnap.exists ? docSnap.data().items : {};
         } catch (error) {
-            logManagerError("Error loading cart for uid: " + user.uid, error);
+            logManagerError("Error loading cart for uid:", user.uid, error);
 
             userCart = {};
         }
