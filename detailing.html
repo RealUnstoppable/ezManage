@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Unstoppable Auto Spa | Premium Detailing</title>
     <meta name="description" content="Premium mobile car detailing in Buford, GA. Ceramic coating, paint correction, and interior restoration.">
-    
+
     <link rel="icon" type="image/png" href="/images/dreams-favicon.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -162,7 +162,7 @@
             padding: 80px 40px;
             text-align: center;
         }
-        
+
         .gallery-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -199,7 +199,7 @@
                 <span class="hero-badge">Serving Buford, GA</span>
                 <h1>Unstoppable <br> <span style="color: var(--accent-blue);">Auto Spa</span></h1>
                 <p class="section-subtitle">
-                    Elevate your vehicle's aesthetic with professional detailing. 
+                    Elevate your vehicle's aesthetic with professional detailing.
                     From ceramic coating to deep interior restoration, we treat every car like a trophy.
                 </p>
                 <a href="#booking" class="cta-button" style="padding: 15px 40px; font-size: 1.1rem;">Book Appointment</a>
@@ -254,7 +254,7 @@
         <section class="portfolio-section">
             <h2 class="reveal">The Results</h2>
             <p class="section-subtitle reveal">Consistent quality. Attention to detail. Unstoppable shine.</p>
-            
+
             <div class="gallery-grid reveal">
                 <div class="gallery-item"><img src="/images/dreams-lobby.jpg" style="width:100%; height:100%; object-fit:cover; opacity:0.5; border-radius:12px;" alt="Detailing Work 1"></div>
                 <div class="gallery-item"><img src="/images/Unstoppable Collection Logo.png" style="width:100%; height:100%; object-fit:cover; opacity:0.5; border-radius:12px;" alt="Detailing Work 2"></div>
@@ -269,7 +269,7 @@
             <div class="booking-container reveal">
                 <h2 style="text-align: center; margin-bottom: 10px;">Reserve Your Spot</h2>
                 <p style="text-align: center; color: var(--text-secondary); margin-bottom: 30px;">We come to you. Mobile service available in Buford and surrounding areas.</p>
-                
+
                 <form id="booking-form">
                     <div class="form-grid">
                         <div>
@@ -306,7 +306,7 @@
                             <textarea id="notes" rows="3" placeholder="e.g. Dog hair removal needed, scratch on rear bumper..."></textarea>
                         </div>
                     </div>
-                    
+
                     <button type="submit" class="cta-button" style="width: 100%; margin-top: 30px; border: none; cursor: pointer;">Confirm Booking Request</button>
                     <p id="form-status" style="text-align: center; margin-top: 15px; font-size: 0.9rem;"></p>
                 </form>
@@ -325,14 +325,14 @@
 
     <script type="module">
         import { loadNavbar } from '/js/navbar.js';
-        
+
         // Load Navbar
         document.addEventListener('DOMContentLoaded', () => {
             // Inject navbar logic manually since the placeholder might differ
             const header = document.querySelector('.main-header');
             if(header) {
                 // We use the exported function from your existing codebase
-                loadNavbar(); 
+                loadNavbar();
             }
         });
     </script>
@@ -375,7 +375,7 @@
             try {
                 // Save to 'detailing_requests' collection in your existing Firestore
                 await addDoc(collection(db, "detailing_requests"), formData);
-                
+
                 statusMsg.textContent = "Request received! We will contact you shortly to confirm.";
                 statusMsg.style.color = "var(--accent-green)";
                 bookingForm.reset();
