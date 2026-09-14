@@ -1,3 +1,6 @@
+const functions = require('firebase-functions');
+const HttpsError = functions.https.HttpsError;
+
 /**
  * Utility functions shared across Cloud Functions
  */
@@ -70,6 +73,8 @@ function logManagerError(actionMessage, error) {
 }
 
 module.exports = {
+  verifyDocAndAuth,
+  getActualOrgId,
   logManagerError,
   parseNum,
   getDayOfWeek,
