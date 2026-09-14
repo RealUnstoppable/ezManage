@@ -5076,7 +5076,11 @@ function checkAndRenderOrgControls() {
                 }
             } catch (e) {
                 console.error("Manager Troubleshooting: Error creating shift group:", e);
-                alert("Failed to create group: " + e.message);
+                if (e.code === 'unavailable' || e.code === 'auth/network-request-failed' || e.code === 'firestore/unavailable') {
+                    alert("Network error: Could not connect to the server. Please check your connection.");
+                } else {
+                    alert("Failed to create group: " + e.message);
+                }
             }
         }
 

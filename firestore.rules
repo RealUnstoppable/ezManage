@@ -44,6 +44,7 @@ service cloud.firestore {
       );
       allow delete: if request.auth != null && (
           resource.data.get('authorId', null) == request.auth.uid ||
+          resource.data.get('orgId', null) == request.auth.uid ||
           isAdmin()
       );
     }
@@ -109,7 +110,7 @@ service cloud.firestore {
                     && request.resource.data.get('orgId', null) == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('orgId', null);
       allow update: if request.auth != null && (
           resource.data.get('authorId', null) == request.auth.uid ||
-          (resource.data.get('orgId', null) != null && resource.data.get('orgId', null) == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('orgId', null)) ||
+          (resource.data.get('orgId', null) != null && (resource.data.get('orgId', null) == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('orgId', null) || resource.data.get('orgId', null) == request.auth.uid)) ||
           isAdmin()
       ) && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['orgId']);
       allow delete: if request.auth != null && (
