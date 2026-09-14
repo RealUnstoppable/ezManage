@@ -29,3 +29,7 @@
 
 ## Summary
 The deep scan primarily highlighted critical XSS vulnerabilities related to string interpolation in inline event handlers. These have been remediated through event delegation. The application is otherwise structurally sound and follows proper vanilla DOM manipulation patterns.
+
+## 6. Duplicate IDs and Syntax Errors
+- Cleaned up duplicated HTML `<input>` IDs in `index.html` Modals for 'Join Group', 'Create Group', and 'Maintenance' using Node.js replacements with exact match.
+- Fixed a `SyntaxError: Identifier 'lastGreeting' has already been declared` in `js/script.js` by replacing duplicate global definitions with a single properly scoped `let lastGreeting = "";` variable in the updateGreeting closure state tracker.
