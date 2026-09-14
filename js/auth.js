@@ -1,21 +1,10 @@
-import { getFirebaseErrorMessage, logManagerError } from './utils.js';
+import { getFirebaseErrorMessage, logManagerError, escapeHTML } from './utils.js';
 
 
 
-const firebaseConfig = {
-  apiKey: "AIzaSyBgrI9HwJPSc5b4pu2Egsv4DE7shNwptSw",
-  authDomain: "ezmanage.realunstoppable.store",
-  projectId: "dts-hub-website",
-  storageBucket: "dts-hub-website.firebasestorage.app",
-  messagingSenderId: "48345990988",
-  appId: "1:48345990988:web:e3662c9b508168546471e9",
-  measurementId: "G-ZN3YJPHVGX"
-};
+import { auth, db } from '../firebase.js';
 
-if (!window.firebase) { console.error("Firebase Compat SDK must be loaded before auth.js"); }
-
-export const auth = window.firebase ? window.firebase.auth() : {};
-export const db = window.firebase ? window.firebase.firestore() : {};
+export { auth, db };
 
 export function getUserRedirectPath(userData) {
     return userData && userData.isAdmin ? 'admin.html' : 'index.html';
@@ -38,7 +27,7 @@ export async function fetchUserDoc(uid) {
     return fetchPromise;
 }
 
-const ADMIN_EMAIL = null;
+
 
 if (auth && auth.onAuthStateChanged) {
 auth.onAuthStateChanged(async (user) => {
@@ -59,7 +48,7 @@ auth.onAuthStateChanged(async (user) => {
 
                 if (membershipStatusContainer) {
                     const level = userData.membershipLevel || 'free';
-                    membershipStatusContainer.innerHTML = `<span class="membership-status ${level}">${level}</span>`;
+                    membershipStatusContainer.innerHTML = `<span class="membership-status ${escapeHTML(level)}">${escapeHTML(level)}</span>`;
                 }
             }
         } catch (error) {
@@ -75,6 +64,8 @@ auth.onAuthStateChanged(async (user) => {
         }
     }
 });
+
+}
 
 if (document.getElementById('auth-form')) {
     const form = document.getElementById('auth-form');
@@ -127,7 +118,7 @@ if (document.getElementById('auth-form')) {
                 window.location.replace('index.html');
             } catch (error) {
                 logManagerError("Sign up error for email: " + email, error);
-                if (error.code === 'auth/network-request-failed' || error.code === 'unavailable') {
+                if (error.code === 'auth/network-request-failed' || error.code === 'unavailable' || error.code === 'firestore/unavailable') {
                     showMessage("Network error: Please check your connection or whitelist our domain.");
                 } else {
                     showMessage(getFirebaseErrorMessage(error));
@@ -149,7 +140,7 @@ if (document.getElementById('auth-form')) {
                 }
             } catch (error) {
                 logManagerError("Sign in error for email: " + email, error);
-                if (error.code === 'auth/network-request-failed' || error.code === 'unavailable') {
+                if (error.code === 'auth/network-request-failed' || error.code === 'unavailable' || error.code === 'firestore/unavailable') {
                     showMessage("Network error: Please check your connection or whitelist our domain.");
                 } else {
                     showMessage(getFirebaseErrorMessage(error));
