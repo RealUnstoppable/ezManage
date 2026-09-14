@@ -85,7 +85,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         };
 
-        let lastGreeting = ""; // ⚡ Bolt Optimization: Cache state to prevent layout thrashing
 
         const updateGreeting = () => {
             const now = new Date();
@@ -109,12 +108,10 @@ document.addEventListener('DOMContentLoaded', () => {
                  }
                  shouldPlayVideo = false;
             }
-
             else if (now >= newYear2026 && now <= endOfCelebration) {
                 newGreeting = "Happy New Year!";
                 shouldPlayVideo = true;
             }
-
             else {
                 const diff = newYear2026 - now;
 
@@ -135,6 +132,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (newGreeting !== lastGreeting) {
                 greetingElement.textContent = newGreeting;
                 lastGreeting = newGreeting;
+                manageVideoBackground(shouldPlayVideo);
             }
 
             manageVideoBackground(shouldPlayVideo);
