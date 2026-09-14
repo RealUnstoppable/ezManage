@@ -1,0 +1,22 @@
+directories:
+  output: dist
+  buildResources: build
+appId: com.realunstoppable.ezmanage
+productName: ezManage
+files:
+  - filter:
+      - '**/*'
+      - '!downloads/*'
+      - '!.github/*'
+      - '!.jules/*'
+      - '!tests/*'
+      - '!client-tests/*'
+      - '!functions/*'
+      - '!dts-hub-website/*'
+      - '!ManagerPro.jpg'
+      - '!*.dmg'
+mac:
+  target: dmg
+  category: public.app-category.business
+  identity: null
+electronVersion: 41.4.0

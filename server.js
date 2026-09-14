@@ -6,7 +6,8 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-const stripe = Stripe(""); // 🔴 replace
+require("dotenv").config();
+const stripe = Stripe(process.env.STRIPE_SECRET || "sk_test_placeholder");
 
 app.post("/create-checkout-session", async (req, res) => {
   const { plan } = req.body;
@@ -36,8 +37,5 @@ app.post("/create-checkout-session", async (req, res) => {
   }
 });
 
-if (require.main === module) {
-  app.listen(3000, () => console.log("Server running on port 3000"));
-}
-
-module.exports = app;
+app.use(express.static(__dirname));
+app.listen(3000, () => console.log("Server running on port 3000"));

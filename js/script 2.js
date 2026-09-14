@@ -58,7 +58,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (greetingElement) {
         const updateGreeting = () => {
             const now = new Date();
-            
+
             // Define key dates for the event
             const newYear2026 = new Date('January 1, 2026 00:00:00');
             const endOfCelebration = new Date('January 1, 2026 23:59:59');
@@ -75,22 +75,22 @@ document.addEventListener('DOMContentLoaded', () => {
                      greetingElement.textContent = "Good Evening.";
                  }
                  if (heroSection) heroSection.classList.remove('fireworks-bg');
-            } 
+            }
             // STATE 2: New Year's Day Celebration (Jan 1st, 2026)
             else if (now >= newYear2026 && now <= endOfCelebration) {
                 greetingElement.textContent = "Happy New Year!";
                 if (heroSection) heroSection.classList.add('fireworks-bg');
-            } 
+            }
             // STATE 3: Countdown to 2026 (Right Now)
             else {
                 const diff = newYear2026 - now;
-                
+
                 if (diff > 0) {
                     const days = Math.floor(diff / (1000 * 60 * 60 * 24));
                     const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
                     const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
                     const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-                    
+
                     // Updates the text to the countdown
                     greetingElement.textContent = `New Year in: ${days}d ${hours}h ${minutes}m ${seconds}s`;
                 }
