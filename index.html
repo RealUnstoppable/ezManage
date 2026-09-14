@@ -4553,7 +4553,7 @@ function checkAndRenderOrgControls() {
             } catch (err) {
                 console.error("Error posting note", err);
                 if (err.code === 'unavailable' || err.code === 'auth/network-request-failed' || err.code === 'firestore/unavailable') {
-                    alert("Network error: Could not connect to the server. Please check your connection.");
+                    alert("Network error: Could not connect to the server. Please check your connection or whitelist the domain.");
                 } else {
                     alert("Failed to post note: " + err.message);
                 }
