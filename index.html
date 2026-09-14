@@ -936,7 +936,7 @@
                             <label for="shiftManager"
                                 class="text-[10px] font-black uppercase tracking-widest text-slate-400">Shift
                                 Manager</label>
-                            <input type="text" id="shiftManager" placeholder="Enter Name">
+                            <input type="text" id="shiftManager" aria-label="Shift Manager" placeholder="Enter Name">
                         </div>
                         <div class="space-y-2">
                             <label for="shiftDate"
@@ -998,7 +998,7 @@
                                         <label for="prepNotes"
                                             class="text-[10px] font-black uppercase tracking-widest text-slate-400">Prep
                                             Notes</label>
-                                        <textarea id="prepNotes" placeholder="e.g. Prepped 8 pans of lettuce..."
+                                        <textarea id="prepNotes" aria-label="Prep Notes" placeholder="e.g. Prepped 8 pans of lettuce..."
                                             class="h-32"></textarea>
                                     </div>
                                 </div>
@@ -1007,7 +1007,7 @@
                                         <label for="beefCook"
                                             class="text-[10px] font-black uppercase tracking-widest text-slate-400">Main
                                             Prep Count (Beef/Protein)</label>
-                                        <input type="text" id="beefCook" placeholder="Cooked Count">
+                                        <input type="text" id="beefCook" aria-label="Cooked Count" placeholder="Cooked Count">
                                     </div>
                                     <div class="space-y-2">
                                         <label for="beefTempered"
@@ -4023,7 +4023,11 @@
                     }).join('');
                 }, err => {
                     console.error("Error fetching tickets:", err);
-                    container.innerHTML = `<div class="text-red-500 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl text-center">Failed to load tickets: ${escapeHTML(err.message)}</div>`;
+                    container.innerHTML = '';
+                    const errDiv = document.createElement('div');
+                    errDiv.className = 'text-red-500 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl text-center';
+                    errDiv.textContent = `Failed to load tickets: ${err.message}`;
+                    container.appendChild(errDiv);
                 });
         }
 
@@ -5848,7 +5852,11 @@ function checkAndRenderOrgControls() {
                     lucide.createIcons();
                 }
             } catch (error) {
-                container.innerHTML = `<div class="col-span-1 md:col-span-2 text-red-500 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl text-center">Failed to load roster: ${escapeHTML(error.message)}</div>`;
+                container.innerHTML = '';
+                const errDiv = document.createElement('div');
+                errDiv.className = 'col-span-1 md:col-span-2 text-red-500 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl text-center';
+                errDiv.textContent = `Failed to load roster: ${error.message}`;
+                container.appendChild(errDiv);
             }
         }
 
