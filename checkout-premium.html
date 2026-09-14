@@ -17,7 +17,7 @@
             margin: 0 auto;
             padding: 120px 20px 60px; /* More padding top, mobile-first padding */
         }
-        
+
         .checkout-layout {
             display: flex;
             flex-direction: column-reverse; /* Mobile-first: Summary on top */
@@ -30,7 +30,7 @@
             border-radius: 16px;
             padding: 25px;
         }
-        
+
         /* Desktop: Two-column layout */
         @media (min-width: 768px) {
             .checkout-layout {
@@ -166,7 +166,7 @@
             background-color: #0070ba;
             color: white;
         }
-        
+
         .placeholder-note {
              font-size: 0.8rem;
              color: var(--text-secondary);
@@ -177,10 +177,11 @@
     </style>
 </head>
 <body>
-    
+
    <header class="main-header">
     </header>
-        
+
+</header>
 <script type="module">
       import { auth, db } from '/js/auth.js';
       import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
@@ -203,7 +204,7 @@
                         <span>Total</span>
                         <span>$5.34</span>
                     </div>
-                    
+
                     <form class="promo-form" id="promo-form">
                         <input type="text" id="promo-code" class="promo-input" placeholder="Promo Code">
                         <button type="submit" class="promo-btn">Apply</button>
@@ -216,11 +217,11 @@
                 <div class="checkout-payment-card">
                     <h2>Payment Details</h2>
                     <p class="placeholder-note">Payment integration is a placeholder.</p>
-                    
+
                     <button class="payment-btn btn-stripe">Pay $5.34 with Card</button>
-                    
+
                     <div class="payment-separator">OR</div>
-                    
+
                     <button class="payment-btn btn-apple-pay">Pay with Apple Pay</button>
                     <button class="payment-btn btn-paypal">Pay with PayPal</button>
 
@@ -251,4 +252,3 @@
     import { loadNavbar } from './js/navbar.js';
     document.addEventListener('DOMContentLoaded', loadNavbar);
 </script>
-   

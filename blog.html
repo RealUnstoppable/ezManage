@@ -1,87 +1,80 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-     <script type="module" src="/js/theme-loader.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Blog | DTS HUB</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="icon" type="image/png" href="/images/dreams-favicon.png">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/css/style.css">
-    <link rel="stylesheet" href="/css/blog.css">
-    <link rel="stylesheet" href="/css/themes.css">
-</head>
-<body>
-<header class="main-header">
-       
-    </header>
+    <title>Blog & News | Unstoppable Platform Updates</title>
+    <link rel="icon" type="image/jpeg" href="ManagerPro.jpg">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/themes.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <script type="module">
-      import { auth, db } from '/js/auth.js';
-      import { doc, getDoc } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
-
-      const authLink = document.getElementById('auth-link');
-    </script>
-    <main class="blog-main">
-        <section class="blog-header">
-            <h1>Blogs</h1>
-            <p>News, updates, and behind-the-scenes looks at the Unstoppable ecosystem.</p>
-        </section>
-
-        <section class="blog-grid">
-            <article class="blog-post-card">
-                <img src="/images/UnstoppableHoodieModel300x300.png" alt="Unstoppable brand representative" class="blog-post-image">
-                <div class="blog-post-content">
-                    <div class="post-meta">
-                        <span>July 22, 2025</span> &bull; <span>Community</span>
-                    </div>
-                    <h3>The Philosophy Behind Unstoppable: More Than a Brand</h3>
-                    <p>We've always seen Unstoppable as more than just a name for high-tier gameplay. It's a mindset. It's about pushing boundaries, celebrating gaming culture, and building a community that shares a passion for excellence... </p>
-                    <a href="the-philosophy-behind-unstoppable-more-than-a-brand.html" class="read-more-btn">Read More</a>
-                </div>
-            </article>
-
-            <article class="blog-post-card">
-                <img src="/images/DreamsTimeSkipModel300x300.jpg" alt="Dreams TimeSkip concept art" class="blog-post-image">
-                <div class="blog-post-content">
-                    <div class="post-meta">
-                        <span>July 18, 2025</span> &bull; <span>Development</span>
-                    </div>
-                    <h3>A First Look at Dreams TimeSkip: The Road to 2027</h3>
-                    <p>The question we get most often is: what exactly is Dreams TimeSkip? It’s an epic Minecraft saga, but it’s also an interactive world with a rich story, unique NPCs, and live events that will shape its future. The 2027 release may seem far away, but we're building something truly special... </p>
-                    <a href="#" class="read-more-btn">Read More</a>
-                </div>
-            </article>
-
-            <article class="blog-post-card">
-                <img src="/images/HarmonyTunesModel300x300.png" alt="HarmonyTunes branded cap" class="blog-post-image">
-                <div class="blog-post-content">
-                    <div class="post-meta">
-                        <span>July 15, 2025</span> &bull; <span>Music</span>
-                    </div>
-                    <h3>HarmonyTunes: How We Find the Internet's Biggest Hits</h3>
-                    <p>Every day, our TikTok is filled with the tracks you can't get out of your head. But how do we do it? Our process is a mix of algorithmic analysis and human curation. With the official HarmonyTunes app launching next year, we're excited to give you even more control over your daily dose of music... </p>
-                    <a href="#" class="read-more-btn">Read More</a>
-                </div>
-            </article>
-        </section>
-    </main>
-    
-    <footer class="main-footer"></footer> 
-
-   <script type="module">
         import { loadNavbar } from './js/navbar.js';
-        import { loadFooter } from './js/footer.js'; // Add this line
-        
+        import { loadFooter } from './js/footer.js';
         document.addEventListener('DOMContentLoaded', () => {
             loadNavbar();
-            loadFooter(); // Add this line
+            loadFooter();
+            if (window.lucide) window.lucide.createIcons();
         });
     </script>
+</head>
+<body class="bg-slate-950 text-slate-100 font-sans min-h-screen flex flex-col pt-20">
+    <header class="main-header"></header>
 
-    <script src="/js/script.js"></script>
-    
-   
+    <main class="flex-grow max-w-7xl mx-auto px-6 py-12 w-full">
+        <div class="text-center max-w-3xl mx-auto mb-16">
+            <span class="inline-flex items-center gap-2 px-3 py-1 text-xs font-black uppercase tracking-widest text-sky-400 bg-sky-950/80 rounded-full mb-4 border border-sky-800/50">
+                <i data-lucide="newspaper" class="w-3.5 h-3.5"></i> News & Announcements
+            </span>
+            <h1 class="text-4xl md:text-6xl font-black text-white tracking-tight mb-4">
+                Official <span class="text-sky-400">Unstoppable Blog</span>
+            </h1>
+            <p class="text-slate-400 text-lg">
+                Read about software releases, store management strategies, music drops, and community updates.
+            </p>
+        </div>
+
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <article class="bg-slate-900 rounded-3xl p-6 border border-slate-800 flex flex-col justify-between hover:border-sky-500/50 transition-all">
+                <div>
+                    <span class="text-xs font-bold uppercase tracking-wider text-sky-400 bg-sky-950 px-2.5 py-1 rounded-md">Feature Update</span>
+                    <h3 class="text-xl font-bold text-white mt-4 mb-2">ezManage 2.0 Released: Real-Time Team Analytics & Cloud Sync</h3>
+                    <p class="text-slate-400 text-sm mb-4">Discover the new zero-data-loss architecture, instant shift note exports, and performance tracking.</p>
+                </div>
+                <div class="text-xs text-slate-500 pt-4 border-t border-slate-800 flex justify-between items-center">
+                    <span>August 2026</span>
+                    <span class="text-sky-400 font-semibold">5 min read</span>
+                </div>
+            </article>
+
+            <article class="bg-slate-900 rounded-3xl p-6 border border-slate-800 flex flex-col justify-between hover:border-sky-500/50 transition-all">
+                <div>
+                    <span class="text-xs font-bold uppercase tracking-wider text-purple-400 bg-purple-950 px-2.5 py-1 rounded-md">Music Drop</span>
+                    <h3 class="text-xl font-bold text-white mt-4 mb-2">HarmonyTunes Summer Single Release</h3>
+                    <p class="text-slate-400 text-sm mb-4">Listen to the latest original single "Deorc Decuple" by FormantX, now streaming exclusively on HarmonyTunes.</p>
+                </div>
+                <div class="text-xs text-slate-500 pt-4 border-t border-slate-800 flex justify-between items-center">
+                    <span>July 2026</span>
+                    <span class="text-purple-400 font-semibold">3 min read</span>
+                </div>
+            </article>
+
+            <article class="bg-slate-900 rounded-3xl p-6 border border-slate-800 flex flex-col justify-between hover:border-sky-500/50 transition-all">
+                <div>
+                    <span class="text-xs font-bold uppercase tracking-wider text-emerald-400 bg-emerald-950 px-2.5 py-1 rounded-md">Management Tips</span>
+                    <h3 class="text-xl font-bold text-white mt-4 mb-2">5 Ways to Save 10 Hours a Week on Shift Closing</h3>
+                    <p class="text-slate-400 text-sm mb-4">A practical guide for fast food and retail shift managers to eliminate paperwork bottlenecks and streamline audits.</p>
+                </div>
+                <div class="text-xs text-slate-500 pt-4 border-t border-slate-800 flex justify-between items-center">
+                    <span>June 2026</span>
+                    <span class="text-emerald-400 font-semibold">7 min read</span>
+                </div>
+            </article>
+        </div>
+    </main>
+
+    <footer class="main-footer"></footer>
 </body>
 </html>
