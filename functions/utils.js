@@ -50,46 +50,12 @@ function escapeHTML(str) {
 }
 
 
-
-
 /**
- * Helper to get a document, verify its existence, and verify its orgId.
+ * Adapts Gen2 parameters to a common format.
+ * @param {Object} data - The data object
+ * @param {Object} context - The context object
+ * @return {Object} The adapted parameters
  */
-async function verifyDocAndAuth(admin, collection, docId, expectedOrgId, notFoundMessage, unauthorizedMessage) {
-  const docRef = admin.firestore().collection(collection).doc(docId);
-  const docSnap = await docRef.get();
-
-  if (!docSnap.exists) {
-    throw new HttpsError("not-found", notFoundMessage);
-  }
-
-  if (docSnap.data().orgId !== expectedOrgId) {
-    throw new HttpsError("permission-denied", unauthorizedMessage);
-  }
-
-  return { docRef, docSnap };
-}
-
-
-/**
- * Helper to get the actual organization ID for a user.
- */
-async function getActualOrgId(admin, uid) {
-  try {
-    const userDoc = await admin.firestore().collection("users").doc(uid).get();
-    if (!userDoc.exists) {
-      throw new HttpsError("not-found", "User not found");
-    }
-    return userDoc.data().orgId || null;
-  } catch (error) {
-    logManagerError("Error getting actual org ID for uid: " + uid, error);
-    if (error instanceof HttpsError) {
-      throw error;
-    }
-    throw new HttpsError("internal", error.message);
-  }
-}
-
 function adaptGen2Params(data, context) {
   if (data && typeof data === "object" && "rawRequest" in data && "auth" in data) {
     return {data: data.data, context: data};
@@ -97,6 +63,11 @@ function adaptGen2Params(data, context) {
   return {data, context};
 }
 
+/**
+ * Logs a manager error.
+ * @param {string} actionMessage - The action message
+ * @param {Error} error - The error object
+ */
 function logManagerError(actionMessage, error) {
   console.error("Manager Troubleshooting: " + actionMessage, error);
 }

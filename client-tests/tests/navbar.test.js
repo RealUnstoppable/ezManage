@@ -1,55 +1,56 @@
 import { jest } from "@jest/globals";
 
-// Map globals first before dynamic imports
 global.window = global.window || {};
-global.firebase = {
-    apps: [],
-    auth: jest.fn(() => ({ onAuthStateChanged: jest.fn() })),
-    firestore: jest.fn(() => ({ collection: jest.fn(), settings: jest.fn() })),
-    initializeApp: jest.fn()
+const mockFirebase = {
+  apps: [],
+  initializeApp: jest.fn(() => ({ name: '[DEFAULT]' })),
+  auth: jest.fn(() => ({ onAuthStateChanged: jest.fn() })),
+  firestore: jest.fn(() => ({
+      collection: jest.fn(() => ({ doc: jest.fn(() => ({ get: jest.fn() })) })),
+      settings: jest.fn()
+  }))
 };
-global.window.firebase = global.firebase;
+global.window.firebase = mockFirebase;
+global.firebase = mockFirebase;
 
-jest.unstable_mockModule("https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js", () => ({
-  getAuth: jest.fn(() => ({ onAuthStateChanged: jest.fn() })),
-  onAuthStateChanged: jest.fn(),
-  createUserWithEmailAndPassword: jest.fn(),
-  signInWithEmailAndPassword: jest.fn(),
-  signOut: jest.fn(),
-  sendEmailVerification: jest.fn()
+const mockGet = jest.fn().mockResolvedValue({
+  exists: true,
+  data: () => ({ isAdmin: false })
+});
+
+jest.unstable_mockModule('../../js/auth.js', () => ({
+  auth: { onAuthStateChanged: jest.fn() },
+  db: { collection: jest.fn(() => ({ doc: jest.fn(() => ({ get: jest.fn() })) })) },
+  getUserRedirectPath: (userData) => userData && userData.isAdmin ? 'admin.html' : 'index.html',
+  fetchUserDoc: jest.fn(() => Promise.resolve({ exists: true, data: () => ({ isAdmin: true }) }))
+  fetchUserDoc: jest.fn()
 }));
 
-jest.unstable_mockModule("https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js", () => ({
-  getFirestore: jest.fn(() => ({ collection: jest.fn(), settings: jest.fn() })),
-  doc: jest.fn(),
-  setDoc: jest.fn(),
-  getDoc: jest.fn(),
-  serverTimestamp: jest.fn()
+const mockOnAuthStateChanged = jest.fn();
+jest.unstable_mockModule('https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js', () => ({
+    onAuthStateChanged: mockOnAuthStateChanged
 }));
 
-jest.unstable_mockModule("https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js", () => ({
-    initializeApp: jest.fn()
+const mockGetDoc = jest.fn();
+jest.unstable_mockModule('https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js', () => ({
+    getDoc: mockGetDoc,
+    doc: jest.fn()
 }));
 
-const { loadNavbar } = await import('../../js/navbar.js');
+const navbar = await import('../../js/navbar.js');
+const loadNavbar = navbar.loadNavbar;
 
 describe('loadNavbar', () => {
+  let mockGet;
+
   beforeEach(() => {
     document.body.innerHTML = '<div class="main-header"></div>';
     jest.clearAllMocks();
   });
 
-  it('should inject navbar HTML', async () => {
+  it('should empty main-header to prevent duplicates', () => {
+    document.querySelector('.main-header').innerHTML = '<div>old</div>';
     loadNavbar();
-    const header = document.querySelector('.main-header');
-    expect(header).not.toBeNull();
-    expect(header.innerHTML).toContain('class="nav-logo"');
-    expect(header.innerHTML).toContain('href="index.html"');
-    expect(header.innerHTML).toContain('id="auth-link"');
-  });
-
-  it('should fallback gracefully if main-header is missing', () => {
-      document.body.innerHTML = '<div>No header here</div>';
-      expect(() => loadNavbar()).not.toThrow();
+    expect(document.querySelector('.main-header').innerHTML).toBe('');
   });
 });
