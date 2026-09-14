@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dreams TimeSkip | Immersive Story & Game</title>
+    <link rel="icon" type="image/jpeg" href="ManagerPro.jpg">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/themes.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script type="module">
+        import { loadNavbar } from './js/navbar.js';
+        import { loadFooter } from './js/footer.js';
+        document.addEventListener('DOMContentLoaded', () => {
+            loadNavbar();
+            loadFooter();
+            if (window.lucide) window.lucide.createIcons();
+        });
+    </script>
+</head>
+<body class="bg-slate-950 text-slate-100 font-sans min-h-screen flex flex-col pt-20">
+    <header class="main-header"></header>
+
+    <main class="flex-grow max-w-7xl mx-auto px-6 py-12 w-full">
+        <div class="relative rounded-3xl overflow-hidden bg-gradient-to-r from-purple-950 via-slate-900 to-sky-950 border border-slate-800 p-8 md:p-16 mb-16 shadow-2xl">
+            <div class="max-w-2xl">
+                <span class="inline-flex items-center gap-2 px-3 py-1 text-xs font-black uppercase tracking-widest text-purple-400 bg-purple-950/80 rounded-full mb-4 border border-purple-800/50">
+                    <i data-lucide="sparkles" class="w-3.5 h-3.5"></i> Interactive Gaming & Lore
+                </span>
+                <h1 class="text-4xl md:text-6xl font-black text-white tracking-tight mb-4">
+                    Dreams <span class="text-purple-400">TimeSkip</span>
+                </h1>
+                <p class="text-slate-300 text-lg mb-8 font-medium">
+                    Journey through futuristic timelines, unlock exclusive character models, and experience immersive storytelling.
+                </p>
+                <div class="flex flex-wrap gap-4">
+                    <a href="shop.html" class="bg-purple-600 hover:bg-purple-500 text-white font-bold px-6 py-3.5 rounded-xl text-sm transition-all flex items-center gap-2">
+                        <i data-lucide="shopping-bag" class="w-4 h-4"></i> View DTS Merch & Models
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-8">
+            <div class="bg-slate-900 rounded-3xl p-8 border border-slate-800">
+                <h3 class="text-2xl font-black text-white mb-4 flex items-center gap-3">
+                    <i data-lucide="book-open" class="text-purple-400"></i> The Lore & Timeline
+                </h3>
+                <p class="text-slate-300 font-medium leading-relaxed">
+                    Set in a dimension where time shifts alter reality, Dreams TimeSkip follows a crew navigating multi-layered timelines to safeguard key historical events.
+                </p>
+            </div>
+
+            <div class="bg-slate-900 rounded-3xl p-8 border border-slate-800">
+                <h3 class="text-2xl font-black text-white mb-4 flex items-center gap-3">
+                    <i data-lucide="shirt" class="text-sky-400"></i> Official Apparel
+                </h3>
+                <p class="text-slate-300 font-medium leading-relaxed">
+                    Grab the official DTS Model Tee in the store, crafted with high-definition character graphics and heavy-cotton comfort.
+                </p>
+            </div>
+        </div>
+    </main>
+
+    <footer class="main-footer"></footer>
+</body>
+</html>
