@@ -1,8 +1,7 @@
+import { logManagerError } from './utils.js';
 
 import { auth, db } from './auth.js';
-import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
-import { doc, getDoc, setDoc, serverTimestamp, runTransaction } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
-import { products, productMap } from './shop.js';
+import { products, productMap, calculateCartTotal } from './shop.js';
 
 let currentUser = null;
 let userCart = {};
@@ -15,11 +14,7 @@ function renderCheckoutPage() {
         return;
     }
 
-    const subtotal = Object.entries(userCart).reduce((sum, [productId, quantity]) => {
-
-        const product = productMap[productId];
-        return sum + (product.price * quantity);
-    }, 0);
+    const subtotal = calculateCartTotal(userCart, productMap);
     const tax = subtotal * 0.07;
     const total = subtotal + tax;
 
@@ -85,7 +80,7 @@ async function handlePlaceOrder(e) {
     const orderDetails = {
         userId: currentUser.uid,
         items: userCart,
-        orderDate: serverTimestamp(),
+        orderDate: window.firebase.firestore.FieldValue.serverTimestamp(),
         status: 'Processing',
         shippingInfo: {
             name: document.getElementById('name').value,
@@ -97,27 +92,27 @@ async function handlePlaceOrder(e) {
 
     try {
 
-        await runTransaction(db, async (transaction) => {
+        await db.runTransaction(async (transaction) => {
             // ⚡ Bolt Performance Optimization:
             // Pre-fetch all product_stats documents concurrently before writing to prevent N+1 query bottlenecks
             // and satisfy Firestore's strict read-before-write transaction constraints.
             const statDocs = await Promise.all(
                 Object.keys(userCart).map(productId =>
-                    transaction.get(doc(db, "product_stats", productId))
+                    transaction.get(db.collection("product_stats").doc(productId))
                 )
             );
 
             // 1. Create a new order document
-            const newOrderRef = doc(db, "orders", `${currentUser.uid}-${Date.now()}`);
+            const newOrderRef = db.collection("orders").doc(`${currentUser.uid}-${Date.now()}`);
             transaction.set(newOrderRef, orderDetails);
 
             // 2. Update product order counts
             statDocs.forEach((statDoc) => {
                 const productId = statDoc.id;
                 const quantity = userCart[productId];
-                const productStatRef = doc(db, "product_stats", productId);
+                const productStatRef = db.collection("product_stats").doc(productId);
 
-                if (!statDoc.exists()) {
+                if (!statDoc.exists) {
                     transaction.set(productStatRef, { orderedCount: quantity });
                 } else {
                     const newCount = statDoc.data().orderedCount + quantity;
@@ -126,7 +121,7 @@ async function handlePlaceOrder(e) {
             });
 
             // 3. Clear the user's cart
-            const userCartRef = doc(db, 'carts', currentUser.uid);
+            const userCartRef = db.collection('carts').doc(currentUser.uid);
             transaction.set(userCartRef, { items: {} });
         });
 
@@ -135,6 +130,8 @@ async function handlePlaceOrder(e) {
         setTimeout(() => window.location.href = './account.html', 3000);
 
     } catch (error) {
+        logManagerError("Error processing checkout for uid:", currentUser.uid, error);
+
         messageEl.textContent = 'There was an error placing your order. Please try again.';
         messageEl.style.color = 'var(--accent-red)';
         placeOrderBtn.disabled = false;
@@ -142,12 +139,18 @@ async function handlePlaceOrder(e) {
     }
 }
 
-onAuthStateChanged(auth, async (user) => {
+auth.onAuthStateChanged(async (user) => {
     if (user) {
         currentUser = user;
-        const userCartRef = doc(db, 'carts', user.uid);
-        const docSnap = await getDoc(userCartRef);
-        userCart = docSnap.exists() ? docSnap.data().items : {};
+        try {
+            const userCartRef = db.collection('carts').doc(user.uid);
+            const docSnap = await userCartRef.get();
+            userCart = docSnap.exists ? docSnap.data().items : {};
+        } catch (error) {
+            logManagerError("Error loading cart for uid:", user.uid, error);
+
+            userCart = {};
+        }
         renderCheckoutPage();
     } else {
         window.location.replace('/sign in beta.html');
