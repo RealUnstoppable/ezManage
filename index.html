@@ -2793,12 +2793,7 @@
                 localStorage.setItem('navTo', viewId);
                 return;
             }
-<<<<<<< HEAD
-            const restrictedViews = ['history', 'presets', 'performance', 'request', 'profile', 'shiftNotes', 'team', 'employees', 'timeoff', 'tasks', 'timeclock'];
-            if (!currentUser && restrictedViews.includes(viewId)) {
-=======
             if (!currentUser && (['history', 'presets', 'performance', 'request', 'profile', 'shiftNotes', 'team', 'employees', 'timeoff', 'tasks', 'announcements'].includes(viewId))) {
->>>>>>> main
                 viewId = 'auth';
             }
             if (viewId === 'maintenance' && currentUser) {
@@ -2821,14 +2816,9 @@
             if (viewId === 'incidents' && currentUser) {
                 fetchIncidents();
             }
-<<<<<<< HEAD
-            if (viewId === 'timeclock' && currentUser) {
-                fetchTimeLogs();
-=======
             if (viewId === 'recognition' && currentUser) {
                 fetchRecognitions();
                 populateRecognitionDropdown();
->>>>>>> main
             }
 
             document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
