@@ -16,7 +16,13 @@
 
     <script src="https://cdn.tailwindcss.com"></script>
     <script type="module">
-        import { escapeHTML } from '/js/utils.js';
+        import { escapeHTML } from './js/utils.js';
+        import { loadNavbar } from './js/navbar.js';
+        import { loadFooter } from './js/footer.js';
+        document.addEventListener('DOMContentLoaded', () => {
+            loadNavbar();
+            loadFooter();
+        });
         window.escapeHTML = escapeHTML;
     </script>
     <script>
@@ -36,6 +42,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-storage-compat.js"></script>
+    <script src="js/firebase-config.js"></script>
 
     <script src="https://unpkg.com/brain.js@2.0.0-beta.23/dist/browser.js"></script>
 
@@ -155,6 +162,7 @@
 </head>
 
 <body x-data="{ mobileMenu: false }">
+    <header class="main-header"></header>
 
     <nav class="fixed w-full z-50 glass-nav border-b border-slate-200/50 top-0 no-print">
         <div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
@@ -391,16 +399,7 @@
         function handleNavAccountClick() { navTo('profile'); }
         function signOut() { auth.signOut().then(() => window.location.href = 'index.html'); }
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyBgrI9HwJPSc5b4pu2Egsv4DE7shNwptSw",
-            authDomain: "dts-hub-website.firebaseapp.com",
-            projectId: "dts-hub-website",
-            storageBucket: "dts-hub-website.firebasestorage.app",
-            messagingSenderId: "48345990988",
-            appId: "1:48345990988:web:e3662c9b508168546471e9",
-            measurementId: "G-ZN3YJPHVGX"
-        };
-
+        const firebaseConfig = window.ezManageFirebaseConfig;
         const app = !window.firebase.apps.length ? window.firebase.initializeApp(firebaseConfig) : window.firebase.app();
         const auth = firebase.auth();
         const db = firebase.firestore();
@@ -887,6 +886,7 @@
             }
         }
     </script>
+    <footer class="main-footer"></footer>
 </body>
 
 </html>
