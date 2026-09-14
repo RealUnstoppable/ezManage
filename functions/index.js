@@ -425,10 +425,9 @@ exports.manageShiftNotes = functions.https.onCall(async (data, context) => {
  * Handles creation, updating, and deletion of employees.
  */
 exports.manageEmployees = functions.https.onCall(async (data, context) => {
-  if (data && typeof data === "object" && "rawRequest" in data && "auth" in data) {
-    context = data;
-    data = data.data;
-  }
+  const adapted = adaptGen2Params(data, context);
+  data = adapted.data;
+  context = adapted.context;
 
   if (!context || !context.auth) {
     throw new HttpsError("unauthenticated", "User must be logged in.");
@@ -720,10 +719,9 @@ exports.manageShiftGroups = functions.https.onCall(async (data, context) => {
  * Handles creation, reading, status updates, and deletion of incidents.
  */
 exports.manageIncidents = functions.https.onCall(async (data, context) => {
-  if (data && typeof data === "object" && "rawRequest" in data && "auth" in data) {
-    context = data;
-    data = data.data;
-  }
+  const adapted = adaptGen2Params(data, context);
+  data = adapted.data;
+  context = adapted.context;
 
   if (!context || !context.auth) {
     throw new HttpsError("unauthenticated", "User must be logged in.");
@@ -757,7 +755,7 @@ exports.manageIncidents = functions.https.onCall(async (data, context) => {
         type,
         status: "Open",
         reportedByUid: uid,
-        reportedByName: userDoc.data().name || "Anonymous",
+        reportedByName: context.auth.token.name || "Anonymous",
         orgId: actualOrgId,
         timestamp: admin.firestore.FieldValue.serverTimestamp(),
       };
@@ -835,10 +833,9 @@ exports.manageIncidents = functions.https.onCall(async (data, context) => {
  * Handles creation, reading, and deletion of waste logs.
  */
 exports.manageWaste = functions.https.onCall(async (data, context) => {
-  if (data && typeof data === "object" && "rawRequest" in data && "auth" in data) {
-    context = data;
-    data = data.data;
-  }
+  const adapted = adaptGen2Params(data, context);
+  data = adapted.data;
+  context = adapted.context;
 
   if (!context || !context.auth) {
     throw new HttpsError("unauthenticated", "User must be logged in.");
@@ -871,7 +868,7 @@ exports.manageWaste = functions.https.onCall(async (data, context) => {
         cost: Number(cost),
         reason,
         loggedByUid: uid,
-        loggedByName: userDoc.data().name || "Anonymous",
+        loggedByName: context.auth.token.name || "Anonymous",
         orgId: actualOrgId,
         timestamp: admin.firestore.FieldValue.serverTimestamp(),
       };

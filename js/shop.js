@@ -170,7 +170,7 @@ async function saveCart() {
             await setDoc(userCartRef, { items: cart });
         } catch (error) {
             logManagerError("Error saving cart to Firestore for uid: " + currentUser.uid, error);
-
+            throw error;
         }
     } else {
         localStorage.setItem('localCart', JSON.stringify(cart));
