@@ -139,12 +139,12 @@ async function handlePlaceOrder(e) {
     }
 }
 
-if (auth && auth.onAuthStateChanged) {
 auth.onAuthStateChanged(async (user) => {
     if (user) {
         currentUser = user;
         try {
-            const docSnap = await db.collection('carts').doc(user.uid).get();
+            const userCartRef = db.collection('carts').doc(user.uid);
+            const docSnap = await userCartRef.get();
             userCart = docSnap.exists ? docSnap.data().items : {};
         } catch (error) {
             logManagerError("Error loading cart for uid: " + user.uid, error);
@@ -156,4 +156,3 @@ auth.onAuthStateChanged(async (user) => {
         window.location.replace('/sign in beta.html');
     }
 });
-}

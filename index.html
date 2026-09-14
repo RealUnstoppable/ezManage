@@ -5324,6 +5324,7 @@ function checkAndRenderOrgControls() {
 
                     logs.forEach(log => {
                         const div = document.createElement('div');
+                        div.id = `waste-log-${escapeHTML(log.id)}`;
                         div.className = "card p-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4";
 
                         const dateStr = log.timestamp ? new Date(log.timestamp._seconds * 1000).toLocaleString() : 'Just now';
@@ -5354,12 +5355,15 @@ function checkAndRenderOrgControls() {
 
         async function deleteWasteLog(logId) {
             if (!confirm("Are you sure you want to permanently delete this waste log entry?")) return;
+            const logEl = document.getElementById('waste-log-' + escapeHTML(logId));
+            if (logEl) logEl.style.display = 'none'; // Optimistically hide
             try {
                 await callCloudFunction('manageWaste', { action: "delete", payload: { logId } });
                 fetchWasteLogs();
             } catch (err) {
-                console.error("Error deleting waste log:", err);
+                logManagerError("Error deleting waste log:", err);
                 alert("Failed to delete log.");
+                fetchWasteLogs(); // Revert on failure
             }
         }
 
@@ -5474,6 +5478,7 @@ function checkAndRenderOrgControls() {
                         const dateStr = incident.timestamp ? new Date(incident.timestamp._seconds * 1000).toLocaleString() : 'Just now';
 
                         const div = document.createElement('div');
+                        div.id = `incident-${escapeHTML(incident.id)}`;
                         div.className = `card p-6 border-l-4 ${incident.severity === 'Critical' ? 'border-l-red-500' : incident.severity === 'High' ? 'border-l-orange-500' : 'border-l-sky-500'}`;
 
                         div.innerHTML = `
@@ -5508,12 +5513,15 @@ function checkAndRenderOrgControls() {
 
         async function deleteIncident(incidentId) {
             if (!confirm("Are you sure you want to permanently delete this incident report?")) return;
+            const incEl = document.getElementById('incident-' + escapeHTML(incidentId));
+            if (incEl) incEl.style.display = 'none'; // Optimistically hide
             try {
                 await callCloudFunction('manageIncidents', { action: "delete", payload: { incidentId } });
                 fetchIncidents();
             } catch (err) {
-                console.error("Error deleting incident:", err);
+                logManagerError("Error deleting incident:", err);
                 alert("Failed to delete incident.");
+                fetchIncidents(); // Revert on failure
             }
         }
 

@@ -164,7 +164,8 @@ async function handleRemoveFromCart(productId) {
 async function saveCart() {
     if (currentUser) {
         try {
-            await db.collection('carts').doc(currentUser.uid).set({ items: cart });
+            const userCartRef = db.collection('carts').doc(currentUser.uid);
+            await userCartRef.set({ items: cart });
         } catch (error) {
             logManagerError("Error saving cart to Firestore for uid: " + currentUser.uid, error);
             throw error;
@@ -228,7 +229,6 @@ document.addEventListener('DOMContentLoaded', () => {
     renderProducts();
     setupEventListeners();
 
-    if (auth && auth.onAuthStateChanged) {
     auth.onAuthStateChanged(async (user) => {
         currentUser = user;
         const localCartData = localStorage.getItem('localCart');
@@ -236,7 +236,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (user) {
             try {
-                const docSnap = await db.collection('carts').doc(user.uid).get();
+                const userCartRef = db.collection('carts').doc(user.uid);
+                const docSnap = await userCartRef.get();
                 const firestoreCart = docSnap.exists ? docSnap.data().items : {};
 
                 const mergedCart = { ...firestoreCart };
@@ -260,5 +261,4 @@ document.addEventListener('DOMContentLoaded', () => {
         updateUserNav(user);
         renderCart();
     });
-    }
 });
