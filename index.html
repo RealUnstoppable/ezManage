@@ -4260,6 +4260,8 @@
                             orgTasksHtml.push(taskCard + revertBtn + deleteBtn + `</div></div>`);
                         }
                     });
+                    myTasksHtml = myTasksArr.join('');
+                    orgTasksHtml = orgTasksArr.join('');
 
                     if (myContainer) myContainer.innerHTML = myTasksHtml.join('') || '<p class="text-slate-500 text-center py-4">No tasks assigned to you right now. You\'re all caught up!</p>';
                     if (orgContainer && isManager) orgContainer.innerHTML = orgTasksHtml.join('') || '<p class="text-slate-500 text-center py-4">No active tasks in the organization.</p>';
@@ -4334,6 +4336,8 @@
                           managerRequestsHtml.push(reqCard + `</div></div>`);
                      }
                  });
+                 myRequestsHtml = myRequestsArr.join('');
+                 managerRequestsHtml = managerRequestsArr.join('');
 
                  if (employeeContainer) employeeContainer.innerHTML = myRequestsHtml.join('') || '<p class="text-slate-500">No time off requests found.</p>';
                  if (managerContainer) {

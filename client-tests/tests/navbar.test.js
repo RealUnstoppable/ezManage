@@ -41,6 +41,8 @@ const navbar = await import('../../js/navbar.js');
 const loadNavbar = navbar.loadNavbar;
 
 describe('loadNavbar', () => {
+  let mockGet;
+
   beforeEach(() => {
     document.body.innerHTML = '<div class="main-header"></div>';
     jest.clearAllMocks();
