@@ -1,36 +1,34 @@
-import { getFirebaseErrorMessage, logManagerError } from './utils.js';
+import { getFirebaseErrorMessage, logManagerError, escapeHTML } from './utils.js';
 
 
 
-const firebaseConfig = {
-  apiKey: "AIzaSyBgrI9HwJPSc5b4pu2Egsv4DE7shNwptSw",
-  authDomain: "ezmanage.realunstoppable.store",
-  projectId: "dts-hub-website",
-  storageBucket: "dts-hub-website.firebasestorage.app",
-  messagingSenderId: "48345990988",
-  appId: "1:48345990988:web:e3662c9b508168546471e9",
-  measurementId: "G-ZN3YJPHVGX"
-};
+import { auth, db } from '../firebase.js';
 
-if (!window.firebase) { console.error("Firebase Compat SDK must be loaded before auth.js"); }
-
-export const auth = window.firebase ? window.firebase.auth() : {};
-export const db = window.firebase ? window.firebase.firestore() : {};
+export { auth, db };
 
 export function getUserRedirectPath(userData) {
     return userData && userData.isAdmin ? 'admin.html' : 'index.html';
 }
 
+const userDocCache = new Map(); // ⚡ Bolt Optimization: Cache user document fetches
+
 export async function fetchUserDoc(uid) {
-    try {
-        return await db.collection("users").doc(uid).get();
-    } catch (error) {
-        logManagerError("Error fetching user document in fetchUserDoc for uid: " + uid, error);
-        throw error;
+    // ⚡ Bolt Optimization: Cache user document fetches to prevent N+1 query bottlenecks on auth state change
+    if (userDocCache.has(uid)) {
+        return userDocCache.get(uid);
     }
+
+    const fetchPromise = db.collection("users").doc(uid).get().catch(error => {
+        logManagerError("Error fetching user document in fetchUserDoc for uid: " + uid, error);
+        userDocCache.delete(uid); // Remove from cache on error so we can retry later
+        throw error;
+    });
+
+    userDocCache.set(uid, fetchPromise);
+    return fetchPromise;
 }
 
-const ADMIN_EMAIL = null;
+
 
 if (auth && auth.onAuthStateChanged) {
 auth.onAuthStateChanged(async (user) => {
@@ -51,11 +49,11 @@ auth.onAuthStateChanged(async (user) => {
 
                 if (membershipStatusContainer) {
                     const level = userData.membershipLevel || 'free';
-                    membershipStatusContainer.innerHTML = `<span class="membership-status ${level}">${level}</span>`;
+                    membershipStatusContainer.innerHTML = `<span class="membership-status ${escapeHTML(level)}">${escapeHTML(level)}</span>`;
                 }
             }
         } catch (error) {
-            logManagerError("Error fetching user document in auth state change for uid: " + user.uid, error);
+            logManagerError("Error fetching user document in auth state change for uid:", user.uid, error);
         }
     } else {
         if (authLink) {
@@ -67,6 +65,9 @@ auth.onAuthStateChanged(async (user) => {
         }
     }
 });
+}
+
+}
 
 if (document.getElementById('auth-form')) {
     const form = document.getElementById('auth-form');
@@ -119,7 +120,7 @@ if (document.getElementById('auth-form')) {
                 window.location.replace('index.html');
             } catch (error) {
                 logManagerError("Sign up error for email: " + email, error);
-                if (error.code === 'auth/network-request-failed' || error.code === 'unavailable') {
+                if (error.code === 'auth/network-request-failed' || error.code === 'unavailable' || error.code === 'firestore/unavailable') {
                     showMessage("Network error: Please check your connection or whitelist our domain.");
                 } else {
                     showMessage(getFirebaseErrorMessage(error));
@@ -129,7 +130,7 @@ if (document.getElementById('auth-form')) {
         } else {
             try {
                 const userCredential = await auth.signInWithEmailAndPassword(email, password);
-                const userDoc = await db.collection("users").doc(userCredential.user.uid).get();
+                const userDoc = await fetchUserDoc(userCredential.user.uid);
 
                 if (userDoc.exists && userDoc.data().isBanned !== true) {
                     const destination = getUserRedirectPath(userDoc.data());
@@ -141,7 +142,7 @@ if (document.getElementById('auth-form')) {
                 }
             } catch (error) {
                 logManagerError("Sign in error for email: " + email, error);
-                if (error.code === 'auth/network-request-failed' || error.code === 'unavailable') {
+                if (error.code === 'auth/network-request-failed' || error.code === 'unavailable' || error.code === 'firestore/unavailable') {
                     showMessage("Network error: Please check your connection or whitelist our domain.");
                 } else {
                     showMessage(getFirebaseErrorMessage(error));

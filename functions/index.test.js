@@ -114,7 +114,7 @@ describe("createCheckoutSession", () => {
     const mockFirestore = require("firebase-admin").firestore;
     mockFirestore().collection().doc().get.mockResolvedValueOnce({
       exists: true,
-      data: () => ({ hasPromoCode: true })
+      data: () => ({hasPromoCode: true}),
     });
 
     mockStripeMock.checkout.sessions.create.mockResolvedValue({url: "https://checkout.url"});
@@ -134,8 +134,7 @@ describe("createCheckoutSession", () => {
           currency: "usd",
           product: "prod_UFnBrTwFCgb54A",
           recurring: {interval: "year"},
-            unit_amount: 18600, // 207 * 0.9 = 186.3 -> floored to 186 -> * 100 = 18600
-          unit_amount: 18600,
+          unit_amount: 18600, // 207 * 0.9 = 186.3 -> floored to 186 -> * 100 = 18600
         },
         quantity: 1,
       }],
@@ -199,12 +198,7 @@ describe("createCheckoutSession", () => {
       payment_method_types: ["card"],
       customer_email: "test2@example.com",
       line_items: [{
-        price_data: {
-          currency: "usd",
-          product: "prod_UFn8zqZ0mwyy5r",
-          recurring: {interval: "year"},
-          unit_amount: 5400,
-        },
+        price: "price_1THHYPBp2C5GdKaKxNpqndNE",
         quantity: 1,
       }],
       subscription_data: {
@@ -259,7 +253,7 @@ describe("createCheckoutSession", () => {
 
     expect(mockStripeMock.checkout.sessions.create).toHaveBeenCalled();
 
-    expect(consoleSpy).toHaveBeenCalledWith("Manager Troubleshooting: Checkout Error for uid: " + req.body.uid, expect.any(Error));
+    expect(consoleSpy).toHaveBeenCalledWith("Manager Troubleshooting: Checkout Error for uid:", req.body.uid, expect.any(Error));
     expect(res.status).toHaveBeenCalledWith(500);
     expect(res.json).toHaveBeenCalledWith({error: errorMessage});
 
