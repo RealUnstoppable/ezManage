@@ -2205,10 +2205,7 @@
     <script>
 
         // Initialization is handled by firebase.js, we just get references
-        const app = window.firebase.app();
-        const auth = window.firebase.auth();
-        const db = window.firebase.firestore();
-        const cloudFunctions = window.firebase.functions();
+
 
         // Wait, since this script is not a module, we need to make sure firebase.js runs before it.
         // Let's just make the inline script check for singleton.

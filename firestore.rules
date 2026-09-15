@@ -151,7 +151,8 @@ service cloud.firestore {
           isAdmin()
       );
       allow create: if request.auth != null
-                    && (request.resource.data.uid == request.auth.uid || request.resource.data.authorId == request.auth.uid);
+                    && (request.resource.data.uid == request.auth.uid || request.resource.data.authorId == request.auth.uid)
+                    && request.resource.data.orgId == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.orgId;
       allow update: if request.auth != null && (
           resource.data.uid == request.auth.uid ||
           resource.data.authorId == request.auth.uid ||
