@@ -215,21 +215,15 @@
 </div>
 
 
-<script>
+<script src="js/firebase-config.js"></script>
+    <script>
     function parseNum(val) {
         if (!val) return 0;
         const parsed = parseFloat(val.toString().replace(/[^0-9.]/g, ""));
         return isNaN(parsed) ? 0 : parsed;
     }
 
-    const firebaseConfig = {
-        apiKey: "AIzaSyBgrI9HwJPSc5b4pu2Egsv4DE7shNwptSw",
-        authDomain: "dts-hub-website.firebaseapp.com",
-        projectId: "dts-hub-website",
-        storageBucket: "dts-hub-website.firebasestorage.app",
-        messagingSenderId: "48345990988",
-        appId: "1:48345990988:web:e3662c9b508168546471e9"
-    };
+    const firebaseConfig = window.ezManageFirebaseConfig;
     const app = !window.firebase.apps.length ? window.firebase.initializeApp(firebaseConfig) : window.firebase.app();
     const auth = firebase.auth();
     const db   = firebase.firestore();
