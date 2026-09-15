@@ -122,3 +122,11 @@
 **Vulnerability:** DOM-based Cross-Site Scripting (XSS) vulnerability was found where `error.message` was unsafely interpolated into the DOM using `innerHTML` template literals.
 **Learning:** Even though `escapeHTML` was widely used for other user inputs, error messages (which can contain arbitrary strings reflecting user input from backend responses) were overlooked.
 **Prevention:** Always apply the `escapeHTML` utility to dynamically generated error messages before inserting them into the DOM using `innerHTML`.
+## 2026-09-15 - Null Reference Exception in Firestore Delete Rules
+**Vulnerability:** A rule in  under  used  inside an  block. In Firestore,  operations don't send a payload, so  is null. This null-reference exception causes the rule evaluation to crash, preventing legitimate users from deleting their data (Denial of Service/Authorization Bypass).
+**Learning:**  cannot be used to validate  operations. Attempting to do so results in a fail-closed error.
+**Prevention:** Always separate  rules from  or  if you need to use  (like checking diffs for ). Ensure  is only referenced in , , or  rules.
+## 2026-08-04 - Null Reference Exception in Firestore Delete Rules
+**Vulnerability:** A rule in `firestore.rules` under `shift_notes` used `request.resource.data.diff(resource.data)` inside an `allow delete` block. In Firestore, `delete` operations don't send a payload, so `request.resource` is null. This null-reference exception causes the rule evaluation to crash, preventing legitimate users from deleting their data (Denial of Service/Authorization Bypass).
+**Learning:** `request.resource` cannot be used to validate `delete` operations. Attempting to do so results in a fail-closed error.
+**Prevention:** Always separate `allow delete` rules from `allow update` or `allow write` if you need to use `request.resource` (like checking diffs for `orgId`). Ensure `request.resource` is only referenced in `create`, `update`, or `write` rules.
