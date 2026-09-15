@@ -122,3 +122,7 @@
 **Vulnerability:** DOM-based Cross-Site Scripting (XSS) vulnerability was found where `error.message` was unsafely interpolated into the DOM using `innerHTML` template literals.
 **Learning:** Even though `escapeHTML` was widely used for other user inputs, error messages (which can contain arbitrary strings reflecting user input from backend responses) were overlooked.
 **Prevention:** Always apply the `escapeHTML` utility to dynamically generated error messages before inserting them into the DOM using `innerHTML`.
+## 2026-09-14 - DOMPurify Integration
+**Vulnerability:** XSS vulnerability in `checkout.js` string template insertion.
+**Learning:** For client-side vanilla JS codebases without a build step for module resolutions, relying on a bare `import` statement in ES modules will crash the application because the browser cannot resolve it.
+**Prevention:** Rather than using bare module imports, load third party utility libraries (like `DOMPurify`) directly into the global object (e.g. `window.DOMPurify`) using CDN script tags in the root HTML, ensuring full compatibility across all environments.
