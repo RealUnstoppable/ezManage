@@ -218,33 +218,38 @@ document.addEventListener('DOMContentLoaded', () => {
     renderProducts();
     setupEventListeners();
 
+    let isDashboardLoaded = false;
     onAuthStateChanged(auth, async (user) => {
         currentUser = user;
         const localCartData = localStorage.getItem('localCart');
         const localCart = localCartData ? JSON.parse(localCartData) : {};
 
         if (user) {
-            try {
-                const userCartRef = doc(db, 'carts', user.uid);
-                const docSnap = await getDoc(userCartRef);
-                const firestoreCart = docSnap.exists() ? docSnap.data().items : {};
+            if (!isDashboardLoaded) {
+                try {
+                    const userCartRef = doc(db, 'carts', user.uid);
+                    const docSnap = await getDoc(userCartRef);
+                    const firestoreCart = docSnap.exists() ? docSnap.data().items : {};
 
-                const mergedCart = { ...firestoreCart };
-                for (const [productId, quantity] of Object.entries(localCart)) {
-                    mergedCart[productId] = (mergedCart[productId] || 0) + quantity;
+                    const mergedCart = { ...firestoreCart };
+                    for (const [productId, quantity] of Object.entries(localCart)) {
+                        mergedCart[productId] = (mergedCart[productId] || 0) + quantity;
+                    }
+
+                    cart = mergedCart;
+                    await saveCart();
+                    localStorage.removeItem('localCart');
+                    isDashboardLoaded = true;
+                } catch (error) {
+                    logManagerError("Error loading cart during auth state change:", error);
+
+                    cart = localCart;
                 }
-
-                cart = mergedCart;
-                await saveCart();
-                localStorage.removeItem('localCart');
-            } catch (error) {
-                logManagerError("Error loading cart during auth state change:", error);
-
-                cart = localCart;
             }
         } else {
 
             cart = localCart;
+            isDashboardLoaded = false;
         }
 
         updateUserNav(user);

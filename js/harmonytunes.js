@@ -436,21 +436,27 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    let isDashboardLoaded = false;
     onAuthStateChanged(auth, async (user) => {
         currentUser = user;
         if (user) {
-            try {
-                const docRef = doc(db, "users", user.uid);
-                const docSnap = await getDoc(docRef);
-                if (docSnap.exists() && docSnap.data().musicFavorites) {
-                    const favIds = docSnap.data().musicFavorites;
-                    userFavorites = librarySongs.filter(song => favIds.includes(song.id));
-                }
-            } catch (e) { logManagerError("Error loading user favorites for uid: " + user.uid, e); }
+            if (!isDashboardLoaded) {
+                try {
+                    const docRef = doc(db, "users", user.uid);
+                    const docSnap = await getDoc(docRef);
+                    if (docSnap.exists() && docSnap.data().musicFavorites) {
+                        const favIds = docSnap.data().musicFavorites;
+                        userFavorites = librarySongs.filter(song => favIds.includes(song.id));
+                    }
+                    isDashboardLoaded = true;
+                } catch (e) { logManagerError("Error loading user favorites for uid: " + user.uid, e); }
+            }
 
             const hour = new Date().getHours();
             const timeGreeting = hour < 12 ? "Good Morning" : hour < 18 ? "Good Afternoon" : "Good Evening";
             document.getElementById('greeting').textContent = `${timeGreeting}, ${user.displayName || 'Friend'}`;
+        } else {
+            isDashboardLoaded = false;
         }
         init();
     });
