@@ -122,3 +122,7 @@
 **Vulnerability:** DOM-based Cross-Site Scripting (XSS) vulnerability was found where `error.message` was unsafely interpolated into the DOM using `innerHTML` template literals.
 **Learning:** Even though `escapeHTML` was widely used for other user inputs, error messages (which can contain arbitrary strings reflecting user input from backend responses) were overlooked.
 **Prevention:** Always apply the `escapeHTML` utility to dynamically generated error messages before inserting them into the DOM using `innerHTML`.
+## 2026-08-04 - [Defense-in-Depth via Content-Security-Policy & Rate Limiting]
+**Vulnerability:** The application was missing defense-in-depth mitigations against Cross-Site Scripting (XSS) via a Content-Security-Policy header, and Firebase Cloud Functions lacked rate-limiting, opening vectors for potential abuse and DoS.
+**Learning:** Even with localized fixes, it is crucial to employ layered security. A strict CSP header significantly reduces the risk of XSS payload execution, and adding a rate-limiting layer at the start of Cloud Functions protects backend resources from excessive or malicious invocation.
+**Prevention:** Always include a robust CSP meta tag across all HTML entry points to control resource origins. Implement an in-memory or Redis-based rate limiter to protect public or sensitive callable Cloud Functions from abuse.

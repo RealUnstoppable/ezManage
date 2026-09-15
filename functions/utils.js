@@ -69,7 +69,38 @@ function logManagerError(actionMessage, error) {
   console.error("Manager Troubleshooting: " + actionMessage, error);
 }
 
+
+const rateLimitMap = new Map();
+const RATE_LIMIT_MAX = 50; // Max requests
+const RATE_LIMIT_WINDOW = 60 * 1000; // 1 minute window
+
+/**
+ * Basic in-memory rate limiter per UID to prevent abuse.
+ * @param {string} uid The user ID
+ * @throws {Error} Throws an error if limit exceeded
+ */
+function checkRateLimit(uid) {
+  const now = Date.now();
+  if (!rateLimitMap.has(uid)) {
+    rateLimitMap.set(uid, {count: 1, resetTime: now + RATE_LIMIT_WINDOW});
+    return;
+  }
+
+  const record = rateLimitMap.get(uid);
+  if (now > record.resetTime) {
+    // Reset window
+    record.count = 1;
+    record.resetTime = now + RATE_LIMIT_WINDOW;
+  } else {
+    record.count++;
+    if (record.count > RATE_LIMIT_MAX) {
+      throw new Error("rate-limit-exceeded");
+    }
+  }
+}
+
 module.exports = {
+  checkRateLimit,
   logManagerError,
   parseNum,
   getDayOfWeek,

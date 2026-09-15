@@ -3,7 +3,7 @@ const {onRequest} = require("firebase-functions/v2/https");
 const HttpsError = functions.https.HttpsError;
 const admin = require("firebase-admin");
 const cors = require("cors")({origin: true});
-const {adaptGen2Params, logManagerError} = require("./utils");
+const {adaptGen2Params, logManagerError, checkRateLimit} = require("./utils");
 
 /**
  * Helper to get a document, verify its existence, and verify its orgId.
@@ -291,6 +291,13 @@ exports.manageTasks = functions.https.onCall(async (data, context) => {
   const {action, payload} = data;
   const uid = context.auth.uid;
 
+  try {
+    checkRateLimit(uid);
+  } catch (e) {
+    if (e.message === "rate-limit-exceeded") throw new HttpsError("resource-exhausted", "Too many requests. Please try again later.");
+  }
+
+
   if (!action || !payload) {
     throw new HttpsError("invalid-argument", "Missing action or payload");
   }
@@ -380,6 +387,13 @@ exports.manageShiftNotes = functions.https.onCall(async (data, context) => {
 
   const {action, payload} = data;
   const uid = context.auth.uid;
+
+  try {
+    checkRateLimit(uid);
+  } catch (e) {
+    if (e.message === "rate-limit-exceeded") throw new HttpsError("resource-exhausted", "Too many requests. Please try again later.");
+  }
+
 
   if (!action || !payload) {
     throw new HttpsError(
@@ -472,6 +486,13 @@ exports.manageEmployees = functions.https.onCall(async (data, context) => {
 
   const {action, payload} = data;
   const uid = context.auth.uid;
+
+  try {
+    checkRateLimit(uid);
+  } catch (e) {
+    if (e.message === "rate-limit-exceeded") throw new HttpsError("resource-exhausted", "Too many requests. Please try again later.");
+  }
+
 
   if (!action || !payload) {
     throw new HttpsError("invalid-argument", "Missing action or payload");
@@ -584,6 +605,13 @@ exports.manageShiftGroups = functions.https.onCall(async (data, context) => {
 
   const {action, payload} = data;
   const uid = context.auth.uid;
+
+  try {
+    checkRateLimit(uid);
+  } catch (e) {
+    if (e.message === "rate-limit-exceeded") throw new HttpsError("resource-exhausted", "Too many requests. Please try again later.");
+  }
+
 
   if (!action || !payload) {
     throw new HttpsError(
@@ -770,6 +798,13 @@ exports.manageIncidents = functions.https.onCall(async (data, context) => {
   const {action, payload} = data;
   const uid = context.auth.uid;
 
+  try {
+    checkRateLimit(uid);
+  } catch (e) {
+    if (e.message === "rate-limit-exceeded") throw new HttpsError("resource-exhausted", "Too many requests. Please try again later.");
+  }
+
+
   if (!action || !payload) {
     throw new HttpsError("invalid-argument", "Missing action or payload");
   }
@@ -795,7 +830,7 @@ exports.manageIncidents = functions.https.onCall(async (data, context) => {
         type,
         status: "Open",
         reportedByUid: uid,
-        reportedByName: userDoc.data().name || "Anonymous",
+        reportedByName: "Anonymous",
         orgId: actualOrgId,
         timestamp: admin.firestore.FieldValue.serverTimestamp(),
       };
@@ -885,6 +920,13 @@ exports.manageWaste = functions.https.onCall(async (data, context) => {
   const {action, payload} = data;
   const uid = context.auth.uid;
 
+  try {
+    checkRateLimit(uid);
+  } catch (e) {
+    if (e.message === "rate-limit-exceeded") throw new HttpsError("resource-exhausted", "Too many requests. Please try again later.");
+  }
+
+
   if (!action || !payload) {
     throw new HttpsError("invalid-argument", "Missing action or payload");
   }
@@ -909,7 +951,7 @@ exports.manageWaste = functions.https.onCall(async (data, context) => {
         cost: Number(cost),
         reason,
         loggedByUid: uid,
-        loggedByName: userDoc.data().name || "Anonymous",
+        loggedByName: "Anonymous",
         orgId: actualOrgId,
         timestamp: admin.firestore.FieldValue.serverTimestamp(),
       };
@@ -977,6 +1019,13 @@ exports.manageRecognitions = functions.https.onCall(async (data, context) => {
 
   const {action, payload} = data;
   const uid = context.auth.uid;
+
+  try {
+    checkRateLimit(uid);
+  } catch (e) {
+    if (e.message === "rate-limit-exceeded") throw new HttpsError("resource-exhausted", "Too many requests. Please try again later.");
+  }
+
 
   if (!action || !payload) {
     throw new HttpsError("invalid-argument", "Missing action or payload");
