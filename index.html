@@ -475,6 +475,9 @@
             <a href="#" onclick="navTo('maintenance')"
                 class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="wrench"></i>
                 Maintenance</a>
+            <a href="#" onclick="navTo('templogs')"
+                class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="thermometer"></i>
+                Temp Logs</a>
             <a href="#" onclick="navTo('tasks')"
                 class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="check-square"></i>
                 Task Manager</a>
@@ -1635,6 +1638,55 @@
                 </div>
             </div>
         </div>
+        <div id="view-templogs" class="view-section px-6 py-12 hidden">
+            <div class="max-w-4xl mx-auto">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+                    <h1 class="text-4xl font-black">Food Safety Temp Logs</h1>
+                    <button onclick="document.getElementById('addTempLogModal').classList.toggle('hidden')"
+                        class="btn btn-primary flex items-center gap-2 px-6">
+                        <i data-lucide="plus-circle" class="w-5 h-5"></i> Log Temp
+                    </button>
+                </div>
+
+                <div id="addTempLogModal"
+                    class="hidden bg-white dark:bg-slate-900 rounded-3xl p-6 md:p-8 shadow-sm border border-slate-100 dark:border-slate-800 mb-12">
+                    <h2 class="text-xl font-bold mb-4">Log Equipment Temperature</h2>
+                    <div class="space-y-4">
+                        <input type="text" id="tempLogEquipment" placeholder="Equipment Name (e.g. Walk-in Cooler)" aria-label="Equipment Name"
+                            class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
+                        <div class="grid md:grid-cols-2 gap-4">
+                            <input type="number" step="0.1" id="tempLogValue" placeholder="Temperature" aria-label="Temperature Value"
+                                class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
+                            <select id="tempLogUnit" aria-label="Temperature Unit" class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
+                                <option value="F">°F</option>
+                                <option value="C">°C</option>
+                            </select>
+                        </div>
+                        <textarea id="tempLogNotes" placeholder="Optional notes..." aria-label="Temperature Notes" rows="2"
+                            class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500 resize-none"></textarea>
+
+                        <div class="flex justify-end gap-3 pt-2">
+                            <button onclick="document.getElementById('addTempLogModal').classList.add('hidden')"
+                                class="btn btn-outline px-6 py-2">Cancel</button>
+                            <button onclick="submitTempLog()" class="btn btn-accent px-6 py-2">Save Entry</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-black">Recent Logs</h2>
+                    <button onclick="fetchTempLogs()"
+                        class="text-sm font-bold text-sky-500 hover:text-sky-600 flex items-center gap-2">
+                        <i data-lucide="refresh-cw" class="w-4 h-4"></i> Refresh
+                    </button>
+                </div>
+
+                <div id="tempLogsContainer" class="space-y-4">
+                    <!-- Temp logs populated via JS -->
+                </div>
+            </div>
+        </div>
+
 
 
                 <div class="flex justify-between items-center mb-6">
@@ -2571,11 +2623,14 @@
                 localStorage.setItem('navTo', viewId);
                 return;
             }
-            if (!currentUser && (['history', 'presets', 'performance', 'request', 'profile', 'shiftNotes', 'team', 'employees', 'timeoff', 'tasks', 'announcements'].includes(viewId))) {
+            if (!currentUser && (['history', 'presets', 'performance', 'request', 'profile', 'shiftNotes', 'team', 'employees', 'timeoff', 'tasks', 'announcements', 'templogs'].includes(viewId))) {
                 viewId = 'auth';
             }
             if (viewId === 'maintenance' && currentUser) {
                 fetchMaintenanceTickets();
+            }
+            if (viewId === 'templogs' && currentUser) {
+                fetchTempLogs();
             }
 
             if (viewId === 'announcements' && currentUser) {
@@ -4938,6 +4993,164 @@ function checkAndRenderOrgControls() {
                 alert("Failed to delete log.");
             }
         }
+
+
+        async function submitTempLog() {
+            if (!currentUser || !currentUserData || !currentUserData.orgId) {
+                alert("You must be part of an organization to log temperatures.");
+                return;
+            }
+
+            const equipmentName = document.getElementById('tempLogEquipment').value.trim();
+            const temperatureStr = document.getElementById('tempLogValue').value;
+            const tempUnit = document.getElementById('tempLogUnit').value;
+            const notes = document.getElementById('tempLogNotes').value.trim();
+
+            if (!equipmentName || !temperatureStr) {
+                alert("Please fill in Equipment Name and Temperature.");
+                return;
+            }
+
+            const temperature = parseFloat(temperatureStr);
+
+            // Basic food safety check (simplified)
+            let isSafe = true;
+            if (tempUnit === 'F') {
+                // Assuming cold holding should be <= 41F and hot holding >= 135F.
+                // We don't know the exact type, but we can do a generic check or let the user decide.
+                // For simplicity, let's say if it's between 41 and 135, it's unsafe (Danger Zone).
+                if (temperature > 41 && temperature < 135) {
+                    isSafe = false;
+                }
+            } else if (tempUnit === 'C') {
+                if (temperature > 5 && temperature < 57) {
+                    isSafe = false;
+                }
+            }
+
+            if (!isSafe) {
+                if (!confirm("WARNING: The entered temperature is in the Danger Zone. Proceed with saving?")) {
+                    return;
+                }
+            }
+
+            const submitBtn = document.querySelector('#addTempLogModal .btn-accent');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> Saving...';
+            submitBtn.disabled = true;
+            lucide.createIcons();
+
+            try {
+                const manageTempLogs = cloudFunctions.httpsCallable('manageTemperatureLogs');
+                await manageTempLogs({
+                    action: "create",
+                    payload: { equipmentName, temperature, tempUnit, isSafe, notes }
+                });
+
+                document.getElementById('tempLogEquipment').value = '';
+                document.getElementById('tempLogValue').value = '';
+                document.getElementById('tempLogNotes').value = '';
+                document.getElementById('addTempLogModal').classList.add('hidden');
+
+                alert("Temperature logged successfully.");
+                fetchTempLogs();
+            } catch (error) {
+                console.error("Error logging temperature:", error);
+                alert("Failed to log temperature. " + error.message);
+            } finally {
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+                lucide.createIcons();
+            }
+        }
+
+        async function fetchTempLogs() {
+            if (!currentUser || !currentUserData || !currentUserData.orgId) {
+                const container = document.getElementById('tempLogsContainer');
+                if (container) {
+                    container.innerHTML = `
+                        <div class="text-center py-16 bg-slate-50 dark:bg-slate-900 rounded-3xl border-2 border-dashed border-slate-200 dark:border-slate-800">
+                            <i data-lucide="users" class="w-12 h-12 text-slate-400 mx-auto mb-4"></i>
+                            <h3 class="text-xl font-bold mb-2">Join or Create a Group</h3>
+                            <p class="text-slate-500">You must be in a Management Group to view temperature logs.</p>
+                        </div>
+                    `;
+                    lucide.createIcons();
+                }
+                return;
+            }
+
+            const container = document.getElementById('tempLogsContainer');
+            container.innerHTML = '<div class="text-center py-8"><i data-lucide="loader-2" class="w-8 h-8 animate-spin mx-auto text-sky-500 mb-4"></i><p class="text-slate-500">Loading temperature logs...</p></div>';
+            lucide.createIcons();
+
+            try {
+                const manageTempLogs = cloudFunctions.httpsCallable('manageTemperatureLogs');
+                const result = await manageTempLogs({ action: "get", payload: {} });
+
+                if (result.data.success) {
+                    const logs = result.data.logs || [];
+                    container.innerHTML = '';
+
+                    if (logs.length === 0) {
+                        container.innerHTML = `
+                            <div class="text-center py-16 bg-slate-50 dark:bg-slate-900 rounded-3xl border-2 border-dashed border-slate-200 dark:border-slate-800">
+                                <i data-lucide="check-circle-2" class="w-12 h-12 text-emerald-400 mx-auto mb-4"></i>
+                                <h3 class="text-xl font-bold mb-2">No Logs Found</h3>
+                                <p class="text-slate-500">There are no recent temperature entries.</p>
+                            </div>
+                        `;
+                        lucide.createIcons();
+                        return;
+                    }
+
+                    const fragment = document.createDocumentFragment();
+
+                    logs.forEach(log => {
+                        const div = document.createElement('div');
+                        div.className = "card p-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4";
+
+                        const dateStr = log.timestamp ? new Date(log.timestamp._seconds * 1000).toLocaleString() : 'Just now';
+                        const safeBadge = log.isSafe ?
+                            '<span class="px-2 py-1 bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 rounded-lg text-xs font-bold">Safe</span>' :
+                            '<span class="px-2 py-1 bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 rounded-lg text-xs font-bold">Danger Zone</span>';
+
+                        div.innerHTML = `
+                            <div>
+                                <h3 class="text-lg font-bold">${escapeHTML(log.equipmentName)} <span class="text-sm font-bold ml-2">${escapeHTML(log.temperature)}°${escapeHTML(log.tempUnit)}</span></h3>
+                                <p class="text-sm text-slate-500">Logged by ${escapeHTML(log.loggedByName)} • ${dateStr}</p>
+                                <div class="mt-2 flex gap-2 items-center">
+                                    ${safeBadge}
+                                    ${log.notes ? `<span class="text-xs text-slate-500 italic">"${escapeHTML(log.notes)}"</span>` : ''}
+                                </div>
+                            </div>
+                            <button onclick="deleteTempLog('${escapeHTML(log.id)}')" class="btn btn-outline btn-sm text-red-500 hover:bg-red-50" aria-label="Delete Temp Log">
+                                <i data-lucide="trash-2" class="w-4 h-4"></i> Remove
+                            </button>
+                        `;
+                        fragment.appendChild(div);
+                    });
+                    container.appendChild(fragment);
+                    lucide.createIcons();
+                }
+            } catch (error) {
+                console.error("Error fetching temperature logs:", error);
+                container.innerHTML = `<div class="text-red-500 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl text-center">Failed to load temperature logs: ${escapeHTML(error.message)}</div>`;
+            }
+        }
+
+        async function deleteTempLog(logId) {
+            if (!confirm("Are you sure you want to permanently delete this temperature log entry?")) return;
+            try {
+                const manageTempLogs = cloudFunctions.httpsCallable('manageTemperatureLogs');
+                await manageTempLogs({ action: "delete", payload: { logId } });
+                fetchTempLogs();
+            } catch (err) {
+                console.error("Error deleting temperature log:", err);
+                alert("Failed to delete log.");
+            }
+        }
+
 
 
         // --- INCIDENTS LOGIC ---
