@@ -547,14 +547,14 @@
   </div>
 
   <script type="module">
-    import { auth, db } from '/js/auth.js';
+    import { auth, db, fetchUserDoc } from '/js/auth.js';
 
     let performanceChart;
 
     if (auth && auth.onAuthStateChanged) {
       auth.onAuthStateChanged(async (user) => {
         if (user) {
-          const userDoc = await db.collection("users").doc(user.uid).get();
+          const userDoc = await fetchUserDoc(user.uid);
 
           if (userDoc.exists && userDoc.data().isAdmin) {
             document.body.style.display = 'flex';

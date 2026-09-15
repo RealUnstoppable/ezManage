@@ -54,9 +54,9 @@
 ## 2024-11-09 - Duplicate state declaration
 **Learning:** Avoid duplicate cache state variable declarations within the same scope. The layout thrashing prevention code was throwing due to `let lastGreeting = ""` declared twice within `script.js`'s `updateGreeting` logic.
 **Action:** Remove the inner redundant declaration while keeping the cache check `newGreeting !== lastGreeting` functional.
-## 2026-09-10 - Clarifying Existing Code Optimizations to Reviewers
-**Learning:** When utilizing a pre-existing function or optimization (e.g., `fetchUserDoc`) without modifying the file where it's defined, explicitly clarify in the PR description that the function is 'already existing'. This prevents automated code reviewers from analyzing the diff in isolation and falsely flagging the implementation as missing.
-**Action:** When acting as the Bolt persona or completing audits, explicitly mention "utilizing already existing [X]" in commit messages or review contexts to prevent automated feedback loops from rejecting correct implementations.
-## 2026-09-10 - Duplicate Global Initializations
-**Learning:** Having duplicate local block-level declarations (like `const app = ...` followed by `const app = ...`) in the same inline `<script>` tag immediately causes `SyntaxError: Identifier has already been declared`, causing the entire script to fail parsing and breaking the app.
-**Action:** When fixing these duplications, be extremely careful to only remove the truly redundant block. Do not blindly strip out the first block if it contains unique initializations (like `const db = ...`) that are not re-declared in the second block. Always merge the blocks rather than deleting one outright to prevent downstream `ReferenceError`s.
+## $(date +%Y-%m-%d) - [Repeated Firebase DB Docs Fetch]
+**Learning:** Functions invoked via callbacks from listeners that span multiple files (e.g., `auth.onAuthStateChanged`) will fire simultaneously. Without a caching layer, they execute redundant concurrent network fetch queries (like `db.collection('users').doc(uid).get()`), causing latency and blocking operations.
+**Action:** Always wrap independent multi-listener fetched resources with a generic memoization layer using a `Map` cache to immediately resolve redundant Promise requests.
+## 2026-10-27 - [DRY Refactoring and Error Handling]
+**Learning:** Repetitive validation logic (like throwing HttpsError for missing fields) clutters Cloud Functions and increases maintenance surface area. Furthermore, unhandled Promise rejections inside async loops (like webhooks) can cause silent failures.
+**Action:** Extract repeated validation logic into shared utility functions, and ensure all critical asynchronous workflows (especially webhooks parsing external payloads) are wrapped in try/catch blocks with proper logging.

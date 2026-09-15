@@ -25,6 +25,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+    <script src="js/firebase-config.js"></script>
 
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -224,10 +225,10 @@
     }
 
     const firebaseConfig = window.ezManageFirebaseConfig;
-    const app = !window.firebase.apps.length ? window.firebase.initializeApp(firebaseConfig) : window.firebase.app();
+        const app = !window.firebase.apps.length ? window.firebase.initializeApp(firebaseConfig) : window.firebase.app();
     const auth = firebase.auth();
-    const db   = firebase.firestore();
-    db.settings({ experimentalForceLongPolling: true });
+    firebase.firestore().settings({ experimentalForceLongPolling: true });
+        const db = firebase.firestore();
 
     const ADMIN_EMAIL = 'catalinandrian1@gmail.com';
 
@@ -245,6 +246,7 @@
     }
     document.getElementById('gPass').addEventListener('keydown', e => { if(e.key==='Enter') gateSignIn(); });
 
+    let isDashboardLoaded = false;
     auth.onAuthStateChanged(user => {
         if (!user) { document.getElementById('gate').style.display = 'flex'; document.getElementById('app').style.display = 'none'; return; }
         if (user.email !== ADMIN_EMAIL) {
@@ -261,7 +263,10 @@
         document.getElementById('gate').style.display = 'none';
         document.getElementById('app').style.display = 'block';
         document.getElementById('navEmail').textContent = user.email;
-        loadDashboard();
+        if (!isDashboardLoaded) {
+            loadDashboard();
+            isDashboardLoaded = true;
+        }
     });
 
     /* ---------- CHARTS ---------- */

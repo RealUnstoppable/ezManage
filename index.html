@@ -48,6 +48,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-messaging-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-functions-compat.js"></script>
+    <script src="js/firebase-config.js"></script>
 
     <style>
         :root {
@@ -443,6 +444,8 @@
             <a href="#" onclick="navTo('tracker')"
                 class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="edit-3"></i> Active
                 Tracker</a>
+            <a href="#" onclick="navTo('timeclock')"
+                class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="clock"></i> Time Clock</a>
             <a href="#" onclick="navTo('schedule')"
                 class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="calendar"></i>
                 Schedule</a>
@@ -785,7 +788,7 @@
 
                 <button onclick="signInWithGoogle()"
                     class="btn btn-outline w-full py-4 font-bold flex items-center justify-center gap-3">
-                    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" class="w-5"> Google
+                    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google logo" class="w-5"> Google
                 </button>
 
                 <p class="mt-8 text-sm text-slate-500">
@@ -883,13 +886,60 @@
                     </div>
                 </div>
 
+                    <!-- ANNOUNCEMENTS SECTION -->
+                    <div id="section-announcements" class="card mb-6" x-data="{ expanded: true }">
+                        <h3 class="text-xl font-black mb-2">
+                            <button @click="expanded = !expanded" :aria-expanded="expanded" type="button"
+                                class="w-full flex items-center justify-between cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 rounded-lg">
+                                <div class="flex items-center gap-3"><i data-lucide="bell"
+                                        class="text-sky-500"></i>
+                                    Company Announcements</div>
+                                <i data-lucide="chevron-down" class="transition-transform no-print" :class="expanded ? 'rotate-180' : ''"></i>
+                            </button>
+                        </h3>
+                        <div x-show="expanded" x-transition class="mt-4">
+                            <div id="announcementsContainer" class="space-y-4 mb-4">
+                                <!-- Announcements will be rendered here -->
+                                <p class="text-slate-500 italic text-sm">Loading announcements...</p>
+                            </div>
+
+                            <!-- Form visible only to managers -->
+                            <div id="announcementFormContainer" class="hidden mt-6 pt-6 border-t border-slate-200 dark:border-slate-800 no-print" x-data="{ showForm: false }">
+                                <button @click="showForm = !showForm" type="button" class="btn btn-outline btn-sm mb-4">
+                                    <i data-lucide="plus" class="w-4 h-4 mr-2"></i> Post Announcement
+                                </button>
+
+                                <form x-show="showForm" id="newAnnouncementForm" class="space-y-4 bg-slate-50 dark:bg-slate-800/50 p-4 rounded-xl">
+                                    <div>
+                                        <label for="announcementTitle" class="text-[10px] font-black uppercase tracking-widest text-slate-400">Title</label>
+                                        <input type="text" id="announcementTitle" placeholder="Enter announcement title" required class="w-full">
+                                    </div>
+                                    <div>
+                                        <label for="announcementContent" class="text-[10px] font-black uppercase tracking-widest text-slate-400">Message</label>
+                                        <textarea id="announcementContent" placeholder="Enter the announcement message..." rows="3" required class="w-full"></textarea>
+                                    </div>
+                                    <div class="flex items-end gap-4">
+                                        <div class="flex-1">
+                                            <label for="announcementPriority" class="text-[10px] font-black uppercase tracking-widest text-slate-400">Priority</label>
+                                            <select id="announcementPriority" class="w-full">
+                                                <option value="normal">Normal</option>
+                                                <option value="high">High</option>
+                                            </select>
+                                        </div>
+                                        <button type="button" onclick="createAnnouncement()" class="btn btn-primary whitespace-nowrap">Post</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
                 <form id="trackerForm" class="space-y-6">
                     <div class="card grid md:grid-cols-3 gap-6">
                         <div class="space-y-2">
                             <label for="shiftManager"
                                 class="text-[10px] font-black uppercase tracking-widest text-slate-400">Shift
                                 Manager</label>
-                            <input type="text" id="shiftManager" placeholder="Enter Name">
+                            <input type="text" id="shiftManager" aria-label="Shift Manager" placeholder="Enter Name">
                         </div>
                         <div class="space-y-2">
                             <label for="shiftDate"
@@ -951,7 +1001,7 @@
                                         <label for="prepNotes"
                                             class="text-[10px] font-black uppercase tracking-widest text-slate-400">Prep
                                             Notes</label>
-                                        <textarea id="prepNotes" placeholder="e.g. Prepped 8 pans of lettuce..."
+                                        <textarea id="prepNotes" aria-label="Prep Notes" placeholder="e.g. Prepped 8 pans of lettuce..."
                                             class="h-32"></textarea>
                                     </div>
                                 </div>
@@ -960,7 +1010,7 @@
                                         <label for="beefCook"
                                             class="text-[10px] font-black uppercase tracking-widest text-slate-400">Main
                                             Prep Count (Beef/Protein)</label>
-                                        <input type="text" id="beefCook" placeholder="Cooked Count">
+                                        <input type="text" id="beefCook" aria-label="Cooked Count" placeholder="Cooked Count">
                                     </div>
                                     <div class="space-y-2">
                                         <label for="beefTempered"
@@ -1120,7 +1170,7 @@
                         <div class="flex justify-end gap-3 pt-2">
                             <button onclick="closeEmployeeModal()"
                                 class="btn btn-outline px-6 py-2">Cancel</button>
-                            <button onclick="submitEmployee()" class="btn btn-accent px-6 py-2" id="submitEmpBtn">Save Employee</button>
+                            <button onclick="submitEmployee()" class="btn btn-accent px-6 py-2 disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center min-w-[140px]" id="submitEmpBtn">Save Employee</button>
                         </div>
                     </div>
                 </div>
@@ -1162,13 +1212,13 @@
                         <h3 class="text-2xl font-black mb-6 text-slate-900 dark:text-white">Create Announcement</h3>
                         <form id="announcementForm" onsubmit="createAnnouncement(event)" class="space-y-4">
                             <div>
-                                <label class="block text-sm font-bold mb-1 text-slate-700 dark:text-slate-300">Title</label>
+                                <label for="announcementTitle" class="block text-sm font-bold mb-1 text-slate-700 dark:text-slate-300">Title</label>
                                 <input type="text" id="announcementTitle" required
                                     class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500 text-slate-900 dark:text-white"
                                     placeholder="e.g. New Break Policy">
                             </div>
                             <div>
-                                <label class="block text-sm font-bold mb-1 text-slate-700 dark:text-slate-300">Content</label>
+                                <label for="announcementContent" class="block text-sm font-bold mb-1 text-slate-700 dark:text-slate-300">Content</label>
                                 <textarea id="announcementContent" required rows="4"
                                     class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500 text-slate-900 dark:text-white"
                                     placeholder="Enter details here..."></textarea>
@@ -1207,11 +1257,11 @@
                     <h3 class="text-xl font-semibold mb-4 text-slate-800 dark:text-white border-b border-slate-200 dark:border-slate-700 pb-2">Assign New Task</h3>
                     <form id="createTaskForm" class="space-y-4" onsubmit="event.preventDefault(); createTask();">
                         <div>
-                            <label for="taskTitle" class="block text-sm font-medium mb-1">Task Title</label>
+                            <label for="taskTitle1" class="block text-sm font-medium mb-1">Task Title</label>
                             <input type="text" id="taskTitle1" class="w-full" placeholder="e.g. Clean fryers" required>
                         </div>
                         <div>
-                            <label for="taskDesc" class="block text-sm font-medium mb-1">Description (Optional)</label>
+                            <label for="taskDesc1" class="block text-sm font-medium mb-1">Description (Optional)</label>
                             <textarea id="taskDesc1" class="w-full h-24" placeholder="Task details..."></textarea>
                         </div>
                         <div>
@@ -1221,7 +1271,7 @@
                             </select>
                         </div>
                         <div>
-                            <label for="taskDueDate" class="block text-sm font-medium mb-1">Due Date</label>
+                            <label for="taskDueDate2" class="block text-sm font-medium mb-1">Due Date</label>
                             <input type="date" id="taskDueDate2" class="w-full" required>
                         </div>
                         <button type="submit" class="btn btn-primary w-full disabled:opacity-70 disabled:cursor-not-allowed">Assign Task</button>
@@ -1242,6 +1292,33 @@
                     <div id="taskList" class="space-y-4">
                         <p class="text-sm text-slate-500">Loading tasks...</p>
                     </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="view-timeclock" class="view-section px-6 py-12 hidden">
+            <div class="max-w-4xl mx-auto">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+                    <h1 class="text-4xl font-black">Time Clock</h1>
+                </div>
+
+                <div class="card shadow-2xl mb-12 text-center py-12">
+                    <h2 class="text-2xl font-bold mb-6" id="timeclockStatusText">Loading Status...</h2>
+                    <p class="text-slate-500 mb-8" id="timeclockSubText">Please wait.</p>
+                    <button id="clockInOutBtn" onclick="toggleClock()" class="btn btn-accent px-12 py-6 text-xl disabled:opacity-50 disabled:cursor-not-allowed">
+                        <i data-lucide="loader-2" class="w-6 h-6 animate-spin"></i>
+                    </button>
+                </div>
+
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-black">Recent Punches</h2>
+                    <button onclick="fetchTimeLogs()" class="text-sm font-bold text-sky-500 hover:text-sky-600 flex items-center gap-2">
+                        <i data-lucide="refresh-cw" class="w-4 h-4"></i> Refresh
+                    </button>
+                </div>
+
+                <div id="timeLogContainer" class="space-y-4">
+                    <!-- Logs populated via JS -->
                 </div>
             </div>
         </div>
@@ -1431,9 +1508,9 @@
                     class="hidden bg-white dark:bg-slate-900 rounded-3xl p-6 md:p-8 shadow-sm border border-slate-100 dark:border-slate-800 mb-12">
                     <h2 class="text-xl font-bold mb-4">Assign New Task</h2>
                     <div class="space-y-4">
-                        <input type="text" id="taskTitle2" placeholder="Task Title"
+                        <input type="text" id="taskTitle2" aria-label="Task Title" placeholder="Task Title"
                             class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
-                        <textarea id="taskDesc2" placeholder="Task Description..." rows="3"
+                        <textarea id="taskDesc2" aria-label="Task Description" placeholder="Task Description..." rows="3"
                             class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500 resize-none"></textarea>
 
                         <div class="flex flex-col md:flex-row gap-4">
@@ -1919,17 +1996,18 @@
 
                 <div id="addStaffModal"
                     class="hidden bg-white dark:bg-slate-900 rounded-3xl p-6 md:p-8 shadow-sm border border-slate-100 dark:border-slate-800 mb-12">
-                    <h2 class="text-xl font-bold mb-4">Add New Employee</h2>
+                    <h2 class="text-xl font-bold mb-4" id="employeeModalTitleAlt">Add New Employee</h2>
+                    <input type="hidden" id="empModalIdAlt" value="">
                     <div class="space-y-4">
                         <input type="text" id="empName" placeholder="Full Name" aria-label="Employee Full Name"
                             class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
-                        <input type="text" id="empRole" placeholder="Role (e.g. Cashier, Cook)" aria-label="Employee Role"
+                        <input type="text" id="empRoleAlt" placeholder="Role (e.g. Cashier, Cook)" aria-label="Role"
                             class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
 
                         <div class="grid md:grid-cols-2 gap-4">
-                            <input type="tel" id="empPhone" placeholder="Phone Number" aria-label="Employee Phone Number"
+                            <input type="tel" id="empPhoneAlt" placeholder="Phone Number" aria-label="Employee Phone Number"
                                 class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
-                            <input type="email" id="empEmail" placeholder="Email Address" aria-label="Employee Email Address"
+                            <input type="email" id="empEmailAlt" placeholder="Email Address" aria-label="Employee Email Address"
                                 class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
                         </div>
 
@@ -1941,8 +2019,38 @@
                         <div class="flex justify-end gap-3 pt-2">
                             <button onclick="document.getElementById('addStaffModal').classList.add('hidden')"
                                 class="btn btn-outline px-6 py-2">Cancel</button>
-                            <button onclick="addEmployee()" class="btn btn-accent px-6 py-2">Save Employee</button>
+                            <button onclick="submitEmployee()" class="btn btn-accent px-6 py-2" id="submitEmpBtnAlt">Save Employee</button>
                         </div>
+                    </div>
+                </div>
+
+                <div id="feedbackModal"
+                    class="hidden bg-white dark:bg-slate-900 rounded-3xl p-6 md:p-8 shadow-sm border border-slate-100 dark:border-slate-800 mb-12">
+                    <h2 class="text-xl font-bold mb-4">Leave Feedback</h2>
+                    <input type="hidden" id="feedbackEmpId" value="">
+                    <input type="hidden" id="feedbackEmpName" value="">
+                    <div class="space-y-4">
+                        <select id="feedbackRating" aria-label="Feedback Rating" class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
+                            <option value="5">5 Stars - Excellent</option>
+                            <option value="4">4 Stars - Good</option>
+                            <option value="3">3 Stars - Average</option>
+                            <option value="2">2 Stars - Needs Improvement</option>
+                            <option value="1">1 Star - Poor</option>
+                        </select>
+                        <textarea id="feedbackComment" placeholder="Constructive feedback or positive recognition..." aria-label="Feedback Comment" rows="3"
+                            class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500 resize-none"></textarea>
+
+                        <div class="flex justify-end gap-3 pt-2">
+                            <button onclick="closeFeedbackModal()"
+                                class="btn btn-outline px-6 py-2">Cancel</button>
+                            <button onclick="submitFeedback()" class="btn btn-accent px-6 py-2">Submit Feedback</button>
+                        </div>
+                    </div>
+
+                    <h3 class="text-lg font-bold mt-8 mb-4 border-t border-slate-100 dark:border-slate-800 pt-6">Feedback History</h3>
+                    <div id="feedbacksContainer" class="space-y-4 max-h-64 overflow-y-auto custom-scrollbar">
+                        <!-- Feedbacks populated via JS -->
+                        <p class="text-sm text-slate-500">Loading history...</p>
                     </div>
                 </div>
 
@@ -1967,7 +2075,7 @@
                     <p class="text-slate-500 mb-8">Direct line to the engineering team. Pro users receive priority.</p>
                     <textarea id="featureReqText" class="h-32 mb-6"
                         placeholder="I would love it if ezManage could..." aria-label="Feature Request Description"></textarea>
-                    <button onclick="submitFeatureRequest()" class="btn btn-accent w-full py-4">Send Directly to
+                    <button id="btnSubmitFeatureReq" onclick="submitFeatureRequest()" class="btn btn-accent w-full py-4 disabled:opacity-70 disabled:cursor-not-allowed">Send Directly to
                         Admin</button>
                 </div>
                 <h3 class="text-xl font-black mb-6 border-b border-slate-200 dark:border-slate-800 pb-2">My Requests
@@ -1996,9 +2104,9 @@
                     </div>
 
                     <label class="block text-sm font-bold mb-2">Description (Optional)</label>
-                    <textarea id="taskDescription3" class="h-24 mb-6" placeholder="Provide extra details..."></textarea>
+                    <textarea id="taskDescription3" aria-label="Task Description" class="h-24 mb-6" placeholder="Provide extra details..."></textarea>
 
-                    <button id="btnSubmitTask" onclick="submitTask()" class="btn btn-accent w-full py-4">Assign Task</button>
+                    <button id="btnSubmitTaskAlt" onclick="submitTaskAlt()" class="btn btn-accent w-full py-4">Assign Task</button>
                 </div>
 
                 <div class="mb-12">
@@ -2034,7 +2142,7 @@
                             <option value="Kudos">Kudos (Public)</option>
                             <option value="Private Feedback">Private Feedback</option>
                         </select>
-                        <textarea id="recogMessage" placeholder="Write a nice message..." rows="3"
+                        <textarea id="recogMessage" aria-label="Recognition Message" placeholder="Write a nice message..." rows="3"
                             class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500 resize-none"></textarea>
 
                         <div class="flex justify-end gap-3 pt-2">
@@ -2242,6 +2350,18 @@
 
                         loadProfileUI(currentUserData);
                         calculatePerformance();
+
+                        // Announcements UI Visibility (Only Managers/Admins can see the form)
+                        const formContainer = document.getElementById('announcementFormContainer');
+                        if (formContainer) {
+                            if (currentUser.uid === currentUserData.orgId || currentUserData.isAdmin || currentUserData.role === 'Manager') {
+                                formContainer.classList.remove('hidden');
+                            } else {
+                                formContainer.classList.add('hidden');
+                            }
+                        }
+
+                        await fetchAnnouncements();
                         renderHistory();
                         updateStorageBar();
 
@@ -2375,7 +2495,7 @@
             db.collection('users').doc(currentUser.uid).set({ cloudSyncEnabled: true }, { merge: true });
             localStorage.setItem(`ezManage_cloudEnabled_${currentUser.uid}`, 'true');
             updateCloudSyncUI();
-            triggerDraftSync();
+            debouncedTriggerDraftSync();
         }
 
         function declineToS() {
@@ -2442,7 +2562,7 @@
                     const state = JSON.parse(e.target.result);
                     if (confirm("This will overwrite your current tracker draft. Proceed?")) {
                         populateTrackerFromState(state);
-                        triggerDraftSync();
+                        debouncedTriggerDraftSync();
                         alert("Data imported successfully!");
                     }
                 } catch (err) {
@@ -2510,7 +2630,7 @@
         function signInWithGoogle() {
             const provider = new firebase.auth.GoogleAuthProvider();
             auth.signInWithPopup(provider).then(cred => {
-                db.collection("users").doc(cred.user.uid).get().then(doc => {
+                fetchUserDoc(cred.user.uid).then(doc => {
                     if (!doc.exists) navTo('setup');
                 });
             }).catch(err => alert(err.message));
@@ -2554,6 +2674,139 @@
             document.body.classList.toggle('overflow-hidden');
         }
 
+        // --- ANNOUNCEMENTS LOGIC ---
+
+        async function fetchAnnouncements() {
+            if (!currentUser || !currentUserData || !currentUserData.orgId) return;
+
+            try {
+                const snapshot = await db.collection('announcements')
+                    .where('orgId', '==', currentUserData.orgId)
+                    .orderBy('createdAt', 'desc')
+                    .get();
+
+                const container = document.getElementById('announcementsContainer');
+                if (snapshot.empty) {
+                    container.innerHTML = `<p class="text-slate-500 italic text-sm">No announcements posted yet.</p>`;
+                    return;
+                }
+
+                container.innerHTML = '';
+                const fragment = document.createDocumentFragment();
+
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    const el = document.createElement('div');
+
+                    const borderClass = data.priority === 'high' ? 'border-red-500 bg-red-50 dark:bg-red-900/10' : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-black/50';
+                    const iconColor = data.priority === 'high' ? 'text-red-500' : 'text-sky-500';
+
+                    el.className = `p-4 rounded-xl border ${borderClass} flex gap-4 items-start`;
+
+                    const dateStr = data.createdAt ? new Date(data.createdAt.toDate()).toLocaleDateString() : 'Just now';
+
+                    let deleteBtnHTML = '';
+                    if (data.authorId === currentUser.uid || currentUserData.isAdmin) {
+                         deleteBtnHTML = `<button onclick="deleteAnnouncement('${doc.id}')" class="text-slate-400 hover:text-red-500 no-print ml-auto" aria-label="Delete Announcement"><i data-lucide="trash-2" class="w-4 h-4"></i></button>`;
+                    }
+
+                    el.innerHTML = `
+                        <div class="mt-1 bg-white dark:bg-slate-800 p-2 rounded-full shadow-sm">
+                            <i data-lucide="bell" class="w-5 h-5 ${iconColor}"></i>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-2 mb-1">
+                                <h4 class="font-bold text-sm truncate">${escapeHTML(data.title)}</h4>
+                                ${data.priority === 'high' ? '<span class="text-[10px] uppercase font-black tracking-wider text-red-500 bg-red-100 dark:bg-red-900/30 px-2 py-0.5 rounded-full">Urgent</span>' : ''}
+                            </div>
+                            <p class="text-sm text-slate-600 dark:text-slate-300 whitespace-pre-wrap">${escapeHTML(data.content)}</p>
+                            <div class="text-xs text-slate-400 font-medium mt-3 flex items-center gap-2">
+                                <span><i data-lucide="user" class="w-3 h-3 inline"></i> ${escapeHTML(data.authorName)}</span>
+                                <span>&bull;</span>
+                                <span>${dateStr}</span>
+                            </div>
+                        </div>
+                        ${deleteBtnHTML}
+                    `;
+                    fragment.appendChild(el);
+                });
+
+                container.appendChild(fragment);
+                lucide.createIcons();
+
+            } catch (error) {
+                console.error("Error fetching announcements:", error);
+                document.getElementById('announcementsContainer').innerHTML = `<p class="text-red-500 text-sm">Failed to load announcements.</p>`;
+            }
+        }
+
+        async function createAnnouncement(e) {
+            if (!currentUser || !currentUserData || !currentUserData.orgId) return;
+
+            const titleInput = document.getElementById('announcementTitle');
+            const contentInput = document.getElementById('announcementContent');
+            const priorityInput = document.getElementById('announcementPriority');
+
+            const title = titleInput.value.trim();
+            const content = contentInput.value.trim();
+            const priority = priorityInput.value;
+
+            if (!title || !content) {
+                alert("Please provide both a title and message.");
+                return;
+            }
+
+            const submitBtn = e && e.target ? e.target : document.querySelector('#newAnnouncementForm button[type="button"]');
+            const originalText = submitBtn ? submitBtn.innerText : "Post";
+            if (submitBtn) {
+                submitBtn.innerText = "Posting...";
+                submitBtn.disabled = true;
+            }
+
+            try {
+                await db.collection('announcements').add({
+                    orgId: currentUserData.orgId,
+                    authorId: currentUser.uid,
+                    authorName: currentUserData.name || currentUser.email.split('@')[0],
+                    title: title,
+                    content: content,
+                    priority: priority,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                titleInput.value = '';
+                contentInput.value = '';
+                priorityInput.value = 'normal';
+
+                fetchAnnouncements();
+
+                if (submitBtn) {
+                    submitBtn.innerText = originalText;
+                    submitBtn.disabled = false;
+                }
+
+            } catch (error) {
+                console.error("Error creating announcement:", error);
+                alert("Failed to post announcement. Please try again.");
+                if(submitBtn) {
+                    submitBtn.innerText = originalText;
+                    submitBtn.disabled = false;
+                }
+            }
+        }
+
+        async function deleteAnnouncement(id) {
+            if (!confirm("Are you sure you want to delete this announcement?")) return;
+            try {
+                await db.collection('announcements').doc(id).delete();
+                fetchAnnouncements();
+            } catch (error) {
+                console.error("Error deleting announcement:", error);
+                alert("Failed to delete announcement.");
+            }
+        }
+
+
         function navTo(viewId) {
             if (isInitializingAuth) {
                 localStorage.setItem('navTo', viewId);
@@ -2596,6 +2849,9 @@
 
             if (viewId === 'shiftNotes') {
                 fetchShiftNotes();
+            }
+            if (viewId === 'tasks') {
+                fetchAssignedTasks();
             }
         }
 
@@ -2654,11 +2910,11 @@
                 <button type="button" class="text-red-400 p-2 delete-drawer-btn" aria-label="Remove drawer"><i data-lucide="x" class="w-4"></i></button>
             `;
 
-            div.querySelector('.drawer-name').oninput = triggerDraftSync;
-            div.querySelector('.drawer-val').oninput = function() { calcDrawer(this); triggerDraftSync(); };
+            div.querySelector('.drawer-name').oninput = debouncedTriggerDraftSync;
+            div.querySelector('.drawer-val').oninput = function() { calcDrawer(this); debouncedTriggerDraftSync(); };
             div.querySelector('.delete-drawer-btn').onclick = function() {
                 if(confirm('Are you sure you want to delete this drawer? This action cannot be undone.')) {
-                    this.parentElement.remove(); triggerDraftSync();
+                    this.parentElement.remove(); debouncedTriggerDraftSync();
                 }
             };
 
@@ -2667,7 +2923,7 @@
             document.getElementById('drawersContainer').appendChild(div);
             calcDrawer(div.querySelector('.drawer-val'));
             lucide.createIcons();
-            if (initialDraftLoaded) triggerDraftSync();
+            if (initialDraftLoaded) debouncedTriggerDraftSync();
         }
 
         function calcDrawer(input) {
@@ -2682,18 +2938,18 @@
             const div = document.createElement('div');
             div.className = "flex gap-4 items-center bg-slate-50 dark:bg-slate-800 p-3 rounded-xl animate-fadeIn";
             div.innerHTML = `
-                <input type="text" placeholder="Amount" class="dep-val" style="flex:1;" aria-label="Deposit Amount" oninput="triggerDraftSync()">
-                <label class="flex items-center gap-1 text-[10px] font-bold"><input type="checkbox" class="dep-ver accent-sky-500 w-4 h-4" onchange="triggerDraftSync()" aria-label="Verify Deposit"> VER</label>
-                <label class="flex items-center gap-1 text-[10px] font-bold"><input type="checkbox" class="dep-val-chk accent-sky-500 w-4 h-4" onchange="triggerDraftSync()" aria-label="Validate Deposit"> VAL</label>
+                <input type="text" placeholder="Amount" class="dep-val" style="flex:1;" aria-label="Deposit Amount" oninput="debouncedTriggerDraftSync()">
+                <label class="flex items-center gap-1 text-[10px] font-bold"><input type="checkbox" class="dep-ver accent-sky-500 w-4 h-4" onchange="debouncedTriggerDraftSync()" aria-label="Verify Deposit"> VER</label>
+                <label class="flex items-center gap-1 text-[10px] font-bold"><input type="checkbox" class="dep-val-chk accent-sky-500 w-4 h-4" onchange="debouncedTriggerDraftSync()" aria-label="Validate Deposit"> VAL</label>
                 <button type="button" class="text-red-400 delete-deposit-btn" aria-label="Remove deposit"><i data-lucide="x" class="w-4"></i></button>
             `;
 
-            div.querySelector('.dep-val').oninput = triggerDraftSync;
-            div.querySelector('.dep-ver').onchange = triggerDraftSync;
-            div.querySelector('.dep-val-chk').onchange = triggerDraftSync;
+            div.querySelector('.dep-val').oninput = debouncedTriggerDraftSync;
+            div.querySelector('.dep-ver').onchange = debouncedTriggerDraftSync;
+            div.querySelector('.dep-val-chk').onchange = debouncedTriggerDraftSync;
             div.querySelector('.delete-deposit-btn').onclick = function() {
                 if(confirm('Are you sure you want to delete this deposit? This action cannot be undone.')) {
-                    this.parentElement.remove(); triggerDraftSync();
+                    this.parentElement.remove(); debouncedTriggerDraftSync();
                 }
             };
 
@@ -2702,7 +2958,7 @@
             div.querySelector('.dep-val-chk').checked = valCheck;
             document.getElementById('depositsContainer').appendChild(div);
             lucide.createIcons();
-            if (initialDraftLoaded) triggerDraftSync();
+            if (initialDraftLoaded) debouncedTriggerDraftSync();
         }
 
         function addRoutineTask(name = "", isChecked = false) {
@@ -2715,7 +2971,7 @@
             chk.type = "checkbox";
             chk.className = "routine-chk w-5 h-5 accent-sky-500";
             chk.checked = isChecked;
-            chk.onchange = triggerDraftSync;
+            chk.onchange = debouncedTriggerDraftSync;
 
             const span = document.createElement('span');
             span.className = "routine-name flex-1 font-semibold text-sm";
@@ -2724,7 +2980,7 @@
             const btn = document.createElement('button');
             btn.type = "button";
             btn.className = "text-slate-300 hover:text-red-400";
-            btn.onclick = function () { if (confirm('Are you sure you want to delete this task? This action cannot be undone.')) { this.parentElement.remove(); triggerDraftSync(); } };
+            btn.onclick = function () { if (confirm('Are you sure you want to delete this task? This action cannot be undone.')) { this.parentElement.remove(); debouncedTriggerDraftSync(); } };
             btn.setAttribute('aria-label', 'Remove task');
             btn.innerHTML = '<i data-lucide="trash-2" class="w-4"></i>';
 
@@ -2735,7 +2991,7 @@
             document.getElementById('routineContainer').appendChild(div);
             document.getElementById('newRoutineTask').value = "";
             lucide.createIcons();
-            if (initialDraftLoaded) triggerDraftSync();
+            if (initialDraftLoaded) debouncedTriggerDraftSync();
         }
 
         let _invLoadTime = Date.now();
@@ -2751,13 +3007,13 @@
                 <button type="button" class="text-red-400 text-right delete-inv-btn" aria-label="Remove item"><i data-lucide="minus-circle" class="w-5"></i></button>
             `;
 
-            div.querySelector('.inv-name').oninput = triggerDraftSync;
-            div.querySelector('.inv-backline').oninput = triggerDraftSync;
-            div.querySelector('.inv-cooler').oninput = triggerDraftSync;
-            div.querySelector('.inv-freezer').oninput = triggerDraftSync;
+            div.querySelector('.inv-name').oninput = debouncedTriggerDraftSync;
+            div.querySelector('.inv-backline').oninput = debouncedTriggerDraftSync;
+            div.querySelector('.inv-cooler').oninput = debouncedTriggerDraftSync;
+            div.querySelector('.inv-freezer').oninput = debouncedTriggerDraftSync;
             div.querySelector('.delete-inv-btn').onclick = function() {
                 if(confirm('Are you sure you want to delete this item? This action cannot be undone.')) {
-                    this.parentElement.remove(); triggerDraftSync();
+                    this.parentElement.remove(); debouncedTriggerDraftSync();
                 }
             };
 
@@ -2765,6 +3021,7 @@
             div.querySelector('.inv-backline').value = bl;
             div.querySelector('.inv-cooler').value = cl;
             div.querySelector('.inv-freezer').value = fr;
+            // ⚡ Bolt Performance Optimization: Use DocumentFragment if batch loading, though here we load individually.
             const container = document.getElementById('inventoryContainer');
             if (prepend && container.firstChild) {
                 container.insertBefore(div, container.firstChild);
@@ -2772,7 +3029,7 @@
                 container.appendChild(div);
             }
             lucide.createIcons();
-            if (initialDraftLoaded) triggerDraftSync();
+            if (initialDraftLoaded) debouncedTriggerDraftSync();
         }
 
         function sortInventory(type) {
@@ -2795,7 +3052,7 @@
             items.forEach(item => fragment.appendChild(item));
             container.appendChild(fragment);
 
-            triggerDraftSync();
+            debouncedTriggerDraftSync();
         }
 
         function getTrackerState() {
@@ -2867,7 +3124,38 @@
             if (draft.routines) draft.routines.forEach(r => addRoutineTask(r.name, r.checked));
 
             document.getElementById('inventoryContainer').innerHTML = '';
-            if (draft.inventory) draft.inventory.forEach(i => addInventoryItem(i.name, i.bl, i.cl, i.fr, false, i.timestamp));
+            // ⚡ Bolt Performance Optimization: batch DOM insertions
+            if (draft.inventory) {
+                const fragment = document.createDocumentFragment();
+                draft.inventory.forEach(i => {
+                   const div = document.createElement('div');
+                   div.className = 'inventory-item animate-fadeIn border-slate-200 dark:border-slate-800';
+                   div.dataset.timestamp = i.timestamp || (_invLoadTime--);
+                   div.innerHTML = `
+                       <input type="text" placeholder="Item Name" class="inv-name" aria-label="Item Name">
+                       <input type="text" placeholder="Backline" class="inv-backline" aria-label="Backline Count">
+                       <input type="text" placeholder="Cooler" class="inv-cooler" aria-label="Cooler Count">
+                       <input type="text" placeholder="Freezer" class="inv-freezer" aria-label="Freezer Count">
+                       <button type="button" class="text-red-400 text-right delete-inv-btn" aria-label="Remove item"><i data-lucide="minus-circle" class="w-5"></i></button>
+                   `;
+                   div.querySelector('.inv-name').oninput = triggerDraftSync;
+                   div.querySelector('.inv-backline').oninput = triggerDraftSync;
+                   div.querySelector('.inv-cooler').oninput = triggerDraftSync;
+                   div.querySelector('.inv-freezer').oninput = triggerDraftSync;
+                   div.querySelector('.delete-inv-btn').onclick = function() {
+                       if(confirm('Are you sure you want to delete this item? This action cannot be undone.')) {
+                           this.parentElement.remove(); triggerDraftSync();
+                       }
+                   };
+                   div.querySelector('.inv-name').value = i.name;
+                   div.querySelector('.inv-backline').value = i.bl;
+                   div.querySelector('.inv-cooler').value = i.cl;
+                   div.querySelector('.inv-freezer').value = i.fr;
+                   fragment.appendChild(div);
+                });
+                document.getElementById('inventoryContainer').appendChild(fragment);
+                lucide.createIcons();
+            }
 
             document.getElementById('drawersContainer').innerHTML = '';
             if (draft.drawers) draft.drawers.forEach(d => addDrawerItem(d.val, d.name));
@@ -2983,7 +3271,7 @@
                 groupHeader.innerHTML = `
                     <div class="font-black text-lg text-slate-800 dark:text-slate-200"><i data-lucide="calendar" class="inline-block w-5 h-5 mr-2 text-sky-500"></i>${escapeHTML(key)}</div>
                     <div class="flex items-center gap-3">
-                        <span class="text-xs font-bold bg-sky-100 text-sky-700 px-2 py-1 rounded-md">${grouped[key].length} shifts</span>
+                        <span class="text-xs font-bold bg-sky-100 text-sky-700 px-2 py-1 rounded-md">${escapeHTML(grouped[key].length)} shifts</span>
                         <i data-lucide="chevron-down" class="history-group-icon w-5 h-5 text-slate-400 transition-transform duration-200"></i>
                     </div>
                 `;
@@ -3086,7 +3374,7 @@
             if (shift) {
                 populateTrackerFromState(shift);
                 navTo('tracker');
-                triggerDraftSync();
+                debouncedTriggerDraftSync();
                 alert("Shift loaded into Active Tracker successfully.");
             }
         }
@@ -3227,7 +3515,7 @@
                 document.getElementById('inventoryContainer').innerHTML = '';
                 (presets[key] || []).forEach(name => addInventoryItem(name));
                 navTo('tracker');
-                triggerDraftSync();
+                debouncedTriggerDraftSync();
             }
         }
 
@@ -3297,15 +3585,47 @@
             if (preset) {
                 if (preset.items) {
                     document.getElementById('inventoryContainer').innerHTML = '';
+                    // ⚡ Bolt Performance Optimization: batch DOM insertions
+                    const fragment = document.createDocumentFragment();
                     preset.items.forEach(i => {
-                        if (typeof i === 'string') addInventoryItem(i);
-                        else addInventoryItem(i.name, i.bl, i.cl, i.fr, false, i.timestamp);
+                        const name = typeof i === 'string' ? i : i.name;
+                        const bl = typeof i === 'string' ? "" : (i.bl || "");
+                        const cl = typeof i === 'string' ? "" : (i.cl || "");
+                        const fr = typeof i === 'string' ? "" : (i.fr || "");
+                        const timestamp = typeof i === 'string' ? null : i.timestamp;
+
+                        const div = document.createElement('div');
+                        div.className = 'inventory-item animate-fadeIn border-slate-200 dark:border-slate-800';
+                        div.dataset.timestamp = timestamp || (_invLoadTime--);
+                        div.innerHTML = \`
+                            <input type="text" placeholder="Item Name" class="inv-name" aria-label="Item Name">
+                            <input type="text" placeholder="Backline" class="inv-backline" aria-label="Backline Count">
+                            <input type="text" placeholder="Cooler" class="inv-cooler" aria-label="Cooler Count">
+                            <input type="text" placeholder="Freezer" class="inv-freezer" aria-label="Freezer Count">
+                            <button type="button" class="text-red-400 text-right delete-inv-btn" aria-label="Remove item"><i data-lucide="minus-circle" class="w-5"></i></button>
+                        \`;
+                        div.querySelector('.inv-name').oninput = triggerDraftSync;
+                        div.querySelector('.inv-backline').oninput = triggerDraftSync;
+                        div.querySelector('.inv-cooler').oninput = triggerDraftSync;
+                        div.querySelector('.inv-freezer').oninput = triggerDraftSync;
+                        div.querySelector('.delete-inv-btn').onclick = function() {
+                            if(confirm('Are you sure you want to delete this item? This action cannot be undone.')) {
+                                this.parentElement.remove(); triggerDraftSync();
+                            }
+                        };
+                        div.querySelector('.inv-name').value = name;
+                        div.querySelector('.inv-backline').value = bl;
+                        div.querySelector('.inv-cooler').value = cl;
+                        div.querySelector('.inv-freezer').value = fr;
+                        fragment.appendChild(div);
                     });
+                    document.getElementById('inventoryContainer').appendChild(fragment);
+                    lucide.createIcons();
                 } else {
                     populateTrackerFromState(preset);
                 }
                 navTo('tracker');
-                triggerDraftSync();
+                debouncedTriggerDraftSync();
             }
         }
 
@@ -3504,7 +3824,7 @@
                 document.getElementById('inventoryContainer').innerHTML = '';
                 document.getElementById('routineContainer').innerHTML = '';
                 initDefaults();
-                triggerDraftSync();
+                debouncedTriggerDraftSync();
             }
         }
 
@@ -3558,6 +3878,159 @@
 
 
 
+
+        async function submitAssignedTask() {
+            if (!currentUser || !currentUserData || !currentUserData.orgId) {
+                alert("You must be part of an organization to assign tasks.");
+                return;
+            }
+
+            const title = document.getElementById('taskTitle').value.trim();
+            const desc = document.getElementById('taskDesc').value.trim();
+            const assignee = document.getElementById('taskAssignee').value;
+
+            if (!title || !assignee) {
+                alert("Task Title and Assignee are required.");
+                return;
+            }
+
+            const submitBtn = document.querySelector('#createTaskModal .btn-accent');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> Assigning...';
+            submitBtn.disabled = true;
+            lucide.createIcons();
+
+            try {
+                await db.collection('assigned_tasks').add({
+                    title: title,
+                    description: desc,
+                    assigneeName: assignee,
+                    status: 'Pending',
+                    createdByUid: currentUser.uid,
+                    createdByName: currentUserData.name || currentUser.email,
+                    orgId: currentUserData.orgId,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                document.getElementById('taskTitle').value = '';
+                document.getElementById('taskDesc').value = '';
+                document.getElementById('taskAssignee').value = '';
+                document.getElementById('createTaskModal').classList.add('hidden');
+
+                alert("Task assigned successfully.");
+                fetchAssignedTasks();
+            } catch (error) {
+                console.error("Error assigning task:", error);
+                if (error.code === 'unavailable' || error.code === 'auth/network-request-failed') {
+                    alert("Network error: Could not connect to the server.");
+                } else {
+                    alert("Failed to assign task. " + error.message);
+                }
+            } finally {
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+                lucide.createIcons();
+            }
+        }
+
+
+        let unsubscribeTasks = null;
+        function fetchAssignedTasks() {
+            if (!currentUser || !currentUserData || !currentUserData.orgId) {
+                document.getElementById('tasksContainer').innerHTML = `
+                    <div class="text-center py-16 bg-slate-50 dark:bg-slate-900 rounded-3xl border-2 border-dashed border-slate-200 dark:border-slate-800">
+                        <i data-lucide="users" class="w-12 h-12 text-slate-400 mx-auto mb-4"></i>
+                        <h3 class="text-xl font-bold mb-2">Join or Create a Group</h3>
+                        <p class="text-slate-500">You must be in a Management Group to assign tasks.</p>
+                    </div>`;
+                lucide.createIcons();
+                return;
+            }
+
+            const container = document.getElementById('tasksContainer');
+            container.innerHTML = '<div class="text-center py-8"><i data-lucide="loader-2" class="w-8 h-8 animate-spin mx-auto text-sky-500 mb-4"></i><p class="text-slate-500">Loading tasks...</p></div>';
+            lucide.createIcons();
+
+            if (unsubscribeTasks) unsubscribeTasks();
+
+            unsubscribeTasks = db.collection('assigned_tasks')
+                .where('orgId', '==', currentUserData.orgId)
+                .onSnapshot(snap => {
+                    container.innerHTML = '';
+                    if (snap.empty) {
+                        container.innerHTML = `
+                            <div class="text-center py-16 bg-slate-50 dark:bg-slate-900 rounded-3xl border-2 border-dashed border-slate-200 dark:border-slate-800">
+                                <i data-lucide="check-circle-2" class="w-12 h-12 text-emerald-400 mx-auto mb-4"></i>
+                                <h3 class="text-xl font-bold mb-2">All Caught Up!</h3>
+                                <p class="text-slate-500">There are no active assigned tasks.</p>
+                            </div>`;
+                        lucide.createIcons();
+                        return;
+                    }
+
+                    let tasks = [];
+                    snap.forEach(doc => tasks.push({ id: doc.id, ...doc.data() }));
+
+                    tasks.sort((a, b) => {
+                        const aTime = a.createdAt ? a.createdAt.toMillis() : 0;
+                        const bTime = b.createdAt ? b.createdAt.toMillis() : 0;
+                        return bTime - aTime;
+                    });
+
+                    container.innerHTML = tasks.map(task => {
+                        const isCompleted = task.status === 'Completed';
+                        const statusColor = isCompleted ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400' : 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400';
+                        const dateStr = task.createdAt ? new Date(task.createdAt.toMillis()).toLocaleString() : 'Just now';
+
+                        return `
+                            <div class="card p-6 border-l-4 ${isCompleted ? 'border-l-emerald-500 opacity-70' : 'border-l-amber-500'}">
+                                <div class="flex flex-col md:flex-row justify-between gap-4 mb-4">
+                                    <div>
+                                        <h3 class="text-lg font-bold ${isCompleted ? 'line-through text-slate-500' : ''}">${escapeHTML(task.title)}</h3>
+                                        <p class="text-sm text-slate-500">Assigned to <span class="font-bold">${escapeHTML(task.assigneeName)}</span> by ${escapeHTML(task.createdByName)} • ${dateStr}</p>
+                                    </div>
+                                    <div class="flex gap-2 items-start">
+                                        <span class="px-3 py-1 rounded-full text-xs font-bold ${statusColor}">${escapeHTML(task.status)}</span>
+                                        <button onclick="updateAssignedTaskStatus('${task.id}', '${isCompleted ? 'Pending' : 'Completed'}')" class="btn btn-sm btn-outline ${isCompleted ? '' : 'btn-success'}">${isCompleted ? 'Mark Pending' : 'Mark Complete'}</button>
+                                        <button onclick="deleteAssignedTask('${task.id}')" class="btn btn-sm btn-outline text-red-500 border-red-200 hover:bg-red-50"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                                    </div>
+                                </div>
+                                <p class="text-slate-700 dark:text-slate-300 whitespace-pre-wrap ${isCompleted ? 'line-through text-slate-500' : ''}">${escapeHTML(task.description)}</p>
+                            </div>
+                        `;
+                    }).join('');
+                    lucide.createIcons();
+                }, err => {
+                    console.error("Error fetching tasks:", err);
+                    container.innerHTML = `<div class="text-red-500 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl text-center">Failed to load tasks: ${err.message}</div>`;
+                });
+        }
+
+
+        async function updateAssignedTaskStatus(taskId, newStatus) {
+            try {
+                await db.collection('assigned_tasks').doc(taskId).update({
+                    status: newStatus,
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    orgId: currentUserData.orgId
+                });
+            } catch (error) {
+                console.error("Manager Troubleshooting: Error updating task status:", error);
+                alert("Failed to update status. " + error.message);
+            }
+        }
+
+        async function deleteAssignedTask(taskId) {
+            if (!confirm("Are you sure you want to delete this task?")) return;
+            try {
+                await db.collection('assigned_tasks').doc(taskId).delete();
+            } catch (error) {
+                console.error("Manager Troubleshooting: Error deleting task:", error);
+                alert("Failed to delete task. " + error.message);
+            }
+        }
+
         async function submitMaintenanceTicket() {
             if (!currentUser || !currentUserData || !currentUserData.orgId) {
                 alert("You must be part of an organization to report issues.");
@@ -3605,6 +4078,62 @@
                     alert("Network error: Could not connect to the server. Please check your connection.");
                 } else {
                     alert("Failed to submit ticket. " + error.message);
+                }
+            } finally {
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+                lucide.createIcons();
+            }
+        }
+
+        async function submitTaskAlt() {
+            if (!currentUser || !currentUserData || !currentUserData.orgId) {
+                alert("You must be part of an organization to assign tasks.");
+                return;
+            }
+
+            const title = document.getElementById('taskTitleAlt').value.trim();
+            const desc = document.getElementById('taskDescriptionAlt').value.trim();
+            const assignee = document.getElementById('taskAssigneeAlt').value;
+
+            if (!title || !assignee) {
+                alert("Please provide a title and assign the task to an employee.");
+                return;
+            }
+
+            const submitBtn = document.getElementById('btnSubmitTaskAlt');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> Assigning...';
+            submitBtn.disabled = true;
+            lucide.createIcons();
+
+            try {
+                await db.collection('tasks').add({
+                    title: title,
+                    description: desc,
+                    assignedTo: assignee,
+                    priority: 'Medium', // defaults
+                    dueDate: null,
+                    status: 'Pending',
+                    authorId: currentUser.uid,
+                    assignedByName: currentUserData.name || currentUser.email,
+                    orgId: currentUserData.orgId || null,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                document.getElementById('taskTitleAlt').value = '';
+                document.getElementById('taskDescriptionAlt').value = '';
+                document.getElementById('taskAssigneeAlt').value = '';
+
+                alert("Task assigned successfully.");
+                fetchTasks();
+            } catch (error) {
+                console.error("Error assigning task:", error);
+                if (error.code === 'unavailable' || error.code === 'auth/network-request-failed') {
+                    alert("Network error: Could not connect to the server. Please check your connection.");
+                } else {
+                    alert("Failed to assign task. " + error.message);
                 }
             } finally {
                 submitBtn.innerHTML = originalText;
@@ -3685,7 +4214,7 @@
                                     </div>
                                     <div class="flex gap-2 items-start">
                                         <span class="px-3 py-1 rounded-full text-xs font-bold ${prioColors[ticket.priority] || prioColors['Low']}">${escapeHTML(ticket.priority)}</span>
-                                        <select class="ticket-status-select px-3 py-1 rounded-full text-xs font-bold border appearance-none cursor-pointer focus:outline-none ${statusColors[ticket.status] || statusColors['Open']}" data-ticket-id="${escapeHTML(ticket.id)}">
+                                        <select aria-label="Update ticket status" class="ticket-status-select px-3 py-1 rounded-full text-xs font-bold border appearance-none cursor-pointer focus:outline-none ${statusColors[ticket.status] || statusColors['Open']}" data-ticket-id="${escapeHTML(ticket.id)}">
                                             <option value="Open" ${ticket.status === 'Open' ? 'selected' : ''}>Open</option>
                                             <option value="In Progress" ${ticket.status === 'In Progress' ? 'selected' : ''}>In Progress</option>
                                             <option value="Resolved" ${ticket.status === 'Resolved' ? 'selected' : ''}>Resolved</option>
@@ -3698,7 +4227,11 @@
                     }).join('');
                 }, err => {
                     console.error("Error fetching tickets:", err);
-                    container.innerHTML = `<div class="text-red-500 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl text-center">Failed to load tickets: ${escapeHTML(err.message)}</div>`;
+                    container.innerHTML = '';
+                    const errDiv = document.createElement('div');
+                    errDiv.className = 'text-red-500 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl text-center';
+                    errDiv.textContent = `Failed to load tickets: ${err.message}`;
+                    container.appendChild(errDiv);
                 });
         }
 
@@ -3835,6 +4368,7 @@
             btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin inline-block"></i> Submitting...`;
             lucide.createIcons();
             btn.disabled = true;
+            lucide.createIcons();
 
             try {
                 await db.collection('time_off_requests').add({
@@ -3920,7 +4454,7 @@
                         // Employee specific view (Can mark their own as complete)
                         if (task.assigneeId === currentUser.uid && task.status === 'Pending') {
                             myTasksHtml.push(taskCard + `
-                                    <button onclick="updateTaskStatus('${task.id}', 'Completed')" class="btn btn-sm bg-green-500 text-white hover:bg-green-600"><i data-lucide="check" class="w-4 h-4 mr-1"></i>Complete</button>
+                                    <button data-action="updateTaskStatus" data-id="${task.id}" data-status="Completed" class="btn btn-sm bg-green-500 text-white hover:bg-green-600"><i data-lucide="check" class="w-4 h-4 mr-1"></i>Complete</button>
                                 </div></div>
                             `);
                         } else if (task.assigneeId === currentUser.uid) {
@@ -3929,12 +4463,14 @@
 
                         // Manager specific view
                         if (isManager) {
-                            let deleteBtn = `<button onclick="deleteTask('${task.id}')" class="btn btn-sm btn-outline text-red-500 hover:bg-red-50" aria-label="Delete Task"><i data-lucide="trash-2" class="w-4 h-4"></i></button>`;
-                            let revertBtn = task.status === 'Completed' ? `<button onclick="updateTaskStatus('${task.id}', 'Pending')" class="btn btn-sm btn-outline text-yellow-600" aria-label="Mark Pending"><i data-lucide="rotate-ccw" class="w-4 h-4"></i></button>` : '';
+                            let deleteBtn = `<button data-action="deleteTask" data-id="${task.id}" class="btn btn-sm btn-outline text-red-500 hover:bg-red-50" aria-label="Delete Task"><i data-lucide="trash-2" class="w-4 h-4"></i></button>`;
+                            let revertBtn = task.status === 'Completed' ? `<button data-action="updateTaskStatus" data-id="${task.id}" data-status="Pending" class="btn btn-sm btn-outline text-yellow-600" aria-label="Mark Pending"><i data-lucide="rotate-ccw" class="w-4 h-4"></i></button>` : '';
 
                             orgTasksHtml.push(taskCard + revertBtn + deleteBtn + `</div></div>`);
                         }
                     });
+                    myTasksHtml = myTasksArr.join('');
+                    orgTasksHtml = orgTasksArr.join('');
 
                     if (myContainer) myContainer.innerHTML = myTasksHtml.join('') || '<p class="text-slate-500 text-center py-4">No tasks assigned to you right now. You\'re all caught up!</p>';
                     if (orgContainer && isManager) orgContainer.innerHTML = orgTasksHtml.join('') || '<p class="text-slate-500 text-center py-4">No active tasks in the organization.</p>';
@@ -4009,6 +4545,8 @@
                           managerRequestsHtml.push(reqCard + `</div></div>`);
                      }
                  });
+                 myRequestsHtml = myRequestsArr.join('');
+                 managerRequestsHtml = managerRequestsArr.join('');
 
                  if (employeeContainer) employeeContainer.innerHTML = myRequestsHtml.join('') || '<p class="text-slate-500">No time off requests found.</p>';
                  if (managerContainer) {
@@ -4109,12 +4647,14 @@
                                 </div>
                             </div>
                             <div class="flex gap-2 self-start sm:self-center">
+                                <button class="btn btn-outline btn-sm text-blue-500 hover:bg-blue-50 feedback-emp-btn" aria-label="Leave Feedback"><i data-lucide="message-square" class="w-3 h-3"></i> Feedback</button>
                                 <button class="btn btn-outline btn-sm toggle-emp-btn" aria-label="Toggle Employee Status">${emp.status === 'Active' ? 'Deactivate' : 'Activate'}</button>
                                 <button class="btn btn-outline btn-sm text-red-500 hover:bg-red-50 delete-emp-btn" aria-label="Delete Employee"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
                             </div>
                         `;
                         div.querySelector('.toggle-emp-btn').onclick = () => toggleEmployeeStatus(emp.id, emp.status);
                         div.querySelector('.delete-emp-btn').onclick = () => deleteEmployee(emp.id);
+                        div.querySelector('.feedback-emp-btn').onclick = () => openFeedbackModal(emp.id, emp.name);
                         fragment.appendChild(div);
                     });
                     if (container) container.appendChild(fragment);
@@ -4122,7 +4662,7 @@
                     populateScheduleDropdown();
                 }, err => {
                     console.error("Manager Troubleshooting: Error fetching employees:", err);
-                    if (container) container.innerHTML = `<p class="text-red-500 text-center py-8">Failed to load roster.</p>`;
+                    if (container) { container.innerHTML = '<p class="text-red-500 text-center py-8">Failed to load roster.</p>'; }
                 });
         }
 
@@ -4317,7 +4857,7 @@
                     }
                 }, error => {
                     console.error("Manager Troubleshooting: Error fetching schedules: ", error);
-                    if (listContainer) listContainer.innerHTML = "<p class='text-sm text-red-500'>Error loading schedule.</p>";
+                    if (listContainer) { listContainer.innerHTML = "<p class='text-sm text-red-500'>Error loading schedule.</p>"; }
                 });
         }
 
@@ -4414,7 +4954,7 @@ function checkAndRenderOrgControls() {
                     controls.innerHTML = `
                         <div class="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700">
                             <span class="text-xs font-bold text-slate-500 uppercase">Group ID:</span>
-                            <span class="text-sm font-mono font-bold">${currentUserData.orgId}</span>
+                            <span class="text-sm font-mono font-bold">${escapeHTML(currentUserData.orgId)}</span>
                             <button aria-label="Copy Group ID" data-org-id="${escapeHTML(currentUserData.orgId)}" class="copy-group-id-btn text-sky-500 hover:text-sky-600"><i data-lucide="copy" class="w-3.5 h-3.5"></i></button>
                         </div>
                     `;
@@ -4512,7 +5052,7 @@ function checkAndRenderOrgControls() {
                             </div>
                             <p class="text-slate-700 dark:text-slate-300 font-medium mb-6 whitespace-pre-wrap pl-1 shift-note-text"></p>
                             <div class="flex justify-end border-t border-slate-100 dark:border-slate-800 pt-4 mt-2">
-                                <button class="text-sm font-bold text-slate-400 hover:text-emerald-500 flex items-center gap-2 transition-colors resolve-note-btn" aria-label="Resolve Shift Note" data-note-id="${docId}">
+                                <button class="text-sm font-bold text-slate-400 hover:text-emerald-500 flex items-center gap-2 transition-colors resolve-note-btn" aria-label="Resolve Shift Note" data-note-id="${escapeHTML(docId)}">
                                     <i data-lucide="check-circle" class="w-4 h-4"></i> Mark Resolved
                                 </button>
                             </div>
@@ -4526,7 +5066,7 @@ function checkAndRenderOrgControls() {
                 })
                 .catch(err => {
                     console.error("Manager Troubleshooting: Error fetching notes:", err);
-                    container.innerHTML = `<p class="text-red-500 text-center py-8">Failed to load shift notes. Please check your connection.</p>`;
+                    if (container) { container.innerHTML = '<p class="text-red-500 text-center py-8">Failed to load shift notes. Please check your connection.</p>'; }
                 });
         }
 
@@ -4558,10 +5098,10 @@ function checkAndRenderOrgControls() {
                 <div class="flex justify-between items-start mb-4">
                     <div class="flex items-center gap-3">
                         <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-sky-400 to-indigo-500 flex items-center justify-center text-white font-bold text-lg shadow-sm">
-                            ${authorName.charAt(0).toUpperCase()}
+                            ${escapeHTML(authorName.charAt(0).toUpperCase())}
                         </div>
                         <div>
-                            <p class="font-bold text-sm">${authorName}</p>
+                            <p class="font-bold text-sm">${escapeHTML(authorName)}</p>
                             <p class="text-xs text-slate-500 font-mono">Posting...</p>
                         </div>
                     </div>
@@ -4600,16 +5140,56 @@ function checkAndRenderOrgControls() {
                 });
 
                 document.getElementById('shiftNoteContent').value = "";
-                // Removed fetchShiftNotes() to prevent unnecessary re-fetches after optimistic update
+
+                // Update UI after success
+                const container = document.getElementById('shiftNotesContainer');
+                const noteDiv = document.createElement('div');
+                const isUrgent = priority === 'Urgent';
+                let borderClass = isUrgent ? "border-red-200 dark:border-red-900/50" : "border-slate-100 dark:border-slate-800";
+                let bgClass = isUrgent ? "bg-red-50 dark:bg-red-950/20" : "bg-white dark:bg-slate-900";
+                let priorityBadge = isUrgent ?
+                    `<span class="bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300 text-xs font-black uppercase tracking-widest px-3 py-1 rounded-full flex items-center gap-1"><i data-lucide="alert-triangle" class="w-3 h-3"></i> Urgent</span>` :
+                    `<span class="bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full">Normal</span>`;
+
+                noteDiv.className = `p-6 rounded-2xl border ${borderClass} ${bgClass} shadow-sm relative group transition-all duration-200 hover:shadow-md`;
+
+                const authorName = currentUser.email.split('@')[0];
+
+                noteDiv.innerHTML = `
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-sky-400 to-indigo-500 flex items-center justify-center text-white font-bold text-lg shadow-sm">
+                                ${authorName.charAt(0).toUpperCase()}
+                            </div>
+                            <div>
+                                <p class="font-bold text-sm">${authorName}</p>
+                                <p class="text-xs text-slate-500 font-mono">Just now</p>
+                            </div>
+                        </div>
+                        ${priorityBadge}
+                    </div>
+                    <p class="text-slate-700 dark:text-slate-300 font-medium mb-6 whitespace-pre-wrap pl-1 shift-note-text"></p>
+                    <div class="flex justify-end border-t border-slate-100 dark:border-slate-800 pt-4 mt-2">
+                        <button class="text-sm font-bold text-slate-400 hover:text-emerald-500 flex items-center gap-2 transition-colors resolve-note-btn" aria-label="Resolve Shift Note">
+                            <i data-lucide="check-circle" class="w-4 h-4"></i> Mark Resolved
+                        </button>
+                    </div>
+                `;
+                noteDiv.querySelector('.shift-note-text').textContent = content;
+
+                const emptyState = container.querySelector('.text-center.py-16');
+                if (emptyState) emptyState.remove();
+
+                container.prepend(noteDiv);
+                if (window.lucide) window.lucide.createIcons();
+
             } catch (err) {
                 console.error("Error posting note", err);
                 if (err.code === 'unavailable' || err.code === 'auth/network-request-failed' || err.code === 'firestore/unavailable') {
-                    alert("Network error: Could not connect to the server. Please check your connection.");
+                    alert("Network error: Could not connect to the server. Please check your connection or whitelist the domain.");
                 } else {
                     alert("Failed to post note: " + err.message);
                 }
-                noteDiv.remove(); // revert optimistic UI
-                document.getElementById('shiftNoteContent').value = previousContent; // Restore input
             }
         }
 
@@ -4673,7 +5253,11 @@ function checkAndRenderOrgControls() {
                 }
             } catch (e) {
                 console.error("Manager Troubleshooting: Error creating shift group:", e);
-                alert("Failed to create group: " + e.message);
+                if (e.code === 'unavailable' || e.code === 'auth/network-request-failed' || e.code === 'firestore/unavailable') {
+                    alert("Network error: Could not connect to the server. Please check your connection.");
+                } else {
+                    alert("Failed to create group: " + e.message);
+                }
             }
         }
 
@@ -4819,8 +5403,7 @@ function checkAndRenderOrgControls() {
             lucide.createIcons();
 
             try {
-                const manageWaste = cloudFunctions.httpsCallable('manageWaste');
-                await manageWaste({
+                await callCloudFunction('manageWaste', {
                     action: "create",
                     payload: { itemName, quantity, cost, reason }
                 });
@@ -4864,8 +5447,7 @@ function checkAndRenderOrgControls() {
             lucide.createIcons();
 
             try {
-                const manageWaste = cloudFunctions.httpsCallable('manageWaste');
-                const result = await manageWaste({ action: "get", payload: {} });
+                const result = await callCloudFunction('manageWaste', { action: "get", payload: {} });
 
                 if (result.data.success) {
                     const logs = result.data.logs || [];
@@ -4887,6 +5469,7 @@ function checkAndRenderOrgControls() {
 
                     logs.forEach(log => {
                         const div = document.createElement('div');
+                        div.id = `waste-log-${escapeHTML(log.id)}`;
                         div.className = "card p-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4";
 
                         const dateStr = log.timestamp ? new Date(log.timestamp._seconds * 1000).toLocaleString() : 'Just now';
@@ -4900,7 +5483,7 @@ function checkAndRenderOrgControls() {
                                     <span class="px-2 py-1 bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 rounded-lg text-xs font-bold">${escapeHTML(log.reason)}</span>
                                 </div>
                             </div>
-                            <button onclick="deleteWasteLog('${escapeHTML(log.id)}')" class="btn btn-outline btn-sm text-red-500 hover:bg-red-50" aria-label="Delete Waste Log">
+                            <button data-action="deleteWasteLog" data-id="${escapeHTML(log.id)}" class="btn btn-outline btn-sm text-red-500 hover:bg-red-50" aria-label="Delete Waste Log">
                                 <i data-lucide="trash-2" class="w-4 h-4"></i> Remove
                             </button>
                         `;
@@ -4917,13 +5500,15 @@ function checkAndRenderOrgControls() {
 
         async function deleteWasteLog(logId) {
             if (!confirm("Are you sure you want to permanently delete this waste log entry?")) return;
+            const logEl = document.getElementById('waste-log-' + escapeHTML(logId));
+            if (logEl) logEl.style.display = 'none'; // Optimistically hide
             try {
-                const manageWaste = cloudFunctions.httpsCallable('manageWaste');
-                await manageWaste({ action: "delete", payload: { logId } });
+                await callCloudFunction('manageWaste', { action: "delete", payload: { logId } });
                 fetchWasteLogs();
             } catch (err) {
-                console.error("Error deleting waste log:", err);
+                logManagerError("Error deleting waste log:", err);
                 alert("Failed to delete log.");
+                fetchWasteLogs(); // Revert on failure
             }
         }
 
@@ -4953,8 +5538,7 @@ function checkAndRenderOrgControls() {
             lucide.createIcons();
 
             try {
-                const manageIncidents = cloudFunctions.httpsCallable('manageIncidents');
-                await manageIncidents({
+                await callCloudFunction('manageIncidents', {
                     action: "create",
                     payload: { title, description: desc, severity, type }
                 });
@@ -5003,8 +5587,7 @@ function checkAndRenderOrgControls() {
             lucide.createIcons();
 
             try {
-                const manageIncidents = cloudFunctions.httpsCallable('manageIncidents');
-                const result = await manageIncidents({ action: "get", payload: {} });
+                const result = await callCloudFunction('manageIncidents', { action: "get", payload: {} });
 
                 if (result.data.success) {
                     const incidents = result.data.incidents || [];
@@ -5040,6 +5623,7 @@ function checkAndRenderOrgControls() {
                         const dateStr = incident.timestamp ? new Date(incident.timestamp._seconds * 1000).toLocaleString() : 'Just now';
 
                         const div = document.createElement('div');
+                        div.id = `incident-${escapeHTML(incident.id)}`;
                         div.className = `card p-6 border-l-4 ${incident.severity === 'Critical' ? 'border-l-red-500' : incident.severity === 'High' ? 'border-l-orange-500' : 'border-l-sky-500'}`;
 
                         div.innerHTML = `
@@ -5051,12 +5635,12 @@ function checkAndRenderOrgControls() {
                                 </div>
                                 <div class="flex gap-2 items-start">
                                     <span class="px-3 py-1 rounded-full text-xs font-bold ${prioColors[incident.severity] || prioColors['Low']}">${escapeHTML(incident.severity)}</span>
-                                    <select class="px-3 py-1 rounded-full text-xs font-bold border appearance-none cursor-pointer focus:outline-none incident-status-select ${statusColors[incident.status] || statusColors['Open']}" data-incident-id="${escapeHTML(incident.id)}">
+                                    <select aria-label="Update incident status" class="px-3 py-1 rounded-full text-xs font-bold border appearance-none cursor-pointer focus:outline-none incident-status-select ${statusColors[incident.status] || statusColors['Open']}" data-incident-id="${escapeHTML(incident.id)}">
                                         <option value="Open" ${incident.status === 'Open' ? 'selected' : ''}>Open</option>
                                         <option value="In Progress" ${incident.status === 'In Progress' ? 'selected' : ''}>In Progress</option>
                                         <option value="Resolved" ${incident.status === 'Resolved' ? 'selected' : ''}>Resolved</option>
                                     </select>
-                                    <button onclick="deleteIncident('${escapeHTML(incident.id)}')" class="text-red-400 p-1 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md ml-2" aria-label="Delete Incident"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                                    <button data-action="deleteIncident" data-id="${escapeHTML(incident.id)}" class="text-red-400 p-1 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md ml-2" aria-label="Delete Incident"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
                                 </div>
                             </div>
                             <p class="text-slate-700 dark:text-slate-300 whitespace-pre-wrap">${escapeHTML(incident.description)}</p>
@@ -5074,18 +5658,28 @@ function checkAndRenderOrgControls() {
 
         async function deleteIncident(incidentId) {
             if (!confirm("Are you sure you want to permanently delete this incident report?")) return;
+            const incEl = document.getElementById('incident-' + escapeHTML(incidentId));
+            if (incEl) incEl.style.display = 'none'; // Optimistically hide
             try {
-                const manageIncidents = cloudFunctions.httpsCallable('manageIncidents');
-                await manageIncidents({ action: "delete", payload: { incidentId } });
+                await callCloudFunction('manageIncidents', { action: "delete", payload: { incidentId } });
                 fetchIncidents();
             } catch (err) {
-                console.error("Error deleting incident:", err);
+                logManagerError("Error deleting incident:", err);
                 alert("Failed to delete incident.");
+                fetchIncidents(); // Revert on failure
             }
         }
 
         // Event delegation for incident status updates
         document.addEventListener('change', function(e) {
+            const select = e.target.closest('select[data-action]');
+            if (select) {
+                const action = select.dataset.action;
+                const id = select.dataset.id;
+                if (action === 'updateTaskStatus') {
+                    updateTaskStatus(id, select.value);
+                }
+            }
             if (e.target && e.target.classList.contains('incident-status-select')) {
                 const incidentId = e.target.getAttribute('data-incident-id');
                 if (incidentId) {
@@ -5096,8 +5690,7 @@ function checkAndRenderOrgControls() {
 
         async function updateIncidentStatus(incidentId, newStatus) {
             try {
-                const manageIncidents = cloudFunctions.httpsCallable('manageIncidents');
-                await manageIncidents({
+                await callCloudFunction('manageIncidents', {
                     action: "updateStatus",
                     payload: { incidentId, status: newStatus }
                 });
@@ -5123,10 +5716,21 @@ function checkAndRenderOrgControls() {
             document.getElementById('submitEmpBtn').innerText = "Save Employee";
         }
 
+        function closeEmployeeModalAlt() {
+            document.getElementById('addEmployeeModalAlt').classList.add('hidden');
+            document.getElementById('empModalIdAlt').value = "";
+            document.getElementById('empNameAlt').value = "";
+            document.getElementById('empRoleAlt').value = "";
+            document.getElementById('empPhoneAlt').value = "";
+            document.getElementById('employeeModalTitleAlt').innerText = "Add New Employee";
+            document.getElementById('submitEmpBtnAlt').innerText = "Save Employee";
+        }
+
         function openEditEmployeeModal(empId) {
             const emp = activeEmployeesList.find(e => e.id === empId);
             if (!emp) return;
 
+            // Ensure the main modal is populated for team view edit
             document.getElementById('empModalId').value = emp.id;
             document.getElementById('empName').value = emp.name;
             document.getElementById('empRole').value = emp.role;
@@ -5143,10 +5747,15 @@ function checkAndRenderOrgControls() {
                 return;
             }
 
-            const empId = document.getElementById('empModalId').value;
-            const name = document.getElementById('empName').value.trim();
-            const role = document.getElementById('empRole').value;
-            const phone = document.getElementById('empPhone').value.trim();
+            let modalIdPrefix = '';
+            if(!document.getElementById('addEmployeeModalAlt').classList.contains('hidden')){
+                modalIdPrefix = 'Alt';
+            }
+
+            const empId = document.getElementById('empModalId' + modalIdPrefix)?.value || "";
+            const name = document.getElementById('empName' + modalIdPrefix).value.trim();
+            const role = document.getElementById('empRole' + modalIdPrefix).value;
+            const phone = document.getElementById('empPhone' + modalIdPrefix).value.trim();
 
             if (!name) {
                 alert("Employee name is required.");
@@ -5154,10 +5763,9 @@ function checkAndRenderOrgControls() {
             }
 
             const btn = document.getElementById('submitEmpBtn');
-            const ogText = btn.innerText;
-            btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Saving...`;
+            btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin mr-2"></i> Saving...`;
             btn.disabled = true;
-            lucide.createIcons();
+            if (window.lucide) window.lucide.createIcons();
 
             try {
                 if (empId) {
@@ -5178,7 +5786,7 @@ function checkAndRenderOrgControls() {
                 console.error("Manager Troubleshooting: Error saving employee:", error);
                 alert("Failed to save employee: " + error.message);
             } finally {
-                btn.innerText = ogText;
+                btn.innerText = document.getElementById('empModalId').value ? "Update Employee" : "Save Employee";
                 btn.disabled = false;
             }
         }
@@ -5229,7 +5837,7 @@ function checkAndRenderOrgControls() {
                 submitBtn.disabled = false;
                 lucide.createIcons();
             } catch (error) {
-                logManagerError("Error creating task", error);
+                logManagerError("Error creating task for assignerId: " + currentUser.uid, error);
                 showToast("Error assigning task.");
                 const submitBtn = document.querySelector('#createTaskForm button[type="submit"]');
                 if (submitBtn) {
@@ -5462,7 +6070,11 @@ function checkAndRenderOrgControls() {
                     lucide.createIcons();
                 }
             } catch (error) {
-                container.innerHTML = `<div class="col-span-1 md:col-span-2 text-red-500 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl text-center">Failed to load roster: ${escapeHTML(error.message)}</div>`;
+                container.innerHTML = '';
+                const errDiv = document.createElement('div');
+                errDiv.className = 'col-span-1 md:col-span-2 text-red-500 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl text-center';
+                errDiv.textContent = `Failed to load roster: ${error.message}`;
+                container.appendChild(errDiv);
             }
         }
 
@@ -5687,13 +6299,13 @@ function checkAndRenderOrgControls() {
                                 </div>
                                 <div class="flex flex-wrap gap-2 items-start justify-end">
                                     <span class="px-3 py-1 rounded-full text-xs font-bold ${prioColors[task.priority] || prioColors['Low']}">${escapeHTML(task.priority)}</span>
-                                    <select class="px-3 py-1 rounded-full text-xs font-bold border appearance-none cursor-pointer focus:outline-none ${statusColors[task.status] || statusColors['Pending']}"
+                                    <select aria-label="Update task status" class="px-3 py-1 rounded-full text-xs font-bold border appearance-none cursor-pointer focus:outline-none ${statusColors[task.status] || statusColors['Pending']}"
                                         onchange="updateTaskStatus('${task.id}', this.value)">
                                         <option value="Pending" ${task.status === 'Pending' ? 'selected' : ''}>Pending</option>
                                         <option value="In Progress" ${task.status === 'In Progress' ? 'selected' : ''}>In Progress</option>
                                         <option value="Completed" ${task.status === 'Completed' ? 'selected' : ''}>Completed</option>
                                     </select>
-                                    <button onclick="deleteTask('${task.id}')" class="text-red-400 p-1 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md" aria-label="Delete Task"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                                    <button data-action="deleteTask" data-id="${task.id}" class="text-red-400 p-1 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md" aria-label="Delete Task"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
                                 </div>
                             </div>
                             <p class="text-slate-700 dark:text-slate-300 whitespace-pre-wrap">${escapeHTML(task.description)}</p>
@@ -5749,13 +6361,16 @@ function checkAndRenderOrgControls() {
                     snap.forEach(doc => employees.push({id: doc.id, ...doc.data()}));
                     employees.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
 
+                    // ⚡ Bolt Optimization: Batch DOM insertions with DocumentFragment to prevent layout thrashing
+                    const fragment = document.createDocumentFragment();
                     employees.forEach(emp => {
                         const opt = document.createElement('option');
                         opt.value = emp.id;
                         opt.dataset.name = emp.name;
                         opt.textContent = `${emp.name} (${emp.role})`;
-                        select.appendChild(opt);
+                        fragment.appendChild(opt);
                     });
+                    select.appendChild(fragment);
                 })
                 .catch(err => console.error("Error populating recognition dropdown:", err));
         }
@@ -5898,7 +6513,7 @@ function checkAndRenderOrgControls() {
                 }
             } catch (error) {
                 console.error("Error fetching recognitions:", error);
-                container.innerHTML = `<div class="text-red-500 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl text-center">Failed to load recognitions: ${error.message}</div>`;
+                container.innerHTML = `<div class="text-red-500 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl text-center">Failed to load recognitions: ${escapeHTML(error.message)}</div>`;
             }
         }
 
@@ -5917,9 +6532,170 @@ function checkAndRenderOrgControls() {
         // We will fetch the team directory when the view is opened or during org check
 
 
+        // --- TIME CLOCK LOGIC ---
+        let isClockedIn = false;
+
+        async function toggleClock() {
+            if (!currentUser || !currentUserData || !currentUserData.orgId) {
+                alert("You must be logged in and part of an organization to use the time clock.");
+                return;
+            }
+
+            const btn = document.getElementById('clockInOutBtn');
+            const originalHtml = btn.innerHTML;
+            btn.innerHTML = '<i data-lucide="loader-2" class="w-6 h-6 animate-spin"></i> Processing...';
+            btn.disabled = true;
+            lucide.createIcons();
+
+            const action = isClockedIn ? 'clock_out' : 'clock_in';
+
+            try {
+                const manageTimeLogs = cloudFunctions.httpsCallable('manageTimeLogs');
+                await manageTimeLogs({ action: action, payload: {} });
+
+                // Optimistically update state
+                isClockedIn = !isClockedIn;
+                updateTimeClockUI();
+                fetchTimeLogs();
+            } catch (error) {
+                console.error("Error toggling clock:", error);
+                alert("Failed to " + (isClockedIn ? "clock out" : "clock in") + ". " + error.message);
+                btn.innerHTML = originalHtml; // Restore button on error
+                btn.disabled = false;
+                lucide.createIcons();
+            }
+        }
+
+        function updateTimeClockUI() {
+            const btn = document.getElementById('clockInOutBtn');
+            const statusText = document.getElementById('timeclockStatusText');
+            const subText = document.getElementById('timeclockSubText');
+
+            if (isClockedIn) {
+                btn.innerHTML = '<i data-lucide="stop-circle" class="w-6 h-6 mr-2"></i> Clock Out';
+                btn.className = 'btn btn-danger px-12 py-6 text-xl shadow-xl shadow-red-500/30';
+                statusText.innerText = "You are Clocked In";
+                statusText.className = "text-2xl font-bold mb-6 text-emerald-500";
+                subText.innerText = "Remember to clock out at the end of your shift.";
+            } else {
+                btn.innerHTML = '<i data-lucide="play-circle" class="w-6 h-6 mr-2"></i> Clock In';
+                btn.className = 'btn btn-success px-12 py-6 text-xl shadow-xl shadow-emerald-500/30';
+                statusText.innerText = "You are Clocked Out";
+                statusText.className = "text-2xl font-bold mb-6 text-slate-800 dark:text-slate-200";
+                subText.innerText = "Ready to start your shift?";
+            }
+            btn.disabled = false;
+            lucide.createIcons();
+        }
+
+        async function fetchTimeLogs() {
+            if (!currentUser || !currentUserData || !currentUserData.orgId) {
+                const container = document.getElementById('timeLogContainer');
+                if (container) {
+                    container.innerHTML = `
+                        <div class="text-center py-16 bg-slate-50 dark:bg-slate-900 rounded-3xl border-2 border-dashed border-slate-200 dark:border-slate-800">
+                            <i data-lucide="users" class="w-12 h-12 text-slate-400 mx-auto mb-4"></i>
+                            <h3 class="text-xl font-bold mb-2">Join or Create a Group</h3>
+                            <p class="text-slate-500 mb-4">You must be in a Management Group to view time logs.</p>
+                        </div>
+                    `;
+                    lucide.createIcons();
+                }
+                updateTimeClockUI(); // Set default UI
+                return;
+            }
+
+            const container = document.getElementById('timeLogContainer');
+            if (container) container.innerHTML = '<div class="text-center py-8"><i data-lucide="loader-2" class="w-8 h-8 animate-spin mx-auto text-sky-500 mb-4"></i><p class="text-slate-500">Loading punches...</p></div>';
+            lucide.createIcons();
+
+            try {
+                const manageTimeLogs = cloudFunctions.httpsCallable('manageTimeLogs');
+                const result = await manageTimeLogs({ action: "get_logs", payload: {} });
+
+                if (result.data.success) {
+                    let logs = result.data.logs || [];
+
+                    // Sort logs client-side since orderBy was removed from backend query
+                    logs.sort((a, b) => {
+                        const timeA = a.clockInTime ? a.clockInTime._seconds : 0;
+                        const timeB = b.clockInTime ? b.clockInTime._seconds : 0;
+                        return timeB - timeA;
+                    });
+
+                    // Check if current user is clocked in
+                    const myActiveLog = logs.find(log => log.uid === currentUser.uid && log.status === 'Clocked In');
+                    isClockedIn = !!myActiveLog;
+                    updateTimeClockUI();
+
+                    if (!container) return;
+                    container.innerHTML = '';
+
+                    // No need to filter on client-side anymore, backend is secure
+                    const visibleLogs = logs;
+
+                    if (visibleLogs.length === 0) {
+                        container.innerHTML = `
+                            <div class="text-center py-16 bg-slate-50 dark:bg-slate-900 rounded-3xl border-2 border-dashed border-slate-200 dark:border-slate-800">
+                                <i data-lucide="clock" class="w-12 h-12 text-slate-300 mx-auto mb-4"></i>
+                                <h3 class="text-xl font-bold mb-2">No Punches Yet</h3>
+                                <p class="text-slate-500">Time logs will appear here once you clock in.</p>
+                            </div>
+                        `;
+                        lucide.createIcons();
+                        return;
+                    }
+
+                    const fragment = document.createDocumentFragment();
+
+                    visibleLogs.forEach(log => {
+                        const div = document.createElement('div');
+                        div.className = "card p-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-l-4 " + (log.status === 'Clocked In' ? 'border-l-emerald-500' : 'border-l-slate-300 dark:border-l-slate-700');
+
+                        const inTimeStr = log.clockInTime ? new Date(log.clockInTime._seconds * 1000).toLocaleString() : 'Unknown';
+                        const outTimeStr = log.clockOutTime ? new Date(log.clockOutTime._seconds * 1000).toLocaleString() : '---';
+
+                        const statusBadge = log.status === 'Clocked In'
+                            ? '<span class="px-2 py-1 bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 rounded-lg text-xs font-bold font-mono inline-flex items-center gap-1"><i data-lucide="play-circle" class="w-3 h-3"></i> Active</span>'
+                            : '<span class="px-2 py-1 bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 rounded-lg text-xs font-bold font-mono inline-flex items-center gap-1"><i data-lucide="stop-circle" class="w-3 h-3"></i> Completed</span>';
+
+                        let durationStr = '';
+                        if (log.clockInTime && log.clockOutTime) {
+                            const diffMs = (log.clockOutTime._seconds - log.clockInTime._seconds) * 1000;
+                            const hours = Math.floor(diffMs / (1000 * 60 * 60));
+                            const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+                            durationStr = `<span class="text-sm font-medium text-slate-600 dark:text-slate-400">Duration: ${hours}h ${minutes}m</span>`;
+                        }
+
+                        div.innerHTML = `
+                            <div>
+                                <div class="flex items-center gap-2 mb-1">
+                                    <h3 class="text-lg font-bold">${escapeHTML(log.employeeName)}</h3>
+                                    ${statusBadge}
+                                </div>
+                                <div class="text-sm text-slate-500 space-y-1 mt-2">
+                                    <div><span class="font-semibold text-slate-700 dark:text-slate-300">In:</span> ${inTimeStr}</div>
+                                    <div><span class="font-semibold text-slate-700 dark:text-slate-300">Out:</span> ${outTimeStr}</div>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                ${durationStr}
+                            </div>
+                        `;
+                        fragment.appendChild(div);
+                    });
+                    container.appendChild(fragment);
+                    lucide.createIcons();
+                }
+            } catch (error) {
+                console.error("Error fetching time logs:", error);
+                if (container) container.innerHTML = `<div class="text-red-500 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl text-center">Failed to load time logs: ${error.message}</div>`;
+            }
+        }
+
         // Global event delegation for dynamically created buttons to prevent XSS from inline handlers
         document.addEventListener('click', (e) => {
-            const btn = e.target.closest('button[data-action]');
+            const btn = e.target.closest('[data-action]');
             if (!btn) return;
             const action = btn.dataset.action;
             const id = btn.dataset.id;
@@ -5929,11 +6705,37 @@ function checkAndRenderOrgControls() {
             else if (action === 'approveGroupRequest') approveGroupRequest(id);
             else if (action === 'retractGroupRequest') retractGroupRequest(id);
             else if (action === 'openEditEmployeeModal') openEditEmployeeModal(id);
+            else if (action === 'deleteTask') deleteTask(id);
+            else if (action === 'deleteWasteLog') deleteWasteLog(id);
+            else if (action === 'deleteIncident') deleteIncident(id);
+            else if (action === 'updateTaskStatus') updateTaskStatus(id, status);
+
             else if (action === 'deleteEmployee') deleteEmployee(id);
             else if (action === 'toggleEmployeeStatus') toggleEmployeeStatus(id, status);
             else if (action === 'updateTimeOffStatus') updateTimeOffStatus(id, status);
             else if (action === 'deleteTimeOffRequest') deleteTimeOffRequest(id);
+            else if (action === 'updateTaskStatus') updateTaskStatus(id, status);
+            else if (action === 'deleteTask') deleteTask(id);
             else if (action === 'removeShift') removeShift(btn.dataset.index);
+            else if (action === 'deleteTask') deleteTask(id);
+            else if (action === 'deleteWasteLog') deleteWasteLog(id);
+            else if (action === 'deleteIncident') deleteIncident(id);
+            else if (action === 'updateTaskStatus') {
+                if (status) {
+                    updateTaskStatus(id, status);
+                }
+            }
+        });
+
+        document.addEventListener('change', (e) => {
+            const select = e.target.closest('select[data-action]');
+            if (!select) return;
+            const action = select.dataset.action;
+            const id = select.dataset.id;
+
+            if (action === 'updateTaskStatus') {
+                updateTaskStatus(id, select.value);
+            }
         });
 
         // The second event listener was unclosed
@@ -6101,6 +6903,138 @@ function checkAndRenderOrgControls() {
             }
         });
 
+        function openFeedbackModal(empId, empName) {
+            document.getElementById('feedbackEmpId').value = empId;
+            document.getElementById('feedbackEmpName').value = empName;
+            document.getElementById('feedbackRating').value = "5";
+            document.getElementById('feedbackComment').value = "";
+            document.getElementById('feedbackModal').classList.remove('hidden');
+            fetchFeedbacksForEmployee(empId);
+            setTimeout(() => {
+                document.getElementById('feedbackModal').scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 100);
+        }
+
+        function closeFeedbackModal() {
+            document.getElementById('feedbackModal').classList.add('hidden');
+            document.getElementById('feedbacksContainer').innerHTML = '<p class="text-sm text-slate-500">Loading history...</p>';
+        }
+
+        async function submitFeedback() {
+            if (!currentUser || !currentUserData || !currentUserData.orgId) {
+                alert("You must be part of an organization to leave feedback.");
+                return;
+            }
+
+            const empId = document.getElementById('feedbackEmpId').value;
+            const empName = document.getElementById('feedbackEmpName').value;
+            const rating = document.getElementById('feedbackRating').value;
+            const comment = document.getElementById('feedbackComment').value.trim();
+
+            if (!empId) return;
+
+            const btn = document.querySelector('#feedbackModal .btn-accent');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Submitting...';
+            btn.disabled = true;
+            lucide.createIcons();
+
+            try {
+                const manageFeedbacks = cloudFunctions.httpsCallable('manageFeedbacks');
+                await manageFeedbacks({
+                    action: "create",
+                    payload: { empId, empName, rating, comment }
+                });
+
+                document.getElementById('feedbackRating').value = "5";
+                document.getElementById('feedbackComment').value = "";
+                alert("Feedback submitted successfully.");
+                fetchFeedbacksForEmployee(empId);
+            } catch (error) {
+                console.error("Manager Troubleshooting: Error submitting feedback:", error);
+                alert("Failed to submit feedback: " + error.message);
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+                lucide.createIcons();
+            }
+        }
+
+        async function fetchFeedbacksForEmployee(empId) {
+            const container = document.getElementById('feedbacksContainer');
+            container.innerHTML = '<div class="text-center py-4"><i data-lucide="loader-2" class="w-6 h-6 animate-spin mx-auto text-sky-500"></i></div>';
+            lucide.createIcons();
+
+            try {
+                const manageFeedbacks = cloudFunctions.httpsCallable('manageFeedbacks');
+                const result = await manageFeedbacks({
+                    action: "get",
+                    payload: { empId }
+                });
+
+                container.innerHTML = '';
+                const feedbacks = result.data.feedbacks || [];
+
+                if (feedbacks.length === 0) {
+                    container.innerHTML = '<p class="text-sm text-slate-500">No feedback history found for this employee.</p>';
+                    return;
+                }
+
+                const fragment = document.createDocumentFragment();
+                feedbacks.forEach(fb => {
+                    const div = document.createElement('div');
+                    div.className = "p-4 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 relative group";
+
+                    const dateStr = fb.createdAt ? new Date(fb.createdAt._seconds * 1000).toLocaleString() : 'Just now';
+
+                    let starsHtml = '';
+                    for (let i = 0; i < 5; i++) {
+                        if (i < fb.rating) {
+                            starsHtml += '<i data-lucide="star" class="w-3 h-3 text-amber-400 fill-amber-400"></i>';
+                        } else {
+                            starsHtml += '<i data-lucide="star" class="w-3 h-3 text-slate-300 dark:text-slate-600"></i>';
+                        }
+                    }
+
+                    div.innerHTML = `
+                        <div class="flex justify-between items-start mb-2">
+                            <div>
+                                <div class="flex items-center gap-1 mb-1">${starsHtml}</div>
+                                <p class="text-xs text-slate-500">By ${escapeHTML(fb.managerName)} • ${dateStr}</p>
+                            </div>
+                            <button class="text-red-400 opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-red-50 dark:hover:bg-red-900/20 rounded delete-feedback-btn" aria-label="Delete Feedback" data-id="${escapeHTML(fb.id)}"><i data-lucide="trash-2" class="w-3 h-3"></i></button>
+                        </div>
+                        ${fb.comment ? `<p class="text-sm text-slate-700 dark:text-slate-300 whitespace-pre-wrap">${escapeHTML(fb.comment)}</p>` : ''}
+                    `;
+
+                    div.querySelector('.delete-feedback-btn').onclick = () => deleteFeedback(fb.id, empId);
+                    fragment.appendChild(div);
+                });
+
+                container.appendChild(fragment);
+                lucide.createIcons();
+
+            } catch (error) {
+                console.error("Error fetching feedbacks:", error);
+                container.innerHTML = '<p class="text-sm text-red-500">Failed to load feedback history.</p>';
+            }
+        }
+
+        async function deleteFeedback(feedbackId, empId) {
+            if (!confirm("Are you sure you want to delete this feedback?")) return;
+            try {
+                const manageFeedbacks = cloudFunctions.httpsCallable('manageFeedbacks');
+                await manageFeedbacks({
+                    action: "delete",
+                    payload: { feedbackId }
+                });
+                fetchFeedbacksForEmployee(empId);
+            } catch (error) {
+                console.error("Error deleting feedback:", error);
+                alert("Failed to delete feedback.");
+            }
+        }
+
         window.addEventListener('offline', updateNetworkStatus);
         window.addEventListener('online', updateNetworkStatus);
         updateNetworkStatus();
@@ -6119,6 +7053,30 @@ function checkAndRenderOrgControls() {
             }
         }
 
+
+        document.addEventListener('click', function(e) {
+            const btn = e.target.closest('[data-action]');
+            if (!btn) return;
+            const action = btn.getAttribute('data-action');
+            if (e.type === 'click' && btn.tagName !== 'SELECT') {
+                const id = btn.getAttribute('data-id');
+                const status = btn.getAttribute('data-status');
+
+                if (action === 'deleteTask') deleteTask(id);
+                if (action === 'updateTaskStatus') updateTaskStatus(id, status);
+                if (action === 'deleteWasteLog') deleteWasteLog(id);
+                if (action === 'deleteIncident') deleteIncident(id);
+            }
+        });
+        document.addEventListener('change', function(e) {
+            const el = e.target.closest('[data-action]');
+            if (!el) return;
+            const action = el.getAttribute('data-action');
+            if (e.type === 'change' && el.tagName === 'SELECT') {
+                const id = el.getAttribute('data-id');
+                if (action === 'updateTaskStatus') updateTaskStatus(id, el.value);
+            }
+        });
     </script>
     <footer class="main-footer"></footer>
 

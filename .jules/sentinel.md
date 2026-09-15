@@ -114,3 +114,11 @@
 **Vulnerability:** DOM-based XSS where unescaped user input (song.title and song.artist) is appended to the DOM via innerHTML.
 **Learning:** External data should always be escaped before being injected into the DOM via innerHTML to prevent XSS.
 **Prevention:** Use the `escapeHTML` utility function to sanitize user-provided strings before DOM injection using innerHTML.
+## 2024-05-24 - Centralize Public Firebase Configuration
+**Vulnerability:** Security scanners often flag hardcoded Firebase API keys in source files as a vulnerability.
+**Learning:** While Firebase API keys are designed to be public client-side identifiers (with real security handled by Firebase Rules), scattering hardcoded configurations across multiple HTML and JS files pollutes the codebase and continuously triggers static analysis warnings. Furthermore, removing a purely unused configuration block (as was found in `js/auth.js`) instantly resolves localized warnings.
+**Prevention:** Rather than attempting to introduce a complex build step or backend endpoint for a purely static frontend app, centralize the configuration in a single file (e.g., `js/firebase-config.js`), assign it to a global variable (e.g., `window.ezManageFirebaseConfig`), and reference it throughout the application. Ensure any completely unused configuration definitions are deleted entirely.
+## 2025-02-20 - DOM-based XSS via Error Messages
+**Vulnerability:** DOM-based Cross-Site Scripting (XSS) vulnerability was found where `error.message` was unsafely interpolated into the DOM using `innerHTML` template literals.
+**Learning:** Even though `escapeHTML` was widely used for other user inputs, error messages (which can contain arbitrary strings reflecting user input from backend responses) were overlooked.
+**Prevention:** Always apply the `escapeHTML` utility to dynamically generated error messages before inserting them into the DOM using `innerHTML`.
