@@ -6,6 +6,7 @@
     import { escapeHTML } from './js/utils.js';
     import { loadNavbar } from './js/navbar.js';
     import { loadFooter } from './js/footer.js';
+    import { fetchUserDoc } from './js/auth.js';
 
     document.addEventListener('DOMContentLoaded', () => {
         loadNavbar();
@@ -13,6 +14,7 @@
     });
 
     window.escapeHTML = escapeHTML;
+    window.fetchUserDoc = fetchUserDoc;
   </script>
 
     <link rel="manifest" href="manifest.json">
@@ -2300,7 +2302,7 @@
                             activeView = document.querySelector('.view-section.active');
                             if (activeView && activeView.id !== 'view-setup') {
                                 try {
-                                    const emailDoc = await db.collection("users").doc(user.email).get();
+                                    const emailDoc = await fetchUserDoc(user.email);
                                     if (emailDoc.exists) {
                                         await db.collection("users").doc(user.uid).set(emailDoc.data(), { merge: true });
                                         return;
@@ -2522,7 +2524,7 @@
         function signInWithGoogle() {
             const provider = new firebase.auth.GoogleAuthProvider();
             auth.signInWithPopup(provider).then(cred => {
-                db.collection("users").doc(cred.user.uid).get().then(doc => {
+                fetchUserDoc(cred.user.uid).then(doc => {
                     if (!doc.exists) navTo('setup');
                 });
             }).catch(err => alert(err.message));
