@@ -57,3 +57,6 @@
 ## $(date +%Y-%m-%d) - [Repeated Firebase DB Docs Fetch]
 **Learning:** Functions invoked via callbacks from listeners that span multiple files (e.g., `auth.onAuthStateChanged`) will fire simultaneously. Without a caching layer, they execute redundant concurrent network fetch queries (like `db.collection('users').doc(uid).get()`), causing latency and blocking operations.
 **Action:** Always wrap independent multi-listener fetched resources with a generic memoization layer using a `Map` cache to immediately resolve redundant Promise requests.
+## $(date +%Y-%m-%d) - [O(n) DOM Operations Batched]
+**Learning:** Sequential calls to \`appendChild()\` inside iterative functions (like populating a tracker state or loading preset lists) cause significant layout thrashing on the main thread, leading to perceived UI jank during rendering.
+**Action:** Always batch DOM insertions using a \`DocumentFragment\` before appending the entire batch to the live DOM in a single operation. When side-effects like \`lucide.createIcons()\` or \`triggerDraftSync()\` depend on the elements being in the live DOM, delay executing them until after the DocumentFragment has been appended.
