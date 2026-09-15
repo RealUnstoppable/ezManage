@@ -59,3 +59,7 @@
 ## 2024-10-27 - Form accessibility enhancements on mismatched labels
 **Learning:** Some explicitly rendered `<label>` elements were missing the `for` attribute completely, or mapping to the wrong `id` (e.g. `taskTitle` instead of `taskTitle1` or `taskDesc` instead of `taskDesc1`). Adding `aria-label`s to these input fields that already have explicitly rendered labels causes screen readers to read redundant tags.
 **Action:** When adding accessibility to form inputs, always verify if there is already a label rendered above the element. If so, fix the `for` and `id` mapping instead of slapping a redundant `aria-label` attribute on the element.
+
+## 2024-10-27 - Missing aria-labels on selects with placeholder options
+**Learning:** `select` elements that lack a visible `<label>` and instead rely on a `<option disabled selected>` as a placeholder are inaccessible to screen readers, as the default text is not read as a label.
+**Action:** When a visible label is omitted to save screen space, ensure you explicitly add an `aria-label` to the `select` element so screen reader users are aware of its purpose.
