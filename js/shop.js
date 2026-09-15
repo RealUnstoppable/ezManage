@@ -51,17 +51,17 @@ export function calculateCartTotal(cartData, prodMap) {
 let cart = {};
 let currentUser = null;
 
-const productGrid = document.getElementById('product-grid');
-const cartButton = document.getElementById('cart-button');
-const cartModal = document.getElementById('cart-modal');
-const closeCartBtn = document.getElementById('close-cart-btn');
-const cartItemsContainer = document.getElementById('cart-items-container');
-const cartItemCountEl = document.getElementById('cart-item-count');
-const cartTotalPriceEl = document.getElementById('cart-total-price');
-const checkoutBtn = document.getElementById('checkout-btn');
-const navCtaContainer = document.getElementById('nav-cta-container');
-const hamburger = document.querySelector('.hamburger');
-const navLinks = document.querySelector('.nav-links');
+let productGrid;
+let cartButton;
+let cartModal;
+let closeCartBtn;
+let cartItemsContainer;
+let cartItemCountEl;
+let cartTotalPriceEl;
+let checkoutBtn;
+let navCtaContainer;
+let hamburger;
+let navLinks;
 
 function renderProducts() {
     productGrid.innerHTML = products.map(product => `
@@ -173,81 +173,109 @@ function updateUserNav(user) {
 }
 
 function setupEventListeners() {
+    if (hamburger && navLinks) {
+        hamburger.addEventListener('click', () => {
+            hamburger.classList.toggle('active');
+            navLinks.classList.toggle('active');
+        });
+    }
 
-    hamburger.addEventListener('click', () => {
-        hamburger.classList.toggle('active');
-        navLinks.classList.toggle('active');
-    });
+    if (productGrid) {
+        productGrid.addEventListener('click', (e) => {
+            if (e.target.classList.contains('add-to-cart-btn')) {
+                const productId = e.target.dataset.id;
+                handleAddToCart(productId);
+            }
+        });
+    }
 
-    productGrid.addEventListener('click', (e) => {
-        if (e.target.classList.contains('add-to-cart-btn')) {
-            const productId = e.target.dataset.id;
-            handleAddToCart(productId);
-        }
-    });
+    if (cartButton && cartModal && closeCartBtn) {
+        cartButton.addEventListener('click', () => cartModal.style.display = 'block');
+        closeCartBtn.addEventListener('click', () => cartModal.style.display = 'none');
+        window.addEventListener('click', (e) => {
+            if (e.target === cartModal) {
+                cartModal.style.display = 'none';
+            }
+        });
+    }
 
-    cartButton.addEventListener('click', () => cartModal.style.display = 'block');
-    closeCartBtn.addEventListener('click', () => cartModal.style.display = 'none');
-    window.addEventListener('click', (e) => {
-        if (e.target === cartModal) {
-            cartModal.style.display = 'none';
-        }
-    });
+    if (cartItemsContainer) {
+        cartItemsContainer.addEventListener('click', (e) => {
+            if (e.target.classList.contains('remove-item-btn')) {
+                const productId = e.target.dataset.id;
+                handleRemoveFromCart(productId);
+            }
+        });
+        cartItemsContainer.addEventListener('change', (e) => {
+            if (e.target.classList.contains('item-quantity-input')) {
+                const productId = e.target.dataset.id;
+                const quantity = parseInt(e.target.value, 10);
+                handleUpdateQuantity(productId, quantity);
+            }
+        });
+    }
 
-    cartItemsContainer.addEventListener('click', (e) => {
-        if (e.target.classList.contains('remove-item-btn')) {
-            const productId = e.target.dataset.id;
-            handleRemoveFromCart(productId);
-        }
-    });
-    cartItemsContainer.addEventListener('change', (e) => {
-        if (e.target.classList.contains('item-quantity-input')) {
-            const productId = e.target.dataset.id;
-            const quantity = parseInt(e.target.value, 10);
-            handleUpdateQuantity(productId, quantity);
-        }
-    });
-
-    checkoutBtn.addEventListener('click', () => {
-
-        window.location.href = 'checkout.html';
-    });
+    if (checkoutBtn) {
+        checkoutBtn.addEventListener('click', () => {
+            window.location.href = 'checkout.html';
+        });
+    }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-    renderProducts();
-    setupEventListeners();
+export function initShop() {
+    productGrid = document.getElementById('product-grid');
+    cartButton = document.getElementById('cart-button');
+    cartModal = document.getElementById('cart-modal');
+    closeCartBtn = document.getElementById('close-cart-btn');
+    cartItemsContainer = document.getElementById('cart-items-container');
+    cartItemCountEl = document.getElementById('cart-item-count');
+    cartTotalPriceEl = document.getElementById('cart-total-price');
+    checkoutBtn = document.getElementById('checkout-btn');
+    navCtaContainer = document.getElementById('nav-cta-container');
+    hamburger = document.querySelector('.hamburger');
+    navLinks = document.querySelector('.nav-links');
 
-    onAuthStateChanged(auth, async (user) => {
-        currentUser = user;
-        const localCartData = localStorage.getItem('localCart');
-        const localCart = localCartData ? JSON.parse(localCartData) : {};
+    if (productGrid) {
+        renderProducts();
+        setupEventListeners();
 
-        if (user) {
-            try {
-                const userCartRef = doc(db, 'carts', user.uid);
-                const docSnap = await getDoc(userCartRef);
-                const firestoreCart = docSnap.exists() ? docSnap.data().items : {};
+        onAuthStateChanged(auth, async (user) => {
+            currentUser = user;
+            const localCartData = localStorage.getItem('localCart');
+            const localCart = localCartData ? JSON.parse(localCartData) : {};
 
-                const mergedCart = { ...firestoreCart };
-                for (const [productId, quantity] of Object.entries(localCart)) {
-                    mergedCart[productId] = (mergedCart[productId] || 0) + quantity;
+            if (user) {
+                try {
+                    const userCartRef = doc(db, 'carts', user.uid);
+                    const docSnap = await getDoc(userCartRef);
+                    const firestoreCart = docSnap.exists() ? docSnap.data().items : {};
+
+                    const mergedCart = { ...firestoreCart };
+                    for (const [productId, quantity] of Object.entries(localCart)) {
+                        mergedCart[productId] = (mergedCart[productId] || 0) + quantity;
+                    }
+
+                    cart = mergedCart;
+                    await saveCart();
+                    localStorage.removeItem('localCart');
+                } catch (error) {
+                    logManagerError("Error loading cart during auth state change:", error);
+
+                    cart = localCart;
                 }
-
-                cart = mergedCart;
-                await saveCart();
-                localStorage.removeItem('localCart');
-            } catch (error) {
-                logManagerError("Error loading cart during auth state change:", error);
+            } else {
 
                 cart = localCart;
             }
-        } else {
 
-            cart = localCart;
-        }
+            if (navCtaContainer) {
+                updateUserNav(user);
+            }
+            if (cartItemsContainer) {
+                renderCart();
+            }
+        });
+    }
+}
 
-        updateUserNav(user);
-        renderCart();
-    });
-});
+document.addEventListener('DOMContentLoaded', initShop);
