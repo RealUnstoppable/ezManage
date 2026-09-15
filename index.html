@@ -3093,6 +3093,12 @@
             inputDebounceTimeout = setTimeout(triggerDraftSync, 300);
         });
 
+        let globalDraftSyncTimeout;
+        window.debouncedTriggerDraftSync = function() {
+            clearTimeout(globalDraftSyncTimeout);
+            globalDraftSyncTimeout = setTimeout(triggerDraftSync, 300);
+        };
+
         function triggerDraftSync() {
             if (!initialDraftLoaded || !currentUser) return;
 
