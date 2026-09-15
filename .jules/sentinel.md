@@ -114,3 +114,7 @@
 **Vulnerability:** DOM-based XSS where unescaped user input (song.title and song.artist) is appended to the DOM via innerHTML.
 **Learning:** External data should always be escaped before being injected into the DOM via innerHTML to prevent XSS.
 **Prevention:** Use the `escapeHTML` utility function to sanitize user-provided strings before DOM injection using innerHTML.
+## 2026-08-04 - Unescaped XSS in Checkout Summary and Error Messaging
+**Vulnerability:** In `js/checkout.js`, the cart item summary directly injected `quantity` and `product.name` into an `innerHTML` string. Similarly, in `index.html`, a promise rejection error (`error.message`) during recognition fetching was directly injected into the DOM via `innerHTML`.
+**Learning:** Directly injecting dynamic data (from database payloads, user cart states, or error messages) into `innerHTML` is a frequent cause of DOM-based XSS if the data source becomes compromised or unconstrained.
+**Prevention:** Always use a utility function like `escapeHTML()` to sanitize dynamic variables (e.g. `product.name`, `quantity`, or `error.message`) before rendering them in the DOM via `innerHTML` or similar unsafe sinks.
