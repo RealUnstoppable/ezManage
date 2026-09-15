@@ -34,7 +34,12 @@ export function updateAuthLink() {
     });
 
     if (auth && auth.onAuthStateChanged) {
+        let currentUid = null;
+        let isDashboardLoaded = false;
         auth.onAuthStateChanged(async (user) => {
+            if (user && user.uid === currentUid && isDashboardLoaded) return;
+            currentUid = user ? user.uid : null;
+            isDashboardLoaded = true;
             if (user) {
                 try {
                     const userDoc = await db.collection("users").doc(user.uid).get();

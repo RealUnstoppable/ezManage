@@ -436,7 +436,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    let currentUid = null;
+    let isDashboardLoaded = false;
     onAuthStateChanged(auth, async (user) => {
+        if (user && user.uid === currentUid && isDashboardLoaded) return;
+        currentUid = user ? user.uid : null;
+        isDashboardLoaded = true;
         currentUser = user;
         if (user) {
             try {
