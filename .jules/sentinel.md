@@ -122,3 +122,8 @@
 **Vulnerability:** DOM-based Cross-Site Scripting (XSS) vulnerability was found where `error.message` was unsafely interpolated into the DOM using `innerHTML` template literals.
 **Learning:** Even though `escapeHTML` was widely used for other user inputs, error messages (which can contain arbitrary strings reflecting user input from backend responses) were overlooked.
 **Prevention:** Always apply the `escapeHTML` utility to dynamically generated error messages before inserting them into the DOM using `innerHTML`.
+
+## 2026-08-04 - Fix Authorization Bypass via Unrestricted Allow Create and Broad Allow Write
+**Vulnerability:** Several collections (`shift_groups`, `shift_group_requests`) used an overly permissive `allow create: if request.auth != null;` rule, allowing any authenticated user to create documents on behalf of others or create junk data without ownership validation. Additionally, the `carts` collection utilized a broad `allow read, write` block instead of granular operation restrictions.
+**Learning:** In Firestore rules, an unrestricted `allow create` rule bypasses the structural requirement of a document belonging to its creator. Similarly, a blanket `allow write` skips granular verification, risking unauthorized modifications.
+**Prevention:** Avoid generic `allow create` rules without verifying incoming payload data properties (e.g., `request.resource.data.get('ownerId', null) == request.auth.uid`). Always split broad `allow write` blocks into discrete `allow create`, `allow update`, and `allow delete` blocks to guarantee robust access controls.
