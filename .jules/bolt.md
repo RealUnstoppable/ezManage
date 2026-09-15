@@ -54,3 +54,6 @@
 ## 2024-11-09 - Duplicate state declaration
 **Learning:** Avoid duplicate cache state variable declarations within the same scope. The layout thrashing prevention code was throwing due to `let lastGreeting = ""` declared twice within `script.js`'s `updateGreeting` logic.
 **Action:** Remove the inner redundant declaration while keeping the cache check `newGreeting !== lastGreeting` functional.
+## $(date +%Y-%m-%d) - Prevent Excessive Syncs and Thrashing
+**Learning:** High-frequency input events (`oninput` on dynamically created elements like inputs inside form fields) mapped directly to sync functions cause excessive event firing and layout thrashing.
+**Action:** Always wrap dynamically generated element events in a `debounced` function (e.g. `clearTimeout`/`setTimeout` wrappers) rather than direct executions to prevent freezing the UI.

@@ -114,3 +114,7 @@
 **Vulnerability:** DOM-based XSS where unescaped user input (song.title and song.artist) is appended to the DOM via innerHTML.
 **Learning:** External data should always be escaped before being injected into the DOM via innerHTML to prevent XSS.
 **Prevention:** Use the `escapeHTML` utility function to sanitize user-provided strings before DOM injection using innerHTML.
+## $(date +%Y-%m-%d) - DOM XSS via Interpolated Error Messages
+**Vulnerability:** Directly interpolating dynamically generated error strings (`error.message` or `err.message` from caught promises) into `innerHTML` strings enables DOM-based XSS if the backend injects an unescaped HTML payload into the error string.
+**Learning:** Any dynamic content sourced from the backend, even in an error handler, must be treated as untrusted and properly escaped before being used in `innerHTML`.
+**Prevention:** Always wrap dynamically interpolated variables with `escapeHTML()` (or use `textContent` where applicable) to neutralize potential HTML injections inside `innerHTML`.

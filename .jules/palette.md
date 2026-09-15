@@ -55,3 +55,6 @@
 ## 2024-08-03 - Missing ARIA Labels on Icon-Only Modal Close Buttons
 **Learning:** Icon-only buttons using libraries like Lucide (e.g., `<button><i data-lucide="x"></i></button>`) often lack implicit accessible names, causing screen readers to read them simply as "button".
 **Action:** When implementing or reviewing modal close buttons or any icon-only interactive elements in this app's components, always verify the presence of an explicit `aria-label` attribute describing the action (e.g., "Close tutorial", "Close announcement modal") to ensure keyboard and screen reader accessibility.
+## $(date +%Y-%m-%d) - Explicit ARIA Labels for Icon Buttons
+**Learning:** Icon-only buttons using data attributes for rendering (e.g., `<i data-lucide="..."></i>`) inside a button element do not implicitly communicate their purpose to screen readers.
+**Action:** Always verify that every `<button>` element containing only icons has a clear and explicit `aria-label` attribute describing its function for proper keyboard and screen reader accessibility.

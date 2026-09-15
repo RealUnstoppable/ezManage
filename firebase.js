@@ -10,18 +10,24 @@ const firebaseConfig = {
     measurementId: getEnv('REACT_APP_FIREBASE_MEASUREMENT_ID', "G-ZN3YJPHVGX")
 };
 
+
 // Ensure Firebase is initialized strictly as a global singleton using the compat SDK
 // to prevent token mismatches and duplicate initialization errors.
-const app = !window.firebase.apps.length ? window.firebase.initializeApp(firebaseConfig) : window.firebase.app();
+const app = (typeof window !== 'undefined' && window.firebase && window.firebase.apps && window.firebase.apps.length)
+    ? window.firebase.app()
+    : (typeof window !== 'undefined' && window.firebase && window.firebase.initializeApp) ? window.firebase.initializeApp(firebaseConfig) : {};
 
-const auth = window.firebase.auth();
+const auth = (typeof window !== 'undefined' && window.firebase && window.firebase.auth) ? window.firebase.auth() : {};
 
 // Use experimentalForceLongPolling for fallback on CORS/network issues
-window.firebase.firestore().settings({
-    experimentalForceLongPolling: true
-});
+if (typeof window !== 'undefined' && window.firebase && window.firebase.firestore) {
+    window.firebase.firestore().settings({
+        experimentalForceLongPolling: true
+    });
+}
 
-const db = window.firebase.firestore();
-const functions = window.firebase.functions();
+const db = (typeof window !== 'undefined' && window.firebase && window.firebase.firestore) ? window.firebase.firestore() : {};
+const functions = (typeof window !== 'undefined' && window.firebase && window.firebase.functions) ? window.firebase.functions() : {};
+
 
 export { app, auth, db, functions, firebaseConfig };
