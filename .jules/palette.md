@@ -59,3 +59,6 @@
 ## 2024-10-27 - Form accessibility enhancements on mismatched labels
 **Learning:** Some explicitly rendered `<label>` elements were missing the `for` attribute completely, or mapping to the wrong `id` (e.g. `taskTitle` instead of `taskTitle1` or `taskDesc` instead of `taskDesc1`). Adding `aria-label`s to these input fields that already have explicitly rendered labels causes screen readers to read redundant tags.
 **Action:** When adding accessibility to form inputs, always verify if there is already a label rendered above the element. If so, fix the `for` and `id` mapping instead of slapping a redundant `aria-label` attribute on the element.
+## 2024-05-24 - Missing Aria-Label on Date Input
+**Learning:** Date inputs that lack explicit labels and placeholders (e.g., `<input type="date">`) must be given an explicit `aria-label` attribute, as they cannot rely on implicit descriptive context.
+**Action:** Always verify all `<input>` elements have a `<label for="...">` or `aria-label` attribute, particularly date inputs which don't support placeholders.
