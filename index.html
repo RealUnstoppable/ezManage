@@ -6160,10 +6160,21 @@ function checkAndRenderOrgControls() {
                 return;
             }
 
-            const submitBtn = document.querySelector('#assignTaskModal .btn-accent');
-            const originalText = submitBtn.innerHTML;
-            submitBtn.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> Assigning...';
-            submitBtn.disabled = true;
+            const btn1 = document.getElementById('btnSubmitTask');
+            const btn2 = document.querySelector('#assignTaskModal .btn-accent');
+            const orig1 = btn1 ? btn1.innerHTML : '';
+            const orig2 = btn2 ? btn2.innerHTML : '';
+
+            if (btn1) {
+                btn1.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin inline-block"></i> Assigning...`;
+                btn1.disabled = true;
+                btn1.classList.add('opacity-70', 'cursor-not-allowed');
+            }
+            if (btn2) {
+                btn2.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin inline-block"></i> Assigning...`;
+                btn2.disabled = true;
+                btn2.classList.add('opacity-70', 'cursor-not-allowed');
+            }
             lucide.createIcons();
 
             try {
@@ -6198,8 +6209,16 @@ function checkAndRenderOrgControls() {
                     alert("Failed to assign task. " + error.message);
                 }
             } finally {
-                submitBtn.innerHTML = originalText;
-                submitBtn.disabled = false;
+                if (btn1) {
+                    btn1.innerHTML = orig1;
+                    btn1.disabled = false;
+                    btn1.classList.remove('opacity-70', 'cursor-not-allowed');
+                }
+                if (btn2) {
+                    btn2.innerHTML = orig2;
+                    btn2.disabled = false;
+                    btn2.classList.remove('opacity-70', 'cursor-not-allowed');
+                }
                 lucide.createIcons();
             }
         }
