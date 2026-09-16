@@ -1,3 +1,6 @@
+const functions = require('firebase-functions');
+const HttpsError = functions.https.HttpsError;
+
 /**
  * Utility functions shared across Cloud Functions
  */
@@ -69,7 +72,27 @@ function logManagerError(actionMessage, error) {
   console.error("Manager Troubleshooting: " + actionMessage, error);
 }
 
+
+/**
+ * Helper to check if required fields are present in a payload.
+ * @param {Object} payload - The payload object to check.
+ * @param {string[]} requiredKeys - Array of keys that must be present and truthy.
+ * @param {string} [errorMessage="Missing required fields"] - Optional custom error message.
+ * @throws {HttpsError} Throws an HttpsError if any key is missing.
+ */
+function checkRequiredFields(payload, requiredKeys, errorMessage = "Missing required fields") {
+  if (!payload || typeof payload !== "object") {
+    throw new HttpsError("invalid-argument", "Missing action or payload");
+  }
+  for (const key of requiredKeys) {
+    if (!payload[key]) {
+      throw new HttpsError("invalid-argument", errorMessage);
+    }
+  }
+}
+
 module.exports = {
+  checkRequiredFields,
   logManagerError,
   parseNum,
   getDayOfWeek,

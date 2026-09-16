@@ -428,35 +428,29 @@ document.addEventListener('DOMContentLoaded', () => {
                     await setDoc(userRef, { musicFavorites: [songId] }, { merge: true });
                     userFavorites.push(song);
                 } catch (innerError) {
-                    logManagerError("Error setting initial favorite document for songId: " + songId, innerError);
+                    logManagerError("Error setting initial favorite document for songId:", songId, innerError);
                 }
             } else {
-                logManagerError("Error toggling favorite for songId: " + songId, e);
+                logManagerError("Error toggling favorite for songId:", songId, e);
             }
         }
     }
 
-    let isDashboardLoaded = false;
     onAuthStateChanged(auth, async (user) => {
         currentUser = user;
         if (user) {
-            if (!isDashboardLoaded) {
-                try {
-                    const docRef = doc(db, "users", user.uid);
-                    const docSnap = await getDoc(docRef);
-                    if (docSnap.exists() && docSnap.data().musicFavorites) {
-                        const favIds = docSnap.data().musicFavorites;
-                        userFavorites = librarySongs.filter(song => favIds.includes(song.id));
-                    }
-                    isDashboardLoaded = true;
-                } catch (e) { logManagerError("Error loading user favorites for uid: " + user.uid, e); }
-            }
+            try {
+                const docRef = doc(db, "users", user.uid);
+                const docSnap = await getDoc(docRef);
+                if (docSnap.exists() && docSnap.data().musicFavorites) {
+                    const favIds = docSnap.data().musicFavorites;
+                    userFavorites = librarySongs.filter(song => favIds.includes(song.id));
+                }
+            } catch (e) { logManagerError("Error loading user favorites for uid:", user.uid, e); }
 
             const hour = new Date().getHours();
             const timeGreeting = hour < 12 ? "Good Morning" : hour < 18 ? "Good Afternoon" : "Good Evening";
             document.getElementById('greeting').textContent = `${timeGreeting}, ${user.displayName || 'Friend'}`;
-        } else {
-            isDashboardLoaded = false;
         }
         init();
     });

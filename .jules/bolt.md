@@ -57,9 +57,6 @@
 ## $(date +%Y-%m-%d) - [Repeated Firebase DB Docs Fetch]
 **Learning:** Functions invoked via callbacks from listeners that span multiple files (e.g., `auth.onAuthStateChanged`) will fire simultaneously. Without a caching layer, they execute redundant concurrent network fetch queries (like `db.collection('users').doc(uid).get()`), causing latency and blocking operations.
 **Action:** Always wrap independent multi-listener fetched resources with a generic memoization layer using a `Map` cache to immediately resolve redundant Promise requests.
-## 2026-09-12 - Prevent Dashboard Re-renders
-**Learning:** Used a state flag (e.g., isDashboardLoaded) to guard against redundant data fetches on auth state changes.
-**Action:** Implemented the pattern in shop.js and harmonytunes.js to prevent N+1 fetches and layout thrashing.
-## 2026-09-12 - Prevent Dashboard Re-renders
-**Learning:** Used a state flag (e.g., isDashboardLoaded) to guard against redundant data fetches on auth state changes.
-**Action:** Implemented the pattern in shop.js and harmonytunes.js to prevent N+1 fetches and layout thrashing.
+## 2026-10-27 - [DRY Refactoring and Error Handling]
+**Learning:** Repetitive validation logic (like throwing HttpsError for missing fields) clutters Cloud Functions and increases maintenance surface area. Furthermore, unhandled Promise rejections inside async loops (like webhooks) can cause silent failures.
+**Action:** Extract repeated validation logic into shared utility functions, and ensure all critical asynchronous workflows (especially webhooks parsing external payloads) are wrapped in try/catch blocks with proper logging.
