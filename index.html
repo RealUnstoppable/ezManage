@@ -499,7 +499,11 @@
                 class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="check-square"></i>
                 Tasks</a>
 
-            <a href="#" onclick="navTo('timeoff')"
+
+            <a href="#" onclick="navTo('deliveries')"
+                class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="truck"></i>
+                Vendor Deliveries</a>
+<a href="#" onclick="navTo('timeoff')"
                 class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="calendar-clock"></i>
                 Time Off</a>
 
@@ -1661,7 +1665,55 @@
                     </div>
                 </div>
 
-        <div id="view-waste" class="view-section px-6 py-12 hidden">
+
+        <div id="view-deliveries" class="view-section px-6 py-12 hidden">
+            <div class="max-w-4xl mx-auto">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+                    <h1 class="text-4xl font-black">Vendor Deliveries</h1>
+                    <button onclick="document.getElementById('addDeliveryModal').classList.toggle('hidden')"
+                        class="btn btn-primary flex items-center gap-2 px-6">
+                        <i data-lucide="plus-circle" class="w-5 h-5"></i> Log Delivery
+                    </button>
+                </div>
+
+                <div id="addDeliveryModal"
+                    class="hidden bg-white dark:bg-slate-900 rounded-3xl p-6 md:p-8 shadow-sm border border-slate-100 dark:border-slate-800 mb-12">
+                    <h2 class="text-xl font-bold mb-4">Log New Delivery</h2>
+                    <div class="space-y-4">
+                        <input type="text" id="deliveryVendorName" placeholder="Vendor Name (e.g. Sysco, US Foods)" aria-label="Vendor Name"
+                            class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
+                        <div class="grid md:grid-cols-2 gap-4">
+                            <input type="text" id="deliveryInvoiceNumber" placeholder="Invoice Number (Optional)" aria-label="Invoice Number"
+                                class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
+                            <input type="number" step="0.01" id="deliveryTotalAmount" placeholder="Total Amount ($)" aria-label="Total Amount"
+                                class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
+                        </div>
+                        <textarea id="deliveryNotes" placeholder="Notes (e.g. Missing 2 cases of tomatoes, damaged cups)" aria-label="Delivery Notes" rows="3"
+                            class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500 resize-none"></textarea>
+
+                        <div class="flex justify-end gap-3 pt-2">
+                            <button onclick="document.getElementById('addDeliveryModal').classList.add('hidden')"
+                                class="btn btn-outline px-6 py-2">Cancel</button>
+                            <button onclick="submitDelivery()" class="btn btn-accent px-6 py-2">Save Delivery</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-black">Recent Deliveries</h2>
+                    <button onclick="fetchDeliveries()"
+                        class="text-sm font-bold text-sky-500 hover:text-sky-600 flex items-center gap-2">
+                        <i data-lucide="refresh-cw" class="w-4 h-4"></i> Refresh
+                    </button>
+                </div>
+
+                <div id="deliveriesContainer" class="space-y-4">
+                    <!-- Deliveries populated via JS -->
+                </div>
+            </div>
+        </div>
+
+<div id="view-waste" class="view-section px-6 py-12 hidden">
             <div class="max-w-4xl mx-auto">
                 <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
                     <h1 class="text-4xl font-black">Waste & Spoilage Tracker</h1>
@@ -2812,7 +2864,7 @@
                 localStorage.setItem('navTo', viewId);
                 return;
             }
-            if (!currentUser && (['history', 'presets', 'performance', 'request', 'profile', 'shiftNotes', 'team', 'employees', 'timeoff', 'tasks', 'announcements'].includes(viewId))) {
+            if (!currentUser && (['history', 'presets', 'performance', 'request', 'profile', 'shiftNotes', 'team', 'employees', 'timeoff', 'tasks', 'announcements', 'deliveries'].includes(viewId))) {
                 viewId = 'auth';
             }
             if (viewId === 'maintenance' && currentUser) {
@@ -5380,7 +5432,168 @@ function checkAndRenderOrgControls() {
 
 
 
-        async function submitWasteLog() {
+
+        async function submitDelivery() {
+            if (!currentUser || !currentUserData || !currentUserData.orgId) {
+                alert("You must be part of an organization to log deliveries.");
+                return;
+            }
+
+            const vendorName = document.getElementById('deliveryVendorName').value.trim();
+            const invoiceNumber = document.getElementById('deliveryInvoiceNumber').value.trim();
+            const totalAmount = document.getElementById('deliveryTotalAmount').value;
+            const notes = document.getElementById('deliveryNotes').value.trim();
+
+            if (!vendorName || !totalAmount) {
+                alert("Please fill in the Vendor Name and Total Amount.");
+                return;
+            }
+
+            const submitBtn = document.querySelector('#addDeliveryModal .btn-accent');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> Saving...';
+            submitBtn.disabled = true;
+            lucide.createIcons();
+
+            try {
+                await callCloudFunction('manageVendorDeliveries', {
+                    action: "create",
+                    payload: { vendorName, invoiceNumber, totalAmount: Number(totalAmount), notes }
+                });
+
+                document.getElementById('deliveryVendorName').value = '';
+                document.getElementById('deliveryInvoiceNumber').value = '';
+                document.getElementById('deliveryTotalAmount').value = '';
+                document.getElementById('deliveryNotes').value = '';
+                document.getElementById('addDeliveryModal').classList.add('hidden');
+
+                alert("Delivery logged successfully.");
+                fetchDeliveries();
+            } catch (error) {
+                console.error("Error logging delivery:", error);
+                alert("Failed to log delivery. " + error.message);
+            } finally {
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+                lucide.createIcons();
+            }
+        }
+
+        async function fetchDeliveries() {
+            if (!currentUser || !currentUserData || !currentUserData.orgId) {
+                const container = document.getElementById('deliveriesContainer');
+                if (container) {
+                    container.innerHTML = `
+                        <div class="text-center py-16 bg-slate-50 dark:bg-slate-900 rounded-3xl border-2 border-dashed border-slate-200 dark:border-slate-800">
+                            <i data-lucide="users" class="w-12 h-12 text-slate-400 mx-auto mb-4"></i>
+                            <h3 class="text-xl font-bold mb-2">Join or Create a Group</h3>
+                            <p class="text-slate-500">You must be in a Management Group to view deliveries.</p>
+                        </div>
+                    `;
+                    lucide.createIcons();
+                }
+                return;
+            }
+
+            const container = document.getElementById('deliveriesContainer');
+            if(!container) return;
+            container.innerHTML = '<div class="text-center py-8"><i data-lucide="loader-2" class="w-8 h-8 animate-spin mx-auto text-sky-500 mb-4"></i><p class="text-slate-500">Loading deliveries...</p></div>';
+            lucide.createIcons();
+
+            try {
+                const result = await callCloudFunction('manageVendorDeliveries', { action: "get", payload: {} });
+
+                if (result.data.success) {
+                    const deliveries = result.data.deliveries || [];
+                    container.innerHTML = '';
+
+                    if (deliveries.length === 0) {
+                        container.innerHTML = `
+                            <div class="text-center py-16 bg-slate-50 dark:bg-slate-900 rounded-3xl border-2 border-dashed border-slate-200 dark:border-slate-800">
+                                <i data-lucide="check-circle-2" class="w-12 h-12 text-emerald-400 mx-auto mb-4"></i>
+                                <h3 class="text-xl font-bold mb-2">No Deliveries Logged</h3>
+                                <p class="text-slate-500">There are no recent vendor deliveries.</p>
+                            </div>
+                        `;
+                        lucide.createIcons();
+                        return;
+                    }
+
+                    const fragment = document.createDocumentFragment();
+                    const statusColors = {
+                        'Received': 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800',
+                        'Pending Credit': 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400 border-amber-200 dark:border-amber-800',
+                        'Credit Received': 'bg-sky-100 text-sky-800 dark:bg-sky-900/30 dark:text-sky-400 border-sky-200 dark:border-sky-800',
+                        'Disputed': 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400 border-red-200 dark:border-red-800'
+                    };
+
+                    deliveries.forEach(delivery => {
+                        const div = document.createElement('div');
+                        div.id = `delivery-${escapeHTML(delivery.id)}`;
+                        div.className = "card p-4 flex flex-col justify-between gap-4";
+
+                        const dateStr = delivery.timestamp ? new Date(delivery.timestamp._seconds * 1000).toLocaleString() : 'Just now';
+
+                        div.innerHTML = `
+                            <div class="flex flex-col md:flex-row justify-between gap-4">
+                                <div>
+                                    <h3 class="text-lg font-bold">${escapeHTML(delivery.vendorName)} <span class="text-sm font-normal text-slate-500">${delivery.invoiceNumber ? '#'+escapeHTML(delivery.invoiceNumber) : ''}</span></h3>
+                                    <p class="text-sm text-slate-500">Logged by ${escapeHTML(delivery.loggedByName)} • ${dateStr}</p>
+                                    ${delivery.notes ? `<p class="text-sm mt-2 text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-slate-800 p-2 rounded-lg italic">"${escapeHTML(delivery.notes)}"</p>` : ''}
+                                </div>
+                                <div class="flex flex-col md:items-end gap-2 shrink-0">
+                                    <div class="font-mono font-bold text-lg bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 px-3 py-1 rounded-xl">${Number(delivery.totalAmount).toFixed(2)}</div>
+                                    <div class="flex items-center gap-2">
+                                        <select aria-label="Update delivery status" class="px-3 py-1 rounded-full text-xs font-bold border appearance-none cursor-pointer focus:outline-none delivery-status-select ${statusColors[delivery.status] || statusColors['Received']}" data-delivery-id="${escapeHTML(delivery.id)}">
+                                            <option value="Received" ${delivery.status === 'Received' ? 'selected' : ''}>Received</option>
+                                            <option value="Pending Credit" ${delivery.status === 'Pending Credit' ? 'selected' : ''}>Pending Credit</option>
+                                            <option value="Credit Received" ${delivery.status === 'Credit Received' ? 'selected' : ''}>Credit Received</option>
+                                            <option value="Disputed" ${delivery.status === 'Disputed' ? 'selected' : ''}>Disputed</option>
+                                        </select>
+                                        <button data-action="deleteDelivery" data-id="${escapeHTML(delivery.id)}" class="btn btn-outline btn-sm text-red-500 hover:bg-red-50" aria-label="Delete Delivery"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                        fragment.appendChild(div);
+                    });
+                    container.appendChild(fragment);
+                    lucide.createIcons();
+                }
+            } catch (error) {
+                console.error("Error fetching deliveries:", error);
+                container.innerHTML = `<div class="text-red-500 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl text-center">Failed to load deliveries: ${escapeHTML(error.message)}</div>`;
+            }
+        }
+
+        async function deleteDelivery(deliveryId) {
+            if (!confirm("Are you sure you want to permanently delete this delivery entry?")) return;
+            const delEl = document.getElementById('delivery-' + escapeHTML(deliveryId));
+            if (delEl) delEl.style.display = 'none'; // Optimistically hide
+            try {
+                await callCloudFunction('manageVendorDeliveries', { action: "delete", payload: { deliveryId } });
+                fetchDeliveries();
+            } catch (err) {
+                logManagerError("Error deleting delivery:", err);
+                alert("Failed to delete delivery.");
+                fetchDeliveries(); // Revert on failure
+            }
+        }
+
+        async function updateDeliveryStatus(deliveryId, newStatus) {
+            try {
+                await callCloudFunction('manageVendorDeliveries', {
+                    action: "updateStatus",
+                    payload: { deliveryId, status: newStatus }
+                });
+            } catch (error) {
+                console.error("Error updating delivery:", error);
+                alert("Failed to update status. " + error.message);
+                fetchDeliveries(); // revert
+            }
+        }
+
+async function submitWasteLog() {
             if (!currentUser || !currentUserData || !currentUserData.orgId) {
                 alert("You must be part of an organization to log waste.");
                 return;
@@ -5680,6 +5893,14 @@ function checkAndRenderOrgControls() {
                     updateTaskStatus(id, select.value);
                 }
             }
+
+            if (e.target && e.target.classList.contains('delivery-status-select')) {
+                const deliveryId = e.target.getAttribute('data-delivery-id');
+                if (deliveryId) {
+                    updateDeliveryStatus(deliveryId, e.target.value);
+                }
+            }
+
             if (e.target && e.target.classList.contains('incident-status-select')) {
                 const incidentId = e.target.getAttribute('data-incident-id');
                 if (incidentId) {
@@ -6707,6 +6928,8 @@ function checkAndRenderOrgControls() {
             else if (action === 'openEditEmployeeModal') openEditEmployeeModal(id);
             else if (action === 'deleteTask') deleteTask(id);
             else if (action === 'deleteWasteLog') deleteWasteLog(id);
+
+            else if (action === 'deleteDelivery') deleteDelivery(id);
             else if (action === 'deleteIncident') deleteIncident(id);
             else if (action === 'updateTaskStatus') updateTaskStatus(id, status);
 
