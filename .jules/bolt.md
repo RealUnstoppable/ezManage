@@ -57,3 +57,6 @@
 ## $(date +%Y-%m-%d) - [Repeated Firebase DB Docs Fetch]
 **Learning:** Functions invoked via callbacks from listeners that span multiple files (e.g., `auth.onAuthStateChanged`) will fire simultaneously. Without a caching layer, they execute redundant concurrent network fetch queries (like `db.collection('users').doc(uid).get()`), causing latency and blocking operations.
 **Action:** Always wrap independent multi-listener fetched resources with a generic memoization layer using a `Map` cache to immediately resolve redundant Promise requests.
+## 2024-05-24 - [Input Form Debouncing]
+**Learning:** High-frequency input events (like `oninput` on dynamically generated input fields) that trigger heavy DOM parsing and synchronous state synchronization (e.g. `triggerDraftSync`) cause layout thrashing and excessive sync overhead.
+**Action:** Consistently use a `setTimeout` debounce wrapper (e.g. `debouncedTriggerDraftSync`) on all such high-frequency form inputs to batch the updates and ensure smooth UI performance.
