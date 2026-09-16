@@ -60,3 +60,7 @@
 ## 2026-10-27 - [DRY Refactoring and Error Handling]
 **Learning:** Repetitive validation logic (like throwing HttpsError for missing fields) clutters Cloud Functions and increases maintenance surface area. Furthermore, unhandled Promise rejections inside async loops (like webhooks) can cause silent failures.
 **Action:** Extract repeated validation logic into shared utility functions, and ensure all critical asynchronous workflows (especially webhooks parsing external payloads) are wrapped in try/catch blocks with proper logging.
+
+## 2026-09-14 - Duplicate Operations in Firestore Rules Bypass Restrictions
+**Learning:** When using `firestore.rules`, defining multiple `allow create` blocks for the same collection acts as a logical `OR`. If one block requires both `authorId` and `orgId`, but another requires only `authorId`, the stricter constraint is easily bypassed by satisfying the looser one.
+**Action:** Always consolidate security checks into a single unified `allow [action]` block per collection to avoid inadvertently creating permissive backdoors through rule duplication.

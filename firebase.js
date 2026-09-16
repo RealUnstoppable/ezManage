@@ -26,8 +26,6 @@ if (!window.firebase.apps.length) {
 // 2. Click "Add domain" and enter `ezmanage.realunstoppable.store`
 // Note: Firestore rules are handled via firestore.rules file deployment.
 
-const auth = window.firebase.auth();
-
 // Use experimentalForceLongPolling for fallback on CORS/network issues
 try {
     window.firebase.firestore().settings({
