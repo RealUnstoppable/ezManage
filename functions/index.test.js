@@ -198,12 +198,7 @@ describe("createCheckoutSession", () => {
       payment_method_types: ["card"],
       customer_email: "test2@example.com",
       line_items: [{
-        price_data: {
-          currency: "usd",
-          product: "prod_UFn8zqZ0mwyy5r",
-          recurring: {interval: "year"},
-          unit_amount: 5400,
-        },
+        price: "price_1THHYPBp2C5GdKaKxNpqndNE",
         quantity: 1,
       }],
       subscription_data: {
@@ -258,7 +253,7 @@ describe("createCheckoutSession", () => {
 
     expect(mockStripeMock.checkout.sessions.create).toHaveBeenCalled();
 
-    expect(consoleSpy).toHaveBeenCalledWith("Manager Troubleshooting: Checkout Error for uid: " + req.body.uid, expect.any(Error));
+    expect(consoleSpy).toHaveBeenCalledWith("Manager Troubleshooting: Checkout Error for uid:", req.body.uid, expect.any(Error));
     expect(res.status).toHaveBeenCalledWith(500);
     expect(res.json).toHaveBeenCalledWith({error: errorMessage});
 
@@ -310,6 +305,42 @@ describe("stripeWebhook", () => {
 
     expect(res.status).toHaveBeenCalledWith(400);
     expect(res.send).toHaveBeenCalledWith("Webhook Error: Invalid signature");
+  });
+
+  it("should return 400 when stripe-signature header is missing", async () => {
+    delete req.headers["stripe-signature"];
+
+    mockStripeMock.webhooks.constructEvent.mockImplementation(() => {
+      throw new Error("No stripe-signature header value was provided.");
+    });
+
+    await stripeWebhook(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.send).toHaveBeenCalledWith("Webhook Error: No stripe-signature header value was provided.");
+  });
+
+  it("should handle firestore error during checkout.session.completed", async () => {
+    const mockEvent = {
+      type: "checkout.session.completed",
+      data: {
+        object: {
+          customer: "cus_123",
+          subscription: "sub_123",
+          metadata: {
+            uid: "user_error",
+            planName: "Pro",
+          },
+        },
+      },
+    };
+    mockStripeMock.webhooks.constructEvent.mockReturnValue(mockEvent);
+
+    const firestoreMock = admin.firestore();
+    firestoreMock.set.mockRejectedValueOnce(new Error("Firestore write failed"));
+
+    await expect(stripeWebhook(req, res)).rejects.toThrow("Firestore write failed");
+    expect(firestoreMock.set).toHaveBeenCalled();
   });
 
   it("should process checkout.session.completed with a valid UID", async () => {
@@ -383,8 +414,9 @@ describe("stripeWebhook", () => {
 
     mockStripeMock.webhooks.constructEvent.mockReturnValue(mockEvent);
 
-    const mockUpdate = jest.fn();
     const mockDocs = {
+      empty: false,
+      size: 2,
       docs: [
         {id: "user_1", ref: {update: mockUpdate}},
         {id: "user_2", ref: {update: mockUpdate}},
@@ -393,18 +425,37 @@ describe("stripeWebhook", () => {
 
     const firestoreMock = admin.firestore();
     firestoreMock.get.mockResolvedValue(mockDocs);
+    const mockBatch = firestoreMock.batch();
 
     await stripeWebhook(req, res);
 
     expect(res.json).toHaveBeenCalledWith({received: true});
 
     expect(firestoreMock.where).toHaveBeenCalledWith("subscription.customerId", "==", "cus_123");
-    expect(mockUpdate).toHaveBeenCalledTimes(2);
-    expect(mockUpdate).toHaveBeenCalledWith({
-      "plan": "Free",
-      "subscription.status": "canceled",
-      "updatedAt": admin.firestore.FieldValue.serverTimestamp(),
-    });
+    expect(firestoreMock.batch).toHaveBeenCalled();
+    expect(mockBatch.update).toHaveBeenCalledTimes(2);
+    expect(mockBatch.update).toHaveBeenCalledWith("ref_1", expect.any(Object));
+    expect(mockBatch.update).toHaveBeenCalledWith("ref_2", expect.any(Object));
+    expect(mockBatch.commit).toHaveBeenCalled();
+  });
+
+  it("should handle firestore error during customer.subscription.deleted", async () => {
+    const mockEvent = {
+      type: "customer.subscription.deleted",
+      data: {
+        object: {
+          customer: "cus_error",
+        },
+      },
+    };
+
+    mockStripeMock.webhooks.constructEvent.mockReturnValue(mockEvent);
+
+    const firestoreMock = admin.firestore();
+    firestoreMock.get.mockRejectedValueOnce(new Error("Firestore query failed"));
+
+    await expect(stripeWebhook(req, res)).rejects.toThrow("Firestore query failed");
+    expect(firestoreMock.where).toHaveBeenCalledWith("subscription.customerId", "==", "cus_error");
   });
 
   it("should process customer.subscription.canceled", async () => {
@@ -419,8 +470,9 @@ describe("stripeWebhook", () => {
 
     mockStripeMock.webhooks.constructEvent.mockReturnValue(mockEvent);
 
-    const mockUpdate = jest.fn();
     const mockDocs = {
+      empty: false,
+      size: 1,
       docs: [
         {id: "user_3", ref: {update: mockUpdate}},
       ],
@@ -428,18 +480,19 @@ describe("stripeWebhook", () => {
 
     const firestoreMock = admin.firestore();
     firestoreMock.get.mockResolvedValue(mockDocs);
+    const mockBatch = firestoreMock.batch();
 
     await stripeWebhook(req, res);
 
     expect(res.json).toHaveBeenCalledWith({received: true});
 
     expect(firestoreMock.where).toHaveBeenCalledWith("subscription.customerId", "==", "cus_456");
-    expect(mockUpdate).toHaveBeenCalledTimes(1);
-    expect(mockUpdate).toHaveBeenCalledWith({
+    expect(mockBatch.update).toHaveBeenCalledWith("ref_3", {
       "plan": "Free",
       "subscription.status": "canceled",
       "updatedAt": admin.firestore.FieldValue.serverTimestamp(),
     });
+    expect(mockBatch.commit).toHaveBeenCalled();
   });
 
   it("should ignore unhandled event types", async () => {

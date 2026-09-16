@@ -1,3 +1,6 @@
+const functions = require('firebase-functions');
+const HttpsError = functions.https.HttpsError;
+
 /**
  * Utility functions shared across Cloud Functions
  */
@@ -70,37 +73,26 @@ function logManagerError(actionMessage, error) {
 }
 
 
-const rateLimitMap = new Map();
-const RATE_LIMIT_MAX = 50; // Max requests
-const RATE_LIMIT_WINDOW = 60 * 1000; // 1 minute window
-
 /**
- * Basic in-memory rate limiter per UID to prevent abuse.
- * @param {string} uid The user ID
- * @throws {Error} Throws an error if limit exceeded
+ * Helper to check if required fields are present in a payload.
+ * @param {Object} payload - The payload object to check.
+ * @param {string[]} requiredKeys - Array of keys that must be present and truthy.
+ * @param {string} [errorMessage="Missing required fields"] - Optional custom error message.
+ * @throws {HttpsError} Throws an HttpsError if any key is missing.
  */
-function checkRateLimit(uid) {
-  const now = Date.now();
-  if (!rateLimitMap.has(uid)) {
-    rateLimitMap.set(uid, {count: 1, resetTime: now + RATE_LIMIT_WINDOW});
-    return;
+function checkRequiredFields(payload, requiredKeys, errorMessage = "Missing required fields") {
+  if (!payload || typeof payload !== "object") {
+    throw new HttpsError("invalid-argument", "Missing action or payload");
   }
-
-  const record = rateLimitMap.get(uid);
-  if (now > record.resetTime) {
-    // Reset window
-    record.count = 1;
-    record.resetTime = now + RATE_LIMIT_WINDOW;
-  } else {
-    record.count++;
-    if (record.count > RATE_LIMIT_MAX) {
-      throw new Error("rate-limit-exceeded");
+  for (const key of requiredKeys) {
+    if (!payload[key]) {
+      throw new HttpsError("invalid-argument", errorMessage);
     }
   }
 }
 
 module.exports = {
-  checkRateLimit,
+  checkRequiredFields,
   logManagerError,
   parseNum,
   getDayOfWeek,

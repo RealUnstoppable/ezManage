@@ -774,8 +774,8 @@
         const firebaseConfig = window.ezManageFirebaseConfig;
         const app = !window.firebase.apps.length ? window.firebase.initializeApp(firebaseConfig) : window.firebase.app();
         const auth = firebase.auth();
+        firebase.firestore().settings({ experimentalForceLongPolling: true });
         const db = firebase.firestore();
-        db.settings({ experimentalForceLongPolling: true });
 
         
 
@@ -1167,7 +1167,7 @@
                     <span class="font-bold text-sm">${escapeHTML(role.email)}</span>
                     <div class="flex items-center gap-3">
                         <span class="text-xs uppercase tracking-widest font-black text-slate-400">${escapeHTML(role.priority)}</span>
-                        <button onclick="removeOnboardingRole(${i})" aria-label="Remove role" class="text-red-400 hover:text-red-500"><i data-lucide="x" class="w-4 h-4"></i></button>
+                        <button data-action="removeOnboardingRole" data-index="${i}" aria-label="Remove role" class="text-red-400 hover:text-red-500"><i data-lucide="x" class="w-4 h-4"></i></button>
                     </div>
                 </div>
             `).join('');
@@ -1435,7 +1435,7 @@
                 snap.forEach(doc => {
                     const d = doc.data();
                     const isOwner = doc.id === currentUser.uid;
-                    const displayName = d.name || d.email.split('@')[0];
+                    const displayName = escapeHTML(d.name || d.email.split('@')[0]);
                     const color = getManagerColor(displayName);
 
                     // 1. Manager Directory
@@ -1713,7 +1713,7 @@
                                 <td class="p-3 font-medium">${escapeHTML(data.email || 'Unknown')}</td>
                                 <td class="p-3">${escapeHTML(data.role || 'Manager')}</td>
                                 <td class="p-3 text-right">
-                                    <button onclick="removeManager('${escapeHTML(doc.id)}')" aria-label="Remove Manager" class="btn btn-outline btn-sm text-red-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                                    <button data-action="removeManager" data-id="${escapeHTML(doc.id)}" aria-label="Remove Manager" class="btn btn-outline btn-sm text-red-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
                                 </td>
                             </tr>
                         `;
@@ -1760,6 +1760,23 @@
                         if (window.lucide) window.lucide.createIcons();
                     }
                 });
+            }
+        });
+
+
+        document.addEventListener('click', (e) => {
+            const btn = e.target.closest('[data-action]');
+            if (!btn) return;
+            const action = btn.dataset.action;
+            const id = btn.dataset.id;
+            const index = btn.dataset.index;
+
+            if (action === 'removeOnboardingRole') {
+                removeOnboardingRole(parseInt(index, 10));
+            } else if (action === 'removeManager') {
+                removeManager(id);
+            } else if (action === 'approveRequest') {
+                approveRequest(id);
             }
         });
 
