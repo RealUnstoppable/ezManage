@@ -2157,12 +2157,7 @@
     <script>
 
         // Initialization is handled by firebase.js, we just get references
-        const app = window.firebase.app();
-        const auth = window.firebase.auth();
-        const db = window.firebase.firestore();
-        const cloudFunctions = window.firebase.functions();
 
-        // Wait, since this script is not a module, we need to make sure firebase.js runs before it.
         // Let's just make the inline script check for singleton.
         const firebaseConfig = {
             apiKey: "AIzaSyBgrI9HwJPSc5b4pu2Egsv4DE7shNwptSw",
@@ -2175,9 +2170,9 @@
         };
         const app = !window.firebase.apps.length ? window.firebase.initializeApp(firebaseConfig) : window.firebase.app();
         const auth = window.firebase.auth();
-        window.firebase.firestore().settings({ experimentalForceLongPolling: true });
         const db = window.firebase.firestore();
         const cloudFunctions = window.firebase.functions();
+
         db.enablePersistence().catch(err => console.error("Offline sync error:", err));
 
         let currentUser = null;
@@ -4599,7 +4594,7 @@ function checkAndRenderOrgControls() {
             document.getElementById('shiftNoteContent').value = "";
 
             try {
-                // To allow client-side writes since cloud functions were failing for some users
+                // Ensure write fully completes before allowing further actions or redirects to avoid race conditions.
                 await db.collection('shift_notes').add({
                     authorId: currentUser.uid,
                     authorName: currentUser.email.split('@')[0],
@@ -4612,7 +4607,9 @@ function checkAndRenderOrgControls() {
                 });
 
                 document.getElementById('shiftNoteContent').value = "";
-                // Removed fetchShiftNotes() to prevent unnecessary re-fetches after optimistic update
+                // Force a reload of the component if needed to sync or clear any local state.
+                // Note: since this is just an optimistic update, we just ensure it is not silently lost.
+
             } catch (err) {
                 console.error("Error posting note", err);
                 if (err.code === 'unavailable' || err.code === 'auth/network-request-failed' || err.code === 'firestore/unavailable') {

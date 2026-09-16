@@ -1,4 +1,26 @@
-import { calculateCartTotal } from '../shop.js';
+import { jest } from '@jest/globals';
+global.window = global.window || {};
+global.window.firebase = {
+  apps: [],
+  initializeApp: () => ({}),
+  app: () => ({}),
+  auth: () => ({ onAuthStateChanged: () => {} }),
+  firestore: () => ({ settings: () => {}, collection: () => ({ doc: () => ({ set: () => Promise.resolve() }) }) }),
+  functions: () => ({})
+};
+global.firebase = global.window.firebase;
+
+jest.unstable_mockModule('../../firebase.js', () => ({
+  auth: {},
+  db: {}
+}));
+jest.unstable_mockModule('../auth.js', () => ({
+  auth: {},
+  db: {}
+}));
+
+const shop = await import('../shop.js');
+const calculateCartTotal = shop.calculateCartTotal;
 
 describe('calculateCartTotal', () => {
     const mockProductMap = {
