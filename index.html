@@ -3586,8 +3586,9 @@
 
             const submitBtn = document.querySelector('#reportMaintenanceModal .btn-accent');
             const originalText = submitBtn.innerHTML;
-            submitBtn.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> Submitting...';
+            submitBtn.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin inline-block"></i> Submitting...';
             submitBtn.disabled = true;
+            submitBtn.classList.add('opacity-70', 'cursor-not-allowed');
             lucide.createIcons();
 
             try {
@@ -3620,6 +3621,7 @@
             } finally {
                 submitBtn.innerHTML = originalText;
                 submitBtn.disabled = false;
+                submitBtn.classList.remove('opacity-70', 'cursor-not-allowed');
                 lucide.createIcons();
             }
         }
@@ -3844,8 +3846,9 @@
             const btn = document.getElementById('btnSubmitTimeOff');
             const originalText = btn.innerHTML;
             btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin inline-block"></i> Submitting...`;
-            lucide.createIcons();
             btn.disabled = true;
+            btn.classList.add('opacity-70', 'cursor-not-allowed');
+            lucide.createIcons();
 
             try {
                 await db.collection('time_off_requests').add({
@@ -3872,6 +3875,7 @@
             } finally {
                 btn.innerHTML = originalText;
                 btn.disabled = false;
+                btn.classList.remove('opacity-70', 'cursor-not-allowed');
                 lucide.createIcons();
             }
         }
@@ -4825,8 +4829,9 @@ function checkAndRenderOrgControls() {
 
             const submitBtn = document.querySelector('#addWasteModal .btn-accent');
             const originalText = submitBtn.innerHTML;
-            submitBtn.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> Saving...';
+            submitBtn.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin inline-block"></i> Saving...';
             submitBtn.disabled = true;
+            submitBtn.classList.add('opacity-70', 'cursor-not-allowed');
             lucide.createIcons();
 
             try {
@@ -4850,6 +4855,7 @@ function checkAndRenderOrgControls() {
             } finally {
                 submitBtn.innerHTML = originalText;
                 submitBtn.disabled = false;
+                submitBtn.classList.remove('opacity-70', 'cursor-not-allowed');
                 lucide.createIcons();
             }
         }
@@ -4959,8 +4965,9 @@ function checkAndRenderOrgControls() {
 
             const submitBtn = document.querySelector('#reportIncidentModal .btn-accent');
             const originalText = submitBtn.innerHTML;
-            submitBtn.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> Submitting...';
+            submitBtn.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin inline-block"></i> Submitting...';
             submitBtn.disabled = true;
+            submitBtn.classList.add('opacity-70', 'cursor-not-allowed');
             lucide.createIcons();
 
             try {
@@ -4988,6 +4995,7 @@ function checkAndRenderOrgControls() {
             } finally {
                 submitBtn.innerHTML = originalText;
                 submitBtn.disabled = false;
+                submitBtn.classList.remove('opacity-70', 'cursor-not-allowed');
                 lucide.createIcons();
             }
         }
@@ -5166,8 +5174,9 @@ function checkAndRenderOrgControls() {
 
             const btn = document.getElementById('submitEmpBtn');
             const ogText = btn.innerText;
-            btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Saving...`;
+            btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin inline-block"></i> Saving...`;
             btn.disabled = true;
+            btn.classList.add('opacity-70', 'cursor-not-allowed');
             lucide.createIcons();
 
             try {
@@ -5189,8 +5198,10 @@ function checkAndRenderOrgControls() {
                 console.error("Manager Troubleshooting: Error saving employee:", error);
                 alert("Failed to save employee: " + error.message);
             } finally {
-                btn.innerText = ogText;
-                btn.disabled = false;
+                btn.innerHTML = ogText;
+                            btn.disabled = false;
+                            btn.classList.remove('opacity-70', 'cursor-not-allowed');
+                            lucide.createIcons();
             }
         }
 
@@ -5218,8 +5229,9 @@ function checkAndRenderOrgControls() {
                 const submitBtn = document.querySelector('#createTaskForm button[type="submit"]');
                 const originalText = submitBtn.innerHTML;
                 submitBtn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin inline-block"></i> Assigning...`;
-                lucide.createIcons();
                 submitBtn.disabled = true;
+                submitBtn.classList.add('opacity-70', 'cursor-not-allowed');
+                lucide.createIcons();
 
                 await db.collection('tasks').add({
                     title: title,
@@ -5238,6 +5250,7 @@ function checkAndRenderOrgControls() {
 
                 submitBtn.innerHTML = originalText;
                 submitBtn.disabled = false;
+                submitBtn.classList.remove('opacity-70', 'cursor-not-allowed');
                 lucide.createIcons();
             } catch (error) {
                 logManagerError("Error creating task", error);
@@ -5360,8 +5373,10 @@ function checkAndRenderOrgControls() {
 
             const btn = event.target.querySelector('button[type="submit"]');
             const originalText = btn.innerHTML;
-            btn.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin mx-auto"></i>';
+            btn.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin mx-auto inline-block"></i>';
             btn.disabled = true;
+            btn.classList.add('opacity-70', 'cursor-not-allowed');
+            lucide.createIcons();
 
             const title = document.getElementById('announcementTitle').value.trim();
             const content = document.getElementById('announcementContent').value.trim();
@@ -5387,6 +5402,7 @@ function checkAndRenderOrgControls() {
             } finally {
                 btn.innerHTML = originalText;
                 btn.disabled = false;
+                btn.classList.remove('opacity-70', 'cursor-not-allowed');
             }
         }
 
@@ -5599,6 +5615,7 @@ function checkAndRenderOrgControls() {
             } finally {
                 submitBtn.innerHTML = originalText;
                 submitBtn.disabled = false;
+                submitBtn.classList.remove('opacity-70', 'cursor-not-allowed');
                 lucide.createIcons();
             }
         }
@@ -5790,8 +5807,10 @@ function checkAndRenderOrgControls() {
 
             const submitBtn = document.querySelector('#addRecognitionModal .btn-accent');
             const originalText = submitBtn.innerHTML;
-            submitBtn.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> Submitting...';
+            submitBtn.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin inline-block"></i> Submitting...';
             submitBtn.disabled = true;
+            submitBtn.classList.add('opacity-70', 'cursor-not-allowed');
+            lucide.createIcons();
             lucide.createIcons();
 
             try {
@@ -5817,6 +5836,7 @@ function checkAndRenderOrgControls() {
             } finally {
                 submitBtn.innerHTML = originalText;
                 submitBtn.disabled = false;
+                submitBtn.classList.remove('opacity-70', 'cursor-not-allowed');
                 lucide.createIcons();
             }
         }

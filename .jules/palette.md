@@ -55,3 +55,6 @@
 ## 2024-08-03 - Missing ARIA Labels on Icon-Only Modal Close Buttons
 **Learning:** Icon-only buttons using libraries like Lucide (e.g., `<button><i data-lucide="x"></i></button>`) often lack implicit accessible names, causing screen readers to read them simply as "button".
 **Action:** When implementing or reviewing modal close buttons or any icon-only interactive elements in this app's components, always verify the presence of an explicit `aria-label` attribute describing the action (e.g., "Close tutorial", "Close announcement modal") to ensure keyboard and screen reader accessibility.
+## 2026-09-16 - Async Button Loading States
+**Learning:** Adding async loading spinners without also applying the Tailwind classes `opacity-70` and `cursor-not-allowed` causes the button to appear functional even when it's disabled under the hood. Also, using `inline-block` on the lucide spinner icon helps prevent alignment issues on some buttons.
+**Action:** Always add visual disabled utility classes when setting `btn.disabled = true` and remember to remove them in the `finally` block.
