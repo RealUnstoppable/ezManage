@@ -48,6 +48,7 @@ export function calculateCartTotal(cartData, prodMap) {
 
 let cart = {};
 let currentUser = null;
+let isDashboardLoaded = false;
 
 const productGrid = document.getElementById('product-grid');
 const cartButton = document.getElementById('cart-button');
@@ -236,6 +237,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const localCart = localCartData ? JSON.parse(localCartData) : {};
 
         if (user) {
+            if (!isDashboardLoaded) {
+                isDashboardLoaded = true;
             try {
                 const userCartRef = db.collection('carts').doc(user.uid);
                 const docSnap = await userCartRef.get();
@@ -254,8 +257,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 cart = localCart;
             }
+            }
         } else {
-
+            isDashboardLoaded = false;
             cart = localCart;
         }
 

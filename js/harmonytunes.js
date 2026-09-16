@@ -2,7 +2,7 @@ import { logManagerError, escapeHTML } from './utils.js';
 import { auth, db } from './auth.js';
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
 import { doc, getDoc, setDoc, updateDoc, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
-import { showToast, escapeHTML } from './utils.js';
+import { showToast } from './utils.js';
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -40,6 +40,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let isShuffle = false;
     let repeatMode = 0;
     let currentUser = null;
+    let isLibraryLoaded = false;
 
     const viewHome = document.getElementById('view-home');
     const viewPlaylist = document.getElementById('view-playlist');
@@ -439,6 +440,8 @@ document.addEventListener('DOMContentLoaded', () => {
     onAuthStateChanged(auth, async (user) => {
         currentUser = user;
         if (user) {
+            if (!isLibraryLoaded) {
+                isLibraryLoaded = true;
             try {
                 const docRef = doc(db, "users", user.uid);
                 const docSnap = await getDoc(docRef);
@@ -451,6 +454,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const hour = new Date().getHours();
             const timeGreeting = hour < 12 ? "Good Morning" : hour < 18 ? "Good Afternoon" : "Good Evening";
             document.getElementById('greeting').textContent = `${timeGreeting}, ${user.displayName || 'Friend'}`;
+            }
+        } else {
+            isLibraryLoaded = false;
         }
         init();
     });
