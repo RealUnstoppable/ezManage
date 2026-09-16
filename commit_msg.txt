@@ -1,0 +1,6 @@
+Refactor redundant error handling and add try-catch
+
+- Created a new `checkRequiredFields` utility in `functions/utils.js`
+- Refactored `functions/index.js` to use `checkRequiredFields` instead of redundant `if (!field) throw new HttpsError(...)` logic.
+- Added a `try/catch` block for uncaught awaits inside the `stripeWebhook` function to log errors with `logManagerError`.
+- Cleaned up unused variables from `utils.js` exports.

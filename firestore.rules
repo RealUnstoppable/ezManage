@@ -23,6 +23,7 @@ service cloud.firestore {
                     && (isOwner(userId) || request.resource.data.get('orgId', null) == request.auth.uid)
                     && (request.resource.data.get('orgId', null) == null || request.resource.data.get('orgId', null) == request.auth.uid)
                     && request.resource.data.get('isAdmin', false) == false
+                    && (!request.resource.data.keys().hasAny(['orgId']) || request.resource.data.get('orgId', null) == request.auth.uid)
                     && !request.resource.data.keys().hasAny(['isBanned', 'membershipLevel', 'plan', 'subscription']);
       allow update: if request.auth != null
                     && (isOwner(userId) || resource.data.get('orgId', null) == request.auth.uid || isAdmin())
@@ -44,6 +45,7 @@ service cloud.firestore {
       );
       allow delete: if request.auth != null && (
           resource.data.get('authorId', null) == request.auth.uid ||
+          resource.data.get('orgId', null) == request.auth.uid ||
           isAdmin()
       );
     }
@@ -51,7 +53,8 @@ service cloud.firestore {
 
     // CARTS
     match /carts/{userId} {
-      allow read, write: if isOwner(userId) || isAdmin();
+      allow read: if isOwner(userId) || isAdmin();
+      allow create, update, delete: if isOwner(userId) || isAdmin();
     }
 
     // ORDERS
@@ -92,7 +95,7 @@ service cloud.firestore {
     // SITE STATS
     match /site_stats/{docId} {
         allow read: if true;
-        allow write: if isAdmin();
+        allow create, update, delete: if isAdmin();
     }
 
     // SHIFT NOTES
@@ -108,7 +111,7 @@ service cloud.firestore {
                     && request.resource.data.get('orgId', null) == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('orgId', null);
       allow update: if request.auth != null && (
           resource.data.get('authorId', null) == request.auth.uid ||
-          (resource.data.get('orgId', null) != null && resource.data.get('orgId', null) == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('orgId', null)) ||
+          (resource.data.get('orgId', null) != null && (resource.data.get('orgId', null) == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('orgId', null) || resource.data.get('orgId', null) == request.auth.uid)) ||
           isAdmin()
       ) && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['orgId']);
       allow delete: if request.auth != null && (
@@ -244,6 +247,25 @@ service cloud.firestore {
           isAdmin()
       ) && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['orgId']);
       allow delete: if request.auth != null && (resource.data.get('loggedByUid', null) == request.auth.uid || isAdmin());
+    }
+
+    // TIME LOGS
+    match /time_logs/{logId} {
+      allow read: if request.auth != null && (
+          resource == null ||
+          resource.data.get('uid', null) == request.auth.uid ||
+          request.auth.uid == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('orgId', null) ||
+          isAdmin()
+      );
+      allow create: if request.auth != null
+                    && request.resource.data.get('uid', null) == request.auth.uid
+                    && request.resource.data.get('orgId', null) == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('orgId', null);
+      allow update: if request.auth != null && (
+          (resource.data.get('uid', null) == request.auth.uid) ||
+          (resource.data.get('orgId', null) != null && resource.data.get('orgId', null) == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('orgId', null)) ||
+          isAdmin()
+      );
+      allow delete: if request.auth != null && (resource.data.get('uid', null) == request.auth.uid || isAdmin());
     }
 
     // EMPLOYEES

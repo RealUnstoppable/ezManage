@@ -3,7 +3,7 @@ const {onRequest} = require("firebase-functions/v2/https");
 const HttpsError = functions.https.HttpsError;
 const admin = require("firebase-admin");
 const cors = require("cors")({origin: true});
-const {adaptGen2Params, logManagerError} = require("./utils");
+const {adaptGen2Params, logManagerError, checkRequiredFields} = require("./utils"); // Added comment for patch visibility
 
 /**
  * Helper to get a document, verify its existence, and verify its orgId.
@@ -118,42 +118,6 @@ exports.createCheckoutSession = onRequest({invoker: "public"}, (req, res) => {
     }
 
     try {
-      let finalPrice = null;
-
-      if (uid) {
-        const userDoc = await admin.firestore().collection("users").doc(uid).get();
-        if (userDoc.exists) {
-          const userData = userDoc.data();
-          if (userData && userData.hasPromoCode) {
-            const basePrice = (plan === "Business Pro") ? 207 : 61;
-            finalPrice = basePrice * 0.9;
-          }
-        }
-      }
-
-      if (finalPrice !== null) {
-        finalPrice = Math.floor(finalPrice);
-        const productId = plan === "Business Pro" ?
-          "prod_UFnBrTwFCgb54A" :
-          "prod_UFn8zqZ0mwyy5r";
-        lineItems = [{
-          price_data: {
-            currency: "usd",
-            product: productId,
-            recurring: {interval: "year"},
-            // Stripe requires amounts in cents
-            unit_amount: Math.round(finalPrice * 100),
-          },
-          quantity: 1,
-        }];
-      } else {
-        // 🔴 Fallback to Actual Price IDs if no custom amount was provided
-        const priceId = plan === "Business Pro" ?
-          "price_1THHbVBp2C5GdKaKvCVoMf1X" :
-          "price_1THHYPBp2C5GdKaKxNpqndNE";
-        lineItems = [{price: priceId, quantity: 1}];
-      }
-
       const session = await stripe.checkout.sessions.create({
         mode: "subscription",
         client_reference_id: uid,
@@ -181,7 +145,7 @@ exports.createCheckoutSession = onRequest({invoker: "public"}, (req, res) => {
 
       res.status(200).json({url: session.url});
     } catch (err) {
-      logManagerError("Checkout Error for uid: " + uid, err);
+      logManagerError("Checkout Error for uid:", uid, err);
       res.status(500).json({error: err.message});
     }
   });
@@ -228,26 +192,30 @@ exports.stripeWebhook = onRequest({invoker: "public"}, async (req, res) => {
     event.type === "customer.subscription.canceled") {
     const sub = event.data.object;
 
-    const snapshot = await admin.firestore()
-        .collection("users")
-        .where("subscription.customerId", "==", sub.customer)
-        .get();
+    try {
+      const snapshot = await admin.firestore()
+          .collection("users")
+          .where("subscription.customerId", "==", sub.customer)
+          .get();
 
-    const updatePromises = snapshot.docs.map(async (doc) => {
-      // Revert the user back to the free plan
-      try {
-        await doc.ref.update({
-          "plan": "Free",
-          "subscription.status": "canceled",
-          "updatedAt": admin.firestore.FieldValue.serverTimestamp(),
-        });
-        console.log(`❌ Reverted user ${doc.id} back to Free plan.`);
-      } catch (err) {
-        logManagerError(`Error reverting user ${doc.id} back to Free plan:`, err);
-      }
-    });
+      const updatePromises = snapshot.docs.map(async (doc) => {
+        // Revert the user back to the free plan
+        try {
+          await doc.ref.update({
+            "plan": "Free",
+            "subscription.status": "canceled",
+            "updatedAt": admin.firestore.FieldValue.serverTimestamp(),
+          });
+          console.log(`❌ Reverted user ${doc.id} back to Free plan.`);
+        } catch (err) {
+          logManagerError(`Error reverting user ${doc.id} back to Free plan:`, err);
+        }
+      });
 
-    await Promise.all(updatePromises);
+      await Promise.all(updatePromises);
+    } catch (webhookError) {
+      logManagerError("Error processing Stripe webhook subscription cancellation:", webhookError);
+    }
   }
 
   res.json({received: true});
@@ -269,7 +237,7 @@ exports.cancelSubscription = onRequest({invoker: "public"}, (req, res) => {
       );
       res.status(200).json({success: true});
     } catch (err) {
-      logManagerError(`Cancel Error for customerId: ${customerId}`, err);
+      logManagerError("Cancel Error for customerId:", customerId, err);
       res.status(500).json({error: err.message});
     }
   });
@@ -305,9 +273,7 @@ exports.manageTasks = functions.https.onCall(async (data, context) => {
         throw new HttpsError("permission-denied", "Only managers can create tasks");
       }
       const {title, description, assigneeId, assigneeName} = payload;
-      if (!title || !assigneeId) {
-        throw new HttpsError("invalid-argument", "Missing required fields");
-      }
+      checkRequiredFields(payload, ['title', 'assigneeId']);
       const newTask = {
         title,
         description: description || "",
@@ -356,7 +322,7 @@ exports.manageTasks = functions.https.onCall(async (data, context) => {
 
     throw new HttpsError("invalid-argument", "Invalid action");
   } catch (error) {
-    logManagerError(`Manage Tasks Error for uid: ${uid}`, error);
+    logManagerError("Manage Tasks Error for uid:", uid, error);
     if (error instanceof HttpsError) {
       throw error;
     }
@@ -424,10 +390,7 @@ exports.manageShiftNotes = functions.https.onCall(async (data, context) => {
     if (action === "resolve") {
       const {noteId, resolvedBy} = payload;
 
-      if (!noteId || !resolvedBy) {
-        throw new HttpsError(
-            "invalid-argument", "Missing required fields");
-      }
+      checkRequiredFields(payload, ['noteId', 'resolvedBy']);
 
       // 🛡️ Verify the user resolving the note is in the same organization
       const {docRef: noteRef} = await verifyDocAndAuth(
@@ -450,7 +413,7 @@ exports.manageShiftNotes = functions.https.onCall(async (data, context) => {
     throw new HttpsError(
         "invalid-argument", "Invalid action");
   } catch (error) {
-    logManagerError("Shift Note Error for uid: " + uid, error);
+    logManagerError("Shift Note Error for uid:", uid, error);
 
     throw new HttpsError("internal", error.message);
   }
@@ -461,10 +424,9 @@ exports.manageShiftNotes = functions.https.onCall(async (data, context) => {
  * Handles creation, updating, and deletion of employees.
  */
 exports.manageEmployees = functions.https.onCall(async (data, context) => {
-  if (data && typeof data === "object" && "rawRequest" in data && "auth" in data) {
-    context = data;
-    data = data.data;
-  }
+  const adapted = adaptGen2Params(data, context);
+  data = adapted.data;
+  context = adapted.context;
 
   if (!context || !context.auth) {
     throw new HttpsError("unauthenticated", "User must be logged in.");
@@ -487,9 +449,7 @@ exports.manageEmployees = functions.https.onCall(async (data, context) => {
     if (action === "create") {
       const {name, role, phone} = payload;
 
-      if (!name || !role) {
-        throw new HttpsError("invalid-argument", "Missing required employee details");
-      }
+      checkRequiredFields(payload, ['name', 'role'], 'Missing required employee details');
 
       const newEmployee = {
         name,
@@ -535,8 +495,6 @@ exports.manageEmployees = functions.https.onCall(async (data, context) => {
       if (phone !== undefined) updates.phone = phone;
       if (status !== undefined) updates.status = status;
 
-      await empRef.update(updates);
-      return {success: true};
     }
 
     if (action === "delete") {
@@ -560,7 +518,7 @@ exports.manageEmployees = functions.https.onCall(async (data, context) => {
 
     throw new HttpsError("invalid-argument", "Invalid action");
   } catch (error) {
-    logManagerError("Manage Employees Error for uid: " + uid, error);
+    logManagerError("Manage Employees Error for uid:", uid, error);
     if (error instanceof HttpsError) {
       throw error;
     }
@@ -595,10 +553,7 @@ exports.manageShiftGroups = functions.https.onCall(async (data, context) => {
     if (action === "create") {
       const {authorId, orgId, ownerName, groupName, password} = payload;
 
-      if (!groupName || !password) {
-        throw new HttpsError(
-            "invalid-argument", "Missing required fields");
-      }
+      checkRequiredFields(payload, ['groupName', 'password']);
 
       const newGroup = {
         ownerId: authorId || uid,
@@ -625,10 +580,7 @@ exports.manageShiftGroups = functions.https.onCall(async (data, context) => {
     if (action === "request_join") {
       const {userName, groupId, password} = payload;
 
-      if (!groupId || !password) {
-        throw new HttpsError(
-            "invalid-argument", "Missing required fields");
-      }
+      checkRequiredFields(payload, ['groupId', 'password']);
 
       const groupDoc = await admin.firestore()
           .collection("shift_groups").doc(groupId).get();
@@ -679,10 +631,7 @@ exports.manageShiftGroups = functions.https.onCall(async (data, context) => {
     if (action === "approve_join") {
       const {requestId} = payload;
 
-      if (!requestId) {
-        throw new HttpsError(
-            "invalid-argument", "Missing required fields");
-      }
+      checkRequiredFields(payload, ['requestId']);
 
       const requestDocRef = admin.firestore()
           .collection("shift_group_requests").doc(requestId);
@@ -721,10 +670,7 @@ exports.manageShiftGroups = functions.https.onCall(async (data, context) => {
     if (action === "remove_manager") {
       const {userId, groupId} = payload;
 
-      if (!userId || !groupId) {
-        throw new HttpsError(
-            "invalid-argument", "Missing required fields");
-      }
+      checkRequiredFields(payload, ['userId', 'groupId']);
 
       const groupDoc = await admin.firestore()
           .collection("shift_groups").doc(groupId).get();
@@ -743,7 +689,7 @@ exports.manageShiftGroups = functions.https.onCall(async (data, context) => {
 
     throw new HttpsError("invalid-argument", "Invalid action");
   } catch (error) {
-    logManagerError("Shift Groups Error for uid: " + uid, error);
+    logManagerError("Shift Groups Error for uid:", uid, error);
 
     if (error instanceof HttpsError) {
       throw error;
@@ -758,10 +704,9 @@ exports.manageShiftGroups = functions.https.onCall(async (data, context) => {
  * Handles creation, reading, status updates, and deletion of incidents.
  */
 exports.manageIncidents = functions.https.onCall(async (data, context) => {
-  if (data && typeof data === "object" && "rawRequest" in data && "auth" in data) {
-    context = data;
-    data = data.data;
-  }
+  const adapted = adaptGen2Params(data, context);
+  data = adapted.data;
+  context = adapted.context;
 
   if (!context || !context.auth) {
     throw new HttpsError("unauthenticated", "User must be logged in.");
@@ -784,9 +729,7 @@ exports.manageIncidents = functions.https.onCall(async (data, context) => {
     if (action === "create") {
       const {title, description, severity, type} = payload;
 
-      if (!title || !description || !severity || !type) {
-        throw new HttpsError("invalid-argument", "Missing required incident details");
-      }
+      checkRequiredFields(payload, ['title', 'description', 'severity', 'type'], 'Missing required incident details');
 
       const newIncident = {
         title,
@@ -795,7 +738,7 @@ exports.manageIncidents = functions.https.onCall(async (data, context) => {
         type,
         status: "Open",
         reportedByUid: uid,
-        reportedByName: userDoc.data().name || "Anonymous",
+        reportedByName: context.auth.token.name || "Anonymous",
         orgId: actualOrgId,
         timestamp: admin.firestore.FieldValue.serverTimestamp(),
       };
@@ -860,7 +803,114 @@ exports.manageIncidents = functions.https.onCall(async (data, context) => {
 
     throw new HttpsError("invalid-argument", "Invalid action");
   } catch (error) {
-    logManagerError(`Manage Incidents Error for uid: ${uid}`, error);
+    logManagerError("Manage Incidents Error for uid:", uid, error);
+    if (error instanceof HttpsError) {
+      throw error;
+    }
+    throw new HttpsError("internal", error.message);
+  }
+});
+
+/**
+ * Manage Time Logs API
+ * Handles clock in, clock out, and retrieving time logs.
+ */
+exports.manageTimeLogs = functions.https.onCall(async (data, context) => {
+  if (data && typeof data === "object" && "rawRequest" in data && "auth" in data) {
+    context = data;
+    data = data.data;
+  }
+
+  if (!context || !context.auth) {
+    throw new HttpsError("unauthenticated", "User must be logged in.");
+  }
+
+  const {action, payload} = data;
+  const uid = context.auth.uid;
+
+  if (!action || !payload) {
+    throw new HttpsError("invalid-argument", "Missing action or payload");
+  }
+
+  try {
+    const userDoc = await admin.firestore().collection("users").doc(uid).get();
+    if (!userDoc.exists) {
+      throw new HttpsError("not-found", "User not found");
+    }
+    const actualOrgId = userDoc.data().orgId || null;
+    const employeeName = userDoc.data().name || "Anonymous";
+
+    if (!actualOrgId) {
+       throw new HttpsError("permission-denied", "User must be part of an organization to clock in/out.");
+    }
+
+    if (action === "clock_in") {
+      // Check if there is already an active clock in
+      const activeLogSnap = await admin.firestore().collection("time_logs")
+          .where("uid", "==", uid)
+          .where("orgId", "==", actualOrgId)
+          .where("status", "==", "Clocked In")
+          .limit(1)
+          .get();
+
+      if (!activeLogSnap.empty) {
+          throw new HttpsError("already-exists", "User is already clocked in.");
+      }
+
+      const newLog = {
+        uid: uid,
+        employeeName: employeeName,
+        orgId: actualOrgId,
+        clockInTime: admin.firestore.FieldValue.serverTimestamp(),
+        clockOutTime: null,
+        status: "Clocked In",
+      };
+
+      const docRef = await admin.firestore().collection("time_logs").add(newLog);
+      return {success: true, id: docRef.id};
+    }
+
+    if (action === "clock_out") {
+      // Find the active clock in
+      const activeLogSnap = await admin.firestore().collection("time_logs")
+          .where("uid", "==", uid)
+          .where("orgId", "==", actualOrgId)
+          .where("status", "==", "Clocked In")
+          .limit(1)
+          .get();
+
+      if (activeLogSnap.empty) {
+          throw new HttpsError("failed-precondition", "User is not clocked in.");
+      }
+
+      const activeLog = activeLogSnap.docs[0];
+      await activeLog.ref.update({
+          clockOutTime: admin.firestore.FieldValue.serverTimestamp(),
+          status: "Clocked Out"
+      });
+
+      return {success: true, id: activeLog.id};
+    }
+
+    if (action === "get_logs") {
+      const isManager = userDoc.data().orgId === uid || userDoc.data().isAdmin;
+
+      let query = admin.firestore().collection("time_logs").where("orgId", "==", actualOrgId);
+
+      if (!isManager) {
+        query = query.where("uid", "==", uid);
+      }
+
+      const snapshot = await query.limit(100).get();
+
+      const logs = [];
+      snapshot.forEach(doc => logs.push({id: doc.id, ...doc.data()}));
+      return {success: true, logs};
+    }
+
+    throw new HttpsError("invalid-argument", "Invalid action");
+  } catch (error) {
+    logManagerError(`Manage Time Logs Error for uid: ${uid}`, error);
     if (error instanceof HttpsError) {
       throw error;
     }
@@ -873,10 +923,9 @@ exports.manageIncidents = functions.https.onCall(async (data, context) => {
  * Handles creation, reading, and deletion of waste logs.
  */
 exports.manageWaste = functions.https.onCall(async (data, context) => {
-  if (data && typeof data === "object" && "rawRequest" in data && "auth" in data) {
-    context = data;
-    data = data.data;
-  }
+  const adapted = adaptGen2Params(data, context);
+  data = adapted.data;
+  context = adapted.context;
 
   if (!context || !context.auth) {
     throw new HttpsError("unauthenticated", "User must be logged in.");
@@ -899,9 +948,7 @@ exports.manageWaste = functions.https.onCall(async (data, context) => {
     if (action === "create") {
       const {itemName, quantity, cost, reason} = payload;
 
-      if (!itemName || !quantity || !cost || !reason) {
-        throw new HttpsError("invalid-argument", "Missing required waste log details");
-      }
+      checkRequiredFields(payload, ['itemName', 'quantity', 'cost', 'reason'], 'Missing required waste log details');
 
       const newLog = {
         itemName,
@@ -909,7 +956,7 @@ exports.manageWaste = functions.https.onCall(async (data, context) => {
         cost: Number(cost),
         reason,
         loggedByUid: uid,
-        loggedByName: userDoc.data().name || "Anonymous",
+        loggedByName: context.auth.token.name || "Anonymous",
         orgId: actualOrgId,
         timestamp: admin.firestore.FieldValue.serverTimestamp(),
       };
@@ -996,9 +1043,7 @@ exports.manageRecognitions = functions.https.onCall(async (data, context) => {
     if (action === "create") {
       const {receiverId, receiverName, message, type} = payload;
 
-      if (!receiverId || !receiverName || !message || !type) {
-        throw new HttpsError("invalid-argument", "Missing required recognition details");
-      }
+      checkRequiredFields(payload, ['receiverId', 'receiverName', 'message', 'type'], 'Missing required recognition details');
 
       const validTypes = ["Kudos", "Private Feedback"];
       const recognitionType = validTypes.includes(type) ? type : "Kudos";
@@ -1071,6 +1116,110 @@ exports.manageRecognitions = functions.https.onCall(async (data, context) => {
     throw new HttpsError("invalid-argument", "Invalid action");
   } catch (error) {
     logManagerError(`Manage Recognitions Error for uid: ${uid}`, error);
+    if (error instanceof HttpsError) {
+      throw error;
+    }
+    throw new HttpsError("internal", error.message);
+  }
+});
+
+
+/**
+ * Manage Feedbacks API
+ * Handles creation, reading, and deletion of employee feedbacks.
+ */
+exports.manageFeedbacks = functions.https.onCall(async (data, context) => {
+  if (data && typeof data === "object" && "rawRequest" in data && "auth" in data) {
+    context = data;
+    data = data.data;
+  }
+
+  if (!context || !context.auth) {
+    throw new HttpsError("unauthenticated", "User must be logged in.");
+  }
+
+  const {action, payload} = data;
+  const uid = context.auth.uid;
+
+  if (!action || !payload) {
+    throw new HttpsError("invalid-argument", "Missing action or payload");
+  }
+
+  try {
+    const userDoc = await admin.firestore().collection("users").doc(uid).get();
+    if (!userDoc.exists) {
+      throw new HttpsError("not-found", "User not found");
+    }
+    const actualOrgId = userDoc.data().orgId || null;
+
+    if (!actualOrgId) {
+       throw new HttpsError("permission-denied", "User must be part of an organization to manage feedbacks.");
+    }
+
+    if (action === "create") {
+      const {empId, empName, rating, comment} = payload;
+
+      if (!empId || !rating) {
+        throw new HttpsError("invalid-argument", "Missing required feedback details");
+      }
+
+      const newFeedback = {
+        empId,
+        empName: empName || "Employee",
+        rating: Number(rating),
+        comment: comment || "",
+        managerId: uid,
+        managerName: userDoc.data().name || "Anonymous Manager",
+        orgId: actualOrgId,
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      };
+
+      const docRef = await admin.firestore().collection("feedbacks").add(newFeedback);
+      return {success: true, id: docRef.id};
+    }
+
+    if (action === "get") {
+      const {empId} = payload;
+      if (!empId) {
+        throw new HttpsError("invalid-argument", "Missing employee ID");
+      }
+
+      const snapshot = await admin.firestore().collection("feedbacks")
+        .where("orgId", "==", actualOrgId)
+        .where("empId", "==", empId)
+        .orderBy("createdAt", "desc")
+        .limit(100)
+        .get();
+
+      const feedbacks = [];
+      snapshot.forEach(doc => feedbacks.push({id: doc.id, ...doc.data()}));
+      return {success: true, feedbacks};
+    }
+
+    if (action === "delete") {
+       const {feedbackId} = payload;
+       if (!feedbackId) {
+          throw new HttpsError("invalid-argument", "Missing feedback ID");
+       }
+
+       const feedbackRef = admin.firestore().collection("feedbacks").doc(feedbackId);
+       const feedbackDoc = await feedbackRef.get();
+
+       if (!feedbackDoc.exists) {
+          throw new HttpsError("not-found", "Feedback not found");
+       }
+
+       if (feedbackDoc.data().orgId !== actualOrgId) {
+          throw new HttpsError("permission-denied", "Unauthorized to delete this feedback");
+       }
+
+       await feedbackRef.delete();
+       return {success: true};
+    }
+
+    throw new HttpsError("invalid-argument", "Invalid action");
+  } catch (error) {
+    logManagerError(`Manage Feedbacks Error for uid: ${uid}`, error);
     if (error instanceof HttpsError) {
       throw error;
     }
