@@ -37,8 +37,8 @@ try {
     console.warn("Firestore settings already configured or errored: ", e);
 }
 
-const auth = window.firebase.auth();
 const db = window.firebase.firestore();
 const functions = window.firebase.functions();
+const app = window.firebase.app();
 
 export { app, auth, db, functions, firebaseConfig };
