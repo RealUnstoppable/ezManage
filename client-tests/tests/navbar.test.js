@@ -28,13 +28,13 @@ jest.unstable_mockModule('../../js/auth.js', () => ({
 const mockOnAuthStateChanged = jest.fn();
 jest.unstable_mockModule('https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js', () => ({
     onAuthStateChanged: mockOnAuthStateChanged
-}));
+}), { virtual: true });
 
 const mockGetDoc = jest.fn();
 jest.unstable_mockModule('https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js', () => ({
     getDoc: mockGetDoc,
     doc: jest.fn()
-}));
+}), { virtual: true });
 
 const navbar = await import('../../js/navbar.js');
 const loadNavbar = navbar.loadNavbar;

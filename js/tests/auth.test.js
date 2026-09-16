@@ -12,6 +12,8 @@ global.firebase = {
     functions: jest.fn(() => ({ httpsCallable: jest.fn() }))
 };
 global.window.firebase = global.firebase;
+global.window.firebase.firestore = jest.fn(() => ({ collection: jest.fn(), settings: mockSettings }));
+global.firebase.firestore = global.window.firebase.firestore;
 
 describe('Firebase Initialization', () => {
   let auth, db;
