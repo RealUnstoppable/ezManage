@@ -4061,7 +4061,7 @@
                     lucide.createIcons();
                 }, err => {
                     console.error("Error fetching tasks:", err);
-                    container.innerHTML = `<div class="text-red-500 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl text-center">Failed to load tasks: ${err.message}</div>`;
+                    container.innerHTML = `<div class="text-red-500 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl text-center">Failed to load tasks: ${escapeHTML(err.message)}</div>`;
                 });
         }
 
@@ -6916,7 +6916,7 @@ async function submitWasteLog() {
                 }
             } catch (error) {
                 console.error("Error fetching time logs:", error);
-                if (container) container.innerHTML = `<div class="text-red-500 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl text-center">Failed to load time logs: ${error.message}</div>`;
+                if (container) container.innerHTML = `<div class="text-red-500 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl text-center">Failed to load time logs: ${escapeHTML(error.message)}</div>`;
             }
         }
 
