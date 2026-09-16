@@ -12,7 +12,13 @@ const firebaseConfig = {
 
 // Ensure Firebase is initialized strictly as a global singleton using the compat SDK
 // to prevent token mismatches and duplicate initialization errors.
-const app = typeof window !== "undefined" && window.firebase ? (!(window.firebase.apps || []).length ? window.firebase.initializeApp(firebaseConfig) : window.firebase.app()) : null;
+// Use experimentalForceLongPolling for fallback on CORS/network issues
+if (!window.firebase.apps.length) {
+    window.firebase.initializeApp(firebaseConfig);
+    window.firebase.firestore().settings({
+        experimentalForceLongPolling: true
+    });
+}
 
 // INSTRUCTIONS FOR AUTHORIZED DOMAINS:
 // To whitelist `ezmanage.realunstoppable.store` in the Firebase Console:
@@ -31,7 +37,8 @@ try {
     console.warn("Firestore settings already configured or errored: ", e);
 }
 
-const db = typeof window !== "undefined" && window.firebase ? window.firebase.firestore() : null;
-const functions = typeof window !== "undefined" && window.firebase ? window.firebase.functions() : null;
+const db = window.firebase.firestore();
+const functions = window.firebase.functions();
+const app = window.firebase.app();
 
 export { app, auth, db, functions, firebaseConfig };
