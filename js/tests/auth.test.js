@@ -8,7 +8,7 @@ global.firebase = {
     initializeApp: jest.fn(() => ({ name: '[DEFAULT]' })),
     app: jest.fn(),
     auth: jest.fn(() => ({ onAuthStateChanged: jest.fn() })),
-    firestore: jest.fn(() => ({ collection: jest.fn(), settings: jest.fn() })),
+    firestore: jest.fn(() => ({ collection: jest.fn(), settings: mockSettings })),
     functions: jest.fn(() => ({ httpsCallable: jest.fn() }))
 };
 global.window.firebase = global.firebase;
