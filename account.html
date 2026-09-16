@@ -16,9 +16,11 @@
 
     <link rel="stylesheet" href="./css/style.css">
     <script type="module">
-        import { loadNavbar } from './js/navbar.js';
+        import { logManagerError } from './js/utils.js';
+    import { loadNavbar } from './js/navbar.js';
         import { loadFooter } from './js/footer.js';
-        document.addEventListener('DOMContentLoaded', () => {
+        window.logManagerError = logManagerError;
+    document.addEventListener('DOMContentLoaded', () => {
             loadNavbar();
             loadFooter();
         });
@@ -222,7 +224,7 @@
                         document.getElementById('acc-membership').textContent = "Free Tier";
                     }
                 } catch(e) {
-                    console.error("Firestore read error", e);
+                    window.logManagerError("Firestore read error", e);
                 }
             } else {
                 window.location.href = 'index.html';
@@ -259,7 +261,7 @@
                 alert("Successfully linked Google account!");
                 checkProviders(auth.currentUser);
             } catch (error) {
-                console.error(error);
+                window.logManagerError(error);
                 alert("Error linking: " + error.message);
             }
         }
@@ -272,7 +274,7 @@
                 alert("Successfully unlinked!");
                 checkProviders(auth.currentUser);
             } catch (error) {
-                console.error(error);
+                window.logManagerError(error);
                 alert("Error unlinking: " + error.message);
             }
         }

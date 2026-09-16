@@ -3,7 +3,7 @@
 
 <head>
   <script type="module">
-    import { escapeHTML } from './js/utils.js';
+    import { escapeHTML, logManagerError } from './js/utils.js';
     import { loadNavbar } from './js/navbar.js';
     import { loadFooter } from './js/footer.js';
 
@@ -13,6 +13,7 @@
     });
 
     window.escapeHTML = escapeHTML;
+    window.logManagerError = logManagerError;
   </script>
 
     <link rel="manifest" href="manifest.json">
@@ -2178,7 +2179,7 @@
         window.firebase.firestore().settings({ experimentalForceLongPolling: true });
         const db = window.firebase.firestore();
         const cloudFunctions = window.firebase.functions();
-        db.enablePersistence().catch(err => console.error("Offline sync error:", err));
+        db.enablePersistence().catch(err => window.logManagerError("Offline sync error:", err));
 
         let currentUser = null;
         let currentUserData = null;
@@ -2200,7 +2201,7 @@
                 const func = firebase.functions().httpsCallable(functionName);
                 return await func(payload);
             } catch (error) {
-                console.error("Manager Troubleshooting: Error calling cloud function " + functionName, error);
+                window.logManagerError("Error calling cloud function " + functionName, error);
                 throw error;
             }
         }
@@ -2224,7 +2225,7 @@
                         currentUserData = JSON.parse(cached);
                         loadProfileUI(currentUserData);
                     } catch (e) {
-                        console.error("Manager Troubleshooting: Cache parsing error", e);
+                        window.logManagerError("Cache parsing error", e);
                     }
                 }
 
@@ -2897,7 +2898,7 @@
                     const parsed = JSON.parse(localDraft);
                     populateTrackerFromState(parsed);
                     return;
-                } catch (e) { console.error("Manager Troubleshooting: Local parse err", e); }
+                } catch (e) { window.logManagerError("Local parse err", e); }
             }
 
             if (cloudSyncEnabled && currentUserData && currentUserData.trackerDraft) {
@@ -3612,7 +3613,7 @@
                 alert("Maintenance ticket submitted successfully.");
                 fetchMaintenanceTickets();
             } catch (error) {
-                console.error("Error submitting ticket:", error);
+                window.logManagerError("Error submitting ticket:", error);
                 if (error.code === 'unavailable' || error.code === 'auth/network-request-failed' || error.code === 'firestore/unavailable') {
                     alert("Network error: Could not connect to the server. Please check your connection.");
                 } else {
@@ -3709,7 +3710,7 @@
                         `;
                     }).join('');
                 }, err => {
-                    console.error("Error fetching tickets:", err);
+                    window.logManagerError("Error fetching tickets:", err);
                     container.innerHTML = `<div class="text-red-500 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl text-center">Failed to load tickets: ${escapeHTML(err.message)}</div>`;
                 });
         }
@@ -3732,7 +3733,7 @@
                 });
                 // Optimistic UI update already handled by changing the select value
             } catch (error) {
-                console.error("Manager Troubleshooting: Error updating ticket:", error);
+                window.logManagerError("Error updating ticket:", error);
                 alert("Failed to update status. " + error.message);
                 fetchMaintenanceTickets(); // revert
             }
@@ -3752,7 +3753,7 @@
                 alert("Sent!");
                 document.getElementById('featureReqText').value = "";
             } catch (err) {
-                console.error("Error sending request:", err);
+                window.logManagerError("Error sending request:", err);
                 if (err.code === 'unavailable' || err.code === 'auth/network-request-failed') {
                     alert("Network error: Could not connect to the server. Please check your connection.");
                 } else {
@@ -3804,7 +3805,7 @@
                 populateScheduleDropdown();
                 populateTaskAssigneeDropdown();
             } catch (err) {
-                console.error("Error adding employee:", err);
+                window.logManagerError("Error adding employee:", err);
                 if (err.code === 'unavailable' || err.code === 'auth/network-request-failed') {
                     alert("Network error: Could not connect to the server. Please check your connection.");
                 } else {
@@ -3864,7 +3865,7 @@
                 document.getElementById('timeoffEndDate').value = '';
                 document.getElementById('timeoffReason').value = '';
             } catch (err) {
-                console.error("Error submitting time off request", err);
+                window.logManagerError("Error submitting time off request", err);
                 if (err.code === 'unavailable' || err.code === 'auth/network-request-failed') {
                     alert("Network error: Could not connect to the server. Please check your connection.");
                 } else {
@@ -3952,7 +3953,7 @@
                     if (orgContainer && isManager) orgContainer.innerHTML = orgTasksHtml.join('') || '<p class="text-slate-500 text-center py-4">No active tasks in the organization.</p>';
                     lucide.createIcons();
                 }, err => {
-                    console.error("Manager Troubleshooting: Error fetching tasks:", err);
+                    window.logManagerError("Error fetching tasks:", err);
                 });
         }
 
@@ -4040,7 +4041,7 @@
                      btn.onclick = () => updateTimeOffStatus(btn.getAttribute('data-req-id'), btn.getAttribute('data-req-status'));
                  });
              }, err => {
-                 console.error("Manager Troubleshooting: Error fetching time off requests:", err);
+                 window.logManagerError("Error fetching time off requests:", err);
              });
         }
 
@@ -4048,7 +4049,7 @@
             try {
                 await db.collection('time_off_requests').doc(id).update({ status: status });
             } catch (err) {
-                console.error("Manager Troubleshooting: Error updating time off status", err);
+                window.logManagerError("Error updating time off status", err);
                 alert("Error updating status.");
             }
         }
@@ -4058,7 +4059,7 @@
             try {
                 await db.collection('time_off_requests').doc(id).delete();
             } catch (err) {
-                console.error("Manager Troubleshooting: Error deleting time off request", err);
+                window.logManagerError("Error deleting time off request", err);
                 alert("Error cancelling request.");
             }
         }
@@ -4133,7 +4134,7 @@
                     lucide.createIcons();
                     populateScheduleDropdown();
                 }, err => {
-                    console.error("Manager Troubleshooting: Error fetching employees:", err);
+                    window.logManagerError("Error fetching employees:", err);
                     if (container) container.innerHTML = `<p class="text-red-500 text-center py-8">Failed to load roster.</p>`;
                 });
         }
@@ -4143,7 +4144,7 @@
             try {
                 await db.collection('employees').doc(id).update({ status: newStatus });
             } catch (err) {
-                console.error("Manager Troubleshooting: Error updating status:", err);
+                window.logManagerError("Error updating status:", err);
                 alert("Failed to update employee status.");
             }
         }
@@ -4202,7 +4203,7 @@
                         taskSelect.appendChild(taskSelectFragment);
                     }
                 })
-                .catch(err => console.error("Manager Troubleshooting: Error populating dropdown:", err));
+                .catch(err => window.logManagerError("Error populating dropdown:", err));
         }
 
         // Auto-select role when an employee is chosen in schedule
@@ -4270,7 +4271,7 @@
                 startTime.value = '';
                 endTime.value = '';
             } catch(err) {
-                console.error("Error saving shift", err);
+                window.logManagerError("Error saving shift", err);
                 if (err.code === 'unavailable' || err.code === 'auth/network-request-failed' || err.code === 'firestore/unavailable') {
                     alert("Network error: Could not connect to the server. Please check your connection.");
                 } else {
@@ -4328,7 +4329,7 @@
                         listContainer.appendChild(fragment);
                     }
                 }, error => {
-                    console.error("Manager Troubleshooting: Error fetching schedules: ", error);
+                    window.logManagerError("Error fetching schedules: ", error);
                     if (listContainer) listContainer.innerHTML = "<p class='text-sm text-red-500'>Error loading schedule.</p>";
                 });
         }
@@ -4349,7 +4350,7 @@
                     await scheduleRef.update({ shifts: shifts });
                 }
             } catch (error) {
-                console.error("Manager Troubleshooting: Error removing shift:", error);
+                window.logManagerError("Error removing shift:", error);
             }
         }
 
@@ -4537,7 +4538,7 @@ function checkAndRenderOrgControls() {
                     lucide.createIcons();
                 })
                 .catch(err => {
-                    console.error("Manager Troubleshooting: Error fetching notes:", err);
+                    window.logManagerError("Error fetching notes:", err);
                     container.innerHTML = `<p class="text-red-500 text-center py-8">Failed to load shift notes. Please check your connection.</p>`;
                 });
         }
@@ -4614,7 +4615,7 @@ function checkAndRenderOrgControls() {
                 document.getElementById('shiftNoteContent').value = "";
                 // Removed fetchShiftNotes() to prevent unnecessary re-fetches after optimistic update
             } catch (err) {
-                console.error("Error posting note", err);
+                window.logManagerError("Error posting note", err);
                 if (err.code === 'unavailable' || err.code === 'auth/network-request-failed' || err.code === 'firestore/unavailable') {
                     alert("Network error: Could not connect to the server. Please check your connection.");
                 } else {
@@ -4653,7 +4654,7 @@ function checkAndRenderOrgControls() {
                 }
             } catch (err) {
                 if (noteDiv) noteDiv.style.display = originalDisplay; // Revert optimistic hide
-                console.error("Manager Troubleshooting: Error resolving shift note:", err);
+                window.logManagerError("Error resolving shift note:", err);
                 alert("Failed to resolve note: " + err.message);
             }
         }
@@ -4684,7 +4685,7 @@ function checkAndRenderOrgControls() {
                     window.location.reload();
                 }
             } catch (e) {
-                console.error("Manager Troubleshooting: Error creating shift group:", e);
+                window.logManagerError("Error creating shift group:", e);
                 alert("Failed to create group: " + e.message);
             }
         }
@@ -4709,7 +4710,7 @@ function checkAndRenderOrgControls() {
                     document.getElementById('joinGroupModal').classList.add('hidden');
                 }
             } catch (e) {
-                console.error("Manager Troubleshooting: Error requesting to join shift group:", e);
+                window.logManagerError("Error requesting to join shift group:", e);
                 alert("Failed to request join: " + e.message);
             }
         }
@@ -4788,7 +4789,7 @@ function checkAndRenderOrgControls() {
                 });
                 alert("Request Retracted!");
             } catch (e) {
-                console.error("Manager Troubleshooting: Error retracting request:", e);
+                window.logManagerError("Error retracting request:", e);
                 alert("Failed to retract: " + e.message);
             }
         }
@@ -4801,7 +4802,7 @@ function checkAndRenderOrgControls() {
                 });
                 if (result.data.success) alert("Approved!");
             } catch (e) {
-                console.error("Manager Troubleshooting: Error approving group request:", e);
+                window.logManagerError("Error approving group request:", e);
                 alert("Failed to approve: " + e.message);
             }
         }
@@ -4845,7 +4846,7 @@ function checkAndRenderOrgControls() {
                 alert("Waste entry logged successfully.");
                 fetchWasteLogs();
             } catch (error) {
-                console.error("Error logging waste:", error);
+                window.logManagerError("Error logging waste:", error);
                 alert("Failed to log waste. " + error.message);
             } finally {
                 submitBtn.innerHTML = originalText;
@@ -4920,7 +4921,7 @@ function checkAndRenderOrgControls() {
                     lucide.createIcons();
                 }
             } catch (error) {
-                console.error("Error fetching waste logs:", error);
+                window.logManagerError("Error fetching waste logs:", error);
                 container.innerHTML = `<div class="text-red-500 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl text-center">Failed to load waste logs: ${escapeHTML(error.message)}</div>`;
             }
         }
@@ -4931,7 +4932,7 @@ function checkAndRenderOrgControls() {
                 await callCloudFunction('manageWaste', { action: "delete", payload: { logId } });
                 fetchWasteLogs();
             } catch (err) {
-                console.error("Error deleting waste log:", err);
+                window.logManagerError("Error deleting waste log:", err);
                 alert("Failed to delete log.");
             }
         }
@@ -4976,7 +4977,7 @@ function checkAndRenderOrgControls() {
                 alert("Incident report submitted successfully.");
                 fetchIncidents();
             } catch (error) {
-                console.error("Error submitting incident:", error);
+                window.logManagerError("Error submitting incident:", error);
                 if (error.code === 'unavailable' || error.code === 'auth/network-request-failed' || error.code === 'firestore/unavailable') {
                     alert("Network error: Could not connect to the server. Please check your connection.");
                 } else {
@@ -5074,7 +5075,7 @@ function checkAndRenderOrgControls() {
                     lucide.createIcons();
                 }
             } catch (error) {
-                console.error("Error fetching incidents:", error);
+                window.logManagerError("Error fetching incidents:", error);
                 container.innerHTML = `<div class="text-red-500 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl text-center">Failed to load incidents: ${escapeHTML(error.message)}</div>`;
             }
         }
@@ -5085,7 +5086,7 @@ function checkAndRenderOrgControls() {
                 await callCloudFunction('manageIncidents', { action: "delete", payload: { incidentId } });
                 fetchIncidents();
             } catch (err) {
-                console.error("Error deleting incident:", err);
+                window.logManagerError("Error deleting incident:", err);
                 alert("Failed to delete incident.");
             }
         }
@@ -5108,7 +5109,7 @@ function checkAndRenderOrgControls() {
                 });
                 // Optimistic UI update already handled by changing the select value
             } catch (error) {
-                console.error("Manager Troubleshooting: Error updating incident:", error);
+                window.logManagerError("Error updating incident:", error);
                 alert("Failed to update status. " + error.message);
                 fetchIncidents(); // revert
             }
@@ -5180,7 +5181,7 @@ function checkAndRenderOrgControls() {
                 closeEmployeeModal();
                 fetchTeamDirectory();
             } catch (error) {
-                console.error("Manager Troubleshooting: Error saving employee:", error);
+                window.logManagerError("Error saving employee:", error);
                 alert("Failed to save employee: " + error.message);
             } finally {
                 btn.innerText = ogText;
@@ -5234,7 +5235,7 @@ function checkAndRenderOrgControls() {
                 submitBtn.disabled = false;
                 lucide.createIcons();
             } catch (error) {
-                logManagerError("Error creating task for assignerId: " + currentUser.uid, error);
+                window.logManagerError("Error creating task for assignerId: " + currentUser.uid, error);
                 showToast("Error assigning task.");
                 const submitBtn = document.querySelector('#createTaskForm button[type="submit"]');
                 if (submitBtn) {
@@ -5340,11 +5341,11 @@ function checkAndRenderOrgControls() {
                     lucide.createIcons();
 
                 }, (error) => {
-                    logManagerError('Error listening to announcements:', error);
+                    window.logManagerError('Error listening to announcements:', error);
                     container.innerHTML = '<div class="text-red-500 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl border border-red-200 dark:border-red-800">Failed to load announcements.</div>';
                 });
             } catch (error) {
-                logManagerError('Error fetching announcements:', error);
+                window.logManagerError('Error fetching announcements:', error);
             }
         }
 
@@ -5376,7 +5377,7 @@ function checkAndRenderOrgControls() {
                 document.getElementById('addAnnouncementModal').classList.add('hidden');
                 event.target.reset();
             } catch (error) {
-                logManagerError("Error creating announcement", error);
+                window.logManagerError("Error creating announcement", error);
                 alert("Failed to create announcement.");
             } finally {
                 btn.innerHTML = originalText;
@@ -5389,7 +5390,7 @@ function checkAndRenderOrgControls() {
             try {
                 await db.collection('announcements').doc(id).delete();
             } catch (error) {
-                logManagerError("Error deleting announcement", error);
+                window.logManagerError("Error deleting announcement", error);
                 alert("Failed to delete announcement.");
             }
         }
@@ -5533,7 +5534,7 @@ function checkAndRenderOrgControls() {
                     });
                     filterSelect.appendChild(filterFragment);
                 })
-                .catch(err => console.error("Error populating task assignee dropdown:", err));
+                .catch(err => window.logManagerError("Error populating task assignee dropdown:", err));
         }
 
         async function submitTask() {
@@ -5584,7 +5585,7 @@ function checkAndRenderOrgControls() {
                 alert("Task assigned successfully.");
                 fetchTasks();
             } catch (error) {
-                console.error("Error assigning task:", error);
+                window.logManagerError("Error assigning task:", error);
                 if (error.code === 'unavailable' || error.code === 'auth/network-request-failed') {
                     alert("Network error: Could not connect to the server. Please check your connection.");
                 } else {
@@ -5634,7 +5635,7 @@ function checkAndRenderOrgControls() {
 
                     renderFilteredTasks();
                 }, err => {
-                    console.error("Error fetching tasks:", err);
+                    window.logManagerError("Error fetching tasks:", err);
                     container.innerHTML = `<div class="text-red-500 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl text-center">Failed to load tasks: ${escapeHTML(err.message)}</div>`;
                 });
         }
@@ -5720,7 +5721,7 @@ function checkAndRenderOrgControls() {
                     orgId: currentUserData.orgId
                 });
             } catch (error) {
-                console.error("Error updating task:", error);
+                window.logManagerError("Error updating task:", error);
                 alert("Failed to update status. " + error.message);
                 fetchTasks(); // revert optimistic change
             }
@@ -5731,7 +5732,7 @@ function checkAndRenderOrgControls() {
             try {
                 await db.collection('tasks').doc(taskId).delete();
             } catch (error) {
-                console.error("Error deleting task:", error);
+                window.logManagerError("Error deleting task:", error);
                 alert("Failed to delete task. " + error.message);
             }
         }
@@ -5765,7 +5766,7 @@ function checkAndRenderOrgControls() {
                     });
                     select.appendChild(fragment);
                 })
-                .catch(err => console.error("Error populating recognition dropdown:", err));
+                .catch(err => window.logManagerError("Error populating recognition dropdown:", err));
         }
 
         async function submitRecognition() {
@@ -5805,7 +5806,7 @@ function checkAndRenderOrgControls() {
                 alert("Recognition submitted successfully.");
                 fetchRecognitions();
             } catch (error) {
-                console.error("Error submitting recognition:", error);
+                window.logManagerError("Error submitting recognition:", error);
                 if (error.code === 'unavailable' || error.code === 'auth/network-request-failed') {
                     alert("Network error: Could not connect to the server. Please check your connection.");
                 } else {
@@ -5905,7 +5906,7 @@ function checkAndRenderOrgControls() {
                     lucide.createIcons();
                 }
             } catch (error) {
-                console.error("Error fetching recognitions:", error);
+                window.logManagerError("Error fetching recognitions:", error);
                 container.innerHTML = `<div class="text-red-500 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl text-center">Failed to load recognitions: ${escapeHTML(error.message)}</div>`;
             }
         }
@@ -5916,7 +5917,7 @@ function checkAndRenderOrgControls() {
                 await callCloudFunction('manageRecognitions', { action: "delete", payload: { recognitionId } });
                 fetchRecognitions();
             } catch (err) {
-                console.error("Error deleting recognition:", err);
+                window.logManagerError("Error deleting recognition:", err);
                 alert("Failed to delete recognition.");
             }
         }
@@ -5957,7 +5958,7 @@ function checkAndRenderOrgControls() {
             if ('serviceWorker' in navigator) {
                 navigator.serviceWorker.register('./sw.js')
                     .then(() => console.log("Service Worker Registered"))
-                    .catch(err => console.error("Manager Troubleshooting: Service Worker Registration Failed:", err));
+                    .catch(err => window.logManagerError("Service Worker Registration Failed:", err));
             }
         };
 

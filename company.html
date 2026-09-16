@@ -13,7 +13,7 @@
     <script>
     </script>
     <script type="module">
-        import { escapeHTML } from './js/utils.js';
+        import { escapeHTML, logManagerError } from './js/utils.js';
         import { loadNavbar } from './js/navbar.js';
         import { loadFooter } from './js/footer.js';
         document.addEventListener('DOMContentLoaded', () => {
@@ -21,6 +21,7 @@
             loadFooter();
         });
         window.escapeHTML = escapeHTML;
+    window.logManagerError = logManagerError;
     </script>
     <script>
         tailwind.config = { darkMode: ['class', '.dark-mode'], }
@@ -1283,7 +1284,7 @@
                 // Reset state so the user can retry
                 isRegistering = false;
                 clearInterval(sim);
-                console.error("Workspace creation error:", e);
+                window.logManagerError("Workspace creation error:", e);
                 alert("Failed to create workspace: " + e.message);
                 transitionSteps('step-loading', 'step-config');
                 currentStepIndex = onboardingFlow.indexOf('step-config');
@@ -1345,7 +1346,7 @@
                 document.getElementById('dashboard-shell').classList.remove('hidden');
                 navTo('overview');
             } catch (e) {
-                console.error(e);
+                window.logManagerError(e);
                 alert("Error loading workspace data.");
             }
         }
@@ -1596,7 +1597,7 @@
                 await callFunction('manageShiftGroups', { action: "remove_manager", payload: { userId, groupId: activeOrgId } });
                 alert("Manager removed successfully.");
             } catch (e) {
-                console.error(e);
+                window.logManagerError(e);
                 alert("Failed to remove manager: " + e.message);
             }
         }

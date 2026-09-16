@@ -3,7 +3,7 @@
 <head>
   <link rel="stylesheet" href="./css/style.css">
   <script type="module">
-    import { escapeHTML } from './js/utils.js';
+    import { escapeHTML, logManagerError } from './js/utils.js';
     import { loadNavbar } from './js/navbar.js';
     import { loadFooter } from './js/footer.js';
     document.addEventListener('DOMContentLoaded', () => {
@@ -11,6 +11,7 @@
         loadFooter();
     });
     window.escapeHTML = escapeHTML;
+    window.logManagerError = logManagerError;
   </script>
 
     <meta charset="UTF-8">
@@ -239,7 +240,7 @@
         err.textContent = '';
         auth.signInWithEmailAndPassword(email, pass)
             .catch(e => {
-                console.error("Manager Troubleshooting: Error during admin sign in", e);
+                window.logManagerError("Error during admin sign in", e);
                 err.textContent = e.message;
             });
     }
@@ -439,7 +440,7 @@
         document.getElementById('dashboard').style.display = 'block';
         lucide.createIcons();
         } catch (error) {
-            console.error("Manager Troubleshooting: Error loading admin dashboard", error);
+            window.logManagerError("Error loading admin dashboard", error);
             document.getElementById('loadingSpinner').innerHTML = '<p style="color:var(--danger);">Failed to load dashboard. Please try again.</p>';
         }
     }
