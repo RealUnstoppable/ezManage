@@ -216,7 +216,8 @@
 </div>
 
 
-<script>
+<script src="js/firebase-config.js"></script>
+    <script>
     function parseNum(val) {
         if (!val) return 0;
         const parsed = parseFloat(val.toString().replace(/[^0-9.]/g, ""));
@@ -226,8 +227,8 @@
     const firebaseConfig = window.ezManageFirebaseConfig;
         const app = !window.firebase.apps.length ? window.firebase.initializeApp(firebaseConfig) : window.firebase.app();
     const auth = firebase.auth();
-    const db   = firebase.firestore();
-    db.settings({ experimentalForceLongPolling: true });
+    firebase.firestore().settings({ experimentalForceLongPolling: true });
+        const db = firebase.firestore();
 
     const ADMIN_EMAIL = 'catalinandrian1@gmail.com';
 
