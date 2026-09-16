@@ -2952,7 +2952,7 @@
             }
         }
 
-        function addDrawerItem(val = "100.00", label = "") {
+        function addDrawerItem(val = "100.00", label = "", targetNode = null) {
             const div = document.createElement('div');
             div.className = "flex gap-2 items-center animate-fadeIn";
             div.innerHTML = `
@@ -2972,7 +2972,7 @@
 
             div.querySelector('.drawer-name').value = label;
             div.querySelector('.drawer-val').value = val;
-            document.getElementById('drawersContainer').appendChild(div);
+            (targetNode || document.getElementById('drawersContainer')).appendChild(div);
             calcDrawer(div.querySelector('.drawer-val'));
             lucide.createIcons();
             if (initialDraftLoaded) debouncedTriggerDraftSync();
@@ -2986,7 +2986,7 @@
             else res.value = diff < 0 ? `$${Math.abs(diff).toFixed(2)} Short` : `$${diff.toFixed(2)} Over`;
         }
 
-        function addDepositItem(val = "", ver = true, valCheck = true) {
+        function addDepositItem(val = "", ver = true, valCheck = true, targetNode = null) {
             const div = document.createElement('div');
             div.className = "flex gap-4 items-center bg-slate-50 dark:bg-slate-800 p-3 rounded-xl animate-fadeIn";
             div.innerHTML = `
@@ -3013,7 +3013,7 @@
             if (initialDraftLoaded) debouncedTriggerDraftSync();
         }
 
-        function addRoutineTask(name = "", isChecked = false) {
+        function addRoutineTask(name = "", isChecked = false, targetNode = null) {
             let taskName = name || document.getElementById('newRoutineTask').value;
             if (!taskName) return;
             const div = document.createElement('div');
@@ -3040,14 +3040,14 @@
             div.appendChild(span);
             div.appendChild(btn);
 
-            document.getElementById('routineContainer').appendChild(div);
+            (targetNode || document.getElementById('routineContainer')).appendChild(div);
             document.getElementById('newRoutineTask').value = "";
             lucide.createIcons();
             if (initialDraftLoaded) debouncedTriggerDraftSync();
         }
 
         let _invLoadTime = Date.now();
-        function addInventoryItem(name = "", bl = "", cl = "", fr = "", prepend = false, timestamp = null) {
+        function addInventoryItem(name = "", bl = "", cl = "", fr = "", prepend = false, timestamp = null, targetNode = null) {
             const div = document.createElement('div');
             div.className = 'inventory-item animate-fadeIn border-slate-200 dark:border-slate-800';
             div.dataset.timestamp = timestamp || (prepend ? Date.now() : _invLoadTime--);
@@ -3179,7 +3179,11 @@
             document.getElementById('changeNeeded').value = draft.changeNeeded || "";
 
             document.getElementById('routineContainer').innerHTML = '';
-            if (draft.routines) draft.routines.forEach(r => addRoutineTask(r.name, r.checked));
+            if (draft.routines) {
+                const fragment = document.createDocumentFragment();
+                draft.routines.forEach(r => addRoutineTask(r.name, r.checked, fragment));
+                document.getElementById('routineContainer').appendChild(fragment);
+            }
 
             document.getElementById('inventoryContainer').innerHTML = '';
             // ⚡ Bolt Performance Optimization: batch DOM insertions
@@ -3216,10 +3220,20 @@
             }
 
             document.getElementById('drawersContainer').innerHTML = '';
-            if (draft.drawers) draft.drawers.forEach(d => addDrawerItem(d.val, d.name));
+            if (draft.drawers) {
+                const fragment = document.createDocumentFragment();
+                draft.drawers.forEach(d => addDrawerItem(d.val, d.name, fragment));
+                document.getElementById('drawersContainer').appendChild(fragment);
+            }
 
             document.getElementById('depositsContainer').innerHTML = '';
-            if (draft.deposits) draft.deposits.forEach(d => addDepositItem(d.val, d.ver, d.valCheck));
+            if (draft.deposits) {
+                const fragment = document.createDocumentFragment();
+                draft.deposits.forEach(d => addDepositItem(d.val, d.ver, d.valCheck, fragment));
+                document.getElementById('depositsContainer').appendChild(fragment);
+            }
+            lucide.createIcons();
+            if (initialDraftLoaded) triggerDraftSync();
         }
 
         function syncDraftFromServer() {
@@ -3571,7 +3585,10 @@
             if (confirm("Apply this template? Current inventory list will be cleared.")) {
                 const key = document.getElementById('presetSelector').value;
                 document.getElementById('inventoryContainer').innerHTML = '';
-                (presets[key] || []).forEach(name => addInventoryItem(name));
+                const fragment = document.createDocumentFragment();
+                (presets[key] || []).forEach(name => addInventoryItem(name, "", "", "", false, null, fragment));
+                document.getElementById('inventoryContainer').appendChild(fragment);
+                lucide.createIcons();
                 navTo('tracker');
                 debouncedTriggerDraftSync();
             }
@@ -3893,8 +3910,15 @@
                 addDrawerItem("100.00", "Register 1");
                 addDrawerItem("100.00", "Register 2");
                 addDepositItem();
-                ["Parking Lot", "Lobby/Restrooms", "ServSafe Temps", "Filtered Fryers", "Trash Run"].forEach(t => addRoutineTask(t));
-                presets['arbys'].forEach(name => addInventoryItem(name));
+                const routineFragment = document.createDocumentFragment();
+                ["Parking Lot", "Lobby/Restrooms", "ServSafe Temps", "Filtered Fryers", "Trash Run"].forEach(t => addRoutineTask(t, false, routineFragment));
+                document.getElementById('routineContainer').appendChild(routineFragment);
+
+                const inventoryFragment = document.createDocumentFragment();
+                presets['arbys'].forEach(name => addInventoryItem(name, "", "", "", false, null, inventoryFragment));
+                document.getElementById('inventoryContainer').appendChild(inventoryFragment);
+
+                lucide.createIcons();
             }
         }
 
