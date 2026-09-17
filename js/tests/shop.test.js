@@ -1,28 +1,24 @@
-import { jest } from '@jest/globals';
+import { jest } from "@jest/globals";
+
 global.window = global.window || {};
-global.window.firebase = {
-  apps: [],
-  initializeApp: () => ({}),
-  app: () => ({}),
-  auth: () => ({ onAuthStateChanged: () => {} }),
-  firestore: () => ({ settings: () => {}, collection: () => ({ doc: () => ({ set: () => Promise.resolve() }) }) }),
-  functions: () => ({})
+global.firebase = {
+    apps: [],
+    initializeApp: jest.fn(() => ({ name: '[DEFAULT]' })),
+    app: jest.fn(() => ({ name: '[DEFAULT]' })),
+    auth: jest.fn(() => ({ onAuthStateChanged: jest.fn() })),
+    firestore: jest.fn(() => ({ collection: jest.fn(), settings: jest.fn() })),
+    functions: jest.fn(() => ({ httpsCallable: jest.fn() }))
 };
-global.firebase = global.window.firebase;
-
-jest.unstable_mockModule('../../firebase.js', () => ({
-  auth: {},
-  db: {}
-}));
-jest.unstable_mockModule('../auth.js', () => ({
-  auth: {},
-  db: {}
-}));
-
-const shop = await import('../shop.js');
-const calculateCartTotal = shop.calculateCartTotal;
+global.window.firebase = global.firebase;
 
 describe('calculateCartTotal', () => {
+    let calculateCartTotal;
+
+    beforeAll(async () => {
+        const shopModule = await import('../shop.js');
+        calculateCartTotal = shopModule.calculateCartTotal;
+    });
+
     const mockProductMap = {
         'prod1': { id: 'prod1', price: 10.00 },
         'prod2': { id: 'prod2', price: 25.50 },

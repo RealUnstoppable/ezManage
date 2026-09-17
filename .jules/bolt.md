@@ -57,3 +57,9 @@
 ## $(date +%Y-%m-%d) - [Repeated Firebase DB Docs Fetch]
 **Learning:** Functions invoked via callbacks from listeners that span multiple files (e.g., `auth.onAuthStateChanged`) will fire simultaneously. Without a caching layer, they execute redundant concurrent network fetch queries (like `db.collection('users').doc(uid).get()`), causing latency and blocking operations.
 **Action:** Always wrap independent multi-listener fetched resources with a generic memoization layer using a `Map` cache to immediately resolve redundant Promise requests.
+## 2026-10-27 - [DRY Refactoring and Error Handling]
+**Learning:** Repetitive validation logic (like throwing HttpsError for missing fields) clutters Cloud Functions and increases maintenance surface area. Furthermore, unhandled Promise rejections inside async loops (like webhooks) can cause silent failures.
+**Action:** Extract repeated validation logic into shared utility functions, and ensure all critical asynchronous workflows (especially webhooks parsing external payloads) are wrapped in try/catch blocks with proper logging.
+## 2024-05-24 - [Draft Sync Debouncing]
+**Learning:** High-frequency input events (like `oninput` on dynamically generated form fields) that trigger expensive operations (like `triggerDraftSync` which parses DOM state and writes to localStorage/Firestore) must be debounced using `setTimeout` to prevent layout thrashing and excessive syncs. If multiple DOM elements reference a global debounce function via inline event handlers, ensure that function is properly defined and exposed to avoid ReferenceErrors that silently break functionality or fail to throttle executions.
+**Action:** Always implement a dedicated debounce wrapper (`debouncedTriggerDraftSync`) for high-frequency inline input events and verify it exists in the global scope when invoked via `oninput="..."`.

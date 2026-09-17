@@ -2,7 +2,6 @@ import { logManagerError, escapeHTML } from './utils.js';
 import { auth, db } from './auth.js';
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
 import { doc, getDoc, setDoc, updateDoc, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
-import { showToast, escapeHTML } from './utils.js';
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -40,6 +39,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let isShuffle = false;
     let repeatMode = 0;
     let currentUser = null;
+    let isLibraryLoaded = false;
 
     const viewHome = document.getElementById('view-home');
     const viewPlaylist = document.getElementById('view-playlist');
@@ -203,7 +203,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderSongTable(songs) {
         songListBody.innerHTML = '';
         if (songs.length === 0) {
-            songListBody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding: 20px;">No songs found.</td></tr>`;
+            songListBody.innerHTML = window.DOMPurify ? window.DOMPurify.sanitize(`<tr><td colspan="4" style="text-align:center; padding: 20px;">No songs found.</td></tr>`) : `<tr><td colspan="4" style="text-align:center; padding: 20px;">No songs found.</td></tr>`;
             return;
         }
 
@@ -215,7 +215,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const isActive = (currentQueue[currentSongIndex]?.id === song.id);
             if (isActive) row.classList.add('playing');
 
-            row.innerHTML = `
+            const htmlStr = `
                 <td>
                     <span class="song-index" style="${isActive ? 'display:none' : ''}">${index + 1}</span>
                     <span class="playing-icon" style="${isActive ? 'display:inline' : 'display:none'}">▶</span>
@@ -224,6 +224,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <td>${escapeHTML(song.artist)}</td>
                 <td style="text-align: right;">${song.duration}</td>
             `;
+            row.innerHTML = window.DOMPurify ? window.DOMPurify.sanitize(htmlStr) : htmlStr;
 
             row.addEventListener('click', () => {
                 playContext(songs, index);
@@ -428,10 +429,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     await setDoc(userRef, { musicFavorites: [songId] }, { merge: true });
                     userFavorites.push(song);
                 } catch (innerError) {
-                    logManagerError("Error setting initial favorite document for songId: " + songId, innerError);
+                    logManagerError("Error setting initial favorite document for songId:", songId, innerError);
                 }
             } else {
-                logManagerError("Error toggling favorite for songId: " + songId, e);
+                logManagerError("Error toggling favorite for songId:", songId, e);
             }
         }
     }
@@ -439,6 +440,8 @@ document.addEventListener('DOMContentLoaded', () => {
     onAuthStateChanged(auth, async (user) => {
         currentUser = user;
         if (user) {
+            if (!isLibraryLoaded) {
+                isLibraryLoaded = true;
             try {
                 const docRef = doc(db, "users", user.uid);
                 const docSnap = await getDoc(docRef);
@@ -446,11 +449,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     const favIds = docSnap.data().musicFavorites;
                     userFavorites = librarySongs.filter(song => favIds.includes(song.id));
                 }
-            } catch (e) { logManagerError("Error loading user favorites for uid: " + user.uid, e); }
+            } catch (e) { logManagerError("Error loading user favorites for uid:", user.uid, e); }
 
             const hour = new Date().getHours();
             const timeGreeting = hour < 12 ? "Good Morning" : hour < 18 ? "Good Afternoon" : "Good Evening";
             document.getElementById('greeting').textContent = `${timeGreeting}, ${user.displayName || 'Friend'}`;
+            }
+        } else {
+            isLibraryLoaded = false;
         }
         init();
     });

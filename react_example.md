@@ -1,65 +1,114 @@
-# React Component Example: ShiftNotesManager
+import React, { useState, useEffect } from 'react';
+import { db } from './firebase'; // Assume you have a configured firebase instance here
+import { collection, addDoc, serverTimestamp, query, where, orderBy, getDocs } from 'firebase/firestore';
 
-Here is a refactored example of how to handle the \`ShiftNotesManager\` component using React, properly utilizing \`async/await\` and robust error catching for Firestore operations before any UI state redirects or transitions.
-
-\`\`\`jsx
-import React, { useState } from 'react';
-import { db } from './firebase'; // Ensure your db is exported from firebase.js
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
-
-export default function ShiftNotesManager({ currentUser, currentUserData }) {
-    const [content, setContent] = useState('');
+/**
+ * Example React Component for creating a Shift Note.
+ *
+ * Demonstrates:
+ * 1. Optimistic UI update and reversion if the server-side write fails.
+ * 2. Proper async/await resolution to ensure writes complete.
+ * 3. Fetching and re-rendering on successful update.
+ */
+function ShiftNotesManager({ currentUser, currentUserData }) {
+    const [shiftNotes, setShiftNotes] = useState([]);
+    const [noteContent, setNoteContent] = useState('');
     const [priority, setPriority] = useState('Normal');
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [error, setError] = useState(null);
+
+    // Initial load
+    useEffect(() => {
+        if (currentUserData?.orgId) {
+            fetchShiftNotes();
+        }
+    }, []);
+
+    const fetchShiftNotes = async () => {
+        if (!currentUserData?.orgId) return;
+
+        try {
+            const q = query(
+                collection(db, 'shift_notes'),
+                where('orgId', '==', currentUserData.orgId),
+                orderBy('createdAt', 'desc')
+            );
+            const querySnapshot = await getDocs(q);
+            const notes = [];
+            querySnapshot.forEach((doc) => {
+                notes.push({ id: doc.id, ...doc.data() });
+            });
+            setShiftNotes(notes);
+        } catch (error) {
+            console.error("Failed to fetch shift notes", error);
+        }
+    };
 
     const submitShiftNote = async (e) => {
         e.preventDefault();
 
         if (!currentUser || !currentUserData || !currentUserData.orgId) {
-            setError("You must be logged in and part of a group to post a shift note.");
+            alert("You must be logged in and part of a group to post a shift note.");
             return;
         }
 
-        if (!content.trim()) {
-            setError("Please enter note content.");
+        const trimmedContent = noteContent.trim();
+        if (!trimmedContent) {
+            alert("Please enter note content.");
             return;
         }
 
+        // 1. Prepare optimistic state
+        const tempId = `temp-${Date.now()}`;
+        const newNote = {
+            id: tempId,
+            authorId: currentUser.uid,
+            authorName: currentUser.email.split('@')[0],
+            content: trimmedContent,
+            priority: priority,
+            status: 'Active',
+            orgId: currentUserData.orgId,
+            createdAt: new Date() // Fake timestamp for immediate render
+        };
+
+        // 2. Apply optimistic UI update
+        setShiftNotes([newNote, ...shiftNotes]);
+
+        // 3. Clear form inputs (temporarily storing in case of rollback)
+        const previousContent = trimmedContent;
+        const previousShiftNotes = shiftNotes;
+        setNoteContent('');
         setIsSubmitting(true);
-        setError(null);
 
         try {
-            // Wait for the document to be successfully written to Firestore
+            // 4. Perform the actual async write. We 'await' here completely before doing anything else.
             await addDoc(collection(db, 'shift_notes'), {
                 authorId: currentUser.uid,
                 authorName: currentUser.email.split('@')[0],
-                content: content.trim(),
+                content: trimmedContent,
                 priority: priority,
                 status: 'Active',
                 orgId: currentUserData.orgId,
                 createdAt: serverTimestamp(),
-                timestamp: serverTimestamp()
+                timestamp: serverTimestamp() // Compatibility field
             });
 
-            // Reset form only after successful write
-            setContent('');
-            setPriority('Normal');
+            // 5. On success, trigger a fresh fetch to ensure consistency with other clients
+            await fetchShiftNotes();
 
-            // e.g. onSuccessRedirect() or reload local state
+        } catch (error) {
+            // 6. Rollback optimistic UI if network request fails
+            console.error("Error posting note", error);
 
-        } catch (err) {
-            console.error("Error posting note", err);
+            // Remove the temporary note
+            setShiftNotes(previousShiftNotes);
 
-            // Handle specific network/CORS/firestore unavailable errors
-            if (
-                err.code === 'unavailable' ||
-                err.code === 'auth/network-request-failed' ||
-                err.code === 'firestore/unavailable'
-            ) {
-                setError("Network error: Could not connect to the server. Please check your connection.");
+            // Restore the content to the input
+            setNoteContent(previousContent);
+
+            if (error.code === 'unavailable' || error.code === 'auth/network-request-failed') {
+                alert("Network error: Could not connect to the server. Please check your connection.");
             } else {
-                setError("Failed to post note: " + err.message);
+                alert("Failed to post note: " + error.message);
             }
         } finally {
             setIsSubmitting(false);
@@ -67,25 +116,37 @@ export default function ShiftNotesManager({ currentUser, currentUserData }) {
     };
 
     return (
-        <form onSubmit={submitShiftNote}>
-            {error && <div className="error">{error}</div>}
+        <div className="shift-notes-container">
+            <h2>Post a Note</h2>
+            <form onSubmit={submitShiftNote}>
+                <textarea
+                    value={noteContent}
+                    onChange={(e) => setNoteContent(e.target.value)}
+                    placeholder="Leave a note, warning, or handover instruction..."
+                    disabled={isSubmitting}
+                />
+                <div>
+                    <select value={priority} onChange={(e) => setPriority(e.target.value)} disabled={isSubmitting}>
+                        <option value="Normal">Normal Priority</option>
+                        <option value="Urgent">🚨 Urgent Issue</option>
+                    </select>
+                    <button type="submit" disabled={isSubmitting}>
+                        {isSubmitting ? 'Saving...' : 'Post Note'}
+                    </button>
+                </div>
+            </form>
 
-            <textarea
-                value={content}
-                onChange={(e) => setContent(e.target.value)}
-                placeholder="Enter shift note..."
-                disabled={isSubmitting}
-            />
-
-            <select value={priority} onChange={(e) => setPriority(e.target.value)} disabled={isSubmitting}>
-                <option value="Normal">Normal</option>
-                <option value="Urgent">Urgent</option>
-            </select>
-
-            <button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? 'Posting...' : 'Post Note'}
-            </button>
-        </form>
+            <div className="active-notes">
+                <h3>Active Notes</h3>
+                {shiftNotes.map(note => (
+                    <div key={note.id} className={`note-card ${note.priority === 'Urgent' ? 'urgent' : ''}`}>
+                        <p><strong>{note.authorName}</strong></p>
+                        <p>{note.content}</p>
+                    </div>
+                ))}
+            </div>
+        </div>
     );
 }
-\`\`\`
+
+export default ShiftNotesManager;
