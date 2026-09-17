@@ -21,7 +21,7 @@ function ShiftNotesManager({ currentUser, currentUserData }) {
         if (currentUserData?.orgId) {
             fetchShiftNotes();
         }
-    }, [currentUserData?.orgId]);
+    }, []);
 
     const fetchShiftNotes = async () => {
         if (!currentUserData?.orgId) return;
@@ -75,6 +75,7 @@ function ShiftNotesManager({ currentUser, currentUserData }) {
 
         // 3. Clear form inputs (temporarily storing in case of rollback)
         const previousContent = trimmedContent;
+        const previousShiftNotes = shiftNotes;
         setNoteContent('');
         setIsSubmitting(true);
 
@@ -99,7 +100,7 @@ function ShiftNotesManager({ currentUser, currentUserData }) {
             console.error("Error posting note", error);
 
             // Remove the temporary note
-            setShiftNotes((prevNotes) => prevNotes.filter(note => note.id !== tempId));
+            setShiftNotes(previousShiftNotes);
 
             // Restore the content to the input
             setNoteContent(previousContent);

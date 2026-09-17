@@ -60,7 +60,6 @@
 ## 2026-10-27 - [DRY Refactoring and Error Handling]
 **Learning:** Repetitive validation logic (like throwing HttpsError for missing fields) clutters Cloud Functions and increases maintenance surface area. Furthermore, unhandled Promise rejections inside async loops (like webhooks) can cause silent failures.
 **Action:** Extract repeated validation logic into shared utility functions, and ensure all critical asynchronous workflows (especially webhooks parsing external payloads) are wrapped in try/catch blocks with proper logging.
-
-## 2026-09-14 - Duplicate Operations in Firestore Rules Bypass Restrictions
-**Learning:** When using `firestore.rules`, defining multiple `allow create` blocks for the same collection acts as a logical `OR`. If one block requires both `authorId` and `orgId`, but another requires only `authorId`, the stricter constraint is easily bypassed by satisfying the looser one.
-**Action:** Always consolidate security checks into a single unified `allow [action]` block per collection to avoid inadvertently creating permissive backdoors through rule duplication.
+## 2024-05-24 - [Draft Sync Debouncing]
+**Learning:** High-frequency input events (like `oninput` on dynamically generated form fields) that trigger expensive operations (like `triggerDraftSync` which parses DOM state and writes to localStorage/Firestore) must be debounced using `setTimeout` to prevent layout thrashing and excessive syncs. If multiple DOM elements reference a global debounce function via inline event handlers, ensure that function is properly defined and exposed to avoid ReferenceErrors that silently break functionality or fail to throttle executions.
+**Action:** Always implement a dedicated debounce wrapper (`debouncedTriggerDraftSync`) for high-frequency inline input events and verify it exists in the global scope when invoked via `oninput="..."`.
