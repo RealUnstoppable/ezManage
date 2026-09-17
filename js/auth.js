@@ -31,7 +31,12 @@ export async function fetchUserDoc(uid) {
 
 
 if (auth && auth.onAuthStateChanged) {
+let currentUid = null;
+let isDashboardLoaded = false;
 auth.onAuthStateChanged(async (user) => {
+    if (user && user.uid === currentUid && isDashboardLoaded) return;
+    currentUid = user ? user.uid : null;
+    isDashboardLoaded = true;
     const authLink = document.getElementById('auth-link');
     const membershipStatusContainer = document.getElementById('membership-status-container');
 
