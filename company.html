@@ -1210,9 +1210,9 @@
             const sim = setInterval(() => {
                 progress += 2;
                 if (progress <= 95) bar.style.width = `${progress}%`;
-                if (progress === 30) status.innerText = "Creating shift groups...";
-                if (progress === 60) status.innerText = "Provisioning AI features...";
-                if (progress === 90) status.innerText = "Finalizing workspace...";
+                if (progress === 30 && status.innerText !== "Creating shift groups...") status.innerText = "Creating shift groups...";
+                if (progress === 60 && status.innerText !== "Provisioning AI features...") status.innerText = "Provisioning AI features...";
+                if (progress === 90 && status.innerText !== "Finalizing workspace...") status.innerText = "Finalizing workspace...";
             }, 100);
 
             try {
