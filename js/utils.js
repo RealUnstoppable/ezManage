@@ -62,3 +62,7 @@ export function getFirebaseErrorMessage(error) {
 export function logManagerError(actionMessage, ...args) {
     console.error("Manager Troubleshooting: " + actionMessage, ...args);
 }
+
+export function isNetworkError(error) {
+    return error.code === 'auth/network-request-failed' || error.code === 'unavailable' || error.code === 'firestore/unavailable';
+}
