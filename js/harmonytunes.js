@@ -144,7 +144,7 @@ document.addEventListener('DOMContentLoaded', () => {
         containerRecommended.innerHTML = recommended.map(song => createSongCard(song)).join('');
 
         containerTikToks.innerHTML = tiktokData.map(tk => `
-            <div class="tiktok-card" onclick="window.open('${escapeHTML(tk.url)}', '_blank')">
+            <div class="tiktok-card" data-action="openUrl" data-url="${escapeHTML(tk.url)}">
                 <img src="${tk.img}" alt="${escapeHTML(tk.title)}" loading="lazy">
                 <div class="tiktok-overlay">
                     <div class="tiktok-title">${escapeHTML(tk.title)}</div>
@@ -157,7 +157,7 @@ document.addEventListener('DOMContentLoaded', () => {
             { id: 'favorites', title: "Liked Songs", desc: "Your Favorites" }
         ];
         containerPlaylists.innerHTML = playlists.map(pl => `
-            <div class="music-card" onclick="window.loadPlaylistView('${pl.id}')">
+            <div class="music-card" data-action="loadPlaylistView" data-id="${escapeHTML(pl.id)}">
                 <div class="card-img-wrapper">
                     <img src="/images/harmony-tunes-card.jpg" alt="${escapeHTML(pl.title)}" loading="lazy">
                     <button class="card-play-btn">▶</button>
@@ -182,7 +182,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function createSongCard(song) {
         return `
-            <div class="music-card" data-song-id="${song.id}" onclick="playSongById('${song.id}')">
+            <div class="music-card" data-song-id="${song.id}" data-action="playSongById" data-id="${escapeHTML(song.id)}">
                 <div class="card-img-wrapper">
                     <img src="${song.art}" alt="${escapeHTML(song.title)}" loading="lazy">
                     <button class="card-play-btn">▶</button>
@@ -460,4 +460,18 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         init();
     });
+});
+document.addEventListener('click', (e) => {
+    const card = e.target.closest('div[data-action]');
+    if (!card) return;
+
+    const action = card.dataset.action;
+
+    if (action === 'openUrl') {
+        window.open(card.dataset.url, '_blank');
+    } else if (action === 'loadPlaylistView') {
+        window.loadPlaylistView(card.dataset.id);
+    } else if (action === 'playSongById') {
+        window.playSongById(card.dataset.id);
+    }
 });
