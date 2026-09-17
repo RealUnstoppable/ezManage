@@ -2323,7 +2323,7 @@
         const firebaseConfig = window.ezManageFirebaseConfig;
         const app = !window.firebase.apps.length ? window.firebase.initializeApp(firebaseConfig) : window.firebase.app();
         const auth = window.firebase.auth();
-        window.firebase.firestore().settings({ experimentalForceLongPolling: true });
+        try { window.firebase.firestore().settings({ experimentalForceLongPolling: true }); } catch (e) { console.warn(e); }
         const db = window.firebase.firestore();
         const cloudFunctions = window.firebase.functions();
         db.enablePersistence().catch(err => console.error("Offline sync error:", err));
@@ -3655,13 +3655,13 @@
                         const div = document.createElement('div');
                         div.className = 'inventory-item animate-fadeIn border-slate-200 dark:border-slate-800';
                         div.dataset.timestamp = timestamp || (_invLoadTime--);
-                        div.innerHTML = \`
+                        div.innerHTML = `
                             <input type="text" placeholder="Item Name" class="inv-name" aria-label="Item Name">
                             <input type="text" placeholder="Backline" class="inv-backline" aria-label="Backline Count">
                             <input type="text" placeholder="Cooler" class="inv-cooler" aria-label="Cooler Count">
                             <input type="text" placeholder="Freezer" class="inv-freezer" aria-label="Freezer Count">
                             <button type="button" class="text-red-400 text-right delete-inv-btn" aria-label="Remove item"><i data-lucide="minus-circle" class="w-5"></i></button>
-                        \`;
+                        `;
                         div.querySelector('.inv-name').oninput = triggerDraftSync;
                         div.querySelector('.inv-backline').oninput = triggerDraftSync;
                         div.querySelector('.inv-cooler').oninput = triggerDraftSync;
@@ -3993,7 +3993,7 @@
         }
 
 
-        let unsubscribeTasks = null;
+        var unsubscribeTasks = null;
         function fetchAssignedTasks() {
             if (!currentUser || !currentUserData || !currentUserData.orgId) {
                 document.getElementById('tasksContainer').innerHTML = `
@@ -4399,7 +4399,7 @@
 
         let unsubscribeEmployees = null;
         let unsubscribeTimeOff = null;
-        let unsubscribeTasks = null;
+        var unsubscribeTasks = null;
 
 
 

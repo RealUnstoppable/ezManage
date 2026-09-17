@@ -15,9 +15,13 @@ const firebaseConfig = {
 // Use experimentalForceLongPolling for fallback on CORS/network issues
 if (!window.firebase.apps.length) {
     window.firebase.initializeApp(firebaseConfig);
-    window.firebase.firestore().settings({
-        experimentalForceLongPolling: true
-    });
+    try {
+        window.firebase.firestore().settings({
+            experimentalForceLongPolling: true
+        });
+    } catch (e) {
+        console.warn("Firestore settings already configured or errored: ", e);
+    }
 }
 
 // INSTRUCTIONS FOR AUTHORIZED DOMAINS:
@@ -27,16 +31,6 @@ if (!window.firebase.apps.length) {
 // Note: Firestore rules are handled via firestore.rules file deployment.
 
 const auth = window.firebase.auth();
-
-// Use experimentalForceLongPolling for fallback on CORS/network issues
-try {
-    window.firebase.firestore().settings({
-        experimentalForceLongPolling: true
-    });
-} catch (e) {
-    console.warn("Firestore settings already configured or errored: ", e);
-}
-
 const db = window.firebase.firestore();
 const functions = window.firebase.functions();
 const app = window.firebase.app();
