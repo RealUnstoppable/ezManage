@@ -1230,6 +1230,86 @@ exports.manageFeedbacks = functions.https.onCall(async (data, context) => {
 exports.trainGlobalAI = require("./trainGlobalAI").trainGlobalAI;
 
 
+exports.manageTemperatureLogs = functions.https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new HttpsError("unauthenticated", "You must be logged in.");
+  }
+  const uid = context.auth.uid;
+  const userDoc = await admin.firestore().collection("users").doc(uid).get();
+  const userOrgId = userDoc.exists ? userDoc.data().orgId : null;
+  const isAdmin = userDoc.exists ? userDoc.data().isAdmin : false;
+  const userName = userDoc.exists ? userDoc.data().name || context.auth.token.email.split('@')[0] : context.auth.token.email.split('@')[0];
+
+  const action = data.action;
+  const payload = data.payload || {};
+
+  try {
+    if (action === "create") {
+      checkRequiredFields(payload, ["equipmentName", "temperature", "unit"]);
+      const activeOrgId = userOrgId || uid;
+
+      let status = "Safe";
+      // Basic safety logic: Freezers > 0F / -18C, Coolers > 41F / 5C, Hot Holding < 135F / 57C could be warnings, but we'll let client define or use a generic "Warning" if submitted by client, or just store it.
+      if (payload.status) {
+          status = payload.status;
+      }
+
+      const newLogRef = await admin.firestore().collection("temperature_logs").add({
+        equipmentName: payload.equipmentName,
+        temperature: payload.temperature,
+        unit: payload.unit,
+        status: status,
+        notes: payload.notes || "",
+        loggedByUid: uid,
+        loggedByName: userName,
+        orgId: activeOrgId,
+        timestamp: admin.firestore.FieldValue.serverTimestamp(),
+      });
+      return { success: true, message: "Temperature log created.", id: newLogRef.id };
+    }
+
+    if (action === "get") {
+      if (!userOrgId && !isAdmin) {
+        return { success: true, logs: [] };
+      }
+
+      let query = admin.firestore().collection("temperature_logs");
+      if (!isAdmin) {
+        query = query.where("orgId", "==", userOrgId);
+      } else if (payload.orgId) {
+        query = query.where("orgId", "==", payload.orgId);
+      }
+
+      query = query.orderBy("timestamp", "desc").limit(50);
+      const snapshot = await query.get();
+      const logs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      return { success: true, logs };
+    }
+
+    if (action === "delete") {
+      checkRequiredFields(payload, ["logId"]);
+      const logRef = admin.firestore().collection("temperature_logs").doc(payload.logId);
+      const logDoc = await logRef.get();
+
+      if (!logDoc.exists) {
+        throw new HttpsError("not-found", "Log not found.");
+      }
+
+      if (logDoc.data().orgId !== userOrgId && !isAdmin) {
+        throw new HttpsError("permission-denied", "Unauthorized.");
+      }
+
+      await logRef.delete();
+      return { success: true, message: "Log deleted." };
+    }
+
+    throw new HttpsError("invalid-argument", "Invalid action.");
+  } catch (error) {
+    logManagerError("Error in manageTemperatureLogs: ", error);
+    throw new HttpsError("internal", error.message);
+  }
+});
+
 exports.manageVendorDeliveries = functions.https.onCall(async (data, context) => {
   if (!context.auth) {
     throw new HttpsError("unauthenticated", "You must be logged in.");
