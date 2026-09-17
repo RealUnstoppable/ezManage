@@ -1009,6 +1009,101 @@ exports.manageWaste = functions.https.onCall(async (data, context) => {
 });
 
 /**
+ * Manage Temperature Logs API
+ * Handles creation, reading, and deletion of temperature logs.
+ */
+exports.manageTemperatureLogs = functions.https.onCall(async (data, context) => {
+  if (data && typeof data === "object" && "rawRequest" in data && "auth" in data) {
+    context = data;
+    data = data.data;
+  }
+
+  if (!context || !context.auth) {
+    throw new HttpsError("unauthenticated", "User must be logged in.");
+  }
+
+  const {action, payload} = data;
+  const uid = context.auth.uid;
+
+  if (!action || !payload) {
+    throw new HttpsError("invalid-argument", "Missing action or payload");
+  }
+
+  try {
+    const actualOrgId = await getActualOrgId(admin, uid);
+    const userDoc = await admin.firestore().collection("users").doc(uid).get();
+
+    if (!actualOrgId) {
+      throw new HttpsError("permission-denied", "User must be part of an organization to log temperatures.");
+    }
+
+    if (action === "create") {
+      const {equipmentName, temperature, tempUnit, isSafe, notes} = payload;
+
+      if (!equipmentName || temperature === undefined || !tempUnit) {
+        throw new HttpsError("invalid-argument", "Missing required temperature log details");
+      }
+
+      const newLog = {
+        equipmentName,
+        temperature: Number(temperature),
+        tempUnit,
+        isSafe: Boolean(isSafe),
+        notes: notes || "",
+        loggedByUid: uid,
+        loggedByName: userDoc.data().name || "Anonymous",
+        orgId: actualOrgId,
+        timestamp: admin.firestore.FieldValue.serverTimestamp(),
+      };
+
+      const docRef = await admin.firestore().collection("temperature_logs").add(newLog);
+      return {success: true, id: docRef.id};
+    }
+
+    if (action === "get") {
+      const snapshot = await admin.firestore().collection("temperature_logs")
+          .where("orgId", "==", actualOrgId)
+          .orderBy("timestamp", "desc")
+          .limit(100)
+          .get();
+
+      const logs = [];
+      snapshot.forEach((doc) => logs.push({id: doc.id, ...doc.data()}));
+      return {success: true, logs};
+    }
+
+    if (action === "delete") {
+      const {logId} = payload;
+      if (!logId) {
+        throw new HttpsError("invalid-argument", "Missing log ID");
+      }
+
+      const logRef = admin.firestore().collection("temperature_logs").doc(logId);
+      const logDoc = await logRef.get();
+
+      if (!logDoc.exists) {
+        throw new HttpsError("not-found", "Temperature log not found");
+      }
+
+      if (logDoc.data().orgId !== actualOrgId) {
+        throw new HttpsError("permission-denied", "Unauthorized to delete this log");
+      }
+
+      await logRef.delete();
+      return {success: true};
+    }
+
+    throw new HttpsError("invalid-argument", "Invalid action");
+  } catch (error) {
+    logManagerError(`Manage Temperature Logs Error for uid: ${uid}`, error);
+    if (error instanceof HttpsError) {
+      throw error;
+    }
+    throw new HttpsError("internal", error.message);
+  }
+});
+
+/**
  * Manage Recognitions API
  * Handles creation, reading, and deletion of recognitions (Kudos / Private Feedback).
  */
