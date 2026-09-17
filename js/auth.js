@@ -67,7 +67,6 @@ auth.onAuthStateChanged(async (user) => {
 });
 }
 
-}
 
 if (document.getElementById('auth-form')) {
     const form = document.getElementById('auth-form');
@@ -154,5 +153,4 @@ if (document.getElementById('auth-form')) {
 
     function showMessage(msg) { messageEl.textContent = msg; }
     updateFormView();
-}
 }
