@@ -983,7 +983,7 @@
                         <div x-show="expanded" x-transition>
                             <div id="routineContainer" class="grid sm:grid-cols-2 gap-4 mt-4"></div>
                             <div class="mt-8 flex gap-3 no-print">
-                                <input type="text" id="newRoutineTask" placeholder="Add custom daily task..."
+                                <input type="text" id="newRoutineTask" placeholder="Add custom daily task..." aria-label="New Routine Task"
                                     class="flex-1" aria-label="New Routine Task">
                                 <button type="button" onclick="addRoutineTask()" class="btn btn-outline">Add</button>
                             </div>
@@ -1530,7 +1530,7 @@
                                 <option value="High">High Priority</option>
                                 <option value="Critical">Critical</option>
                             </select>
-                            <input type="date" id="taskDueDate1" class="flex-1 bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
+                            <input type="date" id="taskDueDate1" class="flex-1 bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500" aria-label="Task Due Date">
                         </div>
 
                         <div class="flex justify-end gap-3 pt-2">
@@ -1810,7 +1810,7 @@
                             <p class="text-sm text-slate-500 mb-4">Saves your exact current inventory layout,
                                 checklists, and register setups so you can recall them instantly.</p>
                             <div class="flex gap-2 mb-8">
-                                <input type="text" id="customPresetName" placeholder="e.g. Closing Shift Layout"
+                                <input type="text" id="customPresetName" placeholder="e.g. Closing Shift Layout" aria-label="Custom Preset Name"
                                     class="flex-1" aria-label="Custom Preset Name">
                                 <button onclick="saveCustomPreset()" class="btn btn-outline whitespace-nowrap">Save
                                     Current</button>
@@ -1929,8 +1929,8 @@
                         <div
                             class="p-4 border border-slate-200 dark:border-slate-800 rounded-xl mb-4 bg-slate-50 dark:bg-slate-900">
                             <label class="flex items-center gap-3 cursor-pointer">
-                                <input type="checkbox" id="profileCloudSyncToggle" onchange="triggerCloudOptIn(this)"
-                                    class="w-5 h-5 accent-sky-500">
+                                <input type="checkbox" id="profileCloudSyncToggle" onchange="triggerCloudOptIn(this)" aria-label="Enable Enterprise Cloud Sync"
+                                    class="w-5 h-5 accent-sky-500" aria-label="Enable Enterprise Cloud Sync">
                                 <span class="font-bold text-sm">Enable Enterprise Cloud Sync</span>
                             </label>
                             <p class="text-xs text-slate-400 mt-2">Requires Business Pro plan. Binds you to Data
@@ -1940,7 +1940,7 @@
                         <div
                             class="p-4 border border-slate-200 dark:border-slate-800 rounded-xl mb-4 bg-slate-50 dark:bg-slate-900">
                             <label class="flex items-center gap-3 cursor-pointer">
-                                <input type="checkbox" id="profileAIToggle" checked class="w-5 h-5 accent-sky-500">
+                                <input type="checkbox" id="profileAIToggle" checked class="w-5 h-5 accent-sky-500" aria-label="Allow AI Training">
                                 <span class="font-bold text-sm">Allow AI Training</span>
                             </label>
                             <p class="text-xs text-slate-400 mt-2">Allows the local neural network to train on your
