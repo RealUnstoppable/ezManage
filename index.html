@@ -1271,7 +1271,7 @@
                             <textarea id="taskDesc1" class="w-full h-24" placeholder="Task details..."></textarea>
                         </div>
                         <div>
-                            <label for="taskAssignee" class="block text-sm font-medium mb-1">Assign To</label>
+                            <label for="taskAssignee2" class="block text-sm font-medium mb-1">Assign To</label>
                             <select id="taskAssignee2" class="w-full" required>
                                 <option value="">Select Employee...</option>
                             </select>
@@ -1520,7 +1520,7 @@
                             class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500 resize-none"></textarea>
 
                         <div class="flex flex-col md:flex-row gap-4">
-                            <select id="taskAssignee1" class="flex-1 bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
+                            <select id="taskAssignee1" aria-label="Assign To Employee" class="flex-1 bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
                                 <option value="" disabled selected>Assign To Employee</option>
                             </select>
                             <select id="taskPriority"
@@ -2151,7 +2151,7 @@
                         </div>
                         <div>
                             <label class="block text-sm font-bold mb-2">Assign To</label>
-                            <select id="taskAssignee3" class="w-full">
+                            <select id="taskAssignee3" aria-label="Assign To Employee" class="w-full">
                                 <option value="">Select Employee</option>
                             </select>
                         </div>
