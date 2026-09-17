@@ -120,6 +120,8 @@
                 }
 
                 listContainer.innerHTML = '';
+                // ⚡ Bolt Optimization: Use DocumentFragment to batch DOM insertions
+                const fragment = document.createDocumentFragment();
                 handoffs.forEach(h => {
                     const el = document.createElement('div');
                     el.className = 'bg-slate-900 border border-slate-800 rounded-xl p-5 relative';
@@ -146,9 +148,10 @@
                         ${h.urgentAlerts ? `<div class="mb-3 p-3 bg-red-950/30 border border-red-900/50 rounded-lg text-red-200 text-sm"><strong class="text-red-400">Urgent:</strong> ${escapeHTML(h.urgentAlerts)}</div>` : ''}
                         <div class="text-sm text-slate-300 whitespace-pre-wrap">${escapeHTML(h.notes)}</div>
                     `;
-                    listContainer.appendChild(el);
+                    fragment.appendChild(el);
                 });
 
+                listContainer.appendChild(fragment);
                 if (window.lucide) window.lucide.createIcons();
 
                 listContainer.querySelectorAll('.ack-btn').forEach(btn => {
