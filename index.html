@@ -8,6 +8,7 @@
     import { escapeHTML, logManagerError } from './js/utils.js';
     import { loadNavbar } from './js/navbar.js';
     import { loadFooter } from './js/footer.js';
+    import { fetchUserDoc } from './js/auth.js';
 
     document.addEventListener('DOMContentLoaded', () => {
         loadNavbar();
@@ -2516,7 +2517,7 @@
                             activeView = document.querySelector('.view-section.active');
                             if (activeView && activeView.id !== 'view-setup') {
                                 try {
-                                    const emailDoc = await db.collection("users").doc(user.email).get();
+                                    const emailDoc = await fetchUserDoc(user.email);
                                     if (emailDoc.exists) {
                                         await db.collection("users").doc(user.uid).set(emailDoc.data(), { merge: true });
                                         return;
