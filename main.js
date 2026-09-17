@@ -35,6 +35,8 @@ app.whenReady().then(() => {
   app.on('activate', function () {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });
+}).catch(err => {
+  console.error("Manager Troubleshooting: Electron app initialization failed:", err);
 });
 
 app.on('window-all-closed', function () {

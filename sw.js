@@ -57,8 +57,8 @@ self.addEventListener('fetch', (event) => {
                         });
                     }
                     return networkResponse;
-                }).catch(() => {
-
+                }).catch((error) => {
+                    console.error("Manager Troubleshooting: Service Worker fetch failed:", error);
                 });
 
                 return cachedResponse || fetchPromise;
