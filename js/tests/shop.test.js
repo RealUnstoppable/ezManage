@@ -1,20 +1,29 @@
 import { jest } from "@jest/globals";
 
-// Mock Firebase globals before importing shop.js/firebase.js
 global.window = global.window || {};
-global.window.firebase = {
+global.firebase = {
     apps: [],
     initializeApp: jest.fn(() => ({ name: '[DEFAULT]' })),
     app: jest.fn(() => ({ name: '[DEFAULT]' })),
-    auth: jest.fn(() => ({
-        onAuthStateChanged: jest.fn()
-    })),
-    firestore: jest.fn(() => ({
-        collection: jest.fn(),
-        settings: jest.fn()
-    })),
-    functions: jest.fn(() => ({}))
+    auth: jest.fn(() => ({ onAuthStateChanged: jest.fn() })),
+    firestore: jest.fn(() => ({ collection: jest.fn(), settings: jest.fn() })),
+    functions: jest.fn(() => ({ httpsCallable: jest.fn() }))
 };
+global.window.firebase = global.firebase;
+
+describe('calculateCartTotal', () => {
+    let calculateCartTotal;
+
+    beforeAll(async () => {
+        const shopModule = await import('../shop.js');
+        calculateCartTotal = shopModule.calculateCartTotal;
+    });
+
+    const mockProductMap = {
+        'prod1': { id: 'prod1', price: 10.00 },
+        'prod2': { id: 'prod2', price: 25.50 },
+        'prod3': { id: 'prod3', price: 5.00 },
+    };
 
 global.firebase = global.window.firebase;
 

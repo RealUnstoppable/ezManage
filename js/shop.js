@@ -1,8 +1,6 @@
 import { logManagerError, escapeHTML } from './utils.js';
 
 import { auth, db } from './auth.js';
-import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
-import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
 
 export const products = [
     {
@@ -50,6 +48,7 @@ export function calculateCartTotal(cartData, prodMap) {
 
 let cart = {};
 let currentUser = null;
+let isDashboardLoaded = false;
 
 let productGrid;
 let cartButton;
@@ -113,12 +112,14 @@ function updateCartSummary() {
 
     cartItemCountEl.textContent = itemCount;
     cartTotalPriceEl.textContent = `$${totalPrice.toFixed(2)}`;
+    cartButton.setAttribute('aria-label', `Open Cart, ${itemCount} items`);
 }
 
 async function updateCartState(mutationFn, errorMessage) {
     const originalCart = { ...cart };
     try {
         mutationFn();
+        if (JSON.stringify(cart) === JSON.stringify(originalCart)) return;
         renderCart();
         await saveCart();
     } catch (error) {
@@ -130,34 +131,46 @@ async function updateCartState(mutationFn, errorMessage) {
 }
 
 async function handleAddToCart(productId) {
-    await updateCartState(() => {
-        cart[productId] = (cart[productId] || 0) + 1;
-    }, "Error adding item to cart");
+    try {
+        await updateCartState(() => {
+            cart[productId] = (cart[productId] || 0) + 1;
+        }, "Error adding item to cart");
+    } catch (error) {
+        logManagerError("Error in handleAddToCart", error);
+    }
 }
 
 async function handleUpdateQuantity(productId, quantity) {
-    if (quantity <= 0) {
-        return handleRemoveFromCart(productId);
+    try {
+        if (quantity <= 0) {
+            return await handleRemoveFromCart(productId);
+        }
+        await updateCartState(() => {
+            cart[productId] = parseInt(quantity, 10);
+        }, "Error updating item quantity");
+    } catch (error) {
+        logManagerError("Error in handleUpdateQuantity", error);
     }
-    await updateCartState(() => {
-        cart[productId] = parseInt(quantity, 10);
-    }, "Error updating item quantity");
 }
 
 async function handleRemoveFromCart(productId) {
-    await updateCartState(() => {
-        delete cart[productId];
-    }, "Error removing item from cart");
+    try {
+        await updateCartState(() => {
+            delete cart[productId];
+        }, "Error removing item from cart");
+    } catch (error) {
+        logManagerError("Error in handleRemoveFromCart", error);
+    }
 }
 
 async function saveCart() {
     if (currentUser) {
         try {
-            const userCartRef = doc(db, 'carts', currentUser.uid);
-            await setDoc(userCartRef, { items: cart });
+            const userCartRef = db.collection('carts').doc(currentUser.uid);
+            await userCartRef.set({ items: cart });
         } catch (error) {
             logManagerError("Error saving cart to Firestore for uid: " + currentUser.uid, error);
-
+            throw error;
         }
     } else {
         localStorage.setItem('localCart', JSON.stringify(cart));
@@ -222,60 +235,35 @@ function setupEventListeners() {
     }
 }
 
-export function initShop() {
-    productGrid = document.getElementById('product-grid');
-    cartButton = document.getElementById('cart-button');
-    cartModal = document.getElementById('cart-modal');
-    closeCartBtn = document.getElementById('close-cart-btn');
-    cartItemsContainer = document.getElementById('cart-items-container');
-    cartItemCountEl = document.getElementById('cart-item-count');
-    cartTotalPriceEl = document.getElementById('cart-total-price');
-    checkoutBtn = document.getElementById('checkout-btn');
-    navCtaContainer = document.getElementById('nav-cta-container');
-    hamburger = document.querySelector('.hamburger');
-    navLinks = document.querySelector('.nav-links');
+document.addEventListener('DOMContentLoaded', () => {
+    renderProducts();
+    setupEventListeners();
 
-    if (productGrid) {
-        renderProducts();
-        setupEventListeners();
+    auth.onAuthStateChanged(async (user) => {
+        currentUser = user;
+        const localCartData = localStorage.getItem('localCart');
+        const localCart = localCartData ? JSON.parse(localCartData) : {};
 
-        onAuthStateChanged(auth, async (user) => {
-            currentUser = user;
-            const localCartData = localStorage.getItem('localCart');
-            const localCart = localCartData ? JSON.parse(localCartData) : {};
+        if (user) {
+            if (!isDashboardLoaded) {
+                isDashboardLoaded = true;
+            try {
+                const userCartRef = db.collection('carts').doc(user.uid);
+                const docSnap = await userCartRef.get();
+                const firestoreCart = docSnap.exists ? docSnap.data().items : {};
 
-            if (user) {
-                try {
-                    const userCartRef = doc(db, 'carts', user.uid);
-                    const docSnap = await getDoc(userCartRef);
-                    const firestoreCart = docSnap.exists() ? docSnap.data().items : {};
-
-                    const mergedCart = { ...firestoreCart };
-                    for (const [productId, quantity] of Object.entries(localCart)) {
-                        mergedCart[productId] = (mergedCart[productId] || 0) + quantity;
-                    }
-
-                    cart = mergedCart;
-                    await saveCart();
-                    localStorage.removeItem('localCart');
-                } catch (error) {
-                    logManagerError("Error loading cart during auth state change:", error);
-
-                    cart = localCart;
+                const mergedCart = { ...firestoreCart };
+                for (const [productId, quantity] of Object.entries(localCart)) {
+                    mergedCart[productId] = (mergedCart[productId] || 0) + quantity;
                 }
             } else {
 
                 cart = localCart;
             }
-
-            if (navCtaContainer) {
-                updateUserNav(user);
             }
-            if (cartItemsContainer) {
-                renderCart();
-            }
-        });
-    }
-}
+        } else {
+            isDashboardLoaded = false;
+            cart = localCart;
+        }
 
 document.addEventListener('DOMContentLoaded', initShop);
