@@ -1,4 +1,4 @@
-import { getFirebaseErrorMessage, logManagerError, escapeHTML } from './utils.js';
+import { getFirebaseErrorMessage, logManagerError, escapeHTML, isNetworkError } from './utils.js';
 
 
 
@@ -13,6 +13,7 @@ export function getUserRedirectPath(userData) {
 const userDocCache = new Map(); // ⚡ Bolt Optimization: Cache user document fetches
 
 export async function fetchUserDoc(uid) {
+    // ⚡ Bolt Optimization: Cache user document fetches to prevent N+1 query bottlenecks on auth state change
     if (userDocCache.has(uid)) {
         return userDocCache.get(uid);
     }
@@ -57,7 +58,7 @@ auth.onAuthStateChanged(async (user) => {
                 }
             }
         } catch (error) {
-            logManagerError("Error fetching user document in auth state change for uid: " + user.uid, error);
+            logManagerError("Error fetching user document in auth state change for uid:", user.uid, error);
         }
     } else {
         if (authLink) {
@@ -65,10 +66,12 @@ auth.onAuthStateChanged(async (user) => {
             authLink.textContent = "Sign In / Sign Up";
         }
         if (membershipStatusContainer) {
-            membershipStatusContainer.innerHTML = '';
+            membershipStatusContainer.textContent = '';
         }
     }
 });
+}
+
 
 if (document.getElementById('auth-form')) {
     const form = document.getElementById('auth-form');
@@ -121,7 +124,7 @@ if (document.getElementById('auth-form')) {
                 window.location.replace('index.html');
             } catch (error) {
                 logManagerError("Sign up error for email: " + email, error);
-                if (error.code === 'auth/network-request-failed' || error.code === 'unavailable') {
+                if (isNetworkError(error)) {
                     showMessage("Network error: Please check your connection or whitelist our domain.");
                 } else {
                     showMessage(getFirebaseErrorMessage(error));
@@ -131,7 +134,7 @@ if (document.getElementById('auth-form')) {
         } else {
             try {
                 const userCredential = await auth.signInWithEmailAndPassword(email, password);
-                const userDoc = await db.collection("users").doc(userCredential.user.uid).get();
+                const userDoc = await fetchUserDoc(userCredential.user.uid);
 
                 if (userDoc.exists && userDoc.data().isBanned !== true) {
                     const destination = getUserRedirectPath(userDoc.data());
@@ -143,7 +146,7 @@ if (document.getElementById('auth-form')) {
                 }
             } catch (error) {
                 logManagerError("Sign in error for email: " + email, error);
-                if (error.code === 'auth/network-request-failed' || error.code === 'unavailable') {
+                if (isNetworkError(error)) {
                     showMessage("Network error: Please check your connection or whitelist our domain.");
                 } else {
                     showMessage(getFirebaseErrorMessage(error));
@@ -155,5 +158,4 @@ if (document.getElementById('auth-form')) {
 
     function showMessage(msg) { messageEl.textContent = msg; }
     updateFormView();
-}
 }

@@ -1,8 +1,6 @@
 import { logManagerError, escapeHTML } from './utils.js';
 
 import { auth, db } from './auth.js';
-import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
-import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
 
 export const products = [
     {
@@ -50,18 +48,19 @@ export function calculateCartTotal(cartData, prodMap) {
 
 let cart = {};
 let currentUser = null;
+let isDashboardLoaded = false;
 
-const productGrid = document.getElementById('product-grid');
-const cartButton = document.getElementById('cart-button');
-const cartModal = document.getElementById('cart-modal');
-const closeCartBtn = document.getElementById('close-cart-btn');
-const cartItemsContainer = document.getElementById('cart-items-container');
-const cartItemCountEl = document.getElementById('cart-item-count');
-const cartTotalPriceEl = document.getElementById('cart-total-price');
-const checkoutBtn = document.getElementById('checkout-btn');
-const navCtaContainer = document.getElementById('nav-cta-container');
-const hamburger = document.querySelector('.hamburger');
-const navLinks = document.querySelector('.nav-links');
+let productGrid;
+let cartButton;
+let cartModal;
+let closeCartBtn;
+let cartItemsContainer;
+let cartItemCountEl;
+let cartTotalPriceEl;
+let checkoutBtn;
+let navCtaContainer;
+let hamburger;
+let navLinks;
 
 function renderProducts() {
     productGrid.innerHTML = products.map(product => `
@@ -96,8 +95,8 @@ function renderCart() {
                         <p>$${product.price.toFixed(2)}</p>
                     </div>
                     <div class="cart-item-actions">
-                        <input type="number" value="${escapeHTML(quantity)}" min="1" data-id="${escapeHTML(productId)}" class="item-quantity-input">
-                        <button class="remove-item-btn" data-id="${escapeHTML(productId)}">&#128465;</button>
+                        <input type="number" aria-label="Item Quantity" value="${escapeHTML(quantity)}" min="1" data-id="${escapeHTML(productId)}" class="item-quantity-input">
+                        <button class="remove-item-btn" aria-label="Remove Item" data-id="${escapeHTML(productId)}">&#128465;</button>
                     </div>
                 </div>
             `;
@@ -113,12 +112,14 @@ function updateCartSummary() {
 
     cartItemCountEl.textContent = itemCount;
     cartTotalPriceEl.textContent = `$${totalPrice.toFixed(2)}`;
+    cartButton.setAttribute('aria-label', `Open Cart, ${itemCount} items`);
 }
 
 async function updateCartState(mutationFn, errorMessage) {
     const originalCart = { ...cart };
     try {
         mutationFn();
+        if (JSON.stringify(cart) === JSON.stringify(originalCart)) return;
         renderCart();
         await saveCart();
     } catch (error) {
@@ -130,34 +131,46 @@ async function updateCartState(mutationFn, errorMessage) {
 }
 
 async function handleAddToCart(productId) {
-    await updateCartState(() => {
-        cart[productId] = (cart[productId] || 0) + 1;
-    }, "Error adding item to cart");
+    try {
+        await updateCartState(() => {
+            cart[productId] = (cart[productId] || 0) + 1;
+        }, "Error adding item to cart");
+    } catch (error) {
+        logManagerError("Error in handleAddToCart", error);
+    }
 }
 
 async function handleUpdateQuantity(productId, quantity) {
-    if (quantity <= 0) {
-        return handleRemoveFromCart(productId);
+    try {
+        if (quantity <= 0) {
+            return await handleRemoveFromCart(productId);
+        }
+        await updateCartState(() => {
+            cart[productId] = parseInt(quantity, 10);
+        }, "Error updating item quantity");
+    } catch (error) {
+        logManagerError("Error in handleUpdateQuantity", error);
     }
-    await updateCartState(() => {
-        cart[productId] = parseInt(quantity, 10);
-    }, "Error updating item quantity");
 }
 
 async function handleRemoveFromCart(productId) {
-    await updateCartState(() => {
-        delete cart[productId];
-    }, "Error removing item from cart");
+    try {
+        await updateCartState(() => {
+            delete cart[productId];
+        }, "Error removing item from cart");
+    } catch (error) {
+        logManagerError("Error in handleRemoveFromCart", error);
+    }
 }
 
 async function saveCart() {
     if (currentUser) {
         try {
-            const userCartRef = doc(db, 'carts', currentUser.uid);
-            await setDoc(userCartRef, { items: cart });
+            const userCartRef = db.collection('carts').doc(currentUser.uid);
+            await userCartRef.set({ items: cart });
         } catch (error) {
             logManagerError("Error saving cart to Firestore for uid: " + currentUser.uid, error);
-
+            throw error;
         }
     } else {
         localStorage.setItem('localCart', JSON.stringify(cart));
@@ -173,87 +186,84 @@ function updateUserNav(user) {
 }
 
 function setupEventListeners() {
+    if (hamburger && navLinks) {
+        hamburger.addEventListener('click', () => {
+            hamburger.classList.toggle('active');
+            navLinks.classList.toggle('active');
+        });
+    }
 
-    hamburger.addEventListener('click', () => {
-        hamburger.classList.toggle('active');
-        navLinks.classList.toggle('active');
-    });
+    if (productGrid) {
+        productGrid.addEventListener('click', (e) => {
+            if (e.target.classList.contains('add-to-cart-btn')) {
+                const productId = e.target.dataset.id;
+                handleAddToCart(productId);
+            }
+        });
+    }
 
-    productGrid.addEventListener('click', (e) => {
-        if (e.target.classList.contains('add-to-cart-btn')) {
-            const productId = e.target.dataset.id;
-            handleAddToCart(productId);
-        }
-    });
+    if (cartButton && cartModal && closeCartBtn) {
+        cartButton.addEventListener('click', () => cartModal.style.display = 'block');
+        closeCartBtn.addEventListener('click', () => cartModal.style.display = 'none');
+        window.addEventListener('click', (e) => {
+            if (e.target === cartModal) {
+                cartModal.style.display = 'none';
+            }
+        });
+    }
 
-    cartButton.addEventListener('click', () => cartModal.style.display = 'block');
-    closeCartBtn.addEventListener('click', () => cartModal.style.display = 'none');
-    window.addEventListener('click', (e) => {
-        if (e.target === cartModal) {
-            cartModal.style.display = 'none';
-        }
-    });
+    if (cartItemsContainer) {
+        cartItemsContainer.addEventListener('click', (e) => {
+            if (e.target.classList.contains('remove-item-btn')) {
+                const productId = e.target.dataset.id;
+                handleRemoveFromCart(productId);
+            }
+        });
+        cartItemsContainer.addEventListener('change', (e) => {
+            if (e.target.classList.contains('item-quantity-input')) {
+                const productId = e.target.dataset.id;
+                const quantity = parseInt(e.target.value, 10);
+                handleUpdateQuantity(productId, quantity);
+            }
+        });
+    }
 
-    cartItemsContainer.addEventListener('click', (e) => {
-        if (e.target.classList.contains('remove-item-btn')) {
-            const productId = e.target.dataset.id;
-            handleRemoveFromCart(productId);
-        }
-    });
-    cartItemsContainer.addEventListener('change', (e) => {
-        if (e.target.classList.contains('item-quantity-input')) {
-            const productId = e.target.dataset.id;
-            const quantity = parseInt(e.target.value, 10);
-            handleUpdateQuantity(productId, quantity);
-        }
-    });
-
-    checkoutBtn.addEventListener('click', () => {
-
-        window.location.href = 'checkout.html';
-    });
+    if (checkoutBtn) {
+        checkoutBtn.addEventListener('click', () => {
+            window.location.href = 'checkout.html';
+        });
+    }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
     renderProducts();
     setupEventListeners();
 
-    let currentUid = null;
-    let isDashboardLoaded = false;
-    onAuthStateChanged(auth, async (user) => {
-        if (user && user.uid === currentUid && isDashboardLoaded) return;
-        currentUid = user ? user.uid : null;
-        isDashboardLoaded = true;
-
+    auth.onAuthStateChanged(async (user) => {
         currentUser = user;
         const localCartData = localStorage.getItem('localCart');
         const localCart = localCartData ? JSON.parse(localCartData) : {};
 
         if (user) {
+            if (!isDashboardLoaded) {
+                isDashboardLoaded = true;
             try {
-                const userCartRef = doc(db, 'carts', user.uid);
-                const docSnap = await getDoc(userCartRef);
-                const firestoreCart = docSnap.exists() ? docSnap.data().items : {};
+                const userCartRef = db.collection('carts').doc(user.uid);
+                const docSnap = await userCartRef.get();
+                const firestoreCart = docSnap.exists ? docSnap.data().items : {};
 
                 const mergedCart = { ...firestoreCart };
                 for (const [productId, quantity] of Object.entries(localCart)) {
                     mergedCart[productId] = (mergedCart[productId] || 0) + quantity;
                 }
-
-                cart = mergedCart;
-                await saveCart();
-                localStorage.removeItem('localCart');
-            } catch (error) {
-                logManagerError("Error loading cart during auth state change:", error);
+            } else {
 
                 cart = localCart;
             }
+            }
         } else {
-
+            isDashboardLoaded = false;
             cart = localCart;
         }
 
-        updateUserNav(user);
-        renderCart();
-    });
-});
+document.addEventListener('DOMContentLoaded', initShop);
