@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <!-- 🛡️ Sentinel: Added Content Security Policy for defense-in-depth -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com https://unpkg.com https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.firebase.com;">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>ezManage | My Account</title>
@@ -16,9 +18,11 @@
 
     <link rel="stylesheet" href="./css/style.css">
     <script type="module">
-        import { loadNavbar } from './js/navbar.js';
+        import { logManagerError } from './js/utils.js';
+    import { loadNavbar } from './js/navbar.js';
         import { loadFooter } from './js/footer.js';
-        document.addEventListener('DOMContentLoaded', () => {
+        window.logManagerError = logManagerError;
+    document.addEventListener('DOMContentLoaded', () => {
             loadNavbar();
             loadFooter();
         });
@@ -134,12 +138,12 @@
             <!-- Company Dashboard Entry -->
             <div>
                 <h3 class="font-black text-xs uppercase tracking-widest text-slate-400 mb-4 flex items-center"><i data-lucide="building-2" class="w-4 h-4 mr-2 text-sky-500"></i> Corporate Portal</h3>
-                <div class="bg-gradient-to-r from-sky-950/30 via-slate-900 to-slate-900 rounded-xl p-4 border border-sky-500/30 flex justify-between items-center">
+                <div class="bg-white dark:bg-slate-900 rounded-xl p-4 border border-slate-200 dark:border-slate-800 shadow-sm flex justify-between items-center transition-colors">
                     <div>
-                        <div class="font-bold text-base text-white">Company Dashboard</div>
-                        <div class="text-xs text-slate-400">Multi-store metrics, shift groups & leaderboards</div>
+                        <div class="font-bold text-base text-slate-900 dark:text-white">Company Dashboard</div>
+                        <div class="text-xs text-slate-500 dark:text-slate-400">Multi-store metrics, shift groups & leaderboards</div>
                     </div>
-                    <a href="company.html" class="btn btn-accent text-xs py-2 px-4 font-bold flex items-center gap-1.5 shrink-0 shadow-md">
+                    <a href="company.html" class="btn btn-primary text-xs py-2 px-4 font-bold flex items-center gap-1.5 shrink-0 shadow-md">
                         <i data-lucide="external-link" class="w-3.5 h-3.5"></i> Access
                     </a>
                 </div>
@@ -187,7 +191,7 @@
     </main>
 
     <script type="module">
-        import { auth, db } from '/js/auth.js';
+        import { auth, db, fetchUserDoc } from '/js/auth.js';
         lucide.createIcons();
         
         // Theme init
@@ -205,8 +209,9 @@
                 checkProviders(user);
 
                 try {
+                    const docSnap = await fetchUserDoc(user.uid);
                     const docRef = db.collection("users").doc(user.uid);
-                    const docSnap = await docRef.get();
+                    const docSnap = await fetchUserDoc(user.uid);
                     if (docSnap.exists) {
                         const data = docSnap.data();
                         document.getElementById('acc-username').textContent = data.username || "User";
@@ -222,7 +227,7 @@
                         document.getElementById('acc-membership').textContent = "Free Tier";
                     }
                 } catch(e) {
-                    console.error("Firestore read error", e);
+                    window.logManagerError("Firestore read error", e);
                 }
             } else {
                 window.location.href = 'index.html';
@@ -259,7 +264,7 @@
                 alert("Successfully linked Google account!");
                 checkProviders(auth.currentUser);
             } catch (error) {
-                console.error(error);
+                window.logManagerError(error);
                 alert("Error linking: " + error.message);
             }
         }
@@ -272,7 +277,7 @@
                 alert("Successfully unlinked!");
                 checkProviders(auth.currentUser);
             } catch (error) {
-                console.error(error);
+                window.logManagerError(error);
                 alert("Error unlinking: " + error.message);
             }
         }
