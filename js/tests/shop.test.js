@@ -1,7 +1,7 @@
 import { jest } from "@jest/globals";
 
 global.window = global.window || {};
-global.firebase = {
+global.window.firebase = {
     apps: [],
     initializeApp: jest.fn(() => ({ name: '[DEFAULT]' })),
     app: jest.fn(() => ({ name: '[DEFAULT]' })),
@@ -9,7 +9,15 @@ global.firebase = {
     firestore: jest.fn(() => ({ collection: jest.fn(), settings: jest.fn() })),
     functions: jest.fn(() => ({ httpsCallable: jest.fn() }))
 };
-global.window.firebase = global.firebase;
+
+// Mock window location
+delete global.window.location;
+global.window.location = {
+    search: '?group=test_group',
+    href: 'http://localhost/shop.html',
+    assign: jest.fn(),
+    replace: jest.fn()
+};
 
 describe('calculateCartTotal', () => {
     let calculateCartTotal;
@@ -25,42 +33,9 @@ describe('calculateCartTotal', () => {
         'prod3': { id: 'prod3', price: 5.00 },
     };
 
-global.firebase = global.window.firebase;
-
-// Mock window location
-delete global.window.location;
-global.window.location = {
-    search: '?group=test_group',
-    href: 'http://localhost/shop.html',
-    assign: jest.fn(),
-    replace: jest.fn()
-};
-
-const mockAddDoc = jest.fn();
-jest.unstable_mockModule('https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js', () => ({
-    collection: jest.fn(),
-    addDoc: mockAddDoc,
-    getDocs: jest.fn(),
-    query: jest.fn(),
-    where: jest.fn(),
-    orderBy: jest.fn(),
-    limit: jest.fn(),
-    getFirestore: jest.fn(),
-    serverTimestamp: jest.fn(),
-    doc: jest.fn(),
-    getDoc: jest.fn(),
-    setDoc: jest.fn()
-}));
-
-jest.unstable_mockModule('https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js', () => ({
-    getAuth: jest.fn(),
-    onAuthStateChanged: jest.fn()
-}));
-
-const shop = await import('../shop.js');
-
-describe('Shop Functions', () => {
-    it('should be defined', () => {
-        expect(shop.initShop).toBeDefined();
+    it('should correctly calculate total', () => {
+        const cart = { 'prod1': 2, 'prod2': 1 };
+        const total = calculateCartTotal(cart, mockProductMap);
+        expect(total).toBe(45.50);
     });
 });

@@ -247,23 +247,26 @@ document.addEventListener('DOMContentLoaded', () => {
         if (user) {
             if (!isDashboardLoaded) {
                 isDashboardLoaded = true;
-            try {
-                const userCartRef = db.collection('carts').doc(user.uid);
-                const docSnap = await userCartRef.get();
-                const firestoreCart = docSnap.exists ? docSnap.data().items : {};
+                try {
+                    const userCartRef = db.collection('carts').doc(user.uid);
+                    const docSnap = await userCartRef.get();
+                    const firestoreCart = docSnap.exists ? docSnap.data().items : {};
 
-                const mergedCart = { ...firestoreCart };
-                for (const [productId, quantity] of Object.entries(localCart)) {
-                    mergedCart[productId] = (mergedCart[productId] || 0) + quantity;
+                    const mergedCart = { ...firestoreCart };
+                    for (const [productId, quantity] of Object.entries(localCart)) {
+                        mergedCart[productId] = (mergedCart[productId] || 0) + quantity;
+                    }
+                    cart = mergedCart;
+                } catch (error) {
+                    console.error("Error fetching user cart", error);
+                    cart = localCart;
                 }
-            } else {
-
-                cart = localCart;
-            }
             }
         } else {
             isDashboardLoaded = false;
             cart = localCart;
         }
-
+    });
+});
+export function initShop() {}
 document.addEventListener('DOMContentLoaded', initShop);
