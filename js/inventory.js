@@ -1,7 +1,7 @@
 import { auth, db } from '../firebase.js';
 import { collection, addDoc, updateDoc, deleteDoc, doc, getDoc, onSnapshot, query, where } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
-import { escapeHTML } from './utils.js';
+import { escapeHTML, logManagerError } from './utils.js';
 
 let currentOrgId = null;
 let unsubscribeInventory = null;
@@ -24,15 +24,19 @@ const emptyState = document.getElementById('emptyState');
 // Auth State Change
 onAuthStateChanged(auth, async (user) => {
     if (user) {
-        // Fetch user's orgId
-        const userDoc = await getDoc(doc(db, 'users', user.uid));
-        if (userDoc.exists()) {
-            currentOrgId = userDoc.data().orgId;
-            if (currentOrgId) {
-                loadInventory();
-            } else {
-                console.error("User does not belong to an organization.");
+        try {
+            // Fetch user's orgId
+            const userDoc = await getDoc(doc(db, 'users', user.uid));
+            if (userDoc.exists()) {
+                currentOrgId = userDoc.data().orgId;
+                if (currentOrgId) {
+                    loadInventory();
+                } else {
+                    console.error("User does not belong to an organization.");
+                }
             }
+        } catch (error) {
+            logManagerError("Error fetching user profile", error);
         }
     } else {
         window.location.href = 'sign in beta.html';
@@ -62,11 +66,15 @@ function loadInventory() {
 
         emptyState.classList.add('hidden');
 
+        const fragment = document.createDocumentFragment();
         snapshot.forEach((docSnap) => {
             const data = docSnap.data();
             const id = docSnap.id;
-            renderItemRow(id, data);
+            const row = renderItemRow(id, data);
+            fragment.appendChild(row);
         });
+        inventoryTableBody.appendChild(fragment);
+        if (window.lucide) window.lucide.createIcons();
     }, (error) => {
         console.error("Error fetching inventory:", error);
         loadingSpinner.classList.add('hidden');
@@ -113,10 +121,7 @@ function renderItemRow(id, data) {
     editBtn.dataset.quantity = data.quantity;
     editBtn.dataset.threshold = data.threshold;
 
-    inventoryTableBody.appendChild(row);
-    if (window.lucide) {
-        window.lucide.createIcons();
-    }
+    return row;
 }
 
 // Event Listeners
@@ -141,7 +146,7 @@ inventoryTableBody.addEventListener('click', async (e) => {
             try {
                 await deleteDoc(doc(db, "inventory", id));
             } catch (error) {
-                console.error("Error deleting item: ", error);
+                logManagerError("Error deleting item", error);
                 alert("Failed to delete item.");
             }
         }
@@ -198,7 +203,7 @@ itemForm.addEventListener('submit', async (e) => {
         itemModal.classList.add('hidden');
         itemModal.classList.remove('flex');
     } catch (error) {
-        console.error("Error saving item: ", error);
+        logManagerError("Error saving item", error);
         alert("Failed to save item. Check console for details.");
     }
 });
