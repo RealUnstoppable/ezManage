@@ -1013,10 +1013,9 @@ exports.manageWaste = functions.https.onCall(async (data, context) => {
  * Handles creation, reading, and deletion of recognitions (Kudos / Private Feedback).
  */
 exports.manageRecognitions = functions.https.onCall(async (data, context) => {
-  if (data && typeof data === "object" && "rawRequest" in data && "auth" in data) {
-    context = data;
-    data = data.data;
-  }
+  const adapted = adaptGen2Params(data, context);
+  data = adapted.data;
+  context = adapted.context;
 
   if (!context || !context.auth) {
     throw new HttpsError("unauthenticated", "User must be logged in.");
