@@ -1271,14 +1271,14 @@
                             <textarea id="taskDesc1" class="w-full h-24" placeholder="Task details..."></textarea>
                         </div>
                         <div>
-                            <label for="taskAssignee2" class="block text-sm font-medium mb-1">Assign To</label>
-                            <select id="taskAssignee2" class="w-full" required>
+                            <label for="taskAssignee1" class="block text-sm font-medium mb-1">Assign To</label>
+                            <select id="taskAssignee1" class="w-full" required>
                                 <option value="">Select Employee...</option>
                             </select>
                         </div>
                         <div>
-                            <label for="taskDueDate2" class="block text-sm font-medium mb-1">Due Date</label>
-                            <input type="date" id="taskDueDate2" class="w-full" required>
+                            <label for="taskDueDate1" class="block text-sm font-medium mb-1">Due Date</label>
+                            <input type="date" id="taskDueDate1" class="w-full" required>
                         </div>
                         <button type="submit" class="btn btn-primary w-full disabled:opacity-70 disabled:cursor-not-allowed">Assign Task</button>
                     </form>
@@ -1520,17 +1520,17 @@
                             class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500 resize-none"></textarea>
 
                         <div class="flex flex-col md:flex-row gap-4">
-                            <select id="taskAssignee1" aria-label="Assign To Employee" class="flex-1 bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
+                            <select id="taskAssignee2" aria-label="Assign To Employee" class="flex-1 bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
                                 <option value="" disabled selected>Assign To Employee</option>
                             </select>
-                            <select id="taskPriority"
+                            <select id="taskPriority2" aria-label="Task Priority"
                                 class="flex-1 bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
                                 <option value="Low">Low Priority</option>
                                 <option value="Medium">Medium Priority</option>
                                 <option value="High">High Priority</option>
                                 <option value="Critical">Critical</option>
                             </select>
-                            <input type="date" id="taskDueDate1" class="flex-1 bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500" aria-label="Task Due Date">
+                            <input type="date" id="taskDueDate2" class="flex-1 bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500" aria-label="Task Due Date">
                         </div>
 
                         <div class="flex justify-end gap-3 pt-2">
@@ -2146,19 +2146,19 @@
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                         <div>
-                            <label for="taskTitle" class="block text-sm font-bold mb-2">Task Title</label>
-                            <input type="text" id="taskTitle" class="w-full" placeholder="e.g. Close Registers">
+                            <label for="taskTitleAlt" class="block text-sm font-bold mb-2">Task Title</label>
+                            <input type="text" id="taskTitleAlt" class="w-full" placeholder="e.g. Close Registers">
                         </div>
                         <div>
-                            <label class="block text-sm font-bold mb-2">Assign To</label>
-                            <select id="taskAssignee3" aria-label="Assign To Employee" class="w-full">
+                            <label for="taskAssigneeAlt" class="block text-sm font-bold mb-2">Assign To</label>
+                            <select id="taskAssigneeAlt" class="w-full">
                                 <option value="">Select Employee</option>
                             </select>
                         </div>
                     </div>
 
-                    <label class="block text-sm font-bold mb-2">Description (Optional)</label>
-                    <textarea id="taskDescription3" aria-label="Task Description" class="h-24 mb-6" placeholder="Provide extra details..."></textarea>
+                    <label for="taskDescriptionAlt" class="block text-sm font-bold mb-2">Description (Optional)</label>
+                    <textarea id="taskDescriptionAlt" aria-label="Task Description" class="h-24 mb-6" placeholder="Provide extra details..."></textarea>
 
                     <button id="btnSubmitTaskAlt" onclick="submitTaskAlt()" class="btn btn-accent w-full py-4">Assign Task</button>
                 </div>
@@ -3962,157 +3962,6 @@
 
 
 
-
-        async function submitAssignedTask() {
-            if (!currentUser || !currentUserData || !currentUserData.orgId) {
-                alert("You must be part of an organization to assign tasks.");
-                return;
-            }
-
-            const title = document.getElementById('taskTitle').value.trim();
-            const desc = document.getElementById('taskDesc').value.trim();
-            const assignee = document.getElementById('taskAssignee').value;
-
-            if (!title || !assignee) {
-                alert("Task Title and Assignee are required.");
-                return;
-            }
-
-            const submitBtn = document.querySelector('#createTaskModal .btn-accent');
-            const originalText = submitBtn.innerHTML;
-            submitBtn.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> Assigning...';
-            submitBtn.disabled = true;
-            lucide.createIcons();
-
-            try {
-                await db.collection('assigned_tasks').add({
-                    title: title,
-                    description: desc,
-                    assigneeName: assignee,
-                    status: 'Pending',
-                    createdByUid: currentUser.uid,
-                    createdByName: currentUserData.name || currentUser.email,
-                    orgId: currentUserData.orgId,
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-                });
-
-                document.getElementById('taskTitle').value = '';
-                document.getElementById('taskDesc').value = '';
-                document.getElementById('taskAssignee').value = '';
-                document.getElementById('createTaskModal').classList.add('hidden');
-
-                alert("Task assigned successfully.");
-                fetchAssignedTasks();
-            } catch (error) {
-                console.error("Error assigning task:", error);
-                if (error.code === 'unavailable' || error.code === 'auth/network-request-failed') {
-                    alert("Network error: Could not connect to the server.");
-                } else {
-                    alert("Failed to assign task. " + error.message);
-                }
-            } finally {
-                submitBtn.innerHTML = originalText;
-                submitBtn.disabled = false;
-                lucide.createIcons();
-            }
-        }
-
-
-        let unsubscribeTasks = null;
-        function fetchAssignedTasks() {
-            if (!currentUser || !currentUserData || !currentUserData.orgId) {
-                document.getElementById('tasksContainer').innerHTML = `
-                    <div class="text-center py-16 bg-slate-50 dark:bg-slate-900 rounded-3xl border-2 border-dashed border-slate-200 dark:border-slate-800">
-                        <i data-lucide="users" class="w-12 h-12 text-slate-400 mx-auto mb-4"></i>
-                        <h3 class="text-xl font-bold mb-2">Join or Create a Group</h3>
-                        <p class="text-slate-500">You must be in a Management Group to assign tasks.</p>
-                    </div>`;
-                lucide.createIcons();
-                return;
-            }
-
-            const container = document.getElementById('tasksContainer');
-            container.innerHTML = '<div class="text-center py-8"><i data-lucide="loader-2" class="w-8 h-8 animate-spin mx-auto text-sky-500 mb-4"></i><p class="text-slate-500">Loading tasks...</p></div>';
-            lucide.createIcons();
-
-            if (unsubscribeTasks) unsubscribeTasks();
-
-            unsubscribeTasks = db.collection('assigned_tasks')
-                .where('orgId', '==', currentUserData.orgId)
-                .onSnapshot(snap => {
-                    container.innerHTML = '';
-                    if (snap.empty) {
-                        container.innerHTML = `
-                            <div class="text-center py-16 bg-slate-50 dark:bg-slate-900 rounded-3xl border-2 border-dashed border-slate-200 dark:border-slate-800">
-                                <i data-lucide="check-circle-2" class="w-12 h-12 text-emerald-400 mx-auto mb-4"></i>
-                                <h3 class="text-xl font-bold mb-2">All Caught Up!</h3>
-                                <p class="text-slate-500">There are no active assigned tasks.</p>
-                            </div>`;
-                        lucide.createIcons();
-                        return;
-                    }
-
-                    let tasks = [];
-                    snap.forEach(doc => tasks.push({ id: doc.id, ...doc.data() }));
-
-                    tasks.sort((a, b) => {
-                        const aTime = a.createdAt ? a.createdAt.toMillis() : 0;
-                        const bTime = b.createdAt ? b.createdAt.toMillis() : 0;
-                        return bTime - aTime;
-                    });
-
-                    container.innerHTML = tasks.map(task => {
-                        const isCompleted = task.status === 'Completed';
-                        const statusColor = isCompleted ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400' : 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400';
-                        const dateStr = task.createdAt ? new Date(task.createdAt.toMillis()).toLocaleString() : 'Just now';
-
-                        return `
-                            <div class="card p-6 border-l-4 ${isCompleted ? 'border-l-emerald-500 opacity-70' : 'border-l-amber-500'}">
-                                <div class="flex flex-col md:flex-row justify-between gap-4 mb-4">
-                                    <div>
-                                        <h3 class="text-lg font-bold ${isCompleted ? 'line-through text-slate-500' : ''}">${escapeHTML(task.title)}</h3>
-                                        <p class="text-sm text-slate-500">Assigned to <span class="font-bold">${escapeHTML(task.assigneeName)}</span> by ${escapeHTML(task.createdByName)} • ${dateStr}</p>
-                                    </div>
-                                    <div class="flex gap-2 items-start">
-                                        <span class="px-3 py-1 rounded-full text-xs font-bold ${statusColor}">${escapeHTML(task.status)}</span>
-                                        <button onclick="updateAssignedTaskStatus('${task.id}', '${isCompleted ? 'Pending' : 'Completed'}')" class="btn btn-sm btn-outline ${isCompleted ? '' : 'btn-success'}">${isCompleted ? 'Mark Pending' : 'Mark Complete'}</button>
-                                        <button aria-label="Delete Task" onclick="deleteAssignedTask('${task.id}')" class="btn btn-sm btn-outline text-red-500 border-red-200 hover:bg-red-50"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
-                                    </div>
-                                </div>
-                                <p class="text-slate-700 dark:text-slate-300 whitespace-pre-wrap ${isCompleted ? 'line-through text-slate-500' : ''}">${escapeHTML(task.description)}</p>
-                            </div>
-                        `;
-                    }).join('');
-                    lucide.createIcons();
-                }, err => {
-                    console.error("Error fetching tasks:", err);
-                    container.innerHTML = `<div class="text-red-500 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl text-center">Failed to load tasks: ${window.escapeHTML ? window.escapeHTML(err.message) : err.message}</div>`;
-                });
-        }
-
-
-        async function updateAssignedTaskStatus(taskId, newStatus) {
-            try {
-                await db.collection('assigned_tasks').doc(taskId).update({
-                    status: newStatus,
-                    updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
-                    orgId: currentUserData.orgId
-                });
-            } catch (error) {
-                console.error("Manager Troubleshooting: Error updating task status:", error);
-                alert("Failed to update status. " + error.message);
-            }
-        }
-
-        async function deleteAssignedTask(taskId) {
-            if (!confirm("Are you sure you want to delete this task?")) return;
-            try {
-                await db.collection('assigned_tasks').doc(taskId).delete();
-            } catch (error) {
-                console.error("Manager Troubleshooting: Error deleting task:", error);
-                alert("Failed to delete task. " + error.message);
-            }
         }
 
         async function submitMaintenanceTicket() {
@@ -4764,7 +4613,12 @@
 
         function populateScheduleDropdown() {
             const select = document.getElementById('shiftEmpName');
-            const taskSelect = document.getElementById('taskAssignee');
+            const taskSelects = [
+                document.getElementById('taskAssignee1'),
+                document.getElementById('taskAssignee2'),
+                document.getElementById('taskAssigneeAlt')
+            ].filter(Boolean);
+
             if (!currentUserData) return;
 
             const queryOrgId = currentUserData.orgId || currentUser.uid;
@@ -4774,7 +4628,7 @@
                 .where('status', '==', 'Active')
                 .get()
                 .then(snap => {
-                    select.innerHTML = '<option value="" disabled selected>Select Employee</option>';
+                    if (select) select.innerHTML = '<option value="" disabled selected>Select Employee</option>';
                     let employees = [];
                     snap.forEach(doc => {
                         let data = doc.data();
@@ -4783,16 +4637,12 @@
                     });
                     employees.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
 
-                    const taskSelect = document.getElementById('taskAssignee');
-                    if (taskSelect) {
+                    taskSelects.forEach(taskSelect => {
                         taskSelect.innerHTML = '<option value="">Select Employee...</option>';
-                    }
+                    });
 
                     const selectFragment = document.createDocumentFragment();
-                    let taskSelectFragment = null;
-                    if (taskSelect) {
-                        taskSelectFragment = document.createDocumentFragment();
-                    }
+                    const taskSelectFragment = document.createDocumentFragment();
 
                     employees.forEach(emp => {
                         const opt = document.createElement('option');
@@ -4801,18 +4651,17 @@
                         opt.dataset.role = emp.role;
                         selectFragment.appendChild(opt);
 
-                        if (taskSelect && taskSelectFragment) {
-                            const taskOpt = document.createElement('option');
-                            taskOpt.value = emp.docId; // Use docId for tasks reference
-                            taskOpt.textContent = emp.name;
-                            taskSelectFragment.appendChild(taskOpt);
-                        }
+                        const taskOpt = document.createElement('option');
+                        taskOpt.value = emp.docId; // Use docId for tasks reference
+                        taskOpt.textContent = `${emp.name} (${emp.role})`;
+                        taskSelectFragment.appendChild(taskOpt);
                     });
 
-                    select.appendChild(selectFragment);
-                    if (taskSelect && taskSelectFragment) {
-                        taskSelect.appendChild(taskSelectFragment);
-                    }
+                    if (select) select.appendChild(selectFragment);
+
+                    taskSelects.forEach(taskSelect => {
+                        taskSelect.appendChild(taskSelectFragment.cloneNode(true));
+                    });
                 })
                 .catch(err => console.error("Manager Troubleshooting: Error populating dropdown:", err));
         }
@@ -6054,10 +5903,10 @@ async function submitWasteLog() {
         async function createTask() {
             if (!currentUser || !currentUserData) return;
 
-            const title = document.getElementById('taskTitle').value;
-            const desc = document.getElementById('taskDesc').value;
-            const assigneeId = document.getElementById('taskAssignee').value;
-            const dueDate = document.getElementById('taskDueDate').value;
+            const title = document.getElementById('taskTitle1').value;
+            const desc = document.getElementById('taskDesc1').value;
+            const assigneeId = document.getElementById('taskAssignee1').value;
+            const dueDate = document.getElementById('taskDueDate1').value;
 
             if (!title || !assigneeId || !dueDate) {
                 showToast("Please fill all required fields.");
@@ -6354,8 +6203,13 @@ async function submitWasteLog() {
         }
 
         function populateTaskAssigneeDropdown() {
-            const select = document.getElementById('taskAssignee');
-            if (!select || !currentUserData) return;
+            const selects = [
+                document.getElementById('taskAssignee1'),
+                document.getElementById('taskAssignee2'),
+                document.getElementById('taskAssigneeAlt')
+            ].filter(Boolean);
+
+            if (selects.length === 0 || !currentUserData) return;
 
             const queryOrgId = currentUserData.orgId || currentUser.uid;
 
@@ -6364,12 +6218,14 @@ async function submitWasteLog() {
                 .where('status', '==', 'Active')
                 .get()
                 .then(snap => {
-                    select.innerHTML = '<option value="" disabled selected>Assign To Employee</option>';
+                    selects.forEach(select => {
+                        select.innerHTML = '<option value="" disabled selected>Assign To Employee</option>';
+                    });
+
                     let employees = [];
                     snap.forEach(doc => employees.push({id: doc.id, ...doc.data()}));
                     employees.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
 
-                    // ⚡ Bolt Optimization: Replace sequential appendChild loop with batched insertions using a DocumentFragment
                     const assignFragment = document.createDocumentFragment();
                     employees.forEach(emp => {
                         const opt = document.createElement('option');
@@ -6377,9 +6233,10 @@ async function submitWasteLog() {
                         opt.textContent = `${emp.name} (${emp.role})`;
                         assignFragment.appendChild(opt);
                     });
-                    select.appendChild(assignFragment);
 
-                    select.appendChild(selectFragment);
+                    selects.forEach(select => {
+                        select.appendChild(assignFragment.cloneNode(true));
+                    });
 
                     const filterSelect = document.getElementById('taskFilterAssignee');
                     filterSelect.innerHTML = '<option value="All">All Assignees</option>';
@@ -6402,11 +6259,11 @@ async function submitWasteLog() {
                 return;
             }
 
-            const title = document.getElementById('taskTitle').value.trim();
-            const desc = document.getElementById('taskDesc').value.trim();
-            const assignee = document.getElementById('taskAssignee').value;
-            const priority = document.getElementById('taskPriority').value;
-            const dueDate = document.getElementById('taskDueDate').value;
+            const title = document.getElementById('taskTitle2').value.trim();
+            const desc = document.getElementById('taskDesc2').value.trim();
+            const assignee = document.getElementById('taskAssignee2').value;
+            const priority = document.getElementById('taskPriority2').value;
+            const dueDate = document.getElementById('taskDueDate2').value;
 
             if (!title || !assignee) {
                 alert("Please provide a title and assign the task to an employee.");
@@ -6434,11 +6291,11 @@ async function submitWasteLog() {
                     updatedAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
 
-                document.getElementById('taskTitle').value = '';
-                document.getElementById('taskDesc').value = '';
-                document.getElementById('taskAssignee').value = '';
-                document.getElementById('taskPriority').value = 'Low';
-                document.getElementById('taskDueDate').value = '';
+                document.getElementById('taskTitle2').value = '';
+                document.getElementById('taskDesc2').value = '';
+                document.getElementById('taskAssignee2').value = '';
+                document.getElementById('taskPriority2').value = 'Low';
+                document.getElementById('taskDueDate2').value = '';
                 document.getElementById('assignTaskModal').classList.add('hidden');
 
                 alert("Task assigned successfully.");
