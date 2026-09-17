@@ -15,9 +15,13 @@ const firebaseConfig = {
 // Use experimentalForceLongPolling for fallback on CORS/network issues
 if (!window.firebase.apps.length) {
     window.firebase.initializeApp(firebaseConfig);
-    window.firebase.firestore().settings({
-        experimentalForceLongPolling: true
-    });
+    try {
+        window.firebase.firestore().settings({
+            experimentalForceLongPolling: true
+        });
+    } catch (e) {
+        console.warn("Firestore settings already configured or errored: ", e);
+    }
 }
 
 // INSTRUCTIONS FOR AUTHORIZED DOMAINS:
@@ -26,7 +30,7 @@ if (!window.firebase.apps.length) {
 // 2. Click "Add domain" and enter `ezmanage.realunstoppable.store`
 // Note: Firestore rules are handled via firestore.rules file deployment.
 
-const auth = window.firebase.auth();
+const auth = typeof window !== "undefined" && window.firebase ? window.firebase.auth() : null;
 
 // Use experimentalForceLongPolling for fallback on CORS/network issues
 try {

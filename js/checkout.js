@@ -18,7 +18,7 @@ function renderCheckoutPage() {
     const tax = subtotal * 0.07;
     const total = subtotal + tax;
 
-    checkoutContainer.innerHTML = `
+    const htmlStr = `
         <h1>Checkout</h1>
         <div class="checkout-layout">
             <div class="checkout-form-container">
@@ -66,6 +66,7 @@ function renderCheckoutPage() {
             </div>
         </div>
     `;
+    checkoutContainer.innerHTML = window.DOMPurify ? window.DOMPurify.sanitize(htmlStr) : htmlStr;
 
     document.getElementById('checkout-form').addEventListener('submit', handlePlaceOrder);
 }
