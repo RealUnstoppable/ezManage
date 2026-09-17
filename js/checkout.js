@@ -5,6 +5,7 @@ import { products, productMap, calculateCartTotal } from './shop.js';
 
 let currentUser = null;
 let userCart = {};
+let isCheckoutLoaded = false;
 
 const checkoutContainer = document.getElementById('checkout-container');
 
@@ -143,6 +144,8 @@ async function handlePlaceOrder(e) {
 auth.onAuthStateChanged(async (user) => {
     if (user) {
         currentUser = user;
+        if (!isCheckoutLoaded) {
+            isCheckoutLoaded = true;
         try {
             const userCartRef = db.collection('carts').doc(user.uid);
             const docSnap = await userCartRef.get();
@@ -152,8 +155,10 @@ auth.onAuthStateChanged(async (user) => {
 
             userCart = {};
         }
+        }
         renderCheckoutPage();
     } else {
+        isCheckoutLoaded = false;
         window.location.replace('/sign in beta.html');
     }
 });
