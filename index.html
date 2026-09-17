@@ -2962,6 +2962,8 @@
             }
         }
 
+        window.navTo = navTo;
+        window.handleNavAccountClick = handleNavAccountClick;
         function handleNavAccountClick() {
             if (isInitializingAuth) return;
             navTo(currentUser ? 'profile' : 'auth');
