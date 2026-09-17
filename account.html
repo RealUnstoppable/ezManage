@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <!-- 🛡️ Sentinel: Added Content Security Policy for defense-in-depth -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com https://unpkg.com https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.firebase.com;">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>ezManage | My Account</title>
@@ -189,7 +191,7 @@
     </main>
 
     <script type="module">
-        import { auth, db } from '/js/auth.js';
+        import { auth, db, fetchUserDoc } from '/js/auth.js';
         lucide.createIcons();
         
         // Theme init
@@ -207,8 +209,9 @@
                 checkProviders(user);
 
                 try {
+                    const docSnap = await fetchUserDoc(user.uid);
                     const docRef = db.collection("users").doc(user.uid);
-                    const docSnap = await docRef.get();
+                    const docSnap = await fetchUserDoc(user.uid);
                     if (docSnap.exists) {
                         const data = docSnap.data();
                         document.getElementById('acc-username').textContent = data.username || "User";

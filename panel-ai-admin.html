@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <!-- 🛡️ Sentinel: Added Content Security Policy for defense-in-depth -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com https://unpkg.com https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.firebase.com;">
   <link rel="stylesheet" href="./css/style.css">
   <script type="module">
     import { escapeHTML, logManagerError } from './js/utils.js';
@@ -217,7 +219,8 @@
 </div>
 
 
-<script>
+<script src="js/firebase-config.js"></script>
+    <script>
     function parseNum(val) {
         if (!val) return 0;
         const parsed = parseFloat(val.toString().replace(/[^0-9.]/g, ""));
@@ -227,8 +230,8 @@
     const firebaseConfig = window.ezManageFirebaseConfig;
         const app = !window.firebase.apps.length ? window.firebase.initializeApp(firebaseConfig) : window.firebase.app();
     const auth = firebase.auth();
-    const db   = firebase.firestore();
-    db.settings({ experimentalForceLongPolling: true });
+    firebase.firestore().settings({ experimentalForceLongPolling: true });
+        const db = firebase.firestore();
 
     const ADMIN_EMAIL = 'catalinandrian1@gmail.com';
 

@@ -2,6 +2,8 @@
 <html lang="en">
 
 <head>
+    <!-- 🛡️ Sentinel: Added Content Security Policy for defense-in-depth -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com https://unpkg.com https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.firebase.com;">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>ezManage | Corporate Portal</title>
@@ -10,6 +12,7 @@
     <link rel="apple-touch-icon" href="ManagerPro.jpg">
 
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="js/firebase-config.js"></script>
     <script>
     </script>
     <script type="module">
@@ -773,8 +776,8 @@
         const firebaseConfig = window.ezManageFirebaseConfig;
         const app = !window.firebase.apps.length ? window.firebase.initializeApp(firebaseConfig) : window.firebase.app();
         const auth = firebase.auth();
+        firebase.firestore().settings({ experimentalForceLongPolling: true });
         const db = firebase.firestore();
-        db.settings({ experimentalForceLongPolling: true });
 
         
 
@@ -1166,7 +1169,7 @@
                     <span class="font-bold text-sm">${escapeHTML(role.email)}</span>
                     <div class="flex items-center gap-3">
                         <span class="text-xs uppercase tracking-widest font-black text-slate-400">${escapeHTML(role.priority)}</span>
-                        <button onclick="removeOnboardingRole(${i})" aria-label="Remove role" class="text-red-400 hover:text-red-500"><i data-lucide="x" class="w-4 h-4"></i></button>
+                        <button data-action="removeOnboardingRole" data-index="${i}" aria-label="Remove role" class="text-red-400 hover:text-red-500"><i data-lucide="x" class="w-4 h-4"></i></button>
                     </div>
                 </div>
             `).join('');
@@ -1434,7 +1437,7 @@
                 snap.forEach(doc => {
                     const d = doc.data();
                     const isOwner = doc.id === currentUser.uid;
-                    const displayName = d.name || d.email.split('@')[0];
+                    const displayName = escapeHTML(d.name || d.email.split('@')[0]);
                     const color = getManagerColor(displayName);
 
                     // 1. Manager Directory
@@ -1712,7 +1715,7 @@
                                 <td class="p-3 font-medium">${escapeHTML(data.email || 'Unknown')}</td>
                                 <td class="p-3">${escapeHTML(data.role || 'Manager')}</td>
                                 <td class="p-3 text-right">
-                                    <button onclick="removeManager('${escapeHTML(doc.id)}')" aria-label="Remove Manager" class="btn btn-outline btn-sm text-red-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                                    <button data-action="removeManager" data-id="${escapeHTML(doc.id)}" aria-label="Remove Manager" class="btn btn-outline btn-sm text-red-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
                                 </td>
                             </tr>
                         `;
@@ -1735,6 +1738,12 @@
                     const email = document.getElementById('newManagerEmail').value.trim();
                     if (!email) return;
 
+                    const btn = form.querySelector('button[type="submit"]');
+                    const originalBtnContent = btn.innerHTML;
+                    btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 mr-2 animate-spin inline-block"></i> Adding...`;
+                    btn.disabled = true;
+                    if (window.lucide) window.lucide.createIcons();
+
                     try {
                         const newUid = db.collection('users').doc().id;
                         await db.collection('users').doc(newUid).set({
@@ -1747,8 +1756,29 @@
                         window.fetchGlobalMetrics();
                     } catch(err) {
                         alert("Error adding manager: " + err.message);
+                    } finally {
+                        btn.innerHTML = originalBtnContent;
+                        btn.disabled = false;
+                        if (window.lucide) window.lucide.createIcons();
                     }
                 });
+            }
+        });
+
+
+        document.addEventListener('click', (e) => {
+            const btn = e.target.closest('[data-action]');
+            if (!btn) return;
+            const action = btn.dataset.action;
+            const id = btn.dataset.id;
+            const index = btn.dataset.index;
+
+            if (action === 'removeOnboardingRole') {
+                removeOnboardingRole(parseInt(index, 10));
+            } else if (action === 'removeManager') {
+                removeManager(id);
+            } else if (action === 'approveRequest') {
+                approveRequest(id);
             }
         });
 
