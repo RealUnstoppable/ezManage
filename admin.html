@@ -2,9 +2,11 @@
 <html lang="en">
 
 <head>
+    <!-- 🛡️ Sentinel: Added Content Security Policy for defense-in-depth -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com https://unpkg.com https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.firebase.com;">
   <script type="module" src="./js/theme-loader.js"></script>
   <script type="module">
-    import { escapeHTML } from './js/utils.js';
+    import { escapeHTML, logManagerError } from './js/utils.js';
     import { loadNavbar } from './js/navbar.js';
     import { loadFooter } from './js/footer.js';
     document.addEventListener('DOMContentLoaded', () => {
@@ -12,6 +14,7 @@
         loadFooter();
     });
     window.escapeHTML = escapeHTML;
+    window.logManagerError = logManagerError;
   </script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -549,14 +552,14 @@
   </div>
 
   <script type="module">
-    import { auth, db } from '/js/auth.js';
+    import { auth, db, fetchUserDoc } from '/js/auth.js';
 
     let performanceChart;
 
     if (auth && auth.onAuthStateChanged) {
       auth.onAuthStateChanged(async (user) => {
         if (user) {
-          const userDoc = await db.collection("users").doc(user.uid).get();
+          const userDoc = await fetchUserDoc(user.uid);
 
           if (userDoc.exists && userDoc.data().isAdmin) {
             document.body.style.display = 'flex';
@@ -606,28 +609,28 @@ function initializeAdminPage(adminUser) {
         if (usersResult.status === 'fulfilled') {
           users = usersResult.value.docs.map(d => ({ id: d.id, ...d.data() }));
         } else {
-          console.error("Error fetching users:", usersResult.reason);
+          window.logManagerError("Error fetching users:", usersResult.reason);
         }
 
         let carts = [];
         if (cartsResult.status === 'fulfilled') {
           carts = cartsResult.value.docs.map(d => ({ id: d.id, ...d.data() }));
         } else {
-          console.error("Error fetching carts:", cartsResult.reason);
+          window.logManagerError("Error fetching carts:", cartsResult.reason);
         }
 
         let orders = [];
         if (ordersResult.status === 'fulfilled') {
           orders = ordersResult.value.docs.map(d => d.data());
         } else {
-          console.error("Error fetching orders:", ordersResult.reason);
+          window.logManagerError("Error fetching orders:", ordersResult.reason);
         }
 
         let subscribers = [];
         if (subscribersResult.status === 'fulfilled') {
           subscribers = subscribersResult.value.docs.map(d => d.data());
         } else {
-          console.error("Error fetching newsletter:", subscribersResult.reason);
+          window.logManagerError("Error fetching newsletter:", subscribersResult.reason);
         }
 
         let bookings = [];
@@ -635,14 +638,14 @@ function initializeAdminPage(adminUser) {
           bookings = bookingsResult.value.docs.map(d => ({ id: d.id, ...d.data() }));
           bookings.sort((a, b) => new Date(b.appointmentDate) - new Date(a.appointmentDate));
         } else {
-          console.error("Error fetching bookings:", bookingsResult.reason);
+          window.logManagerError("Error fetching bookings:", bookingsResult.reason);
         }
 
         let quotes = [];
         if (quotesResult.status === 'fulfilled') {
           quotes = quotesResult.value.docs.map(d => ({ id: d.id, ...d.data() }));
         } else {
-          console.error("Error fetching quotes:", quotesResult.reason);
+          window.logManagerError("Error fetching quotes:", quotesResult.reason);
         }
 
         // Core Calculations
@@ -672,13 +675,13 @@ function initializeAdminPage(adminUser) {
           document.getElementById('download-count-infosheet').textContent = statsResult.value.data().infoSheet || 0;
         } else {
           if (statsResult.status === 'rejected') {
-            console.error("Error loading stats:", statsResult.reason);
+            window.logManagerError("Error loading stats:", statsResult.reason);
           }
           document.getElementById('download-count-infosheet').textContent = "N/A";
         }
 
       } catch (error) {
-        console.error("Error loading admin data:", error);
+        window.logManagerError("Error loading admin data:", error);
       }
     }
 
@@ -869,7 +872,7 @@ function initializeAdminPage(adminUser) {
             e.target.textContent = originalBtnText;
             e.target.classList.toggle('btn-ban');
             e.target.classList.toggle('btn-unban');
-            console.error(`Manager Troubleshooting: Action Failed for User Ban Toggle (ID: ${userId}) - `, err);
+            window.logManagerError(`Action Failed for User Ban Toggle (ID: ${userId}) - `, err);
             alert('Action failed, please try again.');
           }
         }
@@ -896,7 +899,7 @@ function initializeAdminPage(adminUser) {
             // Revert UI on failure
             statusCell.innerHTML = originalStatusHTML;
             actionCell.innerHTML = originalActionHTML;
-            console.error(`Manager Troubleshooting: Action Failed for Feature Request Complete (ID: ${reqId}) - `, err);
+            window.logManagerError(`Action Failed for Feature Request Complete (ID: ${reqId}) - `, err);
             alert('Action failed, please try again.');
           }
         }
@@ -935,7 +938,7 @@ function initializeAdminPage(adminUser) {
               row.cells[4].innerHTML = originalStatusHTML;
               row.cells[5].innerHTML = originalActionHTML;
           }
-          console.error(`Manager Troubleshooting: Action Failed for Bookings Action (${action}) on ID: ${id} - `, err);
+          window.logManagerError(`Action Failed for Bookings Action (${action}) on ID: ${id} - `, err);
           alert('Action failed, please try again.');
         }
       });
@@ -968,7 +971,7 @@ function initializeAdminPage(adminUser) {
             });
           }
         } catch (err) {
-          console.error(`Manager Troubleshooting: Action Failed for Quotes Action (${action}) on ID: ${id} - `, err);
+          window.logManagerError(`Action Failed for Quotes Action (${action}) on ID: ${id} - `, err);
           alert('Action failed, please try again.');
         }
       });

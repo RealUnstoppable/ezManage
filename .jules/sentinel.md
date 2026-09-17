@@ -122,3 +122,7 @@
 **Vulnerability:** DOM-based Cross-Site Scripting (XSS) vulnerability was found where `error.message` was unsafely interpolated into the DOM using `innerHTML` template literals.
 **Learning:** Even though `escapeHTML` was widely used for other user inputs, error messages (which can contain arbitrary strings reflecting user input from backend responses) were overlooked.
 **Prevention:** Always apply the `escapeHTML` utility to dynamically generated error messages before inserting them into the DOM using `innerHTML`.
+## 2025-02-21 - Unescaped Promises Error Messages XSS in index.html Fallbacks
+**Vulnerability:** Error messages caught from promises (`err.message` and `error.message`) were interpolated directly into `innerHTML` strings in index.html (e.g. `Failed to load tasks: ${err.message}`).
+**Learning:** Promise errors from external calls or user interactions might contain attacker-controlled inputs if the error source responds with user data. Directly interpolating these unescaped errors into `innerHTML` creates a DOM-based XSS vulnerability. Also when escaping, you have to be careful with script scopes and use `window.escapeHTML` with a fallback to avoid a ReferenceError crashing the client thread.
+**Prevention:** Always use a utility function like `escapeHTML()` to sanitize dynamic error messages before rendering them in the DOM via `innerHTML` or similar sinks. Use a fallback check (`window.escapeHTML ? window.escapeHTML(msg) : msg`) if the utility function isn't guaranteed to be loaded in scope.
