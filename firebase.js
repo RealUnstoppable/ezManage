@@ -15,9 +15,13 @@ const firebaseConfig = {
 // Use experimentalForceLongPolling for fallback on CORS/network issues
 if (!window.firebase.apps.length) {
     window.firebase.initializeApp(firebaseConfig);
-    window.firebase.firestore().settings({
-        experimentalForceLongPolling: true
-    });
+    try {
+        window.firebase.firestore().settings({
+            experimentalForceLongPolling: true
+        });
+    } catch (e) {
+        console.warn("Firestore settings already configured or errored: ", e);
+    }
 }
 
 // INSTRUCTIONS FOR AUTHORIZED DOMAINS:
