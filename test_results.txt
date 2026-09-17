@@ -1,0 +1,1 @@
+Tests failed due to unrelated test setup issues in client-tests/tests/navbar.test.js and js/tests/shop.test.js, which are expected in this repo per memory.

@@ -1,9 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <!-- 🛡️ Sentinel: Added Content Security Policy for defense-in-depth -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com https://unpkg.com https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.firebase.com;">
   <link rel="stylesheet" href="./css/style.css">
   <script type="module">
-    import { escapeHTML } from './js/utils.js';
+    import { escapeHTML, logManagerError } from './js/utils.js';
     import { loadNavbar } from './js/navbar.js';
     import { loadFooter } from './js/footer.js';
     document.addEventListener('DOMContentLoaded', () => {
@@ -11,6 +13,7 @@
         loadFooter();
     });
     window.escapeHTML = escapeHTML;
+    window.logManagerError = logManagerError;
   </script>
 
     <meta charset="UTF-8">
@@ -131,8 +134,8 @@
     <div style="font-size:2.5rem; margin-bottom:4px;">🔐</div>
     <h1>Admin Intelligence Panel</h1>
     <p>Restricted access — sign in with your admin account.</p>
-    <input type="email" id="gEmail" placeholder="Email" autocomplete="email">
-    <input type="password" id="gPass" placeholder="Password" style="margin-top:4px;" autocomplete="current-password">
+    <input type="email" id="gEmail" placeholder="Email" autocomplete="email" aria-label="Email">
+    <input type="password" id="gPass" placeholder="Password" style="margin-top:4px;" autocomplete="current-password" aria-label="Password">
     <button onclick="gateSignIn()">Sign In</button>
     <p class="err" id="gateErr"></p>
 </div>
@@ -240,7 +243,7 @@
         err.textContent = '';
         auth.signInWithEmailAndPassword(email, pass)
             .catch(e => {
-                console.error("Manager Troubleshooting: Error during admin sign in", e);
+                window.logManagerError("Error during admin sign in", e);
                 err.textContent = e.message;
             });
     }
@@ -440,7 +443,7 @@
         document.getElementById('dashboard').style.display = 'block';
         lucide.createIcons();
         } catch (error) {
-            console.error("Manager Troubleshooting: Error loading admin dashboard", error);
+            window.logManagerError("Error loading admin dashboard", error);
             document.getElementById('loadingSpinner').innerHTML = '<p style="color:var(--danger);">Failed to load dashboard. Please try again.</p>';
         }
     }

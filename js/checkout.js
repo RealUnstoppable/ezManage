@@ -5,6 +5,7 @@ import { products, productMap, calculateCartTotal } from './shop.js';
 
 let currentUser = null;
 let userCart = {};
+let isCheckoutLoaded = false;
 
 const checkoutContainer = document.getElementById('checkout-container');
 
@@ -18,7 +19,7 @@ function renderCheckoutPage() {
     const tax = subtotal * 0.07;
     const total = subtotal + tax;
 
-    checkoutContainer.innerHTML = `
+    const htmlStr = `
         <h1>Checkout</h1>
         <div class="checkout-layout">
             <div class="checkout-form-container">
@@ -66,6 +67,7 @@ function renderCheckoutPage() {
             </div>
         </div>
     `;
+    checkoutContainer.innerHTML = window.DOMPurify ? window.DOMPurify.sanitize(htmlStr) : htmlStr;
 
     document.getElementById('checkout-form').addEventListener('submit', handlePlaceOrder);
 }
@@ -142,6 +144,8 @@ async function handlePlaceOrder(e) {
 auth.onAuthStateChanged(async (user) => {
     if (user) {
         currentUser = user;
+        if (!isCheckoutLoaded) {
+            isCheckoutLoaded = true;
         try {
             const userCartRef = db.collection('carts').doc(user.uid);
             const docSnap = await userCartRef.get();
@@ -151,8 +155,10 @@ auth.onAuthStateChanged(async (user) => {
 
             userCart = {};
         }
+        }
         renderCheckoutPage();
     } else {
+        isCheckoutLoaded = false;
         window.location.replace('/sign in beta.html');
     }
 });
