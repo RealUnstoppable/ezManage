@@ -13,27 +13,35 @@ const mockFirebase = {
 global.window.firebase = mockFirebase;
 global.firebase = mockFirebase;
 
+const mockGet = jest.fn().mockResolvedValue({
+  exists: true,
+  data: () => ({ isAdmin: false })
+});
+
 jest.unstable_mockModule('../../js/auth.js', () => ({
   auth: { onAuthStateChanged: jest.fn() },
   db: { collection: jest.fn(() => ({ doc: jest.fn(() => ({ get: jest.fn() })) })) },
-  getUserRedirectPath: (userData) => userData && userData.isAdmin ? 'admin.html' : 'index.html'
+  getUserRedirectPath: (userData) => userData && userData.isAdmin ? 'admin.html' : 'index.html',
+  fetchUserDoc: jest.fn(() => Promise.resolve({ exists: true, data: () => ({ isAdmin: true }) }))
 }));
 
 const mockOnAuthStateChanged = jest.fn();
 jest.unstable_mockModule('https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js', () => ({
     onAuthStateChanged: mockOnAuthStateChanged
-}));
+}), { virtual: true });
 
 const mockGetDoc = jest.fn();
 jest.unstable_mockModule('https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js', () => ({
     getDoc: mockGetDoc,
     doc: jest.fn()
-}));
+}), { virtual: true });
 
 const navbar = await import('../../js/navbar.js');
 const loadNavbar = navbar.loadNavbar;
 
 describe('loadNavbar', () => {
+  let mockGet;
+
   beforeEach(() => {
     document.body.innerHTML = '<div class="main-header"></div>';
     jest.clearAllMocks();
