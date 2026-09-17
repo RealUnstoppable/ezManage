@@ -60,3 +60,6 @@
 ## 2026-10-27 - [DRY Refactoring and Error Handling]
 **Learning:** Repetitive validation logic (like throwing HttpsError for missing fields) clutters Cloud Functions and increases maintenance surface area. Furthermore, unhandled Promise rejections inside async loops (like webhooks) can cause silent failures.
 **Action:** Extract repeated validation logic into shared utility functions, and ensure all critical asynchronous workflows (especially webhooks parsing external payloads) are wrapped in try/catch blocks with proper logging.
+## 2024-05-18 - Firebase Initialization and Firestore Rules Fix
+**Learning:** The window.ezManageFirebaseConfig parameter is required to explicitly set proper credentials mapping per domain via Firebase configurations natively without crashing Node compatibility.
+**Action:** When updating firestore rules, make sure to explicitly include accurate string matching when repairing stripped blocks instead of global regex replace to avoid unintended deletions of existing rules.

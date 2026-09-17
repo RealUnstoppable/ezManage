@@ -1,6 +1,6 @@
 const getEnv = (key, fallback) => typeof process !== 'undefined' && process.env && process.env[key] ? process.env[key] : fallback;
 
-const firebaseConfig = {
+const firebaseConfig = typeof window !== 'undefined' && window.ezManageFirebaseConfig ? window.ezManageFirebaseConfig : {
     apiKey: getEnv('REACT_APP_FIREBASE_API_KEY', "AIzaSyBgrI9HwJPSc5b4pu2Egsv4DE7shNwptSw"),
     authDomain: getEnv('REACT_APP_FIREBASE_AUTH_DOMAIN', "ezmanage.realunstoppable.store"),
     projectId: getEnv('REACT_APP_FIREBASE_PROJECT_ID', "dts-hub-website"),
