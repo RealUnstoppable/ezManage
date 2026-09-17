@@ -1227,3 +1227,84 @@ exports.manageFeedbacks = functions.https.onCall(async (data, context) => {
 });
 
 exports.trainGlobalAI = require("./trainGlobalAI").trainGlobalAI;
+
+
+exports.manageVendorDeliveries = functions.https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new HttpsError("unauthenticated", "You must be logged in.");
+  }
+  const uid = context.auth.uid;
+  const userDoc = await admin.firestore().collection("users").doc(uid).get();
+  const userOrgId = userDoc.exists ? userDoc.data().orgId : null;
+  const isAdmin = userDoc.exists ? userDoc.data().isAdmin : false;
+  const userName = userDoc.exists ? userDoc.data().name || context.auth.token.email.split('@')[0] : context.auth.token.email.split('@')[0];
+
+  const action = data.action;
+  const payload = data.payload || {};
+
+  try {
+    if (action === "create") {
+      checkRequiredFields(payload, ["vendorName", "totalAmount"]);
+      const activeOrgId = userOrgId || uid;
+
+      const newDeliveryRef = await admin.firestore().collection("vendor_deliveries").add({
+        vendorName: payload.vendorName,
+        invoiceNumber: payload.invoiceNumber || "",
+        totalAmount: payload.totalAmount,
+        notes: payload.notes || "",
+        status: "Received",
+        loggedByUid: uid,
+        loggedByName: userName,
+        orgId: activeOrgId,
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        timestamp: admin.firestore.FieldValue.serverTimestamp()
+      });
+      return { success: true, deliveryId: newDeliveryRef.id };
+    }
+
+    if (action === "get") {
+      const activeOrgId = userOrgId || uid;
+      let snapshot;
+      if (isAdmin) {
+        snapshot = await admin.firestore().collection("vendor_deliveries").orderBy("timestamp", "desc").limit(50).get();
+      } else {
+        snapshot = await admin.firestore().collection("vendor_deliveries")
+          .where("orgId", "==", activeOrgId)
+          .orderBy("timestamp", "desc")
+          .limit(50)
+          .get();
+      }
+
+      const deliveries = [];
+      snapshot.forEach(doc => {
+        deliveries.push({ id: doc.id, ...doc.data() });
+      });
+      return { success: true, deliveries };
+    }
+
+    if (action === "updateStatus") {
+      checkRequiredFields(payload, ["deliveryId", "status"]);
+      const { docRef, docSnap } = await verifyDocAndAuth("vendor_deliveries", payload.deliveryId, userOrgId || uid, "Delivery not found.", "Unauthorized access to this delivery.");
+
+      await docRef.update({
+        status: payload.status,
+        updatedAt: admin.firestore.FieldValue.serverTimestamp()
+      });
+      return { success: true };
+    }
+
+    if (action === "delete") {
+      checkRequiredFields(payload, ["deliveryId"]);
+      const { docRef, docSnap } = await verifyDocAndAuth("vendor_deliveries", payload.deliveryId, userOrgId || uid, "Delivery not found.", "Unauthorized access to this delivery.");
+
+      await docRef.delete();
+      return { success: true };
+    }
+
+    throw new HttpsError("invalid-argument", "Invalid action specified.");
+  } catch (error) {
+    logManagerError("Error in manageVendorDeliveries: ", error);
+    if (error instanceof HttpsError) throw error;
+    throw new HttpsError("internal", error.message);
+  }
+});
