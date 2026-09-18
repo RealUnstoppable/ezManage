@@ -1279,14 +1279,14 @@
                             <textarea id="taskDesc1" class="w-full h-24" placeholder="Task details..."></textarea>
                         </div>
                         <div>
-                            <label for="taskAssignee2" class="block text-sm font-medium mb-1">Assign To</label>
-                            <select id="taskAssignee2" class="w-full" required>
+                            <label for="taskAssignee1" class="block text-sm font-medium mb-1">Assign To</label>
+                            <select id="taskAssignee1" class="w-full" required>
                                 <option value="">Select Employee...</option>
                             </select>
                         </div>
                         <div>
-                            <label for="taskDueDate2" class="block text-sm font-medium mb-1">Due Date</label>
-                            <input type="date" id="taskDueDate2" class="w-full" required>
+                            <label for="taskDueDate1" class="block text-sm font-medium mb-1">Due Date</label>
+                            <input type="date" id="taskDueDate1" class="w-full" required>
                         </div>
                         <button type="submit" class="btn btn-primary w-full disabled:opacity-70 disabled:cursor-not-allowed">Assign Task</button>
                     </form>
@@ -1528,7 +1528,7 @@
                             class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500 resize-none"></textarea>
 
                         <div class="flex flex-col md:flex-row gap-4">
-                            <select id="taskAssignee1" aria-label="Assign To Employee" class="flex-1 bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
+                            <select id="taskAssignee2" aria-label="Assign To Employee" class="flex-1 bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
                                 <option value="" disabled selected>Assign To Employee</option>
                             </select>
                             <select id="taskPriority"
@@ -1538,13 +1538,13 @@
                                 <option value="High">High Priority</option>
                                 <option value="Critical">Critical</option>
                             </select>
-                            <input type="date" id="taskDueDate1" class="flex-1 bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500" aria-label="Task Due Date">
+                            <input type="date" id="taskDueDate2" class="flex-1 bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500" aria-label="Task Due Date">
                         </div>
 
                         <div class="flex justify-end gap-3 pt-2">
                             <button onclick="document.getElementById('assignTaskModal').classList.add('hidden')"
                                 class="btn btn-outline px-6 py-2">Cancel</button>
-                            <button onclick="submitTask()" class="btn btn-accent px-6 py-2">Assign Task</button>
+                            <button id="btnSubmitTask" onclick="submitTask()" class="btn btn-accent px-6 py-2">Assign Task</button>
                         </div>
                     </div>
                 </div>
@@ -4825,7 +4825,7 @@
 
         function populateScheduleDropdown() {
             const select = document.getElementById('shiftEmpName');
-            const taskSelect = document.getElementById('taskAssignee');
+            const taskSelect = document.getElementById('taskAssignee1');
             if (!currentUserData) return;
 
             const queryOrgId = currentUserData.orgId || currentUser.uid;
@@ -4844,7 +4844,7 @@
                     });
                     employees.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
 
-                    const taskSelect = document.getElementById('taskAssignee');
+                    const taskSelect = document.getElementById('taskAssignee1');
                     if (taskSelect) {
                         taskSelect.innerHTML = '<option value="">Select Employee...</option>';
                     }
@@ -6270,10 +6270,10 @@ async function submitWasteLog() {
         async function createTask() {
             if (!currentUser || !currentUserData) return;
 
-            const title = document.getElementById('taskTitle').value;
-            const desc = document.getElementById('taskDesc').value;
-            const assigneeId = document.getElementById('taskAssignee').value;
-            const dueDate = document.getElementById('taskDueDate').value;
+            const title = document.getElementById('taskTitle1').value;
+            const desc = document.getElementById('taskDesc1').value;
+            const assigneeId = document.getElementById('taskAssignee1').value;
+            const dueDate = document.getElementById('taskDueDate1').value;
 
             if (!title || !assigneeId || !dueDate) {
                 showToast("Please fill all required fields.");
@@ -6570,7 +6570,7 @@ async function submitWasteLog() {
         }
 
         function populateTaskAssigneeDropdown() {
-            const select = document.getElementById('taskAssignee');
+            const select = document.getElementById('taskAssignee2');
             if (!select || !currentUserData) return;
 
             const queryOrgId = currentUserData.orgId || currentUser.uid;
@@ -6618,11 +6618,11 @@ async function submitWasteLog() {
                 return;
             }
 
-            const title = document.getElementById('taskTitle').value.trim();
-            const desc = document.getElementById('taskDesc').value.trim();
-            const assignee = document.getElementById('taskAssignee').value;
+            const title = document.getElementById('taskTitle2').value.trim();
+            const desc = document.getElementById('taskDesc2').value.trim();
+            const assignee = document.getElementById('taskAssignee2').value;
             const priority = document.getElementById('taskPriority').value;
-            const dueDate = document.getElementById('taskDueDate').value;
+            const dueDate = document.getElementById('taskDueDate2').value;
 
             if (!title || !assignee) {
                 alert("Please provide a title and assign the task to an employee.");
@@ -6630,19 +6630,12 @@ async function submitWasteLog() {
             }
 
             const btn1 = document.getElementById('btnSubmitTask');
-            const btn2 = document.querySelector('#assignTaskModal .btn-accent');
             const orig1 = btn1 ? btn1.innerHTML : '';
-            const orig2 = btn2 ? btn2.innerHTML : '';
 
             if (btn1) {
                 btn1.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin inline-block"></i> Assigning...`;
                 btn1.disabled = true;
                 btn1.classList.add('opacity-70', 'cursor-not-allowed');
-            }
-            if (btn2) {
-                btn2.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin inline-block"></i> Assigning...`;
-                btn2.disabled = true;
-                btn2.classList.add('opacity-70', 'cursor-not-allowed');
             }
             lucide.createIcons();
 
@@ -6661,11 +6654,11 @@ async function submitWasteLog() {
                     updatedAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
 
-                document.getElementById('taskTitle').value = '';
-                document.getElementById('taskDesc').value = '';
-                document.getElementById('taskAssignee').value = '';
+                document.getElementById('taskTitle2').value = '';
+                document.getElementById('taskDesc2').value = '';
+                document.getElementById('taskAssignee2').value = '';
                 document.getElementById('taskPriority').value = 'Low';
-                document.getElementById('taskDueDate').value = '';
+                document.getElementById('taskDueDate2').value = '';
                 document.getElementById('assignTaskModal').classList.add('hidden');
 
                 alert("Task assigned successfully.");
@@ -6682,11 +6675,6 @@ async function submitWasteLog() {
                     btn1.innerHTML = orig1;
                     btn1.disabled = false;
                     btn1.classList.remove('opacity-70', 'cursor-not-allowed');
-                }
-                if (btn2) {
-                    btn2.innerHTML = orig2;
-                    btn2.disabled = false;
-                    btn2.classList.remove('opacity-70', 'cursor-not-allowed');
                 }
                 lucide.createIcons();
             }
