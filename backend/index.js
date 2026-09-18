@@ -6,6 +6,32 @@ const cors = require("cors")({origin: true});
 const {adaptGen2Params, logManagerError, checkRequiredFields} = require("./utils"); // Added comment for patch visibility
 
 /**
+ * Helper to authenticate user, fetch user doc, and extract payload.
+ */
+async function getAuthAndPayload(data, context, adminInstance) {
+  const { adaptGen2Params } = require("./utils");
+  const adapted = adaptGen2Params(data, context);
+  data = adapted.data;
+  context = adapted.context;
+
+  if (!context || !context.auth) {
+    throw new HttpsError("unauthenticated", "You must be logged in.");
+  }
+
+  const uid = context.auth.uid;
+  const userDoc = await adminInstance.firestore().collection("users").doc(uid).get();
+  const userOrgId = userDoc.exists ? userDoc.data().orgId : null;
+  const isAdmin = userDoc.exists ? userDoc.data().isAdmin : false;
+  const userName = userDoc.exists ? (userDoc.data().name || context.auth.token.email.split('@')[0]) : context.auth.token.email.split('@')[0];
+
+  const action = data.action;
+  const payload = data.payload || {};
+
+  return { uid, userDoc, userOrgId, isAdmin, userName, action, payload };
+}
+
+
+/**
  * Helper to get a document, verify its existence, and verify its orgId.
  * @param {string} collection - The collection name
  * @param {string} docId - The document ID
@@ -257,11 +283,8 @@ exports.manageTasks = functions.https.onCall(async (data, context) => {
   }
 
   const {action, payload} = data;
+  checkRequiredFields({action, payload}, ['action', 'payload']);
   const uid = context.auth.uid;
-
-  if (!action || !payload) {
-    throw new HttpsError("invalid-argument", "Missing action or payload");
-  }
 
   try {
     const userOrgId = await getActualOrgId(admin, uid);
@@ -345,12 +368,8 @@ exports.manageShiftNotes = functions.https.onCall(async (data, context) => {
   }
 
   const {action, payload} = data;
+  checkRequiredFields({action, payload}, ['action', 'payload']);
   const uid = context.auth.uid;
-
-  if (!action || !payload) {
-    throw new HttpsError(
-        "invalid-argument", "Missing action or payload");
-  }
 
   try {
     // 🛡️ Securely fetch the user's actual orgId from the database
@@ -433,11 +452,8 @@ exports.manageEmployees = functions.https.onCall(async (data, context) => {
   }
 
   const {action, payload} = data;
+  checkRequiredFields({action, payload}, ['action', 'payload']);
   const uid = context.auth.uid;
-
-  if (!action || !payload) {
-    throw new HttpsError("invalid-argument", "Missing action or payload");
-  }
 
   try {
     const actualOrgId = await getActualOrgId(admin, uid);
@@ -541,12 +557,8 @@ exports.manageShiftGroups = functions.https.onCall(async (data, context) => {
   }
 
   const {action, payload} = data;
+  checkRequiredFields({action, payload}, ['action', 'payload']);
   const uid = context.auth.uid;
-
-  if (!action || !payload) {
-    throw new HttpsError(
-        "invalid-argument", "Missing action or payload");
-  }
 
   try {
     // Create a new group
@@ -713,11 +725,8 @@ exports.manageIncidents = functions.https.onCall(async (data, context) => {
   }
 
   const {action, payload} = data;
+  checkRequiredFields({action, payload}, ['action', 'payload']);
   const uid = context.auth.uid;
-
-  if (!action || !payload) {
-    throw new HttpsError("invalid-argument", "Missing action or payload");
-  }
 
   try {
     const actualOrgId = await getActualOrgId(admin, uid);
@@ -826,11 +835,8 @@ exports.manageTimeLogs = functions.https.onCall(async (data, context) => {
   }
 
   const {action, payload} = data;
+  checkRequiredFields({action, payload}, ['action', 'payload']);
   const uid = context.auth.uid;
-
-  if (!action || !payload) {
-    throw new HttpsError("invalid-argument", "Missing action or payload");
-  }
 
   try {
     const userDoc = await admin.firestore().collection("users").doc(uid).get();
@@ -932,11 +938,8 @@ exports.manageWaste = functions.https.onCall(async (data, context) => {
   }
 
   const {action, payload} = data;
+  checkRequiredFields({action, payload}, ['action', 'payload']);
   const uid = context.auth.uid;
-
-  if (!action || !payload) {
-    throw new HttpsError("invalid-argument", "Missing action or payload");
-  }
 
   try {
     const actualOrgId = await getActualOrgId(admin, uid);
@@ -1012,96 +1015,6 @@ exports.manageWaste = functions.https.onCall(async (data, context) => {
  * Manage Temperature Logs API
  * Handles creation, reading, and deletion of temperature logs.
  */
-exports.manageTemperatureLogs = functions.https.onCall(async (data, context) => {
-  if (data && typeof data === "object" && "rawRequest" in data && "auth" in data) {
-    context = data;
-    data = data.data;
-  }
-
-  if (!context || !context.auth) {
-    throw new HttpsError("unauthenticated", "User must be logged in.");
-  }
-
-  const {action, payload} = data;
-  const uid = context.auth.uid;
-
-  if (!action || !payload) {
-    throw new HttpsError("invalid-argument", "Missing action or payload");
-  }
-
-  try {
-    const actualOrgId = await getActualOrgId(admin, uid);
-    const userDoc = await admin.firestore().collection("users").doc(uid).get();
-
-    if (!actualOrgId) {
-      throw new HttpsError("permission-denied", "User must be part of an organization to log temperatures.");
-    }
-
-    if (action === "create") {
-      const {equipmentName, temperature, tempUnit, isSafe, notes} = payload;
-
-      if (!equipmentName || temperature === undefined || !tempUnit) {
-        throw new HttpsError("invalid-argument", "Missing required temperature log details");
-      }
-
-      const newLog = {
-        equipmentName,
-        temperature: Number(temperature),
-        tempUnit,
-        isSafe: Boolean(isSafe),
-        notes: notes || "",
-        loggedByUid: uid,
-        loggedByName: userDoc.data().name || "Anonymous",
-        orgId: actualOrgId,
-        timestamp: admin.firestore.FieldValue.serverTimestamp(),
-      };
-
-      const docRef = await admin.firestore().collection("temperature_logs").add(newLog);
-      return {success: true, id: docRef.id};
-    }
-
-    if (action === "get") {
-      const snapshot = await admin.firestore().collection("temperature_logs")
-          .where("orgId", "==", actualOrgId)
-          .orderBy("timestamp", "desc")
-          .limit(100)
-          .get();
-
-      const logs = [];
-      snapshot.forEach((doc) => logs.push({id: doc.id, ...doc.data()}));
-      return {success: true, logs};
-    }
-
-    if (action === "delete") {
-      const {logId} = payload;
-      if (!logId) {
-        throw new HttpsError("invalid-argument", "Missing log ID");
-      }
-
-      const logRef = admin.firestore().collection("temperature_logs").doc(logId);
-      const logDoc = await logRef.get();
-
-      if (!logDoc.exists) {
-        throw new HttpsError("not-found", "Temperature log not found");
-      }
-
-      if (logDoc.data().orgId !== actualOrgId) {
-        throw new HttpsError("permission-denied", "Unauthorized to delete this log");
-      }
-
-      await logRef.delete();
-      return {success: true};
-    }
-
-    throw new HttpsError("invalid-argument", "Invalid action");
-  } catch (error) {
-    logManagerError(`Manage Temperature Logs Error for uid: ${uid}`, error);
-    if (error instanceof HttpsError) {
-      throw error;
-    }
-    throw new HttpsError("internal", error.message);
-  }
-});
 
 /**
  * Manage Recognitions API
@@ -1117,11 +1030,8 @@ exports.manageRecognitions = functions.https.onCall(async (data, context) => {
   }
 
   const {action, payload} = data;
+  checkRequiredFields({action, payload}, ['action', 'payload']);
   const uid = context.auth.uid;
-
-  if (!action || !payload) {
-    throw new HttpsError("invalid-argument", "Missing action or payload");
-  }
 
   try {
     const userDoc = await admin.firestore().collection("users").doc(uid).get();
@@ -1233,11 +1143,8 @@ exports.manageFeedbacks = functions.https.onCall(async (data, context) => {
   }
 
   const {action, payload} = data;
+  checkRequiredFields({action, payload}, ['action', 'payload']);
   const uid = context.auth.uid;
-
-  if (!action || !payload) {
-    throw new HttpsError("invalid-argument", "Missing action or payload");
-  }
 
   try {
     const userDoc = await admin.firestore().collection("users").doc(uid).get();
@@ -1325,17 +1232,7 @@ exports.trainGlobalAI = require("./trainGlobalAI").trainGlobalAI;
 
 
 exports.manageTemperatureLogs = functions.https.onCall(async (data, context) => {
-  if (!context.auth) {
-    throw new HttpsError("unauthenticated", "You must be logged in.");
-  }
-  const uid = context.auth.uid;
-  const userDoc = await admin.firestore().collection("users").doc(uid).get();
-  const userOrgId = userDoc.exists ? userDoc.data().orgId : null;
-  const isAdmin = userDoc.exists ? userDoc.data().isAdmin : false;
-  const userName = userDoc.exists ? userDoc.data().name || context.auth.token.email.split('@')[0] : context.auth.token.email.split('@')[0];
-
-  const action = data.action;
-  const payload = data.payload || {};
+  const { uid, userOrgId, isAdmin, userName, action, payload } = await getAuthAndPayload(data, context, admin);
 
   try {
     if (action === "create") {
@@ -1405,17 +1302,7 @@ exports.manageTemperatureLogs = functions.https.onCall(async (data, context) => 
 });
 
 exports.manageVendorDeliveries = functions.https.onCall(async (data, context) => {
-  if (!context.auth) {
-    throw new HttpsError("unauthenticated", "You must be logged in.");
-  }
-  const uid = context.auth.uid;
-  const userDoc = await admin.firestore().collection("users").doc(uid).get();
-  const userOrgId = userDoc.exists ? userDoc.data().orgId : null;
-  const isAdmin = userDoc.exists ? userDoc.data().isAdmin : false;
-  const userName = userDoc.exists ? userDoc.data().name || context.auth.token.email.split('@')[0] : context.auth.token.email.split('@')[0];
-
-  const action = data.action;
-  const payload = data.payload || {};
+  const { uid, userOrgId, isAdmin, userName, action, payload } = await getAuthAndPayload(data, context, admin);
 
   try {
     if (action === "create") {
