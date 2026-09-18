@@ -126,3 +126,7 @@
 **Vulnerability:** Error messages caught from promises (`err.message` and `error.message`) were interpolated directly into `innerHTML` strings in index.html (e.g. `Failed to load tasks: ${err.message}`).
 **Learning:** Promise errors from external calls or user interactions might contain attacker-controlled inputs if the error source responds with user data. Directly interpolating these unescaped errors into `innerHTML` creates a DOM-based XSS vulnerability. Also when escaping, you have to be careful with script scopes and use `window.escapeHTML` with a fallback to avoid a ReferenceError crashing the client thread.
 **Prevention:** Always use a utility function like `escapeHTML()` to sanitize dynamic error messages before rendering them in the DOM via `innerHTML` or similar sinks. Use a fallback check (`window.escapeHTML ? window.escapeHTML(msg) : msg`) if the utility function isn't guaranteed to be loaded in scope.
+## 2026-09-18 - XSS via Inline Event Handler Interpolation
+**Vulnerability:** User-controlled inputs injected into inline event handlers via `innerHTML` (e.g. `onclick="removeManager('${escapeHTML(doc.id)}')"`).
+**Learning:** Escaping variables used in inline event handlers is not sufficient to prevent XSS. The browser's HTML parser decodes HTML entities back to raw characters before the JavaScript engine executes the attribute content.
+**Prevention:** Use programmatic event listeners attached dynamically (like global `document.addEventListener('click', ...)` with `data-action` attributes) to isolate execution context.
