@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { db } from './firebase'; // Assume you have a configured firebase instance here
 import { collection, addDoc, serverTimestamp, query, where, orderBy, getDocs } from 'firebase/firestore';
 
@@ -16,14 +16,7 @@ function ShiftNotesManager({ currentUser, currentUserData }) {
     const [priority, setPriority] = useState('Normal');
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    // Initial load
-    useEffect(() => {
-        if (currentUserData?.orgId) {
-            fetchShiftNotes();
-        }
-    }, [currentUserData?.orgId]);
-
-    const fetchShiftNotes = async () => {
+    const fetchShiftNotes = useCallback(async () => {
         if (!currentUserData?.orgId) return;
 
         try {
@@ -41,7 +34,12 @@ function ShiftNotesManager({ currentUser, currentUserData }) {
         } catch (error) {
             console.error("Failed to fetch shift notes", error);
         }
-    };
+    }, [currentUserData?.orgId]);
+
+    // Initial load
+    useEffect(() => {
+        fetchShiftNotes();
+    }, [fetchShiftNotes]);
 
     const submitShiftNote = async (e) => {
         e.preventDefault();
@@ -70,11 +68,13 @@ function ShiftNotesManager({ currentUser, currentUserData }) {
             createdAt: new Date() // Fake timestamp for immediate render
         };
 
+        // 3. Clear form inputs (temporarily storing in case of rollback)
+        const previousContent = trimmedContent;
+        const previousShiftNotes = shiftNotes;
+
         // 2. Apply optimistic UI update
         setShiftNotes([newNote, ...shiftNotes]);
 
-        // 3. Clear form inputs (temporarily storing in case of rollback)
-        const previousContent = trimmedContent;
         setNoteContent('');
         setIsSubmitting(true);
 
@@ -98,8 +98,8 @@ function ShiftNotesManager({ currentUser, currentUserData }) {
             // 6. Rollback optimistic UI if network request fails
             console.error("Error posting note", error);
 
-            // Remove the temporary note
-            setShiftNotes((prevNotes) => prevNotes.filter(note => note.id !== tempId));
+            // Remove the temporary note, explicit reset using state callback for safety.
+            setShiftNotes(() => previousShiftNotes);
 
             // Restore the content to the input
             setNoteContent(previousContent);
@@ -122,15 +122,16 @@ function ShiftNotesManager({ currentUser, currentUserData }) {
                     value={noteContent}
                     onChange={(e) => setNoteContent(e.target.value)}
                     placeholder="Leave a note, warning, or handover instruction..."
+                    className="disabled:opacity-70 disabled:cursor-not-allowed"
                     disabled={isSubmitting}
                 />
                 <div>
-                    <select value={priority} onChange={(e) => setPriority(e.target.value)} disabled={isSubmitting}>
+                    <select value={priority} onChange={(e) => setPriority(e.target.value)} className="disabled:opacity-70 disabled:cursor-not-allowed" disabled={isSubmitting}>
                         <option value="Normal">Normal Priority</option>
                         <option value="Urgent">🚨 Urgent Issue</option>
                     </select>
-                    <button type="submit" disabled={isSubmitting}>
-                        {isSubmitting ? 'Saving...' : 'Post Note'}
+                    <button type="submit" className="disabled:opacity-70 disabled:cursor-not-allowed flex items-center gap-2" disabled={isSubmitting}>
+                        {isSubmitting ? <><i data-lucide="loader-2" className="animate-spin"></i> Saving...</> : 'Post Note'}
                     </button>
                 </div>
             </form>

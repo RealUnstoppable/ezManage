@@ -48,18 +48,19 @@ export function calculateCartTotal(cartData, prodMap) {
 
 let cart = {};
 let currentUser = null;
+let isDashboardLoaded = false;
 
-const productGrid = document.getElementById('product-grid');
-const cartButton = document.getElementById('cart-button');
-const cartModal = document.getElementById('cart-modal');
-const closeCartBtn = document.getElementById('close-cart-btn');
-const cartItemsContainer = document.getElementById('cart-items-container');
-const cartItemCountEl = document.getElementById('cart-item-count');
-const cartTotalPriceEl = document.getElementById('cart-total-price');
-const checkoutBtn = document.getElementById('checkout-btn');
-const navCtaContainer = document.getElementById('nav-cta-container');
-const hamburger = document.querySelector('.hamburger');
-const navLinks = document.querySelector('.nav-links');
+let productGrid;
+let cartButton;
+let cartModal;
+let closeCartBtn;
+let cartItemsContainer;
+let cartItemCountEl;
+let cartTotalPriceEl;
+let checkoutBtn;
+let navCtaContainer;
+let hamburger;
+let navLinks;
 
 function renderProducts() {
     productGrid.innerHTML = products.map(product => `
@@ -185,45 +186,53 @@ function updateUserNav(user) {
 }
 
 function setupEventListeners() {
+    if (hamburger && navLinks) {
+        hamburger.addEventListener('click', () => {
+            hamburger.classList.toggle('active');
+            navLinks.classList.toggle('active');
+        });
+    }
 
-    hamburger.addEventListener('click', () => {
-        hamburger.classList.toggle('active');
-        navLinks.classList.toggle('active');
-    });
+    if (productGrid) {
+        productGrid.addEventListener('click', (e) => {
+            if (e.target.classList.contains('add-to-cart-btn')) {
+                const productId = e.target.dataset.id;
+                handleAddToCart(productId);
+            }
+        });
+    }
 
-    productGrid.addEventListener('click', (e) => {
-        if (e.target.classList.contains('add-to-cart-btn')) {
-            const productId = e.target.dataset.id;
-            handleAddToCart(productId);
-        }
-    });
+    if (cartButton && cartModal && closeCartBtn) {
+        cartButton.addEventListener('click', () => cartModal.style.display = 'block');
+        closeCartBtn.addEventListener('click', () => cartModal.style.display = 'none');
+        window.addEventListener('click', (e) => {
+            if (e.target === cartModal) {
+                cartModal.style.display = 'none';
+            }
+        });
+    }
 
-    cartButton.addEventListener('click', () => cartModal.style.display = 'block');
-    closeCartBtn.addEventListener('click', () => cartModal.style.display = 'none');
-    window.addEventListener('click', (e) => {
-        if (e.target === cartModal) {
-            cartModal.style.display = 'none';
-        }
-    });
+    if (cartItemsContainer) {
+        cartItemsContainer.addEventListener('click', (e) => {
+            if (e.target.classList.contains('remove-item-btn')) {
+                const productId = e.target.dataset.id;
+                handleRemoveFromCart(productId);
+            }
+        });
+        cartItemsContainer.addEventListener('change', (e) => {
+            if (e.target.classList.contains('item-quantity-input')) {
+                const productId = e.target.dataset.id;
+                const quantity = parseInt(e.target.value, 10);
+                handleUpdateQuantity(productId, quantity);
+            }
+        });
+    }
 
-    cartItemsContainer.addEventListener('click', (e) => {
-        if (e.target.classList.contains('remove-item-btn')) {
-            const productId = e.target.dataset.id;
-            handleRemoveFromCart(productId);
-        }
-    });
-    cartItemsContainer.addEventListener('change', (e) => {
-        if (e.target.classList.contains('item-quantity-input')) {
-            const productId = e.target.dataset.id;
-            const quantity = parseInt(e.target.value, 10);
-            handleUpdateQuantity(productId, quantity);
-        }
-    });
-
-    checkoutBtn.addEventListener('click', () => {
-
-        window.location.href = 'checkout.html';
-    });
+    if (checkoutBtn) {
+        checkoutBtn.addEventListener('click', () => {
+            window.location.href = 'checkout.html';
+        });
+    }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -236,30 +245,28 @@ document.addEventListener('DOMContentLoaded', () => {
         const localCart = localCartData ? JSON.parse(localCartData) : {};
 
         if (user) {
-            try {
-                const userCartRef = db.collection('carts').doc(user.uid);
-                const docSnap = await userCartRef.get();
-                const firestoreCart = docSnap.exists ? docSnap.data().items : {};
+            if (!isDashboardLoaded) {
+                isDashboardLoaded = true;
+                try {
+                    const userCartRef = db.collection('carts').doc(user.uid);
+                    const docSnap = await userCartRef.get();
+                    const firestoreCart = docSnap.exists ? docSnap.data().items : {};
 
-                const mergedCart = { ...firestoreCart };
-                for (const [productId, quantity] of Object.entries(localCart)) {
-                    mergedCart[productId] = (mergedCart[productId] || 0) + quantity;
+                    const mergedCart = { ...firestoreCart };
+                    for (const [productId, quantity] of Object.entries(localCart)) {
+                        mergedCart[productId] = (mergedCart[productId] || 0) + quantity;
+                    }
+                    cart = mergedCart;
+                } catch (error) {
+                    console.error("Error fetching user cart", error);
+                    cart = localCart;
                 }
-
-                cart = mergedCart;
-                await saveCart();
-                localStorage.removeItem('localCart');
-            } catch (error) {
-                logManagerError("Error loading cart during auth state change:", error);
-
-                cart = localCart;
             }
         } else {
-
+            isDashboardLoaded = false;
             cart = localCart;
         }
-
-        updateUserNav(user);
-        renderCart();
     });
 });
+export function initShop() {}
+document.addEventListener('DOMContentLoaded', initShop);

@@ -1,10 +1,11 @@
-import { logManagerError } from './utils.js';
+import { logManagerError, escapeHTML } from './utils.js';
 
 import { auth, db } from './auth.js';
 import { products, productMap, calculateCartTotal } from './shop.js';
 
 let currentUser = null;
 let userCart = {};
+let isCheckoutLoaded = false;
 
 const checkoutContainer = document.getElementById('checkout-container');
 
@@ -55,7 +56,7 @@ function renderCheckoutPage() {
                     ${Object.entries(userCart).map(([productId, quantity]) => {
 
         const product = productMap[productId];
-        return `<div class="summary-item"><span>${quantity}x ${product.name}</span> <span>$${(product.price * quantity).toFixed(2)}</span></div>`;
+        return `<div class="summary-item"><span>${escapeHTML(String(quantity))}x ${escapeHTML(product.name)}</span> <span>$${(product.price * quantity).toFixed(2)}</span></div>`;
     }).join('')}
                 </div>
                 <div class="summary-calculation">
@@ -143,6 +144,8 @@ async function handlePlaceOrder(e) {
 auth.onAuthStateChanged(async (user) => {
     if (user) {
         currentUser = user;
+        if (!isCheckoutLoaded) {
+            isCheckoutLoaded = true;
         try {
             const userCartRef = db.collection('carts').doc(user.uid);
             const docSnap = await userCartRef.get();
@@ -152,8 +155,10 @@ auth.onAuthStateChanged(async (user) => {
 
             userCart = {};
         }
+        }
         renderCheckoutPage();
     } else {
+        isCheckoutLoaded = false;
         window.location.replace('/sign in beta.html');
     }
 });
