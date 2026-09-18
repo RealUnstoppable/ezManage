@@ -94,38 +94,30 @@ async function handlePlaceOrder(e) {
 
     try {
 
-        await db.runTransaction(async (transaction) => {
-            // ⚡ Bolt Performance Optimization:
-            // Pre-fetch all product_stats documents concurrently before writing to prevent N+1 query bottlenecks
-            // and satisfy Firestore's strict read-before-write transaction constraints.
-            const statDocs = await Promise.all(
-                Object.keys(userCart).map(productId =>
-                    transaction.get(db.collection("product_stats").doc(productId))
-                )
+        // ⚡ Bolt Performance Optimization:
+        // Replaced runTransaction with a batch write and FieldValue.increment to eliminate N+1 query bottlenecks.
+        // This avoids fetching all product_stats documents before updating them, significantly improving checkout performance.
+        const batch = db.batch();
+
+        // 1. Create a new order document
+        const newOrderRef = db.collection("orders").doc(`${currentUser.uid}-${Date.now()}`);
+        batch.set(newOrderRef, orderDetails);
+
+        // 2. Update product order counts using FieldValue.increment
+        Object.entries(userCart).forEach(([productId, quantity]) => {
+            const productStatRef = db.collection("product_stats").doc(productId);
+            batch.set(
+                productStatRef,
+                { orderedCount: window.firebase.firestore.FieldValue.increment(quantity) },
+                { merge: true }
             );
-
-            // 1. Create a new order document
-            const newOrderRef = db.collection("orders").doc(`${currentUser.uid}-${Date.now()}`);
-            transaction.set(newOrderRef, orderDetails);
-
-            // 2. Update product order counts
-            statDocs.forEach((statDoc) => {
-                const productId = statDoc.id;
-                const quantity = userCart[productId];
-                const productStatRef = db.collection("product_stats").doc(productId);
-
-                if (!statDoc.exists) {
-                    transaction.set(productStatRef, { orderedCount: quantity });
-                } else {
-                    const newCount = statDoc.data().orderedCount + quantity;
-                    transaction.update(productStatRef, { orderedCount: newCount });
-                }
-            });
-
-            // 3. Clear the user's cart
-            const userCartRef = db.collection('carts').doc(currentUser.uid);
-            transaction.set(userCartRef, { items: {} });
         });
+
+        // 3. Clear the user's cart
+        const userCartRef = db.collection('carts').doc(currentUser.uid);
+        batch.set(userCartRef, { items: {} });
+
+        await batch.commit();
 
         messageEl.textContent = 'Order placed successfully! Redirecting...';
         messageEl.style.color = 'var(--accent-green)';
