@@ -9,7 +9,7 @@ const {adaptGen2Params, logManagerError, checkRequiredFields} = require("./utils
  * Helper to authenticate user, fetch user doc, and extract payload.
  */
 async function getAuthAndPayload(data, context, adminInstance) {
-  const { adaptGen2Params } = require("./utils");
+  const {adaptGen2Params} = require("./utils");
   const adapted = adaptGen2Params(data, context);
   data = adapted.data;
   context = adapted.context;
@@ -22,12 +22,12 @@ async function getAuthAndPayload(data, context, adminInstance) {
   const userDoc = await adminInstance.firestore().collection("users").doc(uid).get();
   const userOrgId = userDoc.exists ? userDoc.data().orgId : null;
   const isAdmin = userDoc.exists ? userDoc.data().isAdmin : false;
-  const userName = userDoc.exists ? (userDoc.data().name || context.auth.token.email.split('@')[0]) : context.auth.token.email.split('@')[0];
+  const userName = userDoc.exists ? (userDoc.data().name || context.auth.token.email.split("@")[0]) : context.auth.token.email.split("@")[0];
 
   const action = data.action;
   const payload = data.payload || {};
 
-  return { uid, userDoc, userOrgId, isAdmin, userName, action, payload };
+  return {uid, userDoc, userOrgId, isAdmin, userName, action, payload};
 }
 
 
@@ -283,7 +283,7 @@ exports.manageTasks = functions.https.onCall(async (data, context) => {
   }
 
   const {action, payload} = data;
-  checkRequiredFields({action, payload}, ['action', 'payload']);
+  checkRequiredFields({action, payload}, ["action", "payload"]);
   const uid = context.auth.uid;
 
   try {
@@ -296,7 +296,7 @@ exports.manageTasks = functions.https.onCall(async (data, context) => {
         throw new HttpsError("permission-denied", "Only managers can create tasks");
       }
       const {title, description, assigneeId, assigneeName} = payload;
-      checkRequiredFields(payload, ['title', 'assigneeId']);
+      checkRequiredFields(payload, ["title", "assigneeId"]);
       const newTask = {
         title,
         description: description || "",
@@ -368,7 +368,7 @@ exports.manageShiftNotes = functions.https.onCall(async (data, context) => {
   }
 
   const {action, payload} = data;
-  checkRequiredFields({action, payload}, ['action', 'payload']);
+  checkRequiredFields({action, payload}, ["action", "payload"]);
   const uid = context.auth.uid;
 
   try {
@@ -409,7 +409,7 @@ exports.manageShiftNotes = functions.https.onCall(async (data, context) => {
     if (action === "resolve") {
       const {noteId, resolvedBy} = payload;
 
-      checkRequiredFields(payload, ['noteId', 'resolvedBy']);
+      checkRequiredFields(payload, ["noteId", "resolvedBy"]);
 
       // 🛡️ Verify the user resolving the note is in the same organization
       const {docRef: noteRef} = await verifyDocAndAuth(
@@ -452,7 +452,7 @@ exports.manageEmployees = functions.https.onCall(async (data, context) => {
   }
 
   const {action, payload} = data;
-  checkRequiredFields({action, payload}, ['action', 'payload']);
+  checkRequiredFields({action, payload}, ["action", "payload"]);
   const uid = context.auth.uid;
 
   try {
@@ -465,7 +465,7 @@ exports.manageEmployees = functions.https.onCall(async (data, context) => {
     if (action === "create") {
       const {name, role, phone} = payload;
 
-      checkRequiredFields(payload, ['name', 'role'], 'Missing required employee details');
+      checkRequiredFields(payload, ["name", "role"], "Missing required employee details");
 
       const newEmployee = {
         name,
@@ -510,7 +510,6 @@ exports.manageEmployees = functions.https.onCall(async (data, context) => {
       if (role !== undefined) updates.role = role;
       if (phone !== undefined) updates.phone = phone;
       if (status !== undefined) updates.status = status;
-
     }
 
     if (action === "delete") {
@@ -557,7 +556,7 @@ exports.manageShiftGroups = functions.https.onCall(async (data, context) => {
   }
 
   const {action, payload} = data;
-  checkRequiredFields({action, payload}, ['action', 'payload']);
+  checkRequiredFields({action, payload}, ["action", "payload"]);
   const uid = context.auth.uid;
 
   try {
@@ -565,7 +564,7 @@ exports.manageShiftGroups = functions.https.onCall(async (data, context) => {
     if (action === "create") {
       const {authorId, orgId, ownerName, groupName, password} = payload;
 
-      checkRequiredFields(payload, ['groupName', 'password']);
+      checkRequiredFields(payload, ["groupName", "password"]);
 
       const newGroup = {
         ownerId: authorId || uid,
@@ -592,7 +591,7 @@ exports.manageShiftGroups = functions.https.onCall(async (data, context) => {
     if (action === "request_join") {
       const {userName, groupId, password} = payload;
 
-      checkRequiredFields(payload, ['groupId', 'password']);
+      checkRequiredFields(payload, ["groupId", "password"]);
 
       const groupDoc = await admin.firestore()
           .collection("shift_groups").doc(groupId).get();
@@ -643,7 +642,7 @@ exports.manageShiftGroups = functions.https.onCall(async (data, context) => {
     if (action === "approve_join") {
       const {requestId} = payload;
 
-      checkRequiredFields(payload, ['requestId']);
+      checkRequiredFields(payload, ["requestId"]);
 
       const requestDocRef = admin.firestore()
           .collection("shift_group_requests").doc(requestId);
@@ -682,7 +681,7 @@ exports.manageShiftGroups = functions.https.onCall(async (data, context) => {
     if (action === "remove_manager") {
       const {userId, groupId} = payload;
 
-      checkRequiredFields(payload, ['userId', 'groupId']);
+      checkRequiredFields(payload, ["userId", "groupId"]);
 
       const groupDoc = await admin.firestore()
           .collection("shift_groups").doc(groupId).get();
@@ -712,6 +711,85 @@ exports.manageShiftGroups = functions.https.onCall(async (data, context) => {
 
 
 /**
+ * Helper functions for manageIncidents
+ */
+async function handleCreateIncident(payload, uid, context, actualOrgId) {
+  const {title, description, severity, type} = payload;
+
+  checkRequiredFields(payload, ["title", "description", "severity", "type"], "Missing required incident details");
+
+  const newIncident = {
+    title,
+    description,
+    severity,
+    type,
+    status: "Open",
+    reportedByUid: uid,
+    reportedByName: context.auth.token.name || "Anonymous",
+    orgId: actualOrgId,
+    timestamp: admin.firestore.FieldValue.serverTimestamp(),
+  };
+
+  const docRef = await admin.firestore().collection("incident_reports").add(newIncident);
+  return {success: true, id: docRef.id};
+}
+
+async function handleGetIncidents(actualOrgId) {
+  const snapshot = await admin.firestore().collection("incident_reports")
+      .where("orgId", "==", actualOrgId)
+      .orderBy("timestamp", "desc")
+      .limit(100)
+      .get();
+
+  const incidents = [];
+  snapshot.forEach((doc) => incidents.push({id: doc.id, ...doc.data()}));
+  return {success: true, incidents};
+}
+
+async function handleUpdateIncidentStatus(payload, actualOrgId) {
+  const {incidentId, status} = payload;
+  if (!incidentId || !status) {
+    throw new HttpsError("invalid-argument", "Missing incident ID or status");
+  }
+
+  const incidentRef = admin.firestore().collection("incident_reports").doc(incidentId);
+  const incidentDoc = await incidentRef.get();
+
+  if (!incidentDoc.exists) {
+    throw new HttpsError("not-found", "Incident not found");
+  }
+
+  if (incidentDoc.data().orgId !== actualOrgId) {
+    throw new HttpsError("permission-denied", "Unauthorized to update this incident");
+  }
+
+  await incidentRef.update({status});
+  return {success: true};
+}
+
+async function handleDeleteIncident(payload, actualOrgId) {
+  const {incidentId} = payload;
+  if (!incidentId) {
+    throw new HttpsError("invalid-argument", "Missing incident ID");
+  }
+
+  const incidentRef = admin.firestore().collection("incident_reports").doc(incidentId);
+  const incidentDoc = await incidentRef.get();
+
+  if (!incidentDoc.exists) {
+    throw new HttpsError("not-found", "Incident not found");
+  }
+
+  if (incidentDoc.data().orgId !== actualOrgId) {
+    throw new HttpsError("permission-denied", "Unauthorized to delete this incident");
+  }
+
+  await incidentRef.delete();
+  return {success: true};
+}
+
+
+/**
  * Manage Incidents API
  * Handles creation, reading, status updates, and deletion of incidents.
  */
@@ -725,7 +803,7 @@ exports.manageIncidents = functions.https.onCall(async (data, context) => {
   }
 
   const {action, payload} = data;
-  checkRequiredFields({action, payload}, ['action', 'payload']);
+  checkRequiredFields({action, payload}, ["action", "payload"]);
   const uid = context.auth.uid;
 
   try {
@@ -736,78 +814,19 @@ exports.manageIncidents = functions.https.onCall(async (data, context) => {
     }
 
     if (action === "create") {
-      const {title, description, severity, type} = payload;
-
-      checkRequiredFields(payload, ['title', 'description', 'severity', 'type'], 'Missing required incident details');
-
-      const newIncident = {
-        title,
-        description,
-        severity,
-        type,
-        status: "Open",
-        reportedByUid: uid,
-        reportedByName: context.auth.token.name || "Anonymous",
-        orgId: actualOrgId,
-        timestamp: admin.firestore.FieldValue.serverTimestamp(),
-      };
-
-      const docRef = await admin.firestore().collection("incident_reports").add(newIncident);
-      return {success: true, id: docRef.id};
+      return await handleCreateIncident(payload, uid, context, actualOrgId);
     }
 
     if (action === "get") {
-      const snapshot = await admin.firestore().collection("incident_reports")
-          .where("orgId", "==", actualOrgId)
-          .orderBy("timestamp", "desc")
-          .limit(100)
-          .get();
-
-      const incidents = [];
-      snapshot.forEach((doc) => incidents.push({id: doc.id, ...doc.data()}));
-      return {success: true, incidents};
+      return await handleGetIncidents(actualOrgId);
     }
 
     if (action === "updateStatus") {
-      const {incidentId, status} = payload;
-      if (!incidentId || !status) {
-        throw new HttpsError("invalid-argument", "Missing incident ID or status");
-      }
-
-      const incidentRef = admin.firestore().collection("incident_reports").doc(incidentId);
-      const incidentDoc = await incidentRef.get();
-
-      if (!incidentDoc.exists) {
-        throw new HttpsError("not-found", "Incident not found");
-      }
-
-      if (incidentDoc.data().orgId !== actualOrgId) {
-        throw new HttpsError("permission-denied", "Unauthorized to update this incident");
-      }
-
-      await incidentRef.update({status});
-      return {success: true};
+      return await handleUpdateIncidentStatus(payload, actualOrgId);
     }
 
     if (action === "delete") {
-      const {incidentId} = payload;
-      if (!incidentId) {
-        throw new HttpsError("invalid-argument", "Missing incident ID");
-      }
-
-      const incidentRef = admin.firestore().collection("incident_reports").doc(incidentId);
-      const incidentDoc = await incidentRef.get();
-
-      if (!incidentDoc.exists) {
-        throw new HttpsError("not-found", "Incident not found");
-      }
-
-      if (incidentDoc.data().orgId !== actualOrgId) {
-        throw new HttpsError("permission-denied", "Unauthorized to delete this incident");
-      }
-
-      await incidentRef.delete();
-      return {success: true};
+      return await handleDeleteIncident(payload, actualOrgId);
     }
 
     throw new HttpsError("invalid-argument", "Invalid action");
@@ -835,7 +854,7 @@ exports.manageTimeLogs = functions.https.onCall(async (data, context) => {
   }
 
   const {action, payload} = data;
-  checkRequiredFields({action, payload}, ['action', 'payload']);
+  checkRequiredFields({action, payload}, ["action", "payload"]);
   const uid = context.auth.uid;
 
   try {
@@ -847,7 +866,7 @@ exports.manageTimeLogs = functions.https.onCall(async (data, context) => {
     const employeeName = userDoc.data().name || "Anonymous";
 
     if (!actualOrgId) {
-       throw new HttpsError("permission-denied", "User must be part of an organization to clock in/out.");
+      throw new HttpsError("permission-denied", "User must be part of an organization to clock in/out.");
     }
 
     if (action === "clock_in") {
@@ -860,7 +879,7 @@ exports.manageTimeLogs = functions.https.onCall(async (data, context) => {
           .get();
 
       if (!activeLogSnap.empty) {
-          throw new HttpsError("already-exists", "User is already clocked in.");
+        throw new HttpsError("already-exists", "User is already clocked in.");
       }
 
       const newLog = {
@@ -886,13 +905,13 @@ exports.manageTimeLogs = functions.https.onCall(async (data, context) => {
           .get();
 
       if (activeLogSnap.empty) {
-          throw new HttpsError("failed-precondition", "User is not clocked in.");
+        throw new HttpsError("failed-precondition", "User is not clocked in.");
       }
 
       const activeLog = activeLogSnap.docs[0];
       await activeLog.ref.update({
-          clockOutTime: admin.firestore.FieldValue.serverTimestamp(),
-          status: "Clocked Out"
+        clockOutTime: admin.firestore.FieldValue.serverTimestamp(),
+        status: "Clocked Out",
       });
 
       return {success: true, id: activeLog.id};
@@ -910,7 +929,7 @@ exports.manageTimeLogs = functions.https.onCall(async (data, context) => {
       const snapshot = await query.limit(100).get();
 
       const logs = [];
-      snapshot.forEach(doc => logs.push({id: doc.id, ...doc.data()}));
+      snapshot.forEach((doc) => logs.push({id: doc.id, ...doc.data()}));
       return {success: true, logs};
     }
 
@@ -938,7 +957,7 @@ exports.manageWaste = functions.https.onCall(async (data, context) => {
   }
 
   const {action, payload} = data;
-  checkRequiredFields({action, payload}, ['action', 'payload']);
+  checkRequiredFields({action, payload}, ["action", "payload"]);
   const uid = context.auth.uid;
 
   try {
@@ -951,7 +970,7 @@ exports.manageWaste = functions.https.onCall(async (data, context) => {
     if (action === "create") {
       const {itemName, quantity, cost, reason} = payload;
 
-      checkRequiredFields(payload, ['itemName', 'quantity', 'cost', 'reason'], 'Missing required waste log details');
+      checkRequiredFields(payload, ["itemName", "quantity", "cost", "reason"], "Missing required waste log details");
 
       const newLog = {
         itemName,
@@ -1030,7 +1049,7 @@ exports.manageRecognitions = functions.https.onCall(async (data, context) => {
   }
 
   const {action, payload} = data;
-  checkRequiredFields({action, payload}, ['action', 'payload']);
+  checkRequiredFields({action, payload}, ["action", "payload"]);
   const uid = context.auth.uid;
 
   try {
@@ -1047,7 +1066,7 @@ exports.manageRecognitions = functions.https.onCall(async (data, context) => {
     if (action === "create") {
       const {receiverId, receiverName, message, type} = payload;
 
-      checkRequiredFields(payload, ['receiverId', 'receiverName', 'message', 'type'], 'Missing required recognition details');
+      checkRequiredFields(payload, ["receiverId", "receiverName", "message", "type"], "Missing required recognition details");
 
       const validTypes = ["Kudos", "Private Feedback"];
       const recognitionType = validTypes.includes(type) ? type : "Kudos";
@@ -1143,7 +1162,7 @@ exports.manageFeedbacks = functions.https.onCall(async (data, context) => {
   }
 
   const {action, payload} = data;
-  checkRequiredFields({action, payload}, ['action', 'payload']);
+  checkRequiredFields({action, payload}, ["action", "payload"]);
   const uid = context.auth.uid;
 
   try {
@@ -1154,7 +1173,7 @@ exports.manageFeedbacks = functions.https.onCall(async (data, context) => {
     const actualOrgId = userDoc.data().orgId || null;
 
     if (!actualOrgId) {
-       throw new HttpsError("permission-denied", "User must be part of an organization to manage feedbacks.");
+      throw new HttpsError("permission-denied", "User must be part of an organization to manage feedbacks.");
     }
 
     if (action === "create") {
@@ -1186,36 +1205,36 @@ exports.manageFeedbacks = functions.https.onCall(async (data, context) => {
       }
 
       const snapshot = await admin.firestore().collection("feedbacks")
-        .where("orgId", "==", actualOrgId)
-        .where("empId", "==", empId)
-        .orderBy("createdAt", "desc")
-        .limit(100)
-        .get();
+          .where("orgId", "==", actualOrgId)
+          .where("empId", "==", empId)
+          .orderBy("createdAt", "desc")
+          .limit(100)
+          .get();
 
       const feedbacks = [];
-      snapshot.forEach(doc => feedbacks.push({id: doc.id, ...doc.data()}));
+      snapshot.forEach((doc) => feedbacks.push({id: doc.id, ...doc.data()}));
       return {success: true, feedbacks};
     }
 
     if (action === "delete") {
-       const {feedbackId} = payload;
-       if (!feedbackId) {
-          throw new HttpsError("invalid-argument", "Missing feedback ID");
-       }
+      const {feedbackId} = payload;
+      if (!feedbackId) {
+        throw new HttpsError("invalid-argument", "Missing feedback ID");
+      }
 
-       const feedbackRef = admin.firestore().collection("feedbacks").doc(feedbackId);
-       const feedbackDoc = await feedbackRef.get();
+      const feedbackRef = admin.firestore().collection("feedbacks").doc(feedbackId);
+      const feedbackDoc = await feedbackRef.get();
 
-       if (!feedbackDoc.exists) {
-          throw new HttpsError("not-found", "Feedback not found");
-       }
+      if (!feedbackDoc.exists) {
+        throw new HttpsError("not-found", "Feedback not found");
+      }
 
-       if (feedbackDoc.data().orgId !== actualOrgId) {
-          throw new HttpsError("permission-denied", "Unauthorized to delete this feedback");
-       }
+      if (feedbackDoc.data().orgId !== actualOrgId) {
+        throw new HttpsError("permission-denied", "Unauthorized to delete this feedback");
+      }
 
-       await feedbackRef.delete();
-       return {success: true};
+      await feedbackRef.delete();
+      return {success: true};
     }
 
     throw new HttpsError("invalid-argument", "Invalid action");
@@ -1232,7 +1251,7 @@ exports.trainGlobalAI = require("./trainGlobalAI").trainGlobalAI;
 
 
 exports.manageTemperatureLogs = functions.https.onCall(async (data, context) => {
-  const { uid, userOrgId, isAdmin, userName, action, payload } = await getAuthAndPayload(data, context, admin);
+  const {uid, userOrgId, isAdmin, userName, action, payload} = await getAuthAndPayload(data, context, admin);
 
   try {
     if (action === "create") {
@@ -1242,7 +1261,7 @@ exports.manageTemperatureLogs = functions.https.onCall(async (data, context) => 
       let status = "Safe";
       // Basic safety logic: Freezers > 0F / -18C, Coolers > 41F / 5C, Hot Holding < 135F / 57C could be warnings, but we'll let client define or use a generic "Warning" if submitted by client, or just store it.
       if (payload.status) {
-          status = payload.status;
+        status = payload.status;
       }
 
       const newLogRef = await admin.firestore().collection("temperature_logs").add({
@@ -1256,12 +1275,12 @@ exports.manageTemperatureLogs = functions.https.onCall(async (data, context) => 
         orgId: activeOrgId,
         timestamp: admin.firestore.FieldValue.serverTimestamp(),
       });
-      return { success: true, message: "Temperature log created.", id: newLogRef.id };
+      return {success: true, message: "Temperature log created.", id: newLogRef.id};
     }
 
     if (action === "get") {
       if (!userOrgId && !isAdmin) {
-        return { success: true, logs: [] };
+        return {success: true, logs: []};
       }
 
       let query = admin.firestore().collection("temperature_logs");
@@ -1273,8 +1292,8 @@ exports.manageTemperatureLogs = functions.https.onCall(async (data, context) => 
 
       query = query.orderBy("timestamp", "desc").limit(50);
       const snapshot = await query.get();
-      const logs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      return { success: true, logs };
+      const logs = snapshot.docs.map((doc) => ({id: doc.id, ...doc.data()}));
+      return {success: true, logs};
     }
 
     if (action === "delete") {
@@ -1291,7 +1310,7 @@ exports.manageTemperatureLogs = functions.https.onCall(async (data, context) => 
       }
 
       await logRef.delete();
-      return { success: true, message: "Log deleted." };
+      return {success: true, message: "Log deleted."};
     }
 
     throw new HttpsError("invalid-argument", "Invalid action.");
@@ -1302,7 +1321,7 @@ exports.manageTemperatureLogs = functions.https.onCall(async (data, context) => 
 });
 
 exports.manageVendorDeliveries = functions.https.onCall(async (data, context) => {
-  const { uid, userOrgId, isAdmin, userName, action, payload } = await getAuthAndPayload(data, context, admin);
+  const {uid, userOrgId, isAdmin, userName, action, payload} = await getAuthAndPayload(data, context, admin);
 
   try {
     if (action === "create") {
@@ -1319,9 +1338,9 @@ exports.manageVendorDeliveries = functions.https.onCall(async (data, context) =>
         loggedByName: userName,
         orgId: activeOrgId,
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
-        timestamp: admin.firestore.FieldValue.serverTimestamp()
+        timestamp: admin.firestore.FieldValue.serverTimestamp(),
       });
-      return { success: true, deliveryId: newDeliveryRef.id };
+      return {success: true, deliveryId: newDeliveryRef.id};
     }
 
     if (action === "get") {
@@ -1331,36 +1350,36 @@ exports.manageVendorDeliveries = functions.https.onCall(async (data, context) =>
         snapshot = await admin.firestore().collection("vendor_deliveries").orderBy("timestamp", "desc").limit(50).get();
       } else {
         snapshot = await admin.firestore().collection("vendor_deliveries")
-          .where("orgId", "==", activeOrgId)
-          .orderBy("timestamp", "desc")
-          .limit(50)
-          .get();
+            .where("orgId", "==", activeOrgId)
+            .orderBy("timestamp", "desc")
+            .limit(50)
+            .get();
       }
 
       const deliveries = [];
-      snapshot.forEach(doc => {
-        deliveries.push({ id: doc.id, ...doc.data() });
+      snapshot.forEach((doc) => {
+        deliveries.push({id: doc.id, ...doc.data()});
       });
-      return { success: true, deliveries };
+      return {success: true, deliveries};
     }
 
     if (action === "updateStatus") {
       checkRequiredFields(payload, ["deliveryId", "status"]);
-      const { docRef, docSnap } = await verifyDocAndAuth("vendor_deliveries", payload.deliveryId, userOrgId || uid, "Delivery not found.", "Unauthorized access to this delivery.");
+      const {docRef, docSnap} = await verifyDocAndAuth("vendor_deliveries", payload.deliveryId, userOrgId || uid, "Delivery not found.", "Unauthorized access to this delivery.");
 
       await docRef.update({
         status: payload.status,
-        updatedAt: admin.firestore.FieldValue.serverTimestamp()
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       });
-      return { success: true };
+      return {success: true};
     }
 
     if (action === "delete") {
       checkRequiredFields(payload, ["deliveryId"]);
-      const { docRef, docSnap } = await verifyDocAndAuth("vendor_deliveries", payload.deliveryId, userOrgId || uid, "Delivery not found.", "Unauthorized access to this delivery.");
+      const {docRef, docSnap} = await verifyDocAndAuth("vendor_deliveries", payload.deliveryId, userOrgId || uid, "Delivery not found.", "Unauthorized access to this delivery.");
 
       await docRef.delete();
-      return { success: true };
+      return {success: true};
     }
 
     throw new HttpsError("invalid-argument", "Invalid action specified.");
