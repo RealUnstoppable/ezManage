@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <!-- 🛡️ Sentinel: Added Content Security Policy for defense-in-depth -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com https://unpkg.com https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.firebase.com;">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>ezManage | My Account</title>
@@ -16,9 +18,11 @@
 
     <link rel="stylesheet" href="./css/style.css">
     <script type="module">
-        import { loadNavbar } from './js/navbar.js';
+        import { logManagerError } from './js/utils.js';
+    import { loadNavbar } from './js/navbar.js';
         import { loadFooter } from './js/footer.js';
-        document.addEventListener('DOMContentLoaded', () => {
+        window.logManagerError = logManagerError;
+    document.addEventListener('DOMContentLoaded', () => {
             loadNavbar();
             loadFooter();
         });
@@ -223,7 +227,7 @@
                         document.getElementById('acc-membership').textContent = "Free Tier";
                     }
                 } catch(e) {
-                    console.error("Firestore read error", e);
+                    window.logManagerError("Firestore read error", e);
                 }
             } else {
                 window.location.href = 'index.html';
@@ -260,7 +264,7 @@
                 alert("Successfully linked Google account!");
                 checkProviders(auth.currentUser);
             } catch (error) {
-                console.error(error);
+                window.logManagerError(error);
                 alert("Error linking: " + error.message);
             }
         }
@@ -273,7 +277,7 @@
                 alert("Successfully unlinked!");
                 checkProviders(auth.currentUser);
             } catch (error) {
-                console.error(error);
+                window.logManagerError(error);
                 alert("Error unlinking: " + error.message);
             }
         }
