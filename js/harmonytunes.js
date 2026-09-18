@@ -315,29 +315,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    function setupPlayerEvents() {
+    function setupPlaybackControls() {
         playPauseBtn.addEventListener('click', togglePlayPause);
         nextBtn.addEventListener('click', nextSong);
         prevBtn.addEventListener('click', prevSong);
-
-        audioPlayer.addEventListener('timeupdate', updateProgress);
-        audioPlayer.addEventListener('ended', () => {
-            if (repeatMode === 2) {
-                audioPlayer.currentTime = 0;
-                playSong();
-            } else {
-                nextSong();
-            }
-        });
-
-        volumeSlider.addEventListener('input', (e) => audioPlayer.volume = e.target.value);
-
-        progressBar.parentElement.addEventListener('click', (e) => {
-            const width = progressBar.parentElement.clientWidth;
-            const clickX = e.offsetX;
-            const duration = audioPlayer.duration;
-            audioPlayer.currentTime = (clickX / width) * duration;
-        });
 
         shuffleBtn.addEventListener('click', () => {
             isShuffle = !isShuffle;
@@ -364,6 +345,32 @@ document.addEventListener('DOMContentLoaded', () => {
                 toggleFavorite(currentQueue[currentSongIndex].id);
             }
         });
+    }
+
+    function setupProgressEvents() {
+        audioPlayer.addEventListener('timeupdate', updateProgress);
+        audioPlayer.addEventListener('ended', () => {
+            if (repeatMode === 2) {
+                audioPlayer.currentTime = 0;
+                playSong();
+            } else {
+                nextSong();
+            }
+        });
+
+        volumeSlider.addEventListener('input', (e) => audioPlayer.volume = e.target.value);
+
+        progressBar.parentElement.addEventListener('click', (e) => {
+            const width = progressBar.parentElement.clientWidth;
+            const clickX = e.offsetX;
+            const duration = audioPlayer.duration;
+            audioPlayer.currentTime = (clickX / width) * duration;
+        });
+    }
+
+    function setupPlayerEvents() {
+        setupPlaybackControls();
+        setupProgressEvents();
     }
 
     let lastCurrentTimeStr = "";
