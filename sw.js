@@ -57,7 +57,8 @@ self.addEventListener('fetch', (event) => {
                         });
                     }
                     return networkResponse;
-                }).catch(() => {
+                }).catch((err) => {
+                    console.error('Fetch failed:', err);
 
                 });
 

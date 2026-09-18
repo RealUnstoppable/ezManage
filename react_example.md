@@ -18,9 +18,12 @@ function ShiftNotesManager({ currentUser, currentUserData }) {
 
     // Initial load
     useEffect(() => {
-        if (currentUserData?.orgId) {
-            fetchShiftNotes();
-        }
+        const loadNotes = async () => {
+            if (currentUserData?.orgId) {
+                await fetchShiftNotes();
+            }
+        };
+        loadNotes();
     }, [currentUserData?.orgId]);
 
     const fetchShiftNotes = async () => {
@@ -71,6 +74,7 @@ function ShiftNotesManager({ currentUser, currentUserData }) {
         };
 
         // 2. Apply optimistic UI update
+        const previousShiftNotes = [...shiftNotes];
         setShiftNotes([newNote, ...shiftNotes]);
 
         // 3. Clear form inputs (temporarily storing in case of rollback)
@@ -99,7 +103,7 @@ function ShiftNotesManager({ currentUser, currentUserData }) {
             console.error("Error posting note", error);
 
             // Remove the temporary note
-            setShiftNotes((prevNotes) => prevNotes.filter(note => note.id !== tempId));
+            setShiftNotes(previousShiftNotes);
 
             // Restore the content to the input
             setNoteContent(previousContent);

@@ -50,7 +50,27 @@ describe('createCheckoutSession Error Handling', () => {
 
   it('should return 500 when Stripe API throws an error', async () => {
     // Call the function
+
+    // Add mock for admin.firestore().collection("users").doc("user123").get()
+    const adminMock = {
+      initializeApp: sinon.stub(),
+      firestore: () => ({
+        collection: () => ({
+          doc: () => ({
+            get: sinon.stub().resolves({ exists: true, data: () => ({ hasPromoCode: false }) })
+          })
+        })
+      })
+    };
+
+    myFunctions = proxyquire('../index', {
+      'stripe': stripeMock,
+      'firebase-admin': adminMock,
+      'cors': () => (req, res, cb) => cb() // bypass cors for testing
+    });
+
     await myFunctions.createCheckoutSession(req, res);
+
 
     // Wait a tick for promises to resolve
     await new Promise(resolve => setTimeout(resolve, 0));

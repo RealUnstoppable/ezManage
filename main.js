@@ -7,7 +7,11 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Import and start your existing Express server
-import './server.cjs';
+try {
+  await import('./server.cjs');
+} catch (err) {
+  console.error('Failed to load server.cjs:', err);
+}
 
 let mainWindow;
 
@@ -39,4 +43,8 @@ app.whenReady().then(() => {
 
 app.on('window-all-closed', function () {
   if (process.platform !== 'darwin') app.quit();
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
 });

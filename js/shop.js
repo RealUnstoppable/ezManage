@@ -48,6 +48,7 @@ export function calculateCartTotal(cartData, prodMap) {
 
 let cart = {};
 let currentUser = null;
+const debounceTimeouts = new Map();
 
 const productGrid = document.getElementById('product-grid');
 const cartButton = document.getElementById('cart-button');
@@ -82,24 +83,41 @@ function renderCart() {
         cartItemsContainer.innerHTML = '<p class="empty-cart-message">Your cart is empty.</p>';
         checkoutBtn.disabled = true;
     } else {
-        cartItemsContainer.innerHTML = Object.entries(cart).map(([productId, quantity]) => {
+        const fragment = document.createDocumentFragment();
 
+        Object.entries(cart).forEach(([productId, quantity]) => {
             const product = productMap[productId];
-            if (!product) return '';
-            return `
-                <div class="cart-item">
-                    <img src="${escapeHTML(product.imageUrl)}" alt="${escapeHTML(product.name)}" class="cart-item-img" loading="lazy">
-                    <div class="cart-item-info">
-                        <h4>${escapeHTML(product.name)}</h4>
-                        <p>$${product.price.toFixed(2)}</p>
-                    </div>
-                    <div class="cart-item-actions">
-                        <input type="number" aria-label="Item Quantity" value="${escapeHTML(quantity)}" min="1" data-id="${escapeHTML(productId)}" class="item-quantity-input">
-                        <button class="remove-item-btn" aria-label="Remove Item" data-id="${escapeHTML(productId)}">&#128465;</button>
-                    </div>
-                </div>
+            if (!product) return;
+
+            const cartItemDiv = document.createElement('div');
+            cartItemDiv.className = 'cart-item';
+
+            const img = document.createElement('img');
+            img.src = product.imageUrl;
+            img.alt = product.name;
+            img.className = 'cart-item-img';
+            img.loading = 'lazy';
+
+            const infoDiv = document.createElement('div');
+            infoDiv.className = 'cart-item-info';
+            infoDiv.innerHTML = `<h4>${escapeHTML(product.name)}</h4><p>${product.price.toFixed(2)}</p>`;
+
+            const actionsDiv = document.createElement('div');
+            actionsDiv.className = 'cart-item-actions';
+            actionsDiv.innerHTML = `
+                <input type="number" aria-label="Item Quantity" value="${escapeHTML(quantity)}" min="1" data-id="${escapeHTML(productId)}" class="item-quantity-input">
+                <button class="remove-item-btn" aria-label="Remove Item" data-id="${escapeHTML(productId)}">&#128465;</button>
             `;
-        }).join('');
+
+            cartItemDiv.appendChild(img);
+            cartItemDiv.appendChild(infoDiv);
+            cartItemDiv.appendChild(actionsDiv);
+
+            fragment.appendChild(cartItemDiv);
+        });
+
+        cartItemsContainer.innerHTML = '';
+        cartItemsContainer.appendChild(fragment);
         checkoutBtn.disabled = false;
     }
     updateCartSummary();
@@ -216,7 +234,11 @@ function setupEventListeners() {
         if (e.target.classList.contains('item-quantity-input')) {
             const productId = e.target.dataset.id;
             const quantity = parseInt(e.target.value, 10);
-            handleUpdateQuantity(productId, quantity);
+
+            if (debounceTimeouts.has(productId)) clearTimeout(debounceTimeouts.get(productId));
+            debounceTimeouts.set(productId, setTimeout(() => {
+                handleUpdateQuantity(productId, quantity);
+            }, 300));
         }
     });
 

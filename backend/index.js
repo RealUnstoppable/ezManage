@@ -257,11 +257,8 @@ exports.manageTasks = functions.https.onCall(async (data, context) => {
   }
 
   const {action, payload} = data;
+  checkRequiredFields({action, payload}, ['action', 'payload']);
   const uid = context.auth.uid;
-
-  if (!action || !payload) {
-    throw new HttpsError("invalid-argument", "Missing action or payload");
-  }
 
   try {
     const userOrgId = await getActualOrgId(admin, uid);
@@ -345,12 +342,8 @@ exports.manageShiftNotes = functions.https.onCall(async (data, context) => {
   }
 
   const {action, payload} = data;
+  checkRequiredFields({action, payload}, ['action', 'payload']);
   const uid = context.auth.uid;
-
-  if (!action || !payload) {
-    throw new HttpsError(
-        "invalid-argument", "Missing action or payload");
-  }
 
   try {
     // 🛡️ Securely fetch the user's actual orgId from the database
@@ -433,11 +426,8 @@ exports.manageEmployees = functions.https.onCall(async (data, context) => {
   }
 
   const {action, payload} = data;
+  checkRequiredFields({action, payload}, ['action', 'payload']);
   const uid = context.auth.uid;
-
-  if (!action || !payload) {
-    throw new HttpsError("invalid-argument", "Missing action or payload");
-  }
 
   try {
     const actualOrgId = await getActualOrgId(admin, uid);
@@ -541,12 +531,8 @@ exports.manageShiftGroups = functions.https.onCall(async (data, context) => {
   }
 
   const {action, payload} = data;
+  checkRequiredFields({action, payload}, ['action', 'payload']);
   const uid = context.auth.uid;
-
-  if (!action || !payload) {
-    throw new HttpsError(
-        "invalid-argument", "Missing action or payload");
-  }
 
   try {
     // Create a new group
@@ -713,11 +699,8 @@ exports.manageIncidents = functions.https.onCall(async (data, context) => {
   }
 
   const {action, payload} = data;
+  checkRequiredFields({action, payload}, ['action', 'payload']);
   const uid = context.auth.uid;
-
-  if (!action || !payload) {
-    throw new HttpsError("invalid-argument", "Missing action or payload");
-  }
 
   try {
     const actualOrgId = await getActualOrgId(admin, uid);
@@ -826,11 +809,8 @@ exports.manageTimeLogs = functions.https.onCall(async (data, context) => {
   }
 
   const {action, payload} = data;
+  checkRequiredFields({action, payload}, ['action', 'payload']);
   const uid = context.auth.uid;
-
-  if (!action || !payload) {
-    throw new HttpsError("invalid-argument", "Missing action or payload");
-  }
 
   try {
     const userDoc = await admin.firestore().collection("users").doc(uid).get();
@@ -932,11 +912,8 @@ exports.manageWaste = functions.https.onCall(async (data, context) => {
   }
 
   const {action, payload} = data;
+  checkRequiredFields({action, payload}, ['action', 'payload']);
   const uid = context.auth.uid;
-
-  if (!action || !payload) {
-    throw new HttpsError("invalid-argument", "Missing action or payload");
-  }
 
   try {
     const actualOrgId = await getActualOrgId(admin, uid);
@@ -1023,11 +1000,8 @@ exports.manageRecognitions = functions.https.onCall(async (data, context) => {
   }
 
   const {action, payload} = data;
+  checkRequiredFields({action, payload}, ['action', 'payload']);
   const uid = context.auth.uid;
-
-  if (!action || !payload) {
-    throw new HttpsError("invalid-argument", "Missing action or payload");
-  }
 
   try {
     const userDoc = await admin.firestore().collection("users").doc(uid).get();
@@ -1139,11 +1113,8 @@ exports.manageFeedbacks = functions.https.onCall(async (data, context) => {
   }
 
   const {action, payload} = data;
+  checkRequiredFields({action, payload}, ['action', 'payload']);
   const uid = context.auth.uid;
-
-  if (!action || !payload) {
-    throw new HttpsError("invalid-argument", "Missing action or payload");
-  }
 
   try {
     const userDoc = await admin.firestore().collection("users").doc(uid).get();
