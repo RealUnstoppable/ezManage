@@ -100,7 +100,7 @@ function ShiftNotesManager({ currentUser, currentUserData }) {
             console.error("Error posting note", error);
 
             // Remove the temporary note, explicit reset using state callback for safety.
-            setShiftNotes(() => previousShiftNotes);
+            setShiftNotes(previousShiftNotes);
 
             // Restore the content to the input
             setNoteContent(previousContent);
