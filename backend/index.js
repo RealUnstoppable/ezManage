@@ -263,7 +263,7 @@ exports.cancelSubscription = onRequest({invoker: "public"}, (req, res) => {
       );
       res.status(200).json({success: true});
     } catch (err) {
-      logManagerError("Cancel Error for customerId:", customerId, err);
+      logManagerError(`Cancel Error for customerId: ${customerId}`, err);
       res.status(500).json({error: err.message});
     }
   });
@@ -274,20 +274,9 @@ exports.cancelSubscription = onRequest({invoker: "public"}, (req, res) => {
  * Handles creation, status updating, and deletion of shift tasks.
  */
 exports.manageTasks = functions.https.onCall(async (data, context) => {
-  const adapted = adaptGen2Params(data, context);
-  data = adapted.data;
-  context = adapted.context;
-
-  if (!context || !context.auth) {
-    throw new HttpsError("unauthenticated", "User must be logged in.");
-  }
-
-  const {action, payload} = data;
-  checkRequiredFields({action, payload}, ["action", "payload"]);
-  const uid = context.auth.uid;
+  const {uid, userOrgId, isAdmin, userName, action, payload} = await getAuthAndPayload(data, context, admin);
 
   try {
-    const userOrgId = await getActualOrgId(admin, uid);
     const isManager = userOrgId === uid;
     const actualOrgId = userOrgId || uid;
 
@@ -358,23 +347,11 @@ exports.manageTasks = functions.https.onCall(async (data, context) => {
  * Handles creation, updating, and resolution of shift notes.
  */
 exports.manageShiftNotes = functions.https.onCall(async (data, context) => {
-  const adapted = adaptGen2Params(data, context);
-  data = adapted.data;
-  context = adapted.context;
-
-  if (!context || !context.auth) {
-    throw new HttpsError(
-        "unauthenticated", "User must be logged in.");
-  }
-
-  const {action, payload} = data;
-  checkRequiredFields({action, payload}, ["action", "payload"]);
-  const uid = context.auth.uid;
+  const {uid, userOrgId, isAdmin, userName, action, payload} = await getAuthAndPayload(data, context, admin);
 
   try {
     // 🛡️ Securely fetch the user's actual orgId from the database
     // instead of trusting the client payload to prevent IDOR
-    const userOrgId = await getActualOrgId(admin, uid);
     const actualOrgId = payload.orgId || userOrgId || null;
 
     if (action === "create") {
@@ -443,20 +420,10 @@ exports.manageShiftNotes = functions.https.onCall(async (data, context) => {
  * Handles creation, updating, and deletion of employees.
  */
 exports.manageEmployees = functions.https.onCall(async (data, context) => {
-  const adapted = adaptGen2Params(data, context);
-  data = adapted.data;
-  context = adapted.context;
-
-  if (!context || !context.auth) {
-    throw new HttpsError("unauthenticated", "User must be logged in.");
-  }
-
-  const {action, payload} = data;
-  checkRequiredFields({action, payload}, ["action", "payload"]);
-  const uid = context.auth.uid;
+  const {uid, userOrgId, isAdmin, userName, action, payload} = await getAuthAndPayload(data, context, admin);
 
   try {
-    const actualOrgId = await getActualOrgId(admin, uid);
+    const actualOrgId = userOrgId;
 
     if (!actualOrgId) {
       throw new HttpsError("permission-denied", "User must be part of an organization.");
@@ -546,18 +513,7 @@ exports.manageEmployees = functions.https.onCall(async (data, context) => {
  * Handles creating groups, joining groups, and approving joins.
  */
 exports.manageShiftGroups = functions.https.onCall(async (data, context) => {
-  const adapted = adaptGen2Params(data, context);
-  data = adapted.data;
-  context = adapted.context;
-
-  if (!context || !context.auth) {
-    throw new HttpsError(
-        "unauthenticated", "User must be logged in.");
-  }
-
-  const {action, payload} = data;
-  checkRequiredFields({action, payload}, ["action", "payload"]);
-  const uid = context.auth.uid;
+  const {uid, userOrgId, isAdmin, userName, action, payload} = await getAuthAndPayload(data, context, admin);
 
   try {
     // Create a new group
@@ -794,20 +750,10 @@ async function handleDeleteIncident(payload, actualOrgId) {
  * Handles creation, reading, status updates, and deletion of incidents.
  */
 exports.manageIncidents = functions.https.onCall(async (data, context) => {
-  const adapted = adaptGen2Params(data, context);
-  data = adapted.data;
-  context = adapted.context;
-
-  if (!context || !context.auth) {
-    throw new HttpsError("unauthenticated", "User must be logged in.");
-  }
-
-  const {action, payload} = data;
-  checkRequiredFields({action, payload}, ["action", "payload"]);
-  const uid = context.auth.uid;
+  const {uid, userOrgId, isAdmin, userName, action, payload} = await getAuthAndPayload(data, context, admin);
 
   try {
-    const actualOrgId = await getActualOrgId(admin, uid);
+    const actualOrgId = userOrgId;
 
     if (!actualOrgId) {
       throw new HttpsError("permission-denied", "User must be part of an organization to report incidents.");
@@ -844,26 +790,11 @@ exports.manageIncidents = functions.https.onCall(async (data, context) => {
  * Handles clock in, clock out, and retrieving time logs.
  */
 exports.manageTimeLogs = functions.https.onCall(async (data, context) => {
-  if (data && typeof data === "object" && "rawRequest" in data && "auth" in data) {
-    context = data;
-    data = data.data;
-  }
-
-  if (!context || !context.auth) {
-    throw new HttpsError("unauthenticated", "User must be logged in.");
-  }
-
-  const {action, payload} = data;
-  checkRequiredFields({action, payload}, ["action", "payload"]);
-  const uid = context.auth.uid;
+  const {uid, userOrgId, isAdmin, userName, action, payload} = await getAuthAndPayload(data, context, admin);
 
   try {
-    const userDoc = await admin.firestore().collection("users").doc(uid).get();
-    if (!userDoc.exists) {
-      throw new HttpsError("not-found", "User not found");
-    }
-    const actualOrgId = userDoc.data().orgId || null;
-    const employeeName = userDoc.data().name || "Anonymous";
+    const actualOrgId = userOrgId || null;
+    const employeeName = userName || "Anonymous";
 
     if (!actualOrgId) {
       throw new HttpsError("permission-denied", "User must be part of an organization to clock in/out.");
@@ -918,7 +849,7 @@ exports.manageTimeLogs = functions.https.onCall(async (data, context) => {
     }
 
     if (action === "get_logs") {
-      const isManager = userDoc.data().orgId === uid || userDoc.data().isAdmin;
+      const isManager = userOrgId === uid || isAdmin;
 
       let query = admin.firestore().collection("time_logs").where("orgId", "==", actualOrgId);
 
@@ -948,20 +879,10 @@ exports.manageTimeLogs = functions.https.onCall(async (data, context) => {
  * Handles creation, reading, and deletion of waste logs.
  */
 exports.manageWaste = functions.https.onCall(async (data, context) => {
-  const adapted = adaptGen2Params(data, context);
-  data = adapted.data;
-  context = adapted.context;
-
-  if (!context || !context.auth) {
-    throw new HttpsError("unauthenticated", "User must be logged in.");
-  }
-
-  const {action, payload} = data;
-  checkRequiredFields({action, payload}, ["action", "payload"]);
-  const uid = context.auth.uid;
+  const {uid, userOrgId, isAdmin, userName, action, payload} = await getAuthAndPayload(data, context, admin);
 
   try {
-    const actualOrgId = await getActualOrgId(admin, uid);
+    const actualOrgId = userOrgId;
 
     if (!actualOrgId) {
       throw new HttpsError("permission-denied", "User must be part of an organization to log waste.");
@@ -1040,24 +961,10 @@ exports.manageWaste = functions.https.onCall(async (data, context) => {
  * Handles creation, reading, and deletion of recognitions (Kudos / Private Feedback).
  */
 exports.manageRecognitions = functions.https.onCall(async (data, context) => {
-  const adapted = adaptGen2Params(data, context);
-  data = adapted.data;
-  context = adapted.context;
-
-  if (!context || !context.auth) {
-    throw new HttpsError("unauthenticated", "User must be logged in.");
-  }
-
-  const {action, payload} = data;
-  checkRequiredFields({action, payload}, ["action", "payload"]);
-  const uid = context.auth.uid;
+  const {uid, userOrgId, isAdmin, userName, action, payload} = await getAuthAndPayload(data, context, admin);
 
   try {
-    const userDoc = await admin.firestore().collection("users").doc(uid).get();
-    if (!userDoc.exists) {
-      throw new HttpsError("not-found", "User not found");
-    }
-    const actualOrgId = userDoc.data().orgId || null;
+        const actualOrgId = userOrgId || null;
 
     if (!actualOrgId) {
       throw new HttpsError("permission-denied", "User must be part of an organization to manage recognitions.");
@@ -1073,7 +980,7 @@ exports.manageRecognitions = functions.https.onCall(async (data, context) => {
 
       const newRecognition = {
         senderId: uid,
-        senderName: userDoc.data().name || "Anonymous",
+        senderName: userName || "Anonymous",
         receiverId,
         receiverName,
         message,
@@ -1094,7 +1001,7 @@ exports.manageRecognitions = functions.https.onCall(async (data, context) => {
           .get();
 
       const recognitions = [];
-      const isManager = userDoc.data().orgId === uid;
+      const isManager = userOrgId === uid;
 
       snapshot.forEach((doc) => {
         const rec = {id: doc.id, ...doc.data()};
@@ -1128,7 +1035,7 @@ exports.manageRecognitions = functions.https.onCall(async (data, context) => {
         throw new HttpsError("permission-denied", "Unauthorized to delete this recognition");
       }
 
-      if (recDoc.data().senderId !== uid && userDoc.data().orgId !== uid) {
+      if (recDoc.data().senderId !== uid && userOrgId !== uid) {
         throw new HttpsError("permission-denied", "Only the sender or an admin can delete a recognition.");
       }
 
@@ -1152,25 +1059,10 @@ exports.manageRecognitions = functions.https.onCall(async (data, context) => {
  * Handles creation, reading, and deletion of employee feedbacks.
  */
 exports.manageFeedbacks = functions.https.onCall(async (data, context) => {
-  if (data && typeof data === "object" && "rawRequest" in data && "auth" in data) {
-    context = data;
-    data = data.data;
-  }
-
-  if (!context || !context.auth) {
-    throw new HttpsError("unauthenticated", "User must be logged in.");
-  }
-
-  const {action, payload} = data;
-  checkRequiredFields({action, payload}, ["action", "payload"]);
-  const uid = context.auth.uid;
+  const {uid, userOrgId, isAdmin, userName, action, payload} = await getAuthAndPayload(data, context, admin);
 
   try {
-    const userDoc = await admin.firestore().collection("users").doc(uid).get();
-    if (!userDoc.exists) {
-      throw new HttpsError("not-found", "User not found");
-    }
-    const actualOrgId = userDoc.data().orgId || null;
+    const actualOrgId = userOrgId || null;
 
     if (!actualOrgId) {
       throw new HttpsError("permission-denied", "User must be part of an organization to manage feedbacks.");
@@ -1189,7 +1081,7 @@ exports.manageFeedbacks = functions.https.onCall(async (data, context) => {
         rating: Number(rating),
         comment: comment || "",
         managerId: uid,
-        managerName: userDoc.data().name || "Anonymous Manager",
+        managerName: userName || "Anonymous Manager",
         orgId: actualOrgId,
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
       };

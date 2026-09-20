@@ -38,7 +38,10 @@ function ShiftNotesManager({ currentUser, currentUserData }) {
 
     // Initial load
     useEffect(() => {
-        fetchShiftNotes();
+        const loadNotes = async () => {
+            await fetchShiftNotes();
+        };
+        loadNotes();
     }, [fetchShiftNotes]);
 
     const submitShiftNote = async (e) => {
@@ -99,8 +102,8 @@ function ShiftNotesManager({ currentUser, currentUserData }) {
             // 6. Rollback optimistic UI if network request fails
             console.error("Error posting note", error);
 
-            // Remove the temporary note, explicit reset using state callback for safety.
-            setShiftNotes(() => previousShiftNotes);
+            // Remove the temporary note, explicitly passing previous array to reset state correctly.
+            setShiftNotes(previousShiftNotes);
 
             // Restore the content to the input
             setNoteContent(previousContent);
