@@ -1,0 +1,4 @@
+## 2024-05-18 - Fix Hardcoded Plaintext Password Storage
+**Vulnerability:** Shift group passwords were being stored in plaintext in the Firestore database (`groupDoc.data().password`) and directly compared with plaintext payloads during authentication (`request_join`). This is a critical security vulnerability as any database leak exposes all group passwords.
+**Learning:** When adding hashing algorithms to legacy codebases, using a simple heuristic like `.includes(":")` to determine if a stored string is a hash vs a legacy plaintext password is too broad and can inadvertently lock out users who used colons in their valid passwords.
+**Prevention:** Always use a distinct, cryptographic signature prefix (like `$scrypt$`) when creating hashes so they can be unambiguously identified when implementing fallback/upgrade logic (`storedPassword.startsWith("$scrypt$")`).
