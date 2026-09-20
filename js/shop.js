@@ -92,31 +92,23 @@ function renderCart() {
             const product = productMap[productId];
             if (!product) return;
 
-            const cartItemDiv = document.createElement('div');
-            cartItemDiv.className = 'cart-item';
-
-            const img = document.createElement('img');
-            img.src = product.imageUrl;
-            img.alt = product.name;
-            img.className = 'cart-item-img';
-            img.loading = 'lazy';
-
-            const infoDiv = document.createElement('div');
-            infoDiv.className = 'cart-item-info';
-            infoDiv.innerHTML = `<h4>${escapeHTML(product.name)}</h4><p>${product.price.toFixed(2)}</p>`;
-
-            const actionsDiv = document.createElement('div');
-            actionsDiv.className = 'cart-item-actions';
-            actionsDiv.innerHTML = `
-                <input type="number" aria-label="Item Quantity" value="${escapeHTML(quantity)}" min="1" data-id="${escapeHTML(productId)}" class="item-quantity-input">
-                <button class="remove-item-btn" aria-label="Remove Item" data-id="${escapeHTML(productId)}">&#128465;</button>
+            const htmlString = `
+                <div class="cart-item">
+                    <img src="${escapeHTML(product.imageUrl)}" alt="${escapeHTML(product.name)}" class="cart-item-img" loading="lazy">
+                    <div class="cart-item-info">
+                        <h4>${escapeHTML(product.name)}</h4>
+                        <p>${product.price.toFixed(2)}</p>
+                    </div>
+                    <div class="cart-item-actions">
+                        <input type="number" aria-label="Item Quantity" value="${escapeHTML(quantity)}" min="1" data-id="${escapeHTML(productId)}" class="item-quantity-input">
+                        <button class="remove-item-btn" aria-label="Remove Item" data-id="${escapeHTML(productId)}">&#128465;</button>
+                    </div>
+                </div>
             `;
 
-            cartItemDiv.appendChild(img);
-            cartItemDiv.appendChild(infoDiv);
-            cartItemDiv.appendChild(actionsDiv);
-
-            fragment.appendChild(cartItemDiv);
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = htmlString;
+            fragment.appendChild(tempDiv.firstElementChild);
         });
 
         cartItemsContainer.innerHTML = '';
@@ -239,13 +231,27 @@ function setupEventListeners() {
                 handleRemoveFromCart(productId);
             }
         });
+<<<<<<< HEAD
+        const quantityTimeouts = new Map();
+=======
         // ⚡ Bolt Optimization: Debounce quantity inputs to prevent rapid multiple Firestore updates and re-renders
         // Impact: Reduces overlapping rapid inputs, DOM updates, and Firestore writes when using spinners or typing quickly.
+>>>>>>> origin/main
         cartItemsContainer.addEventListener('input', (e) => {
             if (e.target.classList.contains('item-quantity-input')) {
                 const productId = e.target.dataset.id;
                 const quantity = parseInt(e.target.value, 10);
 
+<<<<<<< HEAD
+                if (quantityTimeouts.has(productId)) {
+                    clearTimeout(quantityTimeouts.get(productId));
+                }
+
+                quantityTimeouts.set(productId, setTimeout(() => {
+                    handleUpdateQuantity(productId, quantity);
+                    quantityTimeouts.delete(productId);
+                }, 300));
+=======
                 if (updateQuantityTimeouts.has(productId)) {
                     clearTimeout(updateQuantityTimeouts.get(productId));
                 }
@@ -256,6 +262,7 @@ function setupEventListeners() {
                 }, 300);
 
                 updateQuantityTimeouts.set(productId, timeoutId);
+>>>>>>> origin/main
             }
         });
     }
