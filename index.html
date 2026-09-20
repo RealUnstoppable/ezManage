@@ -512,6 +512,10 @@
             <a href="#" onclick="navTo('deliveries')"
                 class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="truck"></i>
                 Vendor Deliveries</a>
+
+            <a href="#" onclick="navTo('marketplace')"
+                class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="arrow-left-right"></i>
+                Shift Marketplace</a>
 <a href="#" onclick="navTo('timeoff')"
                 class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="calendar-clock"></i>
                 Time Off</a>
@@ -2277,7 +2281,71 @@
             </div>
         </div>
 
-        <div id="view-timeoff" class="view-section px-6 py-12 hidden">
+
+        <div id="view-marketplace" class="view-section px-6 py-12 hidden">
+            <div class="max-w-4xl mx-auto">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+                    <h1 class="text-4xl font-black">Shift Marketplace</h1>
+                    <button onclick="document.getElementById('postShiftModal').classList.remove('hidden')"
+                        class="btn btn-primary flex items-center gap-2 px-6">
+                        <i data-lucide="plus-circle" class="w-5 h-5"></i> Post Shift
+                    </button>
+                </div>
+
+                <!-- Post Shift Modal -->
+                <div id="postShiftModal" class="hidden bg-white dark:bg-slate-900 rounded-3xl p-6 md:p-8 shadow-sm border border-slate-100 dark:border-slate-800 mb-12">
+                    <h2 class="text-xl font-bold mb-4">Post a Shift to the Marketplace</h2>
+                    <p class="text-sm text-slate-500 mb-6">Need coverage? Post your shift details below.</p>
+                    <div class="space-y-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label for="mpShiftDate" class="block text-sm font-bold mb-1">Shift Date</label>
+                                <input type="date" id="mpShiftDate" class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
+                            </div>
+                            <div>
+                                <label for="mpRole" class="block text-sm font-bold mb-1">Role Needed</label>
+                                <input type="text" id="mpRole" placeholder="e.g. Cashier, Cook" class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label for="mpShiftStart" class="block text-sm font-bold mb-1">Start Time</label>
+                                <input type="time" id="mpShiftStart" class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
+                            </div>
+                            <div>
+                                <label for="mpShiftEnd" class="block text-sm font-bold mb-1">End Time</label>
+                                <input type="time" id="mpShiftEnd" class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
+                            </div>
+                        </div>
+
+                        <div class="flex justify-end gap-3 pt-4">
+                            <button onclick="document.getElementById('postShiftModal').classList.add('hidden')" class="btn btn-outline px-6 py-2">Cancel</button>
+                            <button onclick="postShiftToMarketplace()" class="btn btn-accent px-6 py-2" id="btnPostShift">Post Shift</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tabs -->
+                <div class="flex gap-4 mb-6 border-b border-slate-200 dark:border-slate-800 pb-2">
+                    <button onclick="switchMarketplaceTab('available')" id="tabMpAvailable" class="font-bold text-sky-500 border-b-2 border-sky-500 pb-2 px-2">Available Shifts</button>
+                    <button onclick="switchMarketplaceTab('my')" id="tabMpMy" class="font-bold text-slate-500 hover:text-slate-800 dark:hover:text-slate-300 pb-2 px-2">My Posted Shifts</button>
+                    <button onclick="switchMarketplaceTab('manager')" id="tabMpManager" class="hidden font-bold text-slate-500 hover:text-slate-800 dark:hover:text-slate-300 pb-2 px-2">Manager Approvals</button>
+                </div>
+
+                <div class="flex justify-end mb-4">
+                    <button onclick="fetchMarketplaceShifts()" class="text-sm font-bold text-sky-500 hover:text-sky-600 flex items-center gap-2">
+                        <i data-lucide="refresh-cw" class="w-4 h-4"></i> Refresh
+                    </button>
+                </div>
+
+                <!-- Containers -->
+                <div id="mpAvailableContainer" class="space-y-4"></div>
+                <div id="mpMyContainer" class="space-y-4 hidden"></div>
+                <div id="mpManagerContainer" class="space-y-4 hidden"></div>
+
+            </div>
+        </div>
+<div id="view-timeoff" class="view-section px-6 py-12 hidden">
             <div class="max-w-4xl mx-auto">
                 <div class="card shadow-2xl mb-12">
                     <h1 class="text-3xl font-black mb-4">Request Time Off</h1>
@@ -2923,7 +2991,7 @@
                 localStorage.setItem('navTo', viewId);
                 return;
             }
-            if (!currentUser && (['history', 'presets', 'performance', 'request', 'profile', 'shiftNotes', 'team', 'employees', 'timeoff', 'tasks', 'announcements', 'deliveries'].includes(viewId))) {
+            if (!currentUser && (['history', 'presets', 'performance', 'request', 'profile', 'shiftNotes', 'team', 'employees', 'timeoff', 'tasks', 'announcements', 'deliveries', 'marketplace'].includes(viewId))) {
                 viewId = 'auth';
             }
             if (viewId === 'maintenance' && currentUser) {
@@ -2932,6 +3000,9 @@
 
             if (viewId === 'announcements' && currentUser) {
                 fetchAnnouncements();
+            }
+            if (viewId === 'marketplace' && currentUser) {
+                fetchMarketplaceShifts();
             }
             if (viewId === 'tasks' && currentUser) {
                 fetchTasks();
@@ -7224,7 +7295,299 @@ async function submitWasteLog() {
 
         // The second event listener was unclosed
 
-        window.onload = () => {
+
+        // ==========================
+        // SHIFT MARKETPLACE SYSTEM
+        // ==========================
+
+        let marketplaceShifts = [];
+        let currentMpTab = 'available';
+
+        function switchMarketplaceTab(tab) {
+            currentMpTab = tab;
+            document.getElementById('tabMpAvailable').className = "font-bold text-slate-500 hover:text-slate-800 dark:hover:text-slate-300 pb-2 px-2";
+            document.getElementById('tabMpMy').className = "font-bold text-slate-500 hover:text-slate-800 dark:hover:text-slate-300 pb-2 px-2";
+            document.getElementById('tabMpManager').className = "hidden font-bold text-slate-500 hover:text-slate-800 dark:hover:text-slate-300 pb-2 px-2";
+
+            if(currentUserData && currentUserData.orgId === currentUser.uid) {
+                document.getElementById('tabMpManager').classList.remove('hidden');
+            }
+
+            if (tab === 'available') {
+                document.getElementById('tabMpAvailable').className = "font-bold text-sky-500 border-b-2 border-sky-500 pb-2 px-2";
+                document.getElementById('mpAvailableContainer').classList.remove('hidden');
+                document.getElementById('mpMyContainer').classList.add('hidden');
+                document.getElementById('mpManagerContainer').classList.add('hidden');
+            } else if (tab === 'my') {
+                document.getElementById('tabMpMy').className = "font-bold text-sky-500 border-b-2 border-sky-500 pb-2 px-2";
+                document.getElementById('mpAvailableContainer').classList.add('hidden');
+                document.getElementById('mpMyContainer').classList.remove('hidden');
+                document.getElementById('mpManagerContainer').classList.add('hidden');
+            } else if (tab === 'manager') {
+                document.getElementById('tabMpManager').className = "font-bold text-sky-500 border-b-2 border-sky-500 pb-2 px-2";
+                document.getElementById('mpAvailableContainer').classList.add('hidden');
+                document.getElementById('mpMyContainer').classList.add('hidden');
+                document.getElementById('mpManagerContainer').classList.remove('hidden');
+            }
+
+            renderMarketplaceShifts();
+        }
+
+        async function postShiftToMarketplace() {
+            if (!currentUser || !currentUserData || !currentUserData.orgId) {
+                alert("You must be part of an organization to post a shift.");
+                return;
+            }
+
+            const shiftDate = document.getElementById('mpShiftDate').value;
+            const shiftStart = document.getElementById('mpShiftStart').value;
+            const shiftEnd = document.getElementById('mpShiftEnd').value;
+            const role = document.getElementById('mpRole').value.trim();
+
+            if (!shiftDate) {
+                alert("Shift date is required.");
+                return;
+            }
+
+            const btn = document.getElementById('btnPostShift');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin mr-2"></i> Posting...';
+            btn.disabled = true;
+            lucide.createIcons();
+
+            try {
+                await callCloudFunction('manageShiftMarketplace', {
+                    action: "create",
+                    payload: {
+                        originalEmployeeId: currentUser.uid,
+                        originalEmployeeName: currentUserData.name || currentUser.email.split('@')[0],
+                        shiftDate,
+                        shiftStart,
+                        shiftEnd,
+                        role
+                    }
+                });
+
+                document.getElementById('mpShiftDate').value = '';
+                document.getElementById('mpShiftStart').value = '';
+                document.getElementById('mpShiftEnd').value = '';
+                document.getElementById('mpRole').value = '';
+                document.getElementById('postShiftModal').classList.add('hidden');
+
+                alert("Shift posted successfully!");
+                fetchMarketplaceShifts();
+                switchMarketplaceTab('my');
+            } catch (error) {
+                console.error("Error posting shift:", error);
+                alert("Failed to post shift: " + error.message);
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+                lucide.createIcons();
+            }
+        }
+
+        async function fetchMarketplaceShifts() {
+            if (!currentUser || !currentUserData || !currentUserData.orgId) return;
+
+            const containers = ['mpAvailableContainer', 'mpMyContainer', 'mpManagerContainer'];
+            containers.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.innerHTML = '<div class="text-center py-8"><i data-lucide="loader-2" class="w-8 h-8 animate-spin mx-auto text-sky-500 mb-4"></i><p class="text-slate-500">Loading...</p></div>';
+            });
+            lucide.createIcons();
+
+            try {
+                const result = await callCloudFunction('manageShiftMarketplace', { action: "get", payload: {} });
+                if (result.data.success) {
+                    marketplaceShifts = result.data.shifts || [];
+
+                    if(currentUserData.orgId === currentUser.uid) {
+                        document.getElementById('tabMpManager').classList.remove('hidden');
+                    }
+
+                    renderMarketplaceShifts();
+                }
+            } catch (error) {
+                console.error("Error fetching shifts:", error);
+                containers.forEach(id => {
+                    const el = document.getElementById(id);
+                    if(el) el.innerHTML = '<p class="text-red-500 text-center">Failed to load shifts.</p>';
+                });
+            }
+        }
+
+        function renderMarketplaceShifts() {
+            const availContainer = document.getElementById('mpAvailableContainer');
+            const myContainer = document.getElementById('mpMyContainer');
+            const mgrContainer = document.getElementById('mpManagerContainer');
+
+            availContainer.innerHTML = '';
+            myContainer.innerHTML = '';
+            mgrContainer.innerHTML = '';
+
+            const isManager = currentUserData && currentUserData.orgId === currentUser.uid;
+
+            let availCount = 0;
+            let myCount = 0;
+            let mgrCount = 0;
+
+            const availFragment = document.createDocumentFragment();
+            const myFragment = document.createDocumentFragment();
+            const mgrFragment = document.createDocumentFragment();
+
+            marketplaceShifts.forEach(shift => {
+                let dateStr = 'Unknown';
+                if (shift.createdAt && shift.createdAt._seconds) {
+                    dateStr = new Date(shift.createdAt._seconds * 1000).toLocaleString();
+                } else if (shift.createdAt && typeof shift.createdAt === 'string') {
+                    dateStr = new Date(shift.createdAt).toLocaleString();
+                }
+                const shiftTimeStr = shift.shiftStart && shift.shiftEnd ? `${escapeHTML(shift.shiftStart)} - ${escapeHTML(shift.shiftEnd)}` : 'TBD';
+
+                const div = document.createElement('div');
+                div.className = "card p-5 border border-slate-200 dark:border-slate-800 flex flex-col md:flex-row justify-between gap-4";
+
+                let statusBadge = '';
+                if(shift.status === 'Open') statusBadge = '<span class="px-2 py-1 bg-emerald-100 text-emerald-800 rounded-lg text-xs font-bold">Open</span>';
+                else if(shift.status === 'Pending Approval') statusBadge = '<span class="px-2 py-1 bg-amber-100 text-amber-800 rounded-lg text-xs font-bold">Pending Manager</span>';
+                else if(shift.status === 'Approved') statusBadge = '<span class="px-2 py-1 bg-sky-100 text-sky-800 rounded-lg text-xs font-bold">Approved</span>';
+
+                let actionsHtml = '';
+
+                // Categorize
+                let isMy = (shift.originalEmployeeId === currentUser.uid);
+
+                if (isMy) {
+                    // My Shifts
+                    if(shift.status === 'Open' || shift.status === 'Pending Approval') {
+                        actionsHtml = `<button class="btn btn-sm btn-outline text-red-500 delete-mp-shift" data-id="${shift.id}">Cancel Request</button>`;
+                    }
+                    div.innerHTML = `
+                        <div>
+                            <div class="flex items-center gap-2 mb-2"><h3 class="font-bold text-lg">${escapeHTML(shift.shiftDate)}</h3> ${statusBadge}</div>
+                            <p class="text-sm text-slate-500">Role: ${escapeHTML(shift.role)} • Time: ${shiftTimeStr} • ${dateStr}</p>
+                            ${shift.coveringEmployeeName ? `<p class="text-sm text-sky-600 mt-1">${escapeHTML(shift.coveringEmployeeName)} offered to cover</p>` : ''}
+                        </div>
+                        <div class="flex items-center justify-end">${actionsHtml}</div>
+                    `;
+                    myFragment.appendChild(div);
+                    myCount++;
+                } else if (shift.status === 'Open') {
+                    // Available Shifts
+                    actionsHtml = `<button class="btn btn-sm btn-accent offer-cover-btn" data-id="${shift.id}">Offer to Cover</button>`;
+                    div.innerHTML = `
+                        <div>
+                            <div class="flex items-center gap-2 mb-2"><h3 class="font-bold text-lg">${escapeHTML(shift.shiftDate)}</h3> ${statusBadge}</div>
+                            <p class="text-sm text-slate-500">Posted by ${escapeHTML(shift.originalEmployeeName)} • Role: ${escapeHTML(shift.role)} • Time: ${shiftTimeStr} • ${dateStr}</p>
+                        </div>
+                        <div class="flex items-center justify-end">${actionsHtml}</div>
+                    `;
+                    availFragment.appendChild(div);
+                    availCount++;
+                }
+
+                // Manager View
+                if (isManager && shift.status === 'Pending Approval') {
+                    const mgrDiv = div.cloneNode(true);
+                    mgrDiv.innerHTML = `
+                        <div>
+                            <div class="flex items-center gap-2 mb-2"><h3 class="font-bold text-lg">${escapeHTML(shift.shiftDate)}</h3> ${statusBadge}</div>
+                            <p class="text-sm text-slate-500">${escapeHTML(shift.originalEmployeeName)} -> ${escapeHTML(shift.coveringEmployeeName)}</p>
+                            <p class="text-xs text-slate-400">Role: ${escapeHTML(shift.role)} • Time: ${shiftTimeStr} • ${dateStr}</p>
+                        </div>
+                        <div class="flex gap-2 items-center justify-end">
+                            <button class="btn btn-sm bg-emerald-500 text-white hover:bg-emerald-600 approve-mp-btn" data-id="${shift.id}">Approve</button>
+                            <button class="btn btn-sm bg-red-500 text-white hover:bg-red-600 deny-mp-btn" data-id="${shift.id}">Deny</button>
+                        </div>
+                    `;
+                    mgrFragment.appendChild(mgrDiv);
+                    mgrCount++;
+                }
+            });
+
+            if(availCount === 0) availContainer.innerHTML = '<p class="text-center text-slate-500 py-8">No open shifts available to cover.</p>';
+            else availContainer.appendChild(availFragment);
+
+            if(myCount === 0) myContainer.innerHTML = '<p class="text-center text-slate-500 py-8">You have not posted any shifts.</p>';
+            else myContainer.appendChild(myFragment);
+
+            if(mgrCount === 0) mgrContainer.innerHTML = '<p class="text-center text-slate-500 py-8">No pending swaps require approval.</p>';
+            else mgrContainer.appendChild(mgrFragment);
+
+            lucide.createIcons();
+            attachMpEventListeners();
+        }
+
+        function attachMpEventListeners() {
+            document.querySelectorAll('.delete-mp-shift').forEach(btn => {
+                btn.onclick = () => deleteMarketplaceShift(btn.getAttribute('data-id'));
+            });
+            document.querySelectorAll('.offer-cover-btn').forEach(btn => {
+                btn.onclick = () => offerCoverShift(btn.getAttribute('data-id'));
+            });
+            document.querySelectorAll('.approve-mp-btn').forEach(btn => {
+                btn.onclick = () => approveMarketplaceShift(btn.getAttribute('data-id'));
+            });
+            document.querySelectorAll('.deny-mp-btn').forEach(btn => {
+                btn.onclick = () => denyMarketplaceShift(btn.getAttribute('data-id'));
+            });
+        }
+
+        async function offerCoverShift(shiftId) {
+            if (!confirm("Are you sure you want to offer to cover this shift? A manager must approve it.")) return;
+            try {
+                await callCloudFunction('manageShiftMarketplace', {
+                    action: "offer_cover",
+                    payload: {
+                        shiftId: shiftId,
+                        coveringEmployeeId: currentUser.uid,
+                        coveringEmployeeName: currentUserData.name || currentUser.email.split('@')[0]
+                    }
+                });
+                alert("Coverage offered! Waiting for manager approval.");
+                fetchMarketplaceShifts();
+            } catch(e) {
+                console.error(e);
+                alert("Error offering coverage: " + e.message);
+            }
+        }
+
+        async function approveMarketplaceShift(shiftId) {
+            try {
+                await callCloudFunction('manageShiftMarketplace', { action: "approve", payload: { shiftId } });
+                alert("Shift swap approved!");
+                fetchMarketplaceShifts();
+            } catch(e) {
+                console.error(e);
+                alert("Error approving swap: " + e.message);
+            }
+        }
+
+        async function denyMarketplaceShift(shiftId) {
+            try {
+                await callCloudFunction('manageShiftMarketplace', { action: "deny", payload: { shiftId } });
+                alert("Shift swap denied. Shift remains open.");
+                fetchMarketplaceShifts();
+            } catch(e) {
+                console.error(e);
+                alert("Error denying swap: " + e.message);
+            }
+        }
+
+        async function deleteMarketplaceShift(shiftId) {
+            if (!confirm("Cancel this marketplace request?")) return;
+            try {
+                await callCloudFunction('manageShiftMarketplace', { action: "delete", payload: { shiftId } });
+                fetchMarketplaceShifts();
+            } catch(e) {
+                console.error(e);
+                alert("Error deleting shift request: " + e.message);
+            }
+        }
+
+
+window.onload = () => {
             if (localStorage.getItem('managerProTheme') === 'dark') {
                 document.body.classList.add('dark-mode');
                 document.getElementById('themeToggle').checked = true;

@@ -1389,3 +1389,118 @@ exports.manageVendorDeliveries = functions.https.onCall(async (data, context) =>
     throw new HttpsError("internal", error.message);
   }
 });
+
+
+exports.manageShiftMarketplace = functions.https.onCall(async (data, context) => {
+    if (!context.auth) {
+        throw new functions.https.HttpsError('unauthenticated', 'The function must be called while authenticated.');
+    }
+
+    const { action, payload } = data;
+    const uid = context.auth.uid;
+
+    try {
+        const userDoc = await admin.firestore().collection('users').doc(uid).get();
+        if (!userDoc.exists) throw new functions.https.HttpsError('not-found', 'User not found.');
+        const orgId = userDoc.data().orgId || uid;
+        const isManager = orgId === uid;
+
+        if (action === "create") {
+            const { originalEmployeeId, originalEmployeeName, shiftDate, shiftStart, shiftEnd, role } = payload;
+            if (!originalEmployeeId || !shiftDate) {
+                throw new functions.https.HttpsError('invalid-argument', 'Missing required shift data');
+            }
+            const docRef = await admin.firestore().collection('shift_marketplace').add({
+                orgId: orgId,
+                originalEmployeeId: originalEmployeeId,
+                originalEmployeeName: originalEmployeeName || 'Unknown',
+                shiftDate: shiftDate,
+                shiftStart: shiftStart || '',
+                shiftEnd: shiftEnd || '',
+                role: role || '',
+                status: 'Open',
+                coveringEmployeeId: null,
+                coveringEmployeeName: null,
+                createdAt: admin.firestore.FieldValue.serverTimestamp()
+            });
+            return { success: true, shiftId: docRef.id };
+        }
+        else if (action === "offer_cover") {
+            const { shiftId, coveringEmployeeId, coveringEmployeeName } = payload;
+            if (!shiftId || !coveringEmployeeId) throw new functions.https.HttpsError('invalid-argument', 'Missing cover info');
+
+            const shiftRef = admin.firestore().collection('shift_marketplace').doc(shiftId);
+            const shiftDoc = await shiftRef.get();
+            if (!shiftDoc.exists || shiftDoc.data().orgId !== orgId) throw new functions.https.HttpsError('not-found', 'Shift not found');
+            if (shiftDoc.data().status !== 'Open') throw new functions.https.HttpsError('failed-precondition', 'Shift is not open for coverage');
+
+            await shiftRef.update({
+                coveringEmployeeId: coveringEmployeeId,
+                coveringEmployeeName: coveringEmployeeName,
+                status: 'Pending Approval'
+            });
+            return { success: true };
+        }
+        else if (action === "approve") {
+            if (!isManager) throw new functions.https.HttpsError('permission-denied', 'Only managers can approve swaps');
+            const { shiftId } = payload;
+            if (!shiftId) throw new functions.https.HttpsError('invalid-argument', 'Missing shift ID');
+
+            const shiftRef = admin.firestore().collection('shift_marketplace').doc(shiftId);
+            const shiftDoc = await shiftRef.get();
+            if (!shiftDoc.exists || shiftDoc.data().orgId !== orgId) throw new functions.https.HttpsError('not-found', 'Shift not found');
+
+            await shiftRef.update({ status: 'Approved' });
+            return { success: true };
+        }
+        else if (action === "deny") {
+            if (!isManager) throw new functions.https.HttpsError('permission-denied', 'Only managers can deny swaps');
+            const { shiftId } = payload;
+            if (!shiftId) throw new functions.https.HttpsError('invalid-argument', 'Missing shift ID');
+
+            const shiftRef = admin.firestore().collection('shift_marketplace').doc(shiftId);
+            const shiftDoc = await shiftRef.get();
+            if (!shiftDoc.exists || shiftDoc.data().orgId !== orgId) throw new functions.https.HttpsError('not-found', 'Shift not found');
+
+            await shiftRef.update({
+                coveringEmployeeId: null,
+                coveringEmployeeName: null,
+                status: 'Open'
+            });
+            return { success: true };
+        }
+        else if (action === "get") {
+            const snapshot = await admin.firestore().collection('shift_marketplace')
+                .where('orgId', '==', orgId)
+                .orderBy('createdAt', 'desc')
+                .get();
+
+            let shifts = [];
+            snapshot.forEach(doc => {
+                shifts.push({ id: doc.id, ...doc.data() });
+            });
+            return { success: true, shifts: shifts };
+        }
+        else if (action === "delete") {
+            const { shiftId } = payload;
+            if (!shiftId) throw new functions.https.HttpsError('invalid-argument', 'Missing shift ID');
+
+            const shiftRef = admin.firestore().collection('shift_marketplace').doc(shiftId);
+            const shiftDoc = await shiftRef.get();
+            if (!shiftDoc.exists || shiftDoc.data().orgId !== orgId) throw new functions.https.HttpsError('not-found', 'Shift not found');
+            if (!isManager && shiftDoc.data().originalEmployeeId !== uid) {
+                 throw new functions.https.HttpsError('permission-denied', 'Cannot delete this shift');
+            }
+
+            await shiftRef.delete();
+            return { success: true };
+        }
+        else {
+             throw new functions.https.HttpsError('invalid-argument', 'Invalid action');
+        }
+    } catch (error) {
+        console.error("Error managing shift marketplace:", error);
+        if (error instanceof functions.https.HttpsError) throw error;
+        throw new functions.https.HttpsError('internal', 'Internal server error', error.message);
+    }
+});

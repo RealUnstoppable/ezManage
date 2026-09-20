@@ -386,6 +386,26 @@ service cloud.firestore {
       );
     }
 
+
+    // SHIFT MARKETPLACE
+    match /shift_marketplace/{shiftId} {
+      allow read: if request.auth != null && (
+          resource == null ||
+          resource.data.get('orgId', null) == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('orgId', null) ||
+          isAdmin()
+      );
+      allow create: if request.auth != null && request.resource.data.get('orgId', null) == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('orgId', null);
+      allow update: if request.auth != null && (
+          resource.data.get('originalEmployeeId', null) == request.auth.uid ||
+          (resource.data.get('orgId', null) == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('orgId', null)) ||
+          isAdmin()
+      ) && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['orgId']);
+      allow delete: if request.auth != null && (
+          resource.data.get('originalEmployeeId', null) == request.auth.uid ||
+          isAdmin()
+      );
+    }
+
     // SHIFT HANDOFFS
     match /shift_handoffs/{handoffId} {
       allow read: if request.auth != null && (
