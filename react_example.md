@@ -70,10 +70,9 @@ function ShiftNotesManager({ currentUser, currentUserData }) {
 
         // 3. Clear form inputs (temporarily storing in case of rollback)
         const previousContent = trimmedContent;
-        const previousShiftNotes = shiftNotes;
+        const previousShiftNotes = [...shiftNotes];
 
         // 2. Apply optimistic UI update
-        const previousShiftNotes = [...shiftNotes];
         setShiftNotes([newNote, ...shiftNotes]);
 
         setNoteContent('');
