@@ -62,6 +62,9 @@ let navCtaContainer;
 let hamburger;
 let navLinks;
 
+
+let updateQuantityTimeouts = new Map();
+
 function renderProducts() {
     productGrid.innerHTML = products.map(product => `
         <div class="product-card">
@@ -236,11 +239,23 @@ function setupEventListeners() {
                 handleRemoveFromCart(productId);
             }
         });
-        cartItemsContainer.addEventListener('change', (e) => {
+        // ⚡ Bolt Optimization: Debounce quantity inputs to prevent rapid multiple Firestore updates and re-renders
+        // Impact: Reduces overlapping rapid inputs, DOM updates, and Firestore writes when using spinners or typing quickly.
+        cartItemsContainer.addEventListener('input', (e) => {
             if (e.target.classList.contains('item-quantity-input')) {
                 const productId = e.target.dataset.id;
                 const quantity = parseInt(e.target.value, 10);
-                handleUpdateQuantity(productId, quantity);
+
+                if (updateQuantityTimeouts.has(productId)) {
+                    clearTimeout(updateQuantityTimeouts.get(productId));
+                }
+
+                const timeoutId = setTimeout(() => {
+                    handleUpdateQuantity(productId, quantity);
+                    updateQuantityTimeouts.delete(productId);
+                }, 300);
+
+                updateQuantityTimeouts.set(productId, timeoutId);
             }
         });
     }

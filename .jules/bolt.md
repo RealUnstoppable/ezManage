@@ -63,3 +63,6 @@
 ## 2024-05-24 - [Draft Sync Debouncing]
 **Learning:** High-frequency input events (like `oninput` on dynamically generated form fields) that trigger expensive operations (like `triggerDraftSync` which parses DOM state and writes to localStorage/Firestore) must be debounced using `setTimeout` to prevent layout thrashing and excessive syncs. If multiple DOM elements reference a global debounce function via inline event handlers, ensure that function is properly defined and exposed to avoid ReferenceErrors that silently break functionality or fail to throttle executions.
 **Action:** Always implement a dedicated debounce wrapper (`debouncedTriggerDraftSync`) for high-frequency inline input events and verify it exists in the global scope when invoked via `oninput="..."`.
+## 2026-06-15 - [Input Debouncing with Map]
+**Learning:** When debouncing input events for multiple distinct items (like cart quantities), using a single global timeout cancels updates for other items when multiple inputs are modified rapidly.
+**Action:** Use a `Map` to track timeouts by unique identifiers (e.g., `productId`) to ensure each item is debounced independently.
