@@ -10,6 +10,16 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-messaging-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-functions-compat.js"></script>
+    <script>
+      const app = !window.firebase.apps.length ? window.firebase.initializeApp(window.ezManageFirebaseConfig) : window.firebase.app();
+      try {
+          window.firebase.firestore().settings({ experimentalForceLongPolling: true });
+      } catch (e) {
+          console.warn("Firestore settings already configured or errored: ", e);
+      }
+      const auth = window.firebase.auth();
+      const db = window.firebase.firestore();
+    </script>
   <script type="module">
     import { escapeHTML, logManagerError } from './js/utils.js';
     import { loadNavbar } from './js/navbar.js';
