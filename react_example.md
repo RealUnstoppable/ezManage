@@ -73,10 +73,9 @@ function ShiftNotesManager({ currentUser, currentUserData }) {
 
         // 3. Clear form inputs (temporarily storing in case of rollback)
         const previousContent = trimmedContent;
-        const previousShiftNotes = shiftNotes;
+        const previousShiftNotes = [...shiftNotes];
 
         // 2. Apply optimistic UI update
-        const previousShiftNotes = [...shiftNotes];
         setShiftNotes([newNote, ...shiftNotes]);
 
         setNoteContent('');
@@ -102,7 +101,11 @@ function ShiftNotesManager({ currentUser, currentUserData }) {
             // 6. Rollback optimistic UI if network request fails
             console.error("Error posting note", error);
 
+<<<<<<< HEAD
             // Remove the temporary note, explicitly passing previous array to reset state correctly.
+=======
+            // Remove the temporary note, explicit reset using state callback for safety.
+>>>>>>> origin/main
             setShiftNotes(previousShiftNotes);
 
             // Restore the content to the input

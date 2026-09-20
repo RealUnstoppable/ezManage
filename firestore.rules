@@ -153,24 +153,24 @@ service cloud.firestore {
     match /schedules/{scheduleId} {
       allow read: if request.auth != null && (
           resource == null ||
-          resource.data.uid == request.auth.uid ||
-          resource.data.authorId == request.auth.uid ||
-          resource.data.orgId == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.orgId ||
+          resource.data.get('uid', null) == request.auth.uid ||
+          resource.data.get('authorId', null) == request.auth.uid ||
+          resource.data.get('orgId', null) == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('orgId', null) ||
           scheduleId[0:request.auth.uid.size()] == request.auth.uid ||
           isAdmin()
       );
       allow create: if request.auth != null
-                    && (request.resource.data.uid == request.auth.uid || request.resource.data.authorId == request.auth.uid)
-                    && request.resource.data.orgId == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.orgId;
+                    && (request.resource.data.get('uid', null) == request.auth.uid || request.resource.data.get('authorId', null) == request.auth.uid)
+                    && request.resource.data.get('orgId', null) == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('orgId', null);
       allow update: if request.auth != null && (
-          resource.data.uid == request.auth.uid ||
-          resource.data.authorId == request.auth.uid ||
-          resource.data.orgId == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.orgId ||
+          resource.data.get('uid', null) == request.auth.uid ||
+          resource.data.get('authorId', null) == request.auth.uid ||
+          resource.data.get('orgId', null) == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('orgId', null) ||
           isAdmin()
       ) && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['orgId']);
       allow delete: if request.auth != null && (
-          resource.data.uid == request.auth.uid ||
-          resource.data.authorId == request.auth.uid ||
+          resource.data.get('uid', null) == request.auth.uid ||
+          resource.data.get('authorId', null) == request.auth.uid ||
           isAdmin()
       );
     }
@@ -382,6 +382,26 @@ service cloud.firestore {
       ) && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['orgId']);
       allow delete: if request.auth != null && (
           (resource.data.get('orgId', null) != null && resource.data.get('orgId', null) == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('orgId', null) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('orgId', null) == request.auth.uid) ||
+          isAdmin()
+      );
+    }
+
+
+    // SHIFT MARKETPLACE
+    match /shift_marketplace/{shiftId} {
+      allow read: if request.auth != null && (
+          resource == null ||
+          resource.data.get('orgId', null) == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('orgId', null) ||
+          isAdmin()
+      );
+      allow create: if request.auth != null && request.resource.data.get('orgId', null) == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('orgId', null);
+      allow update: if request.auth != null && (
+          resource.data.get('originalEmployeeId', null) == request.auth.uid ||
+          (resource.data.get('orgId', null) == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('orgId', null)) ||
+          isAdmin()
+      ) && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['orgId']);
+      allow delete: if request.auth != null && (
+          resource.data.get('originalEmployeeId', null) == request.auth.uid ||
           isAdmin()
       );
     }
