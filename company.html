@@ -1467,7 +1467,8 @@
 
                     // Aggregate shifts for charts
                     const h = d.shiftHistory || [];
-                    allShifts = allShifts.concat(h);
+                    // ⚡ Bolt Optimization: Replace O(n²) array recreation with fast, in-place push
+                    allShifts.push(...h);
 
                     // 2. Individual Performance for Selected Date
                     const todayShift = h.find(s => s.dateSaved === selectedDate);
