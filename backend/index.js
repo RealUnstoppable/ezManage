@@ -4,6 +4,7 @@ const HttpsError = functions.https.HttpsError;
 const admin = require("firebase-admin");
 const cors = require("cors")({origin: true});
 const {adaptGen2Params, logManagerError, checkRequiredFields} = require("./utils"); // Added comment for patch visibility
+const crypto = require("crypto");
 
 /**
  * Helper to authenticate user, fetch user doc, and extract payload.
@@ -566,12 +567,16 @@ exports.manageShiftGroups = functions.https.onCall(async (data, context) => {
 
       checkRequiredFields(payload, ["groupName", "password"]);
 
+      const salt = crypto.randomBytes(16).toString("hex");
+      const hash = crypto.scryptSync(password, salt, 64).toString("hex");
+      const hashedPassword = `$scrypt$${hash}:${salt}`;
+
       const newGroup = {
         ownerId: authorId || uid,
         orgId: orgId || uid,
         ownerName: ownerName || "Anonymous",
         groupName,
-        password, // Basic password for joining (in a real app, hash this)
+        password: hashedPassword,
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
       };
 
@@ -600,7 +605,29 @@ exports.manageShiftGroups = functions.https.onCall(async (data, context) => {
         throw new HttpsError("not-found", "Group not found");
       }
 
-      if (groupDoc.data().password !== password) {
+      const storedPassword = groupDoc.data().password;
+      let isValid = false;
+
+      // Check if it's a salted hash
+      if (storedPassword && storedPassword.startsWith("$scrypt$")) {
+        const [hash, salt] = storedPassword.substring(8).split(":");
+        const derivedHash = crypto.scryptSync(password, salt, 64).toString("hex");
+        isValid = (hash === derivedHash);
+      } else {
+        // Legacy plaintext comparison
+        isValid = (storedPassword === password);
+
+        // Upgrade to salted hash if correct
+        if (isValid) {
+          const salt = crypto.randomBytes(16).toString("hex");
+          const hash = crypto.scryptSync(password, salt, 64).toString("hex");
+          await admin.firestore().collection("shift_groups").doc(groupId).update({
+            password: `$scrypt$${hash}:${salt}`,
+          });
+        }
+      }
+
+      if (!isValid) {
         throw new HttpsError(
             "permission-denied", "Invalid password");
       }
