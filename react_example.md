@@ -73,7 +73,6 @@ function ShiftNotesManager({ currentUser, currentUserData }) {
         const previousShiftNotes = shiftNotes;
 
         // 2. Apply optimistic UI update
-        const previousShiftNotes = [...shiftNotes];
         setShiftNotes([newNote, ...shiftNotes]);
 
         setNoteContent('');
