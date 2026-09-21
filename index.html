@@ -12,11 +12,6 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-functions-compat.js"></script>
     <script>
       const app = !window.firebase.apps.length ? window.firebase.initializeApp(window.ezManageFirebaseConfig) : window.firebase.app();
-      try {
-          window.firebase.firestore().settings({ experimentalForceLongPolling: true });
-      } catch (e) {
-          console.warn("Firestore settings already configured or errored: ", e);
-      }
       const auth = window.firebase.auth();
       const db = window.firebase.firestore();
     </script>
@@ -2454,13 +2449,11 @@
 
         // Initialization is handled by firebase.js, we just get references
 
-// Wait, since this script is not a module, we need to make sure firebase.js runs before it.
-        // Let's just make the inline script check for singleton.
+        // Ensure singleton check since it relies on firebaseConfig
         const firebaseConfig = window.ezManageFirebaseConfig;
-        const app = !window.firebase.apps.length ? window.firebase.initializeApp(firebaseConfig) : window.firebase.app();
-        const auth = window.firebase.auth();
-
-        const db = window.firebase.firestore();
+        // Initialization is handled by firebase.js or earlier in the file, we just get references.
+        // We don't redeclare const app, auth, db to prevent SyntaxError.
+        const appInstance = !window.firebase.apps.length ? window.firebase.initializeApp(firebaseConfig) : window.firebase.app();
         const cloudFunctions = window.firebase.functions();
 
         db.enablePersistence().catch(err => console.error("Offline sync error:", err));
