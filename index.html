@@ -11,14 +11,14 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-messaging-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-functions-compat.js"></script>
     <script>
-      const app = !window.firebase.apps.length ? window.firebase.initializeApp(window.ezManageFirebaseConfig) : window.firebase.app();
+      window.app = !window.firebase.apps.length ? window.firebase.initializeApp(window.ezManageFirebaseConfig) : window.firebase.app();
       try {
           window.firebase.firestore().settings({ experimentalForceLongPolling: true });
       } catch (e) {
           console.warn("Firestore settings already configured or errored: ", e);
       }
-      const auth = window.firebase.auth();
-      const db = window.firebase.firestore();
+      window.auth = window.firebase.auth();
+      window.db = window.firebase.firestore();
     </script>
   <script type="module">
     import { escapeHTML, logManagerError } from './js/utils.js';
@@ -2456,14 +2456,14 @@
 
 // Wait, since this script is not a module, we need to make sure firebase.js runs before it.
         // Let's just make the inline script check for singleton.
-        const firebaseConfig = window.ezManageFirebaseConfig;
-        const app = !window.firebase.apps.length ? window.firebase.initializeApp(firebaseConfig) : window.firebase.app();
-        const auth = window.firebase.auth();
+        window.firebaseConfig = window.ezManageFirebaseConfig;
+        window.app = !window.firebase.apps.length ? window.firebase.initializeApp(window.firebaseConfig) : window.firebase.app();
+        window.auth = window.firebase.auth();
 
-        const db = window.firebase.firestore();
-        const cloudFunctions = window.firebase.functions();
+        window.db = window.firebase.firestore();
+        window.cloudFunctions = window.firebase.functions();
 
-        db.enablePersistence().catch(err => console.error("Offline sync error:", err));
+        window.db.enablePersistence().catch(err => console.error("Offline sync error:", err));
 
         let currentUser = null;
         let currentUserData = null;
@@ -2493,7 +2493,7 @@
         // Legal & Privacy Settings
         let cloudSyncEnabled = false;
 
-        auth.onAuthStateChanged((user) => {
+        window.auth.onAuthStateChanged((user) => {
             currentUser = user;
             const navStatus = document.getElementById('navUserStatus');
 
@@ -2513,7 +2513,7 @@
                     }
                 }
 
-                unsubscribeUser = db.collection("users").doc(user.uid).onSnapshot(async doc => {
+                unsubscribeUser = window.db.collection("users").doc(user.uid).onSnapshot(async doc => {
                     isInitializingAuth = false;
                     if (doc.exists) {
                         currentUserData = doc.data();
@@ -2599,7 +2599,7 @@
                                 try {
                                     const emailDoc = await fetchUserDoc(user.email);
                                     if (emailDoc.exists) {
-                                        await db.collection("users").doc(user.uid).set(emailDoc.data(), { merge: true });
+                                        await window.db.collection("users").doc(user.uid).set(emailDoc.data(), { merge: true });
                                         return;
                                     } else {
                                         navTo('setup');
@@ -2608,7 +2608,7 @@
                             }
                         }
                         if (!doc.exists || !doc.data().name) {
-                            await db.collection("users").doc(user.uid).set({
+                            await window.db.collection("users").doc(user.uid).set({
                                 name: user.displayName || "Manager",
                                 email: user.email
                             }, { merge: true });
@@ -2681,7 +2681,7 @@
             document.getElementById('profileCloudSyncToggle').checked = true;
             document.getElementById('tosModal').classList.add('hidden');
 
-            db.collection('users').doc(currentUser.uid).set({ cloudSyncEnabled: true }, { merge: true });
+            window.db.collection('users').doc(currentUser.uid).set({ cloudSyncEnabled: true }, { merge: true });
             localStorage.setItem(`ezManage_cloudEnabled_${currentUser.uid}`, 'true');
             updateCloudSyncUI();
             debouncedTriggerDraftSync();
@@ -2696,7 +2696,7 @@
         function disableCloudSync() {
             if (!currentUser) return;
             cloudSyncEnabled = false;
-            db.collection('users').doc(currentUser.uid).set({ cloudSyncEnabled: false }, { merge: true });
+            window.db.collection('users').doc(currentUser.uid).set({ cloudSyncEnabled: false }, { merge: true });
             localStorage.setItem(`ezManage_cloudEnabled_${currentUser.uid}`, 'false');
             updateCloudSyncUI();
         }
@@ -2787,7 +2787,7 @@
             btn.disabled = true;
 
             if (isRegisterMode) {
-                auth.createUserWithEmailAndPassword(email, pass)
+                window.auth.createUserWithEmailAndPassword(email, pass)
                     .then(() => navTo('setup'))
                     .catch(err => {
                         if (err.code === 'auth/network-request-failed' || err.code === 'firestore/unavailable') {
@@ -2801,7 +2801,7 @@
                         btn.disabled = false;
                     });
             } else {
-                auth.signInWithEmailAndPassword(email, pass)
+                window.auth.signInWithEmailAndPassword(email, pass)
                     .catch(err => {
                         if (err.code === 'auth/network-request-failed' || err.code === 'firestore/unavailable') {
                             alert("Network error: Could not connect to the server. Please check your connection.");
@@ -2818,14 +2818,14 @@
 
         function signInWithGoogle() {
             const provider = new firebase.auth.GoogleAuthProvider();
-            auth.signInWithPopup(provider).then(cred => {
+            window.auth.signInWithPopup(provider).then(cred => {
                 fetchUserDoc(cred.user.uid).then(doc => {
                     if (!doc.exists) navTo('setup');
                 });
             }).catch(err => alert(err.message));
         }
 
-        function signOut() { auth.signOut().then(() => window.location.reload()); }
+        function signOut() { window.auth.signOut().then(() => window.location.reload()); }
 
         async function completeSetup() {
             if (!currentUser) return;
@@ -2845,7 +2845,7 @@
             if (!data.name) return alert("Name is required.");
 
             try {
-                await db.collection('users').doc(currentUser.uid).set(data, { merge: true });
+                await window.db.collection('users').doc(currentUser.uid).set(data, { merge: true });
                 currentUser.updateProfile({ displayName: data.name });
                 document.getElementById('shiftManager').value = data.name;
                 navTo('tracker');
@@ -2869,7 +2869,7 @@
             if (!currentUser || !currentUserData || !currentUserData.orgId) return;
 
             try {
-                const snapshot = await db.collection('announcements')
+                const snapshot = await window.db.collection('announcements')
                     .where('orgId', '==', currentUserData.orgId)
                     .orderBy('createdAt', 'desc')
                     .get();
@@ -2953,7 +2953,7 @@
             }
 
             try {
-                await db.collection('announcements').add({
+                await window.db.collection('announcements').add({
                     orgId: currentUserData.orgId,
                     authorId: currentUser.uid,
                     authorName: currentUserData.name || currentUser.email.split('@')[0],
@@ -2987,7 +2987,7 @@
         async function deleteAnnouncement(id) {
             if (!confirm("Are you sure you want to delete this announcement?")) return;
             try {
-                await db.collection('announcements').doc(id).delete();
+                await window.db.collection('announcements').doc(id).delete();
                 fetchTrackerAnnouncements();
             } catch (error) {
                 console.error("Error deleting announcement:", error);
@@ -3300,7 +3300,7 @@
             if (cloudSyncEnabled) {
                 clearTimeout(cloudSyncTimeout);
                 cloudSyncTimeout = setTimeout(() => {
-                    db.collection('users').doc(currentUser.uid).set({ trackerDraft: state }, { merge: true });
+                    window.db.collection('users').doc(currentUser.uid).set({ trackerDraft: state }, { merge: true });
                 }, 3000);
             }
         }
@@ -3398,7 +3398,7 @@
             if (!cloudSyncEnabled) return alert("Enterprise Cloud Sync is required to save shift history to the cloud.");
 
             const state = getTrackerState();
-            db.collection('users').doc(currentUser.uid).set({
+            window.db.collection('users').doc(currentUser.uid).set({
                 shiftHistory: firebase.firestore.FieldValue.arrayUnion(state)
             }, { merge: true }).then(() => {
                 alert("Shift saved to Cloud History!");
@@ -3550,7 +3550,7 @@
             if (!currentUserData || !confirm("Are you sure you want to delete this shift from history permanently? This action cannot be undone.")) return;
             const shift = (currentUserData.shiftHistory || []).find(s => s.id === id);
             if (shift) {
-                db.collection('users').doc(currentUser.uid).update({
+                window.db.collection('users').doc(currentUser.uid).update({
                     shiftHistory: firebase.firestore.FieldValue.arrayRemove(shift)
                 });
             }
@@ -3746,7 +3746,7 @@
                 deposits: state.deposits
             };
 
-            db.collection('users').doc(currentUser.uid).set({
+            window.db.collection('users').doc(currentUser.uid).set({
                 customPresets: firebase.firestore.FieldValue.arrayUnion(presetData)
             }, { merge: true }).then(() => {
                 alert("Tracker Layout Saved Successfully!");
@@ -3758,7 +3758,7 @@
             if (!currentUserData || !confirm("Are you sure you want to delete this preset permanently? This action cannot be undone.")) return;
             const preset = (currentUserData.customPresets || []).find(p => p.id === id);
             if (preset) {
-                db.collection('users').doc(currentUser.uid).update({
+                window.db.collection('users').doc(currentUser.uid).update({
                     customPresets: firebase.firestore.FieldValue.arrayRemove(preset)
                 });
             }
@@ -3968,7 +3968,7 @@
             if (profileDebounceTimeout) clearTimeout(profileDebounceTimeout);
 
             profileDebounceTimeout = setTimeout(() => {
-                db.collection('users').doc(currentUser.uid).set(data, { merge: true }).then(() => {
+                window.db.collection('users').doc(currentUser.uid).set(data, { merge: true }).then(() => {
                     localStorage.setItem(`ezManage_aiEnabled_${currentUser.uid}`, data.aiTrainingEnabled);
                     localStorage.setItem(`ezManage_cloudEnabled_${currentUser.uid}`, cloudSyncEnabled);
                     alert("Profile Updated!");
@@ -3978,7 +3978,7 @@
 
         function changePassword() {
             if (!currentUser) return;
-            auth.sendPasswordResetEmail(currentUser.email).then(() => {
+            window.auth.sendPasswordResetEmail(currentUser.email).then(() => {
                 alert("A password reset email has been sent to " + currentUser.email);
             }).catch(err => alert(err.message));
         }
@@ -3998,7 +3998,7 @@
                 const data = await res.json();
                 if (data.success) {
                     alert("Subscription canceled successfully.");
-                    db.collection('users').doc(currentUser.uid).update({
+                    window.db.collection('users').doc(currentUser.uid).update({
                         "subscription.status": "canceled",
                         plan: "Free",
                         cloudSyncEnabled: false
@@ -4014,7 +4014,7 @@
             if (!currentUser) return;
             if (!confirm("WARNING: Are you sure you want to permanently delete your account and all associated data? This right to forget action cannot be undone.")) return;
 
-            db.collection('users').doc(currentUser.uid).delete().then(() => {
+            window.db.collection('users').doc(currentUser.uid).delete().then(() => {
                 localStorage.removeItem(`ezManage_draft_${currentUser.uid}`);
                 currentUser.delete().then(() => {
                     alert("Your account has been deleted.");
@@ -4121,7 +4121,7 @@
             lucide.createIcons();
 
             try {
-                await db.collection('assigned_tasks').add({
+                await window.db.collection('assigned_tasks').add({
                     title: title,
                     description: desc,
                     assigneeName: assignee,
@@ -4174,7 +4174,7 @@
 
             if (unsubscribeTasks) unsubscribeTasks();
 
-            unsubscribeTasks = db.collection('assigned_tasks')
+            unsubscribeTasks = window.db.collection('assigned_tasks')
                 .where('orgId', '==', currentUserData.orgId)
                 .onSnapshot(snap => {
                     container.innerHTML = '';
@@ -4230,7 +4230,7 @@
 
         async function updateAssignedTaskStatus(taskId, newStatus) {
             try {
-                await db.collection('assigned_tasks').doc(taskId).update({
+                await window.db.collection('assigned_tasks').doc(taskId).update({
                     status: newStatus,
                     updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
                     orgId: currentUserData.orgId
@@ -4244,7 +4244,7 @@
         async function deleteAssignedTask(taskId) {
             if (!confirm("Are you sure you want to delete this task?")) return;
             try {
-                await db.collection('assigned_tasks').doc(taskId).delete();
+                await window.db.collection('assigned_tasks').doc(taskId).delete();
             } catch (error) {
                 console.error("Manager Troubleshooting: Error deleting task:", error);
                 alert("Failed to delete task. " + error.message);
@@ -4273,7 +4273,7 @@
             lucide.createIcons();
 
             try {
-                await db.collection('maintenance_logs').add({
+                await window.db.collection('maintenance_logs').add({
                     title: title,
                     description: desc,
                     priority: priority,
@@ -4328,7 +4328,7 @@
             lucide.createIcons();
 
             try {
-                await db.collection('tasks').add({
+                await window.db.collection('tasks').add({
                     title: title,
                     description: desc,
                     assignedTo: assignee,
@@ -4383,7 +4383,7 @@
                 window.maintenanceUnsubscribe();
             }
 
-            window.maintenanceUnsubscribe = db.collection('maintenance_logs')
+            window.maintenanceUnsubscribe = window.db.collection('maintenance_logs')
                 .where('orgId', '==', currentUserData.orgId)
                 .onSnapshot(snap => {
                     container.innerHTML = '';
@@ -4466,7 +4466,7 @@
 
         async function updateTicketStatus(ticketId, newStatus) {
             try {
-                await db.collection('maintenance_logs').doc(ticketId).update({
+                await window.db.collection('maintenance_logs').doc(ticketId).update({
                     status: newStatus,
                     updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
                     orgId: currentUserData.orgId
@@ -4483,7 +4483,7 @@
             const msg = document.getElementById('featureReqText').value;
             if (!msg) return;
             try {
-                await db.collection('feature_requests').add({
+                await window.db.collection('feature_requests').add({
                     uid: currentUser.uid,
                     email: currentUser.email,
                     message: msg,
@@ -4521,7 +4521,7 @@
             saveBtn.disabled = true;
 
             try {
-                await db.collection('employees').add({
+                await window.db.collection('employees').add({
                     name,
                     role,
                     phone,
@@ -4591,7 +4591,7 @@
             lucide.createIcons();
 
             try {
-                await db.collection('time_off_requests').add({
+                await window.db.collection('time_off_requests').add({
                     uid: currentUser.uid,
                     employeeName: currentUserData.username || currentUser.email,
                     orgId: currentUserData.orgId,
@@ -4635,7 +4635,7 @@
                 document.getElementById('managerTasksSection').style.display = 'none';
             }
 
-            unsubscribeTasks = db.collection('tasks')
+            unsubscribeTasks = window.db.collection('tasks')
                 .where('orgId', '==', actualOrgId)
                 .onSnapshot(snap => {
                     const myContainer = document.getElementById('myTasksContainer');
@@ -4704,7 +4704,7 @@
              if (!currentUser || !currentUserData) return;
              if (unsubscribeTimeOff) unsubscribeTimeOff();
 
-             let query = db.collection('time_off_requests');
+             let query = window.db.collection('time_off_requests');
 
              // If manager/admin (assuming they have an orgId and are not just a base user, or using some flag. We will check if they own the org or just use orgId)
              // For simplicity, we fetch all for the org if they are an org owner, otherwise just their own.
@@ -4792,7 +4792,7 @@
 
         async function updateTimeOffStatus(id, status) {
             try {
-                await db.collection('time_off_requests').doc(id).update({ status: status });
+                await window.db.collection('time_off_requests').doc(id).update({ status: status });
             } catch (err) {
                 window.logManagerError("Error updating time off status", err);
                 alert("Error updating status.");
@@ -4802,7 +4802,7 @@
         async function deleteTimeOffRequest(id) {
             if (!confirm("Are you sure you want to cancel this request?")) return;
             try {
-                await db.collection('time_off_requests').doc(id).delete();
+                await window.db.collection('time_off_requests').doc(id).delete();
             } catch (err) {
                 window.logManagerError("Error deleting time off request", err);
                 alert("Error cancelling request.");
@@ -4820,7 +4820,7 @@
 
             const queryOrgId = currentUserData.orgId || currentUser.uid;
 
-            unsubscribeEmployees = db.collection('employees')
+            unsubscribeEmployees = window.db.collection('employees')
                 .where('orgId', '==', queryOrgId)
                 .onSnapshot(snap => {
                     if (container) container.innerHTML = '';
@@ -4889,7 +4889,7 @@
         async function toggleEmployeeStatus(id, currentStatus) {
             const newStatus = currentStatus === 'Active' ? 'Inactive' : 'Active';
             try {
-                await db.collection('employees').doc(id).update({ status: newStatus });
+                await window.db.collection('employees').doc(id).update({ status: newStatus });
             } catch (err) {
                 window.logManagerError("Error updating status:", err);
                 alert("Failed to update employee status.");
@@ -4910,7 +4910,7 @@
 
             const queryOrgId = currentUserData.orgId || currentUser.uid;
 
-            db.collection('employees')
+            window.db.collection('employees')
                 .where('orgId', '==', queryOrgId)
                 .where('status', '==', 'Active')
                 .get()
@@ -4995,7 +4995,7 @@
             };
 
             const date = dateInput.value;
-            const scheduleRef = db.collection('schedules').doc(`${currentUser.uid}_${date}`);
+            const scheduleRef = window.db.collection('schedules').doc(`${currentUser.uid}_${date}`);
 
             try {
                 const doc = await scheduleRef.get();
@@ -5036,7 +5036,7 @@
             const listContainer = document.getElementById('scheduleList');
             if (listContainer) listContainer.innerHTML = '<p class="text-sm text-slate-500">Loading schedule...</p>';
 
-            unsubscribeSchedule = db.collection('schedules')
+            unsubscribeSchedule = window.db.collection('schedules')
                 .doc(`${currentUser.uid}_${date}`)
                 .onSnapshot(doc => {
                     if (listContainer) {
@@ -5086,7 +5086,7 @@
             if (!dateInput || !dateInput.value) return;
 
             const date = dateInput.value;
-            const scheduleRef = db.collection('schedules').doc(`${currentUser.uid}_${date}`);
+            const scheduleRef = window.db.collection('schedules').doc(`${currentUser.uid}_${date}`);
 
             try {
                 const doc = await scheduleRef.get();
@@ -5104,7 +5104,7 @@
 
         function fetchFeatureRequests() {
             if (!currentUser) return;
-            db.collection('feature_requests')
+            window.db.collection('feature_requests')
                 .where('uid', '==', currentUser.uid)
                 .onSnapshot(snap => {
                     const container = document.getElementById('myFeatureRequests');
@@ -5169,7 +5169,7 @@ function checkAndRenderOrgControls() {
             fetchMySentRequests();
 
             // If they are the owner, show the request panel logic
-            db.collection('shift_groups').doc(currentUserData.orgId).get().then(doc => {
+            window.db.collection('shift_groups').doc(currentUserData.orgId).get().then(doc => {
                 if (doc.exists && doc.data().ownerId === currentUser.uid) {
                     controls.innerHTML = `
                         <div class="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700">
@@ -5213,7 +5213,7 @@ function checkAndRenderOrgControls() {
             container.innerHTML = '<div class="text-center py-8"><i data-lucide="loader-2" class="w-8 h-8 animate-spin mx-auto text-sky-500 mb-4"></i><p class="text-slate-500">Loading notes...</p></div>';
             lucide.createIcons();
 
-            db.collection('shift_notes')
+            window.db.collection('shift_notes')
                 .where('orgId', '==', currentUserData.orgId)
                 .get() // orderBy timestamp desc requires composite index if where filters are used
                 .then(snap => {
@@ -5348,7 +5348,7 @@ function checkAndRenderOrgControls() {
 
             try {
                 // Ensure write fully completes before allowing further actions or redirects to avoid race conditions.
-                await db.collection('shift_notes').add({
+                await window.db.collection('shift_notes').add({
                     authorId: currentUser.uid,
                     authorName: currentUser.email.split('@')[0],
                     content: content,
@@ -5515,7 +5515,7 @@ function checkAndRenderOrgControls() {
 
         function fetchGroupRequests(groupId) {
             if (window.groupRequestsUnsubscribe) window.groupRequestsUnsubscribe();
-            window.groupRequestsUnsubscribe = db.collection('shift_group_requests')
+            window.groupRequestsUnsubscribe = window.db.collection('shift_group_requests')
                 .where('groupId', '==', groupId)
                 .where('status', '==', 'Pending')
                 .onSnapshot(snap => {
@@ -5548,7 +5548,7 @@ function checkAndRenderOrgControls() {
         function fetchMySentRequests() {
             if (window.mySentRequestsUnsubscribe) window.mySentRequestsUnsubscribe();
             if (!currentUser) return;
-            window.mySentRequestsUnsubscribe = db.collection('shift_group_requests')
+            window.mySentRequestsUnsubscribe = window.db.collection('shift_group_requests')
                 .where('userId', '==', currentUser.uid)
                 .where('status', '==', 'Pending')
                 .onSnapshot(snap => {
@@ -6362,7 +6362,7 @@ async function submitWasteLog() {
                 lucide.createIcons();
                 submitBtn.disabled = true;
 
-                await db.collection('tasks').add({
+                await window.db.collection('tasks').add({
                     title: title,
                     description: desc,
                     assigneeId: assigneeId,
@@ -6414,7 +6414,7 @@ async function submitWasteLog() {
                     unsubscribeAnnouncements();
                 }
 
-                const query = db.collection('announcements')
+                const query = window.db.collection('announcements')
                     .where('orgId', '==', actualOrgId)
                     .orderBy('createdAt', 'desc');
 
@@ -6510,7 +6510,7 @@ async function submitWasteLog() {
             const actualOrgId = currentUserData.orgId || currentUser.uid;
 
             try {
-                await db.collection('announcements').add({
+                await window.db.collection('announcements').add({
                     orgId: actualOrgId,
                     title: title,
                     content: content,
@@ -6534,7 +6534,7 @@ async function submitWasteLog() {
         async function deleteAnnouncement(id) {
             if (!confirm('Are you sure you want to delete this announcement?')) return;
             try {
-                await db.collection('announcements').doc(id).delete();
+                await window.db.collection('announcements').doc(id).delete();
             } catch (error) {
                 window.logManagerError("Error deleting announcement", error);
                 alert("Failed to delete announcement.");
@@ -6655,7 +6655,7 @@ async function submitWasteLog() {
 
             const queryOrgId = currentUserData.orgId || currentUser.uid;
 
-            db.collection('employees')
+            window.db.collection('employees')
                 .where('orgId', '==', queryOrgId)
                 .where('status', '==', 'Active')
                 .get()
@@ -6723,7 +6723,7 @@ async function submitWasteLog() {
             lucide.createIcons();
 
             try {
-                await db.collection('tasks').add({
+                await window.db.collection('tasks').add({
                     title: title,
                     description: desc,
                     assignedTo: assignee,
@@ -6786,7 +6786,7 @@ async function submitWasteLog() {
                 unsubscribeTasks();
             }
 
-            unsubscribeTasks = db.collection('tasks')
+            unsubscribeTasks = window.db.collection('tasks')
                 .where('orgId', '==', currentUserData.orgId)
                 .onSnapshot(snap => {
                     activeTasksList = [];
@@ -6880,7 +6880,7 @@ async function submitWasteLog() {
 
         async function updateTaskStatus(taskId, newStatus) {
             try {
-                await db.collection('tasks').doc(taskId).update({
+                await window.db.collection('tasks').doc(taskId).update({
                     status: newStatus,
                     updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
                     orgId: currentUserData.orgId
@@ -6895,7 +6895,7 @@ async function submitWasteLog() {
         async function deleteTask(taskId) {
             if (!confirm("Are you sure you want to delete this task permanently?")) return;
             try {
-                await db.collection('tasks').doc(taskId).delete();
+                await window.db.collection('tasks').doc(taskId).delete();
             } catch (error) {
                 window.logManagerError("Error deleting task:", error);
                 alert("Failed to delete task. " + error.message);
@@ -6910,7 +6910,7 @@ async function submitWasteLog() {
 
             const queryOrgId = currentUserData.orgId || currentUser.uid;
 
-            db.collection('employees')
+            window.db.collection('employees')
                 .where('orgId', '==', queryOrgId)
                 .where('status', '==', 'Active')
                 .get()
@@ -7109,7 +7109,7 @@ async function submitWasteLog() {
             const action = isClockedIn ? 'clock_out' : 'clock_in';
 
             try {
-                const manageTimeLogs = cloudFunctions.httpsCallable('manageTimeLogs');
+                const manageTimeLogs = window.cloudFunctions.httpsCallable('manageTimeLogs');
                 await manageTimeLogs({ action: action, payload: {} });
 
                 // Optimistically update state
@@ -7169,7 +7169,7 @@ async function submitWasteLog() {
             lucide.createIcons();
 
             try {
-                const manageTimeLogs = cloudFunctions.httpsCallable('manageTimeLogs');
+                const manageTimeLogs = window.cloudFunctions.httpsCallable('manageTimeLogs');
                 const result = await manageTimeLogs({ action: "get_logs", payload: {} });
 
                 if (result.data.success) {
@@ -7797,7 +7797,7 @@ window.onload = () => {
             lucide.createIcons();
 
             try {
-                const manageFeedbacks = cloudFunctions.httpsCallable('manageFeedbacks');
+                const manageFeedbacks = window.cloudFunctions.httpsCallable('manageFeedbacks');
                 await manageFeedbacks({
                     action: "create",
                     payload: { empId, empName, rating, comment }
@@ -7823,7 +7823,7 @@ window.onload = () => {
             lucide.createIcons();
 
             try {
-                const manageFeedbacks = cloudFunctions.httpsCallable('manageFeedbacks');
+                const manageFeedbacks = window.cloudFunctions.httpsCallable('manageFeedbacks');
                 const result = await manageFeedbacks({
                     action: "get",
                     payload: { empId }
@@ -7880,7 +7880,7 @@ window.onload = () => {
         async function deleteFeedback(feedbackId, empId) {
             if (!confirm("Are you sure you want to delete this feedback?")) return;
             try {
-                const manageFeedbacks = cloudFunctions.httpsCallable('manageFeedbacks');
+                const manageFeedbacks = window.cloudFunctions.httpsCallable('manageFeedbacks');
                 await manageFeedbacks({
                     action: "delete",
                     payload: { feedbackId }
