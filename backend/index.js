@@ -910,6 +910,105 @@ exports.manageTimeLogs = functions.https.onCall(async (data, context) => {
 });
 
 /**
+ * Manage Maintenance Logs API
+ * Handles creation, reading, status updates, and deletion of maintenance logs.
+ */
+exports.manageMaintenanceLogs = functions.https.onCall(async (data, context) => {
+  const {uid, userOrgId, isAdmin, userName, action, payload} = await getAuthAndPayload(data, context, admin);
+
+  try {
+    const actualOrgId = userOrgId;
+
+    if (!actualOrgId) {
+      throw new HttpsError("permission-denied", "User must be part of an organization to report maintenance issues.");
+    }
+
+    if (action === "create") {
+      const {title, description, priority, cost} = payload;
+
+      checkRequiredFields(payload, ["title", "description", "priority"], "Missing required maintenance details");
+
+      const newMaintenanceLog = {
+        title,
+        description,
+        priority,
+        cost: cost ? Number(cost) : 0,
+        status: "Open",
+        reportedByUid: uid,
+        reportedByName: context.auth.token.name || "Anonymous",
+        orgId: actualOrgId,
+        timestamp: admin.firestore.FieldValue.serverTimestamp(),
+      };
+
+      const docRef = await admin.firestore().collection("maintenance_logs").add(newMaintenanceLog);
+      return {success: true, id: docRef.id};
+    }
+
+    if (action === "get") {
+      const snapshot = await admin.firestore().collection("maintenance_logs")
+          .where("orgId", "==", actualOrgId)
+          .orderBy("timestamp", "desc")
+          .limit(100)
+          .get();
+
+      const logs = [];
+      snapshot.forEach((doc) => logs.push({id: doc.id, ...doc.data()}));
+      return {success: true, logs};
+    }
+
+    if (action === "updateStatus") {
+      const {logId, status} = payload;
+      if (!logId || !status) {
+        throw new HttpsError("invalid-argument", "Missing log ID or status");
+      }
+
+      const logRef = admin.firestore().collection("maintenance_logs").doc(logId);
+      const logDoc = await logRef.get();
+
+      if (!logDoc.exists) {
+        throw new HttpsError("not-found", "Maintenance log not found");
+      }
+
+      if (logDoc.data().orgId !== actualOrgId) {
+        throw new HttpsError("permission-denied", "Unauthorized to update this log");
+      }
+
+      await logRef.update({status});
+      return {success: true};
+    }
+
+    if (action === "delete") {
+      const {logId} = payload;
+      if (!logId) {
+        throw new HttpsError("invalid-argument", "Missing log ID");
+      }
+
+      const logRef = admin.firestore().collection("maintenance_logs").doc(logId);
+      const logDoc = await logRef.get();
+
+      if (!logDoc.exists) {
+        throw new HttpsError("not-found", "Maintenance log not found");
+      }
+
+      if (logDoc.data().orgId !== actualOrgId) {
+        throw new HttpsError("permission-denied", "Unauthorized to delete this log");
+      }
+
+      await logRef.delete();
+      return {success: true};
+    }
+
+    throw new HttpsError("invalid-argument", "Invalid action");
+  } catch (error) {
+    logManagerError(`Manage Maintenance Logs Error for uid: ${uid}`, error);
+    if (error instanceof HttpsError) {
+      throw error;
+    }
+    throw new HttpsError("internal", error.message);
+  }
+});
+
+/**
  * Manage Waste Logs API
  * Handles creation, reading, and deletion of waste logs.
  */
