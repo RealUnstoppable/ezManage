@@ -3,6 +3,7 @@ const mockCancelSubscription = jest.fn();
 
 jest.mock("firebase-admin", () => {
   const firestoreMock = {
+    initializeApp: jest.fn(),
     collection: jest.fn().mockReturnThis(),
     doc: jest.fn().mockReturnThis(),
     where: jest.fn().mockReturnThis(),
