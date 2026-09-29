@@ -2518,8 +2518,7 @@
 
         // Initialization is handled by firebase.js, we just get references
 
-// Wait, since this script is not a module, we need to make sure firebase.js runs before it.
-        // Let's just make the inline script check for singleton.
+        // Ensure singleton check since it relies on firebaseConfig
         const firebaseConfig = window.ezManageFirebaseConfig;
         window.app = !window.firebase.apps.length ? window.firebase.initializeApp(firebaseConfig) : window.firebase.app();
         window.auth = window.firebase.auth();
