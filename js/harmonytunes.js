@@ -375,24 +375,31 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let lastCurrentTimeStr = "";
     let lastTotalTimeStr = "";
+    let isUpdatingProgress = false;
 
     function updateProgress() {
-        const { duration, currentTime } = audioPlayer;
-        if (duration) {
-            const percent = (currentTime / duration) * 100;
-            progress.style.width = `${percent}%`;
+        if (!isUpdatingProgress) {
+            isUpdatingProgress = true;
+            window.requestAnimationFrame(() => {
+                const { duration, currentTime } = audioPlayer;
+                if (duration) {
+                    const percent = (currentTime / duration) * 100;
+                    progress.style.width = `${percent}%`;
 
-            const currentStr = formatTime(currentTime);
-            const totalStr = formatTime(duration);
+                    const currentStr = formatTime(currentTime);
+                    const totalStr = formatTime(duration);
 
-            if (currentStr !== lastCurrentTimeStr) {
-                currentTimeEl.textContent = currentStr;
-                lastCurrentTimeStr = currentStr;
-            }
-            if (totalStr !== lastTotalTimeStr) {
-                totalTimeEl.textContent = totalStr;
-                lastTotalTimeStr = totalStr;
-            }
+                    if (currentStr !== lastCurrentTimeStr) {
+                        currentTimeEl.textContent = currentStr;
+                        lastCurrentTimeStr = currentStr;
+                    }
+                    if (totalStr !== lastTotalTimeStr) {
+                        totalTimeEl.textContent = totalStr;
+                        lastTotalTimeStr = totalStr;
+                    }
+                }
+                isUpdatingProgress = false;
+            });
         }
     }
 

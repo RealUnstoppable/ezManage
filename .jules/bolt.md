@@ -66,3 +66,6 @@
 ## 2026-06-15 - [Input Debouncing with Map]
 **Learning:** When debouncing input events for multiple distinct items (like cart quantities), using a single global timeout cancels updates for other items when multiple inputs are modified rapidly.
 **Action:** Use a `Map` to track timeouts by unique identifiers (e.g., `productId`) to ensure each item is debounced independently.
+## 2026-10-31 - [High-Frequency Style Mutations]
+**Learning:** Directly mutating inline DOM styles (like `progress.style.width`) inside high-frequency event handlers (like `timeupdate` or `mousemove`) forces the browser into rapid, synchronous recalculate/repaint cycles outside of its natural render loop, causing layout thrashing and dropped frames.
+**Action:** Always wrap high-frequency DOM style mutations in a `window.requestAnimationFrame` callback. Protect the callback with a boolean state lock (e.g., `isUpdatingProgress = true/false`) to ensure only one frame is requested per render cycle.
