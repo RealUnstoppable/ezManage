@@ -375,25 +375,34 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let lastCurrentTimeStr = "";
     let lastTotalTimeStr = "";
+    let isProgressUpdating = false;
 
+    // ⚡ Bolt Optimization: Throttle high-frequency timeupdate events using requestAnimationFrame.
+    // Reduces layout thrashing and prevents unnecessary UI repaints during playback.
     function updateProgress() {
-        const { duration, currentTime } = audioPlayer;
-        if (duration) {
-            const percent = (currentTime / duration) * 100;
-            progress.style.width = `${percent}%`;
+        if (isProgressUpdating) return;
+        isProgressUpdating = true;
 
-            const currentStr = formatTime(currentTime);
-            const totalStr = formatTime(duration);
+        window.requestAnimationFrame(() => {
+            const { duration, currentTime } = audioPlayer;
+            if (duration) {
+                const percent = (currentTime / duration) * 100;
+                progress.style.width = `${percent}%`;
 
-            if (currentStr !== lastCurrentTimeStr) {
-                currentTimeEl.textContent = currentStr;
-                lastCurrentTimeStr = currentStr;
+                const currentStr = formatTime(currentTime);
+                const totalStr = formatTime(duration);
+
+                if (currentStr !== lastCurrentTimeStr) {
+                    currentTimeEl.textContent = currentStr;
+                    lastCurrentTimeStr = currentStr;
+                }
+                if (totalStr !== lastTotalTimeStr) {
+                    totalTimeEl.textContent = totalStr;
+                    lastTotalTimeStr = totalStr;
+                }
             }
-            if (totalStr !== lastTotalTimeStr) {
-                totalTimeEl.textContent = totalStr;
-                lastTotalTimeStr = totalStr;
-            }
-        }
+            isProgressUpdating = false;
+        });
     }
 
     function formatTime(seconds) {
