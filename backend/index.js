@@ -420,6 +420,76 @@ exports.manageShiftNotes = functions.https.onCall(async (data, context) => {
  * Manage Employees API
  * Handles creation, updating, and deletion of employees.
  */
+exports.manageCertifications = functions.https.onCall(async (data, context) => {
+  try {
+    const {uid, userOrgId, isAdmin, userName, action, payload} = await getAuthAndPayload(data, context, admin);
+
+    if (!userOrgId) {
+      throw new HttpsError("permission-denied", "User must be part of an organization to manage certifications.");
+    }
+
+    if (action === "create") {
+      checkRequiredFields(payload, ["empId", "empName", "certName", "expiryDate"]);
+
+      const certRef = await admin.firestore().collection("certifications").add({
+        empId: payload.empId,
+        empName: payload.empName,
+        certName: payload.certName,
+        issueDate: payload.issueDate || null,
+        expiryDate: payload.expiryDate,
+        status: "Valid", // Frontend logic can update this if needed, or backend can verify
+        orgId: userOrgId,
+        loggedByUid: uid,
+        loggedByName: userName,
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+
+      return {success: true, message: "Certification created", id: certRef.id};
+    } else if (action === "get") {
+      const certsQuery = await admin.firestore().collection("certifications")
+          .where("orgId", "==", userOrgId)
+          .orderBy("createdAt", "desc")
+          .get();
+
+      let certs = [];
+      certsQuery.forEach((doc) => {
+        certs.push({id: doc.id, ...doc.data()});
+      });
+      return {success: true, certifications: certs};
+    } else if (action === "delete") {
+      checkRequiredFields(payload, ["certId"]);
+
+      const certRef = admin.firestore().collection("certifications").doc(payload.certId);
+      const doc = await certRef.get();
+      if (!doc.exists) throw new HttpsError("not-found", "Certification not found.");
+      if (doc.data().orgId !== userOrgId && !isAdmin) {
+          throw new HttpsError("permission-denied", "Cannot delete a certification outside your organization.");
+      }
+
+      await certRef.delete();
+      return {success: true, message: "Certification deleted"};
+    } else if (action === "updateStatus") {
+      checkRequiredFields(payload, ["certId", "status"]);
+
+      const certRef = admin.firestore().collection("certifications").doc(payload.certId);
+      const doc = await certRef.get();
+      if (!doc.exists) throw new HttpsError("not-found", "Certification not found.");
+      if (doc.data().orgId !== userOrgId && !isAdmin) {
+          throw new HttpsError("permission-denied", "Cannot update a certification outside your organization.");
+      }
+
+      await certRef.update({status: payload.status});
+      return {success: true, message: "Certification updated"};
+    } else {
+      throw new HttpsError("invalid-argument", "Unknown action");
+    }
+  } catch (error) {
+    logManagerError("Error in manageCertifications: ", error);
+    if (error instanceof HttpsError) throw error;
+    throw new HttpsError("internal", error.message);
+  }
+});
+
 exports.manageEmployees = functions.https.onCall(async (data, context) => {
   const {uid, userOrgId, isAdmin, userName, action, payload} = await getAuthAndPayload(data, context, admin);
 
