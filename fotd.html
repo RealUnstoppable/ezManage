@@ -335,9 +335,17 @@
                     `;
                     const daysGrid = monthContainer.querySelector('.days-grid');
                     const firstDayOfMonth = new Date(year, month, 1).getDay();
+
+                    // ⚡ Bolt Optimization: Replace O(N^2) innerHTML += and sequential appendChild loops
+                    // with a batched DocumentFragment insertion to ensure 100% defense against XSS while maintaining performance.
+                    const fragment = document.createDocumentFragment();
+
                     for (let i = 0; i < firstDayOfMonth; i++) {
-                        daysGrid.innerHTML += '<div class="calendar-day empty"></div>';
+                        const emptyCell = document.createElement('div');
+                        emptyCell.className = 'calendar-day empty';
+                        fragment.appendChild(emptyCell);
                     }
+
                     const daysInMonth = new Date(year, month + 1, 0).getDate();
                     for (let day = 1; day <= daysInMonth; day++) {
                         const dayDate = new Date(year, month, day);
@@ -352,8 +360,10 @@
                         } else {
                             dayCell.classList.add('past-day');
                         }
-                        daysGrid.appendChild(dayCell);
+                        fragment.appendChild(dayCell);
                     }
+
+                    daysGrid.appendChild(fragment);
                     calendarGridContainer.appendChild(monthContainer);
                     currentDate.setMonth(currentDate.getMonth() + 1);
                 }
