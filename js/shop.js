@@ -253,7 +253,7 @@ function setupEventListeners() {
 
                 const timeoutId = setTimeout(() => {
                     handleUpdateQuantity(productId, quantity);
-                    updateQuantityTimeouts.delete(productId);
+                    quantityTimeouts.delete(productId);
                 }, 300);
 
                 updateQuantityTimeouts.set(productId, timeoutId);
