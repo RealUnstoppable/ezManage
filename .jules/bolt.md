@@ -66,3 +66,6 @@
 ## 2026-06-15 - [Input Debouncing with Map]
 **Learning:** When debouncing input events for multiple distinct items (like cart quantities), using a single global timeout cancels updates for other items when multiple inputs are modified rapidly.
 **Action:** Use a `Map` to track timeouts by unique identifiers (e.g., `productId`) to ensure each item is debounced independently.
+## 2026-11-20 - [Batch DOM Insertions in FotD Calendar]
+**Learning:** Sequential `.appendChild()` and `innerHTML +=` concatenations inside loops for dynamically generated elements like calendar days and rows cause unnecessary layout thrashing, resulting in O(n²) performance degradation.
+**Action:** Always batch element creation inside a `DocumentFragment` and avoid string concatenation inside loops by using `.map().join('')` or `.fill().join('')` before a single `.innerHTML` assignment.
