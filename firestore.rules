@@ -219,7 +219,7 @@ service cloud.firestore {
     }
 
         // MAINTENANCE LOGS
-    match /maintenance/{logId} {
+    match /maintenance_logs/{logId} {
       allow read: if request.auth != null && (
           resource == null ||
           resource.data.get('reportedByUid', null) == request.auth.uid ||
