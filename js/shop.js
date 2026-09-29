@@ -231,7 +231,7 @@ function setupEventListeners() {
                 handleRemoveFromCart(productId);
             }
         });
-        const updateQuantityTimeouts = new Map();
+        const quantityTimeouts = new Map();
         // ⚡ Bolt Optimization: Debounce quantity inputs to prevent rapid multiple Firestore updates and re-renders
         // Impact: Reduces overlapping rapid inputs, DOM updates, and Firestore writes when using spinners or typing quickly.
         cartItemsContainer.addEventListener('input', (e) => {
@@ -239,13 +239,21 @@ function setupEventListeners() {
                 const productId = e.target.dataset.id;
                 const quantity = parseInt(e.target.value, 10);
 
+                if (quantityTimeouts.has(productId)) {
+                    clearTimeout(quantityTimeouts.get(productId));
+                }
+
+                quantityTimeouts.set(productId, setTimeout(() => {
+                    handleUpdateQuantity(productId, quantity);
+                    quantityTimeouts.delete(productId);
+                }, 300));
                 if (updateQuantityTimeouts.has(productId)) {
                     clearTimeout(updateQuantityTimeouts.get(productId));
                 }
 
                 const timeoutId = setTimeout(() => {
                     handleUpdateQuantity(productId, quantity);
-                    updateQuantityTimeouts.delete(productId);
+                    quantityTimeouts.delete(productId);
                 }, 300);
 
                 updateQuantityTimeouts.set(productId, timeoutId);
