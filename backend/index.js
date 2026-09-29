@@ -420,6 +420,76 @@ exports.manageShiftNotes = functions.https.onCall(async (data, context) => {
  * Manage Employees API
  * Handles creation, updating, and deletion of employees.
  */
+exports.manageCertifications = functions.https.onCall(async (data, context) => {
+  try {
+    const {uid, userOrgId, isAdmin, userName, action, payload} = await getAuthAndPayload(data, context, admin);
+
+    if (!userOrgId) {
+      throw new HttpsError("permission-denied", "User must be part of an organization to manage certifications.");
+    }
+
+    if (action === "create") {
+      checkRequiredFields(payload, ["empId", "empName", "certName", "expiryDate"]);
+
+      const certRef = await admin.firestore().collection("certifications").add({
+        empId: payload.empId,
+        empName: payload.empName,
+        certName: payload.certName,
+        issueDate: payload.issueDate || null,
+        expiryDate: payload.expiryDate,
+        status: "Valid", // Frontend logic can update this if needed, or backend can verify
+        orgId: userOrgId,
+        loggedByUid: uid,
+        loggedByName: userName,
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+
+      return {success: true, message: "Certification created", id: certRef.id};
+    } else if (action === "get") {
+      const certsQuery = await admin.firestore().collection("certifications")
+          .where("orgId", "==", userOrgId)
+          .orderBy("createdAt", "desc")
+          .get();
+
+      let certs = [];
+      certsQuery.forEach((doc) => {
+        certs.push({id: doc.id, ...doc.data()});
+      });
+      return {success: true, certifications: certs};
+    } else if (action === "delete") {
+      checkRequiredFields(payload, ["certId"]);
+
+      const certRef = admin.firestore().collection("certifications").doc(payload.certId);
+      const doc = await certRef.get();
+      if (!doc.exists) throw new HttpsError("not-found", "Certification not found.");
+      if (doc.data().orgId !== userOrgId && !isAdmin) {
+          throw new HttpsError("permission-denied", "Cannot delete a certification outside your organization.");
+      }
+
+      await certRef.delete();
+      return {success: true, message: "Certification deleted"};
+    } else if (action === "updateStatus") {
+      checkRequiredFields(payload, ["certId", "status"]);
+
+      const certRef = admin.firestore().collection("certifications").doc(payload.certId);
+      const doc = await certRef.get();
+      if (!doc.exists) throw new HttpsError("not-found", "Certification not found.");
+      if (doc.data().orgId !== userOrgId && !isAdmin) {
+          throw new HttpsError("permission-denied", "Cannot update a certification outside your organization.");
+      }
+
+      await certRef.update({status: payload.status});
+      return {success: true, message: "Certification updated"};
+    } else {
+      throw new HttpsError("invalid-argument", "Unknown action");
+    }
+  } catch (error) {
+    logManagerError("Error in manageCertifications: ", error);
+    if (error instanceof HttpsError) throw error;
+    throw new HttpsError("internal", error.message);
+  }
+});
+
 exports.manageEmployees = functions.https.onCall(async (data, context) => {
   const {uid, userOrgId, isAdmin, userName, action, payload} = await getAuthAndPayload(data, context, admin);
 
@@ -902,6 +972,105 @@ exports.manageTimeLogs = functions.https.onCall(async (data, context) => {
     throw new HttpsError("invalid-argument", "Invalid action");
   } catch (error) {
     logManagerError(`Manage Time Logs Error for uid: ${uid}`, error);
+    if (error instanceof HttpsError) {
+      throw error;
+    }
+    throw new HttpsError("internal", error.message);
+  }
+});
+
+/**
+ * Manage Maintenance Logs API
+ * Handles creation, reading, status updates, and deletion of maintenance logs.
+ */
+exports.manageMaintenanceLogs = functions.https.onCall(async (data, context) => {
+  const {uid, userOrgId, isAdmin, userName, action, payload} = await getAuthAndPayload(data, context, admin);
+
+  try {
+    const actualOrgId = userOrgId;
+
+    if (!actualOrgId) {
+      throw new HttpsError("permission-denied", "User must be part of an organization to report maintenance issues.");
+    }
+
+    if (action === "create") {
+      const {title, description, priority, cost} = payload;
+
+      checkRequiredFields(payload, ["title", "description", "priority"], "Missing required maintenance details");
+
+      const newMaintenanceLog = {
+        title,
+        description,
+        priority,
+        cost: cost ? Number(cost) : 0,
+        status: "Open",
+        reportedByUid: uid,
+        reportedByName: context.auth.token.name || "Anonymous",
+        orgId: actualOrgId,
+        timestamp: admin.firestore.FieldValue.serverTimestamp(),
+      };
+
+      const docRef = await admin.firestore().collection("maintenance_logs").add(newMaintenanceLog);
+      return {success: true, id: docRef.id};
+    }
+
+    if (action === "get") {
+      const snapshot = await admin.firestore().collection("maintenance_logs")
+          .where("orgId", "==", actualOrgId)
+          .orderBy("timestamp", "desc")
+          .limit(100)
+          .get();
+
+      const logs = [];
+      snapshot.forEach((doc) => logs.push({id: doc.id, ...doc.data()}));
+      return {success: true, logs};
+    }
+
+    if (action === "updateStatus") {
+      const {logId, status} = payload;
+      if (!logId || !status) {
+        throw new HttpsError("invalid-argument", "Missing log ID or status");
+      }
+
+      const logRef = admin.firestore().collection("maintenance_logs").doc(logId);
+      const logDoc = await logRef.get();
+
+      if (!logDoc.exists) {
+        throw new HttpsError("not-found", "Maintenance log not found");
+      }
+
+      if (logDoc.data().orgId !== actualOrgId) {
+        throw new HttpsError("permission-denied", "Unauthorized to update this log");
+      }
+
+      await logRef.update({status});
+      return {success: true};
+    }
+
+    if (action === "delete") {
+      const {logId} = payload;
+      if (!logId) {
+        throw new HttpsError("invalid-argument", "Missing log ID");
+      }
+
+      const logRef = admin.firestore().collection("maintenance_logs").doc(logId);
+      const logDoc = await logRef.get();
+
+      if (!logDoc.exists) {
+        throw new HttpsError("not-found", "Maintenance log not found");
+      }
+
+      if (logDoc.data().orgId !== actualOrgId) {
+        throw new HttpsError("permission-denied", "Unauthorized to delete this log");
+      }
+
+      await logRef.delete();
+      return {success: true};
+    }
+
+    throw new HttpsError("invalid-argument", "Invalid action");
+  } catch (error) {
+    logManagerError(`Manage Maintenance Logs Error for uid: ${uid}`, error);
     if (error instanceof HttpsError) {
       throw error;
     }
