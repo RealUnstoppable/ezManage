@@ -38,10 +38,9 @@ function ShiftNotesManager({ currentUser, currentUserData }) {
 
     // Initial load
     useEffect(() => {
-        const loadNotes = async () => {
+        (async () => {
             await fetchShiftNotes();
-        };
-        loadNotes();
+        })();
     }, [fetchShiftNotes]);
 
     const submitShiftNote = async (e) => {
