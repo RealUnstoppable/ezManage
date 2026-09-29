@@ -1,7 +1,7 @@
 import { auth, db } from '../firebase.js';
 import { collection, addDoc, updateDoc, deleteDoc, doc, getDoc, onSnapshot, query, where } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
-import { escapeHTML, logManagerError } from './utils.js';
+import { logManagerError, escapeHTML } from './utils.js';
 
 let currentOrgId = null;
 let unsubscribeInventory = null;
@@ -32,7 +32,7 @@ onAuthStateChanged(auth, async (user) => {
                 if (currentOrgId) {
                     loadInventory();
                 } else {
-                    console.error("User does not belong to an organization.");
+                    logManagerError("User does not belong to an organization.");
                 }
             }
         } catch (error) {
@@ -76,7 +76,7 @@ function loadInventory() {
         inventoryTableBody.appendChild(fragment);
         if (window.lucide) window.lucide.createIcons();
     }, (error) => {
-        console.error("Error fetching inventory:", error);
+        logManagerError("Error fetching inventory:", error);
         loadingSpinner.classList.add('hidden');
         alert("Failed to load inventory. Please try again.");
     });
