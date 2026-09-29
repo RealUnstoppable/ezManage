@@ -224,7 +224,7 @@ service cloud.firestore {
     }
 
         // MAINTENANCE LOGS
-    match /maintenance/{logId} {
+    match /maintenance_logs/{logId} {
       allow read: if request.auth != null && (
           resource == null ||
           resource.data.get('reportedByUid', null) == request.auth.uid ||
@@ -286,6 +286,18 @@ service cloud.firestore {
       allow read: if request.auth != null && (
           resource == null ||
           (resource.data.get('orgId', null) != null && resource.data.get('orgId', null) == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('orgId', null)) ||
+          isAdmin()
+      );
+      allow create: if request.auth != null && request.resource.data.get('orgId', null) == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('orgId', null);
+      allow update: if request.auth != null && resource.data.get('orgId', null) == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('orgId', null) && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['orgId']);
+      allow delete: if request.auth != null && resource.data.get('orgId', null) == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('orgId', null);
+    }
+
+    // CERTIFICATIONS
+    match /certifications/{certId} {
+      allow read: if request.auth != null && (
+          resource == null ||
+          resource.data.get('orgId', null) == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('orgId', null) ||
           isAdmin()
       );
       allow create: if request.auth != null && request.resource.data.get('orgId', null) == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('orgId', null);

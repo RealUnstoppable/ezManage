@@ -497,6 +497,9 @@
             <a href="#" onclick="navTo('temperatures'); fetchTemperatureLogs();"
                 class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="thermometer"></i>
                 Equipment Temps</a>
+            <a href="#" onclick="navTo('certifications'); fetchCertifications();"
+                class="flex items-center gap-4 font-bold text-lg hover:text-sky-500 text-amber-600"><i data-lucide="shield-check"></i>
+                Certifications</a>
             <a href="#" onclick="navTo('tasks')"
                 class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="check-square"></i>
                 Task Manager</a>
@@ -1785,6 +1788,65 @@
             </div>
         </div>
 
+        <div id="view-certifications" class="view-section px-6 py-12 hidden">
+            <div class="max-w-4xl mx-auto">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+                    <h1 class="text-4xl font-black text-amber-600 flex items-center gap-3"><i data-lucide="shield-check" class="w-8 h-8"></i> Compliance & Certifications</h1>
+                    <button onclick="document.getElementById('addCertModal').classList.remove('hidden'); populateCertAssigneeDropdown();"
+                        class="btn btn-primary flex items-center gap-2 px-6">
+                        <i data-lucide="plus-circle" class="w-5 h-5"></i> Log Certification
+                    </button>
+                </div>
+
+                <div id="addCertModal"
+                    class="hidden bg-white dark:bg-slate-900 rounded-3xl p-6 md:p-8 shadow-sm border border-slate-100 dark:border-slate-800 mb-12">
+                    <h2 class="text-xl font-bold mb-4">Log Employee Certification</h2>
+                    <div class="space-y-4">
+                        <select id="certAssignee" aria-label="Employee" class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
+                            <option value="" disabled selected>Select Employee</option>
+                        </select>
+                        <select id="certName" aria-label="Certification Type" class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
+                            <option value="ServSafe Manager">ServSafe Manager</option>
+                            <option value="Food Handler Permit">Food Handler Permit</option>
+                            <option value="Allergen Training">Allergen Training</option>
+                            <option value="Alcohol Service Permit">Alcohol Service Permit (TIPS/LEAD)</option>
+                            <option value="First Aid / CPR">First Aid / CPR</option>
+                            <option value="Other">Other</option>
+                        </select>
+
+                        <div class="grid md:grid-cols-2 gap-4">
+                            <div>
+                                <label for="certIssueDate" class="block text-xs font-bold mb-1 text-slate-500">Issue Date (Optional)</label>
+                                <input type="date" id="certIssueDate" class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
+                            </div>
+                            <div>
+                                <label for="certExpiryDate" class="block text-xs font-bold mb-1 text-slate-500">Expiration Date *</label>
+                                <input type="date" id="certExpiryDate" class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500" required>
+                            </div>
+                        </div>
+
+                        <div class="flex justify-end gap-3 pt-2">
+                            <button onclick="document.getElementById('addCertModal').classList.add('hidden')"
+                                class="btn btn-outline px-6 py-2">Cancel</button>
+                            <button onclick="submitCertification()" class="btn btn-accent px-6 py-2">Save Record</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-black">Active Records</h2>
+                    <button onclick="fetchCertifications()"
+                        class="text-sm font-bold text-sky-500 hover:text-sky-600 flex items-center gap-2">
+                        <i data-lucide="refresh-cw" class="w-4 h-4"></i> Refresh
+                    </button>
+                </div>
+
+                <div id="certificationsContainer" class="space-y-4">
+                    <!-- Certifications populated via JS -->
+                </div>
+            </div>
+        </div>
+
 <div id="view-waste" class="view-section px-6 py-12 hidden">
             <div class="max-w-4xl mx-auto">
                 <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
@@ -2456,8 +2518,8 @@
 
 // Wait, since this script is not a module, we need to make sure firebase.js runs before it.
         // Let's just make the inline script check for singleton.
-        window.firebaseConfig = window.ezManageFirebaseConfig;
-        window.app = !window.firebase.apps.length ? window.firebase.initializeApp(window.firebaseConfig) : window.firebase.app();
+        const firebaseConfig = window.ezManageFirebaseConfig;
+        window.app = !window.firebase.apps.length ? window.firebase.initializeApp(firebaseConfig) : window.firebase.app();
         window.auth = window.firebase.auth();
 
         window.db = window.firebase.firestore();
@@ -3002,7 +3064,7 @@
                 localStorage.setItem('navTo', viewId);
                 return;
             }
-            if (!currentUser && (['history', 'presets', 'performance', 'request', 'profile', 'shiftNotes', 'team', 'employees', 'timeoff', 'tasks', 'announcements', 'deliveries', 'marketplace'].includes(viewId))) {
+            if (!currentUser && (['history', 'presets', 'performance', 'request', 'profile', 'shiftNotes', 'team', 'employees', 'timeoff', 'tasks', 'announcements', 'deliveries', 'marketplace', 'certifications'].includes(viewId))) {
                 viewId = 'auth';
             }
             if (viewId === 'maintenance' && currentUser) {
@@ -5768,6 +5830,192 @@ function checkAndRenderOrgControls() {
             }
         }
 
+        // ==========================
+        // COMPLIANCE & CERTIFICATIONS
+        // ==========================
+
+        function populateCertAssigneeDropdown() {
+            const select = document.getElementById('certAssignee');
+            if (!select || !currentUserData) return;
+
+            const queryOrgId = currentUserData.orgId || currentUser.uid;
+
+            db.collection('employees')
+                .where('orgId', '==', queryOrgId)
+                .where('status', '==', 'Active')
+                .get()
+                .then(snap => {
+                    select.innerHTML = '<option value="" disabled selected>Select Employee</option>';
+                    let employees = [];
+                    snap.forEach(doc => employees.push({id: doc.id, ...doc.data()}));
+                    employees.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+
+                    const fragment = document.createDocumentFragment();
+                    employees.forEach(emp => {
+                        const opt = document.createElement('option');
+                        opt.value = emp.id;
+                        opt.dataset.name = emp.name;
+                        opt.textContent = `${emp.name} (${emp.role})`;
+                        fragment.appendChild(opt);
+                    });
+                    select.appendChild(fragment);
+                })
+                .catch(err => window.logManagerError("Error populating cert assignee dropdown:", err));
+        }
+
+        async function submitCertification() {
+            if (!currentUser || !currentUserData || !currentUserData.orgId) {
+                alert("You must be part of an organization to log certifications.");
+                return;
+            }
+
+            const assigneeSelect = document.getElementById('certAssignee');
+            const empId = assigneeSelect.value;
+            const empName = assigneeSelect.options[assigneeSelect.selectedIndex]?.dataset?.name;
+            const certName = document.getElementById('certName').value;
+            const issueDate = document.getElementById('certIssueDate').value;
+            const expiryDate = document.getElementById('certExpiryDate').value;
+
+            if (!empId || !expiryDate) {
+                alert("Please select an employee and provide an expiration date.");
+                return;
+            }
+
+            const submitBtn = document.querySelector('#addCertModal .btn-accent');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> Saving...';
+            submitBtn.disabled = true;
+            lucide.createIcons();
+
+            try {
+                await callCloudFunction('manageCertifications', {
+                    action: "create",
+                    payload: { empId, empName, certName, issueDate, expiryDate }
+                });
+
+                document.getElementById('certAssignee').value = '';
+                document.getElementById('certName').value = 'ServSafe Manager';
+                document.getElementById('certIssueDate').value = '';
+                document.getElementById('certExpiryDate').value = '';
+                document.getElementById('addCertModal').classList.add('hidden');
+
+                alert("Certification logged successfully.");
+                fetchCertifications();
+            } catch (error) {
+                console.error("Error logging certification:", error);
+                alert("Failed to log certification. " + error.message);
+            } finally {
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+                lucide.createIcons();
+            }
+        }
+
+        async function fetchCertifications() {
+            if (!currentUser || !currentUserData || !currentUserData.orgId) {
+                const container = document.getElementById('certificationsContainer');
+                if (container) {
+                    container.innerHTML = `
+                        <div class="text-center py-16 bg-slate-50 dark:bg-slate-900 rounded-3xl border-2 border-dashed border-slate-200 dark:border-slate-800">
+                            <i data-lucide="shield-alert" class="w-12 h-12 text-slate-400 mx-auto mb-4"></i>
+                            <h3 class="text-xl font-bold mb-2">Join or Create a Group</h3>
+                            <p class="text-slate-500">You must be in a Management Group to view certifications.</p>
+                        </div>
+                    `;
+                    lucide.createIcons();
+                }
+                return;
+            }
+
+            const container = document.getElementById('certificationsContainer');
+            container.innerHTML = '<div class="text-center py-8"><i data-lucide="loader-2" class="w-8 h-8 animate-spin mx-auto text-sky-500 mb-4"></i><p class="text-slate-500">Loading certifications...</p></div>';
+            lucide.createIcons();
+
+            try {
+                const result = await callCloudFunction('manageCertifications', { action: "get", payload: {} });
+
+                if (result.data.success) {
+                    const certs = result.data.certifications || [];
+                    container.innerHTML = '';
+
+                    if (certs.length === 0) {
+                        container.innerHTML = `
+                            <div class="text-center py-16 bg-slate-50 dark:bg-slate-900 rounded-3xl border-2 border-dashed border-slate-200 dark:border-slate-800">
+                                <i data-lucide="shield-check" class="w-12 h-12 text-emerald-400 mx-auto mb-4"></i>
+                                <h3 class="text-xl font-bold mb-2">No Certifications Logged</h3>
+                                <p class="text-slate-500">Keep track of important compliance documents here.</p>
+                            </div>
+                        `;
+                        lucide.createIcons();
+                        return;
+                    }
+
+                    const fragment = document.createDocumentFragment();
+
+                    certs.forEach(cert => {
+                        const div = document.createElement('div');
+                        div.id = `cert-${escapeHTML(cert.id)}`;
+
+                        // Calculate status
+                        let status = "Valid";
+                        let statusColors = 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800';
+                        let borderLeft = 'border-l-emerald-500';
+
+                        if (cert.expiryDate) {
+                            const exp = new Date(cert.expiryDate);
+                            const now = new Date();
+                            const diffDays = Math.ceil((exp - now) / (1000 * 60 * 60 * 24));
+
+                            if (diffDays < 0) {
+                                status = "Expired";
+                                statusColors = 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400 border-red-200 dark:border-red-800';
+                                borderLeft = 'border-l-red-500';
+                            } else if (diffDays <= 30) {
+                                status = "Expiring Soon";
+                                statusColors = 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400 border-amber-200 dark:border-amber-800';
+                                borderLeft = 'border-l-amber-500';
+                            }
+                        }
+
+                        div.className = `card p-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-l-4 ${borderLeft}`;
+
+                        div.innerHTML = `
+                            <div>
+                                <h3 class="text-lg font-bold">${escapeHTML(cert.empName)} - ${escapeHTML(cert.certName)}</h3>
+                                <p class="text-sm text-slate-500">Expires: <span class="font-bold text-slate-800 dark:text-slate-200">${escapeHTML(cert.expiryDate)}</span></p>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <span class="px-3 py-1 rounded-full text-xs font-bold border ${statusColors}">${status}</span>
+                                <button data-action="deleteCert" data-id="${escapeHTML(cert.id)}" class="btn btn-outline btn-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20" aria-label="Delete Certification">
+                                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                </button>
+                            </div>
+                        `;
+                        fragment.appendChild(div);
+                    });
+                    container.appendChild(fragment);
+                    lucide.createIcons();
+                }
+            } catch (error) {
+                console.error("Error fetching certifications:", error);
+                container.innerHTML = `<div class="text-red-500 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl text-center">Failed to load certifications: ${window.escapeHTML ? window.escapeHTML(error.message) : error.message}</div>`;
+            }
+        }
+
+        async function deleteCertification(certId) {
+            if (!confirm("Are you sure you want to permanently delete this certification record?")) return;
+            const el = document.getElementById('cert-' + escapeHTML(certId));
+            if (el) el.style.display = 'none'; // Optimistically hide
+            try {
+                await callCloudFunction('manageCertifications', { action: "delete", payload: { certId } });
+                fetchCertifications();
+            } catch (err) {
+                logManagerError("Error deleting certification:", err);
+                alert("Failed to delete record.");
+                fetchCertifications(); // Revert on failure
+            }
+        }
+
 async function submitWasteLog() {
             if (!currentUser || !currentUserData || !currentUserData.orgId) {
                 alert("You must be part of an organization to log waste.");
@@ -7270,6 +7518,7 @@ async function submitWasteLog() {
             else if (action === 'deleteDelivery') deleteDelivery(id);
             else if (action === 'deleteIncident') deleteIncident(id);
             else if (action === 'deleteAnnouncement') deleteAnnouncement(id);
+            else if (action === 'deleteCert') deleteCertification(id);
             else if (action === 'updateAssignedTaskStatus') updateAssignedTaskStatus(id, status);
             else if (action === 'deleteAssignedTask') deleteAssignedTask(id);
             else if (action === 'deleteRecognition') deleteRecognition(id);
@@ -7924,6 +8173,7 @@ window.onload = () => {
                 if (action === 'deleteWasteLog') deleteWasteLog(id);
                 if (action === 'deleteIncident') deleteIncident(id);
                 if (action === 'deleteAnnouncement') deleteAnnouncement(id);
+                if (action === 'deleteCert') deleteCertification(id);
                 if (action === 'updateAssignedTaskStatus') updateAssignedTaskStatus(id, status);
                 if (action === 'deleteAssignedTask') deleteAssignedTask(id);
                 if (action === 'deleteRecognition') deleteRecognition(id);
