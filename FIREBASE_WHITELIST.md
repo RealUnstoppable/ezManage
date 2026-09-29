@@ -4,7 +4,7 @@ If you are experiencing CORS errors (`auth/network-request-failed` or `firestore
 
 ## Authentication Whitelisting
 1. Go to the Firebase Console (console.firebase.google.com).
-2. Select your project.
+2. Select your project (`dts-hub-website`).
 3. In the left navigation pane, click on **Authentication**.
 4. Navigate to the **Settings** tab.
 5. In the **Authorized domains** section, click **Add domain**.
