@@ -2278,7 +2278,11 @@
         };
         const app = !window.firebase.apps.length ? window.firebase.initializeApp(firebaseConfig) : window.firebase.app();
         const auth = window.firebase.auth();
-        window.firebase.firestore().settings({ experimentalForceLongPolling: true });
+        try {
+            window.firebase.firestore().settings({ experimentalForceLongPolling: true });
+        } catch (e) {
+            console.warn("Firestore settings already set or errored:", e);
+        }
         const db = window.firebase.firestore();
         const cloudFunctions = window.firebase.functions();
         db.enablePersistence().catch(err => console.error("Offline sync error:", err));
@@ -2312,14 +2316,17 @@
         let cloudSyncEnabled = false;
 
         auth.onAuthStateChanged((user) => {
+            isInitializingAuth = false;
+            let activeView = null;
             currentUser = user;
             const navStatus = document.getElementById('navUserStatus');
 
             if (unsubscribeUser) unsubscribeUser();
 
             if (user) {
-                navStatus.innerText = "Manager: " + (user.displayName || "Online");
-                document.getElementById('profEmail').value = user.email;
+                if(navStatus) navStatus.innerText = "Manager: " + (user.displayName || "Online");
+                let profEmail = document.getElementById('profEmail');
+                if(profEmail) profEmail.value = user.email;
 
                 const cached = sessionStorage.getItem('ezManage_userData');
                 if (cached) {
@@ -2332,7 +2339,7 @@
                 }
 
                 unsubscribeUser = db.collection("users").doc(user.uid).onSnapshot(async doc => {
-                    isInitializingAuth = false;
+                    
                     if (doc.exists) {
                         currentUserData = doc.data();
                         sessionStorage.setItem('ezManage_userData', JSON.stringify(currentUserData));
@@ -2405,13 +2412,13 @@
                             localStorage.removeItem('navTo');
                             navTo(pendingNavTo);
                         } else {
-                            let activeView = document.querySelector('.view-section.active');
+                            activeView = document.querySelector('.view-section.active');
                             if (activeView && activeView.id === 'view-auth') navTo('tracker');
                         }
                         runAIPatternLogic();
                     } else {
                         if (!doc.exists) {
-                            isInitializingAuth = false;
+                            
                             activeView = document.querySelector('.view-section.active');
                             if (activeView && activeView.id !== 'view-setup') {
                                 try {
@@ -2441,7 +2448,7 @@
                     }
                 });
             } else {
-                isInitializingAuth = false;
+                
                 navStatus.innerText = "Login / Sign Up";
                 currentUserData = null;
                 initialDraftLoaded = false;
@@ -2456,7 +2463,7 @@
                     activeView = document.querySelector('.view-section.active');
                     if (activeView && activeView.id !== 'view-auth' && activeView.id !== 'view-tracker') navTo('auth');
                 }
-                isInitializingAuth = false;
+                
             }
         });
 

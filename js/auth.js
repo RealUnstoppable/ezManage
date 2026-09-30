@@ -44,7 +44,7 @@ auth.onAuthStateChanged(async (user) => {
 
                 if (authLink) {
                     authLink.href = destination;
-                    authLink.textContent = "My Account";
+                    authLink.textContent = userData.username || userData.name || "My Account";
                 }
 
                 if (membershipStatusContainer) {

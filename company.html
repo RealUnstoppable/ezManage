@@ -12,7 +12,6 @@
     <link rel="apple-touch-icon" href="ManagerPro.jpg">
 
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="js/firebase-config.js"></script>
     <script>
     </script>
     <script type="module">
@@ -775,7 +774,7 @@
         const firebaseConfig = window.ezManageFirebaseConfig;
         const app = !window.firebase.apps.length ? window.firebase.initializeApp(firebaseConfig) : window.firebase.app();
         const auth = firebase.auth();
-        firebase.firestore().settings({ experimentalForceLongPolling: true });
+        try { firebase.firestore().settings({ experimentalForceLongPolling: true }); } catch(e){}
         const db = firebase.firestore();
 
         
@@ -1429,8 +1428,8 @@
                     return;
                 }
 
-                let htmlManagers = '';
-                let htmlIndiv = '';
+                const htmlManagers = [];
+                const htmlIndiv = [];
                 let allShifts = [];
 
                 snap.forEach(doc => {
@@ -1440,7 +1439,7 @@
                     const color = getManagerColor(displayName);
 
                     // 1. Manager Directory
-                    htmlManagers += `
+                    htmlManagers.push(`
                     <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
                         <td class="px-6 py-3">
                             <div class="flex items-center gap-3">
@@ -1462,7 +1461,7 @@
                         <td class="px-6 py-3 text-right">
                             ${!isOwner ? `<button onclick="removeManager('${escapeHTML(doc.id)}')" aria-label="Remove manager" class="text-slate-400 hover:text-red-500 transition-colors"><i data-lucide="trash-2" class="w-4 h-4"></i></button>` : `<span class="text-slate-300">-</span>`}
                         </td>
-                    </tr>`;
+                    </tr>`);
 
                     // Aggregate shifts for charts
                     const h = d.shiftHistory || [];
@@ -1476,7 +1475,7 @@
                         score = Math.round((checked / todayShift.routines.length) * 100);
                     }
 
-                    htmlIndiv += `
+                    htmlIndiv.push(`
                     <div class="p-4 bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-100 dark:border-slate-800 flex items-center justify-between">
                         <div class="flex items-center gap-3">
                             <div class="w-10 h-10 rounded-full flex items-center justify-center text-white font-black shadow-sm" style="background-color: ${color}">
@@ -1488,11 +1487,11 @@
                             <div class="text-xl font-black ${score === 100 ? 'text-emerald-500' : (score > 0 ? 'text-indigo-500' : 'text-slate-400')}">${score}%</div>
                             <div class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Completion</div>
                         </div>
-                    </div>`;
+                    </div>`);
                 });
 
-                tbody.innerHTML = htmlManagers;
-                indivContainer.innerHTML = htmlIndiv;
+                tbody.innerHTML = htmlManagers.join('');
+                indivContainer.innerHTML = htmlIndiv.join('');
                 lucide.createIcons();
 
                 if (typeof renderGlobalPerformanceChart === 'function') {
@@ -1504,7 +1503,7 @@
                 db.collection('shift_notes').where('orgId', '==', activeOrgId).onSnapshot(notesSnap => {
                     const container = document.getElementById('globalNotesContainer');
                     let notesCount = 0;
-                    let htmlNotes = '';
+                    const htmlNotes = [];
 
                     notesSnap.forEach(doc => {
                         const data = doc.data();
@@ -1513,7 +1512,7 @@
                         const authorColor = getManagerColor(data.authorName || 'Unknown');
 
                         notesCount++;
-                        htmlNotes += `
+                        htmlNotes.push(`
                         <div class="p-4 bg-white dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-800 shadow-sm flex items-start gap-4 hover:border-${color}-200 dark:hover:border-${color}-800 transition-colors">
                             <div class="w-10 h-10 rounded-full flex items-center justify-center text-white flex-shrink-0 mt-1 font-black shadow-sm" style="background-color: ${authorColor}">
                                 ${escapeHTML((data.authorName || 'U').substring(0, 1).toUpperCase())}
@@ -1526,14 +1525,14 @@
                                 <div class="text-sm text-slate-600 dark:text-slate-400 mb-2">${escapeHTML(data.content)}</div>
                                 <div class="text-[10px] font-bold uppercase tracking-widest text-slate-400">Status: ${escapeHTML(data.status)}</div>
                             </div>
-                        </div>`;
+                        </div>`);
                     });
 
                     if (document.getElementById('statNotesCount')) {
                         document.getElementById('statNotesCount').innerText = `${notesCount} notes`;
                     }
                     if (container) {
-                        container.innerHTML = notesCount > 0 ? htmlNotes : `<div class="text-center py-8 text-slate-400 font-bold">No notes for this date.</div>`;
+                        container.innerHTML = notesCount > 0 ? htmlNotes.join('') : `<div class="text-center py-8 text-slate-400 font-bold">No notes for this date.</div>`;
                     }
 
                     const totalMinutesSaved = notesCount * 15;
