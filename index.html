@@ -2689,10 +2689,6 @@
         }
 
         function navTo(viewId) {
-            if (isInitializingAuth) {
-                localStorage.setItem('navTo', viewId);
-                return;
-            }
             if (!currentUser && (['history', 'presets', 'performance', 'request', 'profile', 'shiftNotes', 'team', 'employees', 'timeoff', 'tasks', 'announcements'].includes(viewId))) {
                 viewId = 'auth';
             }
@@ -2722,11 +2718,17 @@
             }
 
             document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
-            document.getElementById('view-' + viewId).classList.add('active');
-            document.getElementById('sidebar').classList.remove('open');
+            const targetView = document.getElementById('view-' + viewId);
+            if (targetView) targetView.classList.add('active');
+            
+            const sidebarEl = document.getElementById('sidebar');
+            if (sidebarEl) sidebarEl.classList.remove('open');
+            
             document.body.classList.remove('overflow-hidden');
             window.scrollTo({ top: 0, behavior: 'smooth' });
-            lucide.createIcons();
+            if (window.lucide) {
+                try { lucide.createIcons(); } catch (e) { console.warn("Lucide error:", e); }
+            }
 
             if (viewId === 'shiftNotes') {
                 fetchShiftNotes();
