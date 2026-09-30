@@ -2689,52 +2689,56 @@
         }
 
         function navTo(viewId) {
-            if (!currentUser && (['history', 'presets', 'performance', 'request', 'profile', 'shiftNotes', 'team', 'employees', 'timeoff', 'tasks', 'announcements'].includes(viewId))) {
-                viewId = 'auth';
-            }
-            if (viewId === 'maintenance' && currentUser) {
-                fetchMaintenanceTickets();
-            }
+            try {
+                if (!currentUser && (['history', 'presets', 'performance', 'request', 'profile', 'shiftNotes', 'team', 'employees', 'timeoff', 'tasks', 'announcements'].includes(viewId))) {
+                    viewId = 'auth';
+                }
+                if (viewId === 'maintenance' && currentUser) {
+                    fetchMaintenanceTickets();
+                }
 
-            if (viewId === 'announcements' && currentUser) {
-                fetchAnnouncements();
-            }
-            if (viewId === 'tasks' && currentUser) {
-                fetchTasks();
-            }
-            if (viewId === 'team' && currentUser) {
-                fetchTeamDirectory();
-            }
+                if (viewId === 'announcements' && currentUser) {
+                    fetchAnnouncements();
+                }
+                if (viewId === 'tasks' && currentUser) {
+                    fetchTasks();
+                }
+                if (viewId === 'team' && currentUser) {
+                    fetchTeamDirectory();
+                }
 
-            if (viewId === 'waste' && currentUser) {
-                fetchWasteLogs();
-            }
-            if (viewId === 'incidents' && currentUser) {
-                fetchIncidents();
-            }
-            if (viewId === 'recognition' && currentUser) {
-                fetchRecognitions();
-                populateRecognitionDropdown();
-            }
+                if (viewId === 'waste' && currentUser) {
+                    fetchWasteLogs();
+                }
+                if (viewId === 'incidents' && currentUser) {
+                    fetchIncidents();
+                }
+                if (viewId === 'recognition' && currentUser) {
+                    fetchRecognitions();
+                    populateRecognitionDropdown();
+                }
 
-            document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
-            const targetView = document.getElementById('view-' + viewId);
-            if (targetView) targetView.classList.add('active');
-            
-            const sidebarEl = document.getElementById('sidebar');
-            if (sidebarEl) sidebarEl.classList.remove('open');
-            
-            document.body.classList.remove('overflow-hidden');
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-            if (window.lucide) {
-                try { lucide.createIcons(); } catch (e) { console.warn("Lucide error:", e); }
-            }
+                document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+                const targetView = document.getElementById('view-' + viewId);
+                if (targetView) targetView.classList.add('active');
+                
+                const sidebarEl = document.getElementById('sidebar');
+                if (sidebarEl) sidebarEl.classList.remove('open');
+                
+                document.body.classList.remove('overflow-hidden');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                if (window.lucide) {
+                    try { lucide.createIcons(); } catch (e) { console.warn("Lucide error:", e); }
+                }
 
-            if (viewId === 'shiftNotes') {
-                fetchShiftNotes();
-            }
-            if (viewId === 'tasks') {
-                fetchAssignedTasks();
+                if (viewId === 'shiftNotes') {
+                    fetchShiftNotes();
+                }
+                if (viewId === 'tasks') {
+                    fetchAssignedTasks();
+                }
+            } catch (error) {
+                alert("navTo Error: " + error.message + "\nLine: " + error.stack);
             }
         }
 
@@ -2975,6 +2979,12 @@
             // ⚡ Bolt Optimization: Debounce input events to prevent layout thrashing and excessive syncs
             inputDebounceTimeout = setTimeout(triggerDraftSync, 300);
         });
+
+        let globalDraftSyncTimeout;
+        window.debouncedTriggerDraftSync = function() {
+            clearTimeout(globalDraftSyncTimeout);
+            globalDraftSyncTimeout = setTimeout(triggerDraftSync, 300);
+        };
 
         function triggerDraftSync() {
             if (!initialDraftLoaded || !currentUser) return;
