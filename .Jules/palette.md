@@ -65,3 +65,7 @@
 ## 2026-09-16 - Form accessibility enhancements and deduplicating IDs
 **Learning:** Duplicate HTML IDs across different forms not only invalidate HTML but also break explicit `<label for="">` accessibility mappings. When resolving these conflicts by splitting a shared ID into unique suffixed IDs (like `taskAssignee1`, `taskAssignee2`), all shared JavaScript DOM population functions (like dropdown populators) must be updated to target an array of all the new IDs to prevent breaking downstream functionality.
 **Action:** When fixing conflicting IDs for accessibility mapping, always trace where those IDs are being populated dynamically via Javascript and update those population functions to target the newly split IDs via `[].forEach()` or similar logic.
+
+## 2024-05-24 - Missing ARIA Labels on Async State Loading Buttons
+**Learning:** Buttons that represent an action but load initially with only an animated icon (like a loader) often lack implicit accessible names. Screen readers may not be able to provide any context upon load until the text explicitly changes.
+**Action:** Always provide an explicit `aria-label` on dynamic buttons that utilize icons for loading states to ensure immediate and persistent screen reader accessibility.
