@@ -75,9 +75,6 @@ function ShiftNotesManager({ currentUser, currentUserData }) {
         const previousContent = trimmedContent;
         const previousShiftNotes = [...shiftNotes];
 
-        // 2. Apply optimistic UI update
-        setShiftNotes([newNote, ...shiftNotes]);
-
         setNoteContent('');
         setIsSubmitting(true);
 
@@ -94,6 +91,9 @@ function ShiftNotesManager({ currentUser, currentUserData }) {
                 timestamp: serverTimestamp() // Compatibility field
             });
 
+            // 2. Apply optimistic UI update after the actual async write resolves.
+            setShiftNotes([newNote, ...shiftNotes]);
+
             // 5. On success, trigger a fresh fetch to ensure consistency with other clients
             await fetchShiftNotes();
 
@@ -101,11 +101,7 @@ function ShiftNotesManager({ currentUser, currentUserData }) {
             // 6. Rollback optimistic UI if network request fails
             console.error("Error posting note", error);
 
-<<<<<<< HEAD
             // Remove the temporary note, explicitly passing previous array to reset state correctly.
-=======
-            // Remove the temporary note, explicit reset using state callback for safety.
->>>>>>> origin/main
             setShiftNotes(previousShiftNotes);
 
             // Restore the content to the input
