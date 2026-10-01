@@ -55,25 +55,74 @@ function loadInventory() {
 
     const q = query(collection(db, "inventory"), where("orgId", "==", currentOrgId));
 
+    // Flag to handle initial load vs incremental updates to avoid duplicates on re-subscription
+    let isInitialRender = true;
+
     unsubscribeInventory = onSnapshot(q, (snapshot) => {
         loadingSpinner.classList.add('hidden');
-        inventoryTableBody.innerHTML = '';
 
         if (snapshot.empty) {
             emptyState.classList.remove('hidden');
+            inventoryTableBody.innerHTML = '';
             return;
         }
 
         emptyState.classList.add('hidden');
 
-        const fragment = document.createDocumentFragment();
-        snapshot.forEach((docSnap) => {
-            const data = docSnap.data();
-            const id = docSnap.id;
-            const row = renderItemRow(id, data);
-            fragment.appendChild(row);
+        if (isInitialRender) {
+             inventoryTableBody.innerHTML = '';
+             isInitialRender = false;
+        }
+
+        // ⚡ Bolt Optimization: Use docChanges() to incrementally update the DOM instead of recreating it all.
+        // Impact: Eliminates O(N) DOM node destruction and recreation on every update, drastically reducing layout thrashing.
+        snapshot.docChanges().forEach((change) => {
+            const data = change.doc.data();
+            const id = change.doc.id;
+
+            if (change.type === 'added') {
+                const row = renderItemRow(id, data);
+                // Respect index to maintain sort order
+                const existingNodes = inventoryTableBody.children;
+                if (existingNodes.length > change.newIndex) {
+                    inventoryTableBody.insertBefore(row, existingNodes[change.newIndex]);
+                } else {
+                    inventoryTableBody.appendChild(row);
+                }
+            }
+            if (change.type === 'modified') {
+                const oldRow = document.getElementById(`item-row-${id}`);
+                const newRow = renderItemRow(id, data);
+
+                if (oldRow) {
+                    if (change.oldIndex === change.newIndex) {
+                        inventoryTableBody.replaceChild(newRow, oldRow);
+                    } else {
+                        oldRow.remove();
+                        const existingNodes = inventoryTableBody.children;
+                        if (existingNodes.length > change.newIndex) {
+                            inventoryTableBody.insertBefore(newRow, existingNodes[change.newIndex]);
+                        } else {
+                            inventoryTableBody.appendChild(newRow);
+                        }
+                    }
+                } else {
+                    const existingNodes = inventoryTableBody.children;
+                    if (existingNodes.length > change.newIndex) {
+                        inventoryTableBody.insertBefore(newRow, existingNodes[change.newIndex]);
+                    } else {
+                        inventoryTableBody.appendChild(newRow); // Fallback
+                    }
+                }
+            }
+            if (change.type === 'removed') {
+                const oldRow = document.getElementById(`item-row-${id}`);
+                if (oldRow) {
+                    oldRow.remove();
+                }
+            }
         });
-        inventoryTableBody.appendChild(fragment);
+
         if (window.lucide) window.lucide.createIcons();
     }, (error) => {
         logManagerError("Error fetching inventory:", error);
@@ -86,6 +135,7 @@ function loadInventory() {
 function renderItemRow(id, data) {
     const isLowStock = parseInt(data.quantity) < parseInt(data.threshold);
     const row = document.createElement('tr');
+    row.id = `item-row-${id}`; // Needed for targeted DOM updates
     row.className = `border-b border-slate-800/50 transition-colors hover:bg-slate-800/20 ${isLowStock ? 'bg-rose-900/10' : ''}`;
 
     row.innerHTML = `
