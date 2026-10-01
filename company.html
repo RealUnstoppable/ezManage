@@ -12,9 +12,14 @@
     <link rel="apple-touch-icon" href="ManagerPro.jpg">
 
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="js/firebase-config.js"></script>
     <script>
     </script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="js/firebase-config.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-messaging-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-functions-compat.js"></script>
     <script type="module">
         import { escapeHTML, logManagerError } from './js/utils.js';
         import { loadNavbar } from './js/navbar.js';
@@ -38,11 +43,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@400;500;600;700;800;900&display=swap"
         rel="stylesheet">
 
-    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-functions-compat.js"></script>
-    <script src="js/firebase-config.js"></script>
 
     <style>
         :root {
@@ -442,7 +442,7 @@
                             <label
                                 class="flex items-center gap-4 bg-slate-50 dark:bg-slate-800 p-4 rounded-xl cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
                                 <input type="checkbox" id="configAi" checked
-                                    class="w-6 h-6 text-indigo-500 rounded focus:ring-0">
+                                    class="w-6 h-6 text-indigo-500 rounded focus:ring-0" aria-label="Enable AI Training">
                                 <div>
                                     <div class="font-black text-lg">Enable AI Features</div>
                                     <div class="text-sm text-slate-500">Use ezManage AI to summarize shift notes and
@@ -453,7 +453,7 @@
                             <label
                                 class="flex items-center gap-4 bg-slate-50 dark:bg-slate-800 p-4 rounded-xl cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
                                 <input type="checkbox" id="configSync" checked
-                                    class="w-6 h-6 text-indigo-500 rounded focus:ring-0">
+                                    class="w-6 h-6 text-indigo-500 rounded focus:ring-0" aria-label="Enable Cloud Sync">
                                 <div>
                                     <div class="font-black text-lg">Cloud Sync</div>
                                     <div class="text-sm text-slate-500">Automatically sync changes across all your
@@ -464,7 +464,7 @@
                             <label
                                 class="flex items-center gap-4 bg-slate-50 dark:bg-slate-800 p-4 rounded-xl cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors border-2 border-transparent">
                                 <input type="checkbox" id="termsCheck"
-                                    class="w-6 h-6 text-indigo-500 rounded focus:ring-0">
+                                    class="w-6 h-6 text-indigo-500 rounded focus:ring-0" aria-label="Accept Terms">
                                 <div>
                                     <div class="font-black text-lg">Accept Terms</div>
                                     <div class="text-sm text-slate-500">I agree to the Terms of Service and Privacy
@@ -1467,7 +1467,8 @@
 
                     // Aggregate shifts for charts
                     const h = d.shiftHistory || [];
-                    allShifts = allShifts.concat(h);
+                    // ⚡ Bolt Optimization: Replace O(n²) array recreation with fast, in-place push
+                    allShifts.push(...h);
 
                     // 2. Individual Performance for Selected Date
                     const todayShift = h.find(s => s.dateSaved === selectedDate);

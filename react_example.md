@@ -38,7 +38,9 @@ function ShiftNotesManager({ currentUser, currentUserData }) {
 
     // Initial load
     useEffect(() => {
-        fetchShiftNotes();
+        (async () => {
+            await fetchShiftNotes();
+        })();
     }, [fetchShiftNotes]);
 
     const submitShiftNote = async (e) => {
@@ -70,7 +72,7 @@ function ShiftNotesManager({ currentUser, currentUserData }) {
 
         // 3. Clear form inputs (temporarily storing in case of rollback)
         const previousContent = trimmedContent;
-        const previousShiftNotes = shiftNotes; // Use exact reference
+        const previousShiftNotes = [...shiftNotes];
 
         // 2. Apply optimistic UI update
         setShiftNotes([newNote, ...shiftNotes]);
@@ -91,15 +93,12 @@ function ShiftNotesManager({ currentUser, currentUserData }) {
                 timestamp: serverTimestamp() // Compatibility field
             });
 
-            // 5. On success, trigger a fresh fetch to ensure consistency with other clients
-            await fetchShiftNotes();
-
         } catch (error) {
-            // 6. Rollback optimistic UI if network request fails
+            // 5. Rollback optimistic UI if network request fails
             console.error("Error posting note", error);
 
-            // Remove the temporary note, explicit reset using state callback for safety.
-            setShiftNotes(() => previousShiftNotes);
+            // Remove the temporary note, explicitly passing previous array to reset state correctly.
+            setShiftNotes(previousShiftNotes);
 
             // Restore the content to the input
             setNoteContent(previousContent);
