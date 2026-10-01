@@ -1477,17 +1477,10 @@ exports.manageVendorDeliveries = functions.https.onCall(async (data, context) =>
 
 
 exports.manageShiftMarketplace = functions.https.onCall(async (data, context) => {
-    if (!context.auth) {
-        throw new functions.https.HttpsError('unauthenticated', 'The function must be called while authenticated.');
-    }
-
-    const { action, payload } = data;
-    const uid = context.auth.uid;
+    const {uid, userOrgId, isAdmin, userName, action, payload} = await getAuthAndPayload(data, context, admin);
 
     try {
-        const userDoc = await admin.firestore().collection('users').doc(uid).get();
-        if (!userDoc.exists) throw new functions.https.HttpsError('not-found', 'User not found.');
-        const orgId = userDoc.data().orgId || uid;
+        const orgId = userOrgId || uid;
         const isManager = orgId === uid;
 
         if (action === "create") {
@@ -1584,7 +1577,7 @@ exports.manageShiftMarketplace = functions.https.onCall(async (data, context) =>
              throw new functions.https.HttpsError('invalid-argument', 'Invalid action');
         }
     } catch (error) {
-        console.error("Error managing shift marketplace:", error);
+        logManagerError("Error managing shift marketplace", error);
         if (error instanceof functions.https.HttpsError) throw error;
         throw new functions.https.HttpsError('internal', 'Internal server error', error.message);
     }
