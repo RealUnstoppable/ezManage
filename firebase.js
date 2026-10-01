@@ -30,12 +30,12 @@ if (!window.firebase.apps.length) {
 // 2. Click "Add domain" and enter `ezmanage.realunstoppable.store`
 // Note: Firestore rules are handled via firestore.rules file deployment.
 
+
+
+
+const db = typeof window !== "undefined" && window.firebase ? window.firebase.firestore() : null;
+const functions = typeof window !== "undefined" && window.firebase ? window.firebase.functions() : null;
+
+const app = typeof window !== "undefined" && window.firebase ? window.firebase.app() : null;
 const auth = typeof window !== "undefined" && window.firebase ? window.firebase.auth() : null;
-
-
-
-const db = window.firebase.firestore();
-const functions = window.firebase.functions();
-const app = window.firebase.app();
-
 export { app, auth, db, functions, firebaseConfig };
