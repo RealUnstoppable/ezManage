@@ -1591,3 +1591,76 @@ exports.manageShiftMarketplace = functions.https.onCall(async (data, context) =>
     throw new functions.https.HttpsError("internal", "Internal server error");
   }
 });
+
+exports.manageLostAndFound = functions.https.onCall(async (data, context) => {
+  const {uid, userOrgId, isAdmin, userName, action, payload} = await getAuthAndPayload(data, context, admin);
+
+  try {
+    const actualOrgId = userOrgId || null;
+
+    if (!actualOrgId) {
+      throw new functions.https.HttpsError("permission-denied", "User must be part of an organization to manage lost & found items.");
+    }
+
+    if (action === "create") {
+      const {itemName, description, status, dateFound} = payload;
+      checkRequiredFields(payload, ["itemName", "status"]);
+
+      const newItem = {
+        orgId: actualOrgId,
+        itemName,
+        description: description || "",
+        status,
+        dateFound: dateFound || new Date().toISOString(),
+        loggedByUid: uid,
+        loggedByName: userName,
+        timestamp: admin.firestore.FieldValue.serverTimestamp(),
+      };
+
+      const docRef = await admin.firestore().collection("lost_and_found").add(newItem);
+      return {success: true, itemId: docRef.id};
+    } else if (action === "get") {
+      const snapshot = await admin.firestore().collection("lost_and_found")
+          .where("orgId", "==", actualOrgId)
+          .orderBy("timestamp", "desc")
+          .limit(50)
+          .get();
+
+      const items = [];
+      snapshot.forEach((docSnap) => {
+        items.push({id: docSnap.id, ...docSnap.data()});
+      });
+
+      return {success: true, items};
+    } else if (action === "updateStatus") {
+      const {itemId, status} = payload;
+      checkRequiredFields(payload, ["itemId", "status"]);
+
+      const {docRef, docSnap} = await verifyDocAndAuth("lost_and_found", itemId, actualOrgId, "Item not found.", "Unauthorized access to this item.");
+
+      await docRef.update({
+        status,
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+      return {success: true};
+    } else if (action === "delete") {
+      const {itemId} = payload;
+      checkRequiredFields(payload, ["itemId"]);
+
+      const {docRef, docSnap} = await verifyDocAndAuth("lost_and_found", itemId, actualOrgId, "Item not found.", "Unauthorized access to this item.");
+
+      if (!isAdmin && docSnap.data().loggedByUid !== uid) {
+        throw new functions.https.HttpsError("permission-denied", "Only admins or the creator can delete this item.");
+      }
+
+      await docRef.delete();
+      return {success: true};
+    } else {
+      throw new functions.https.HttpsError("invalid-argument", "Invalid action.");
+    }
+  } catch (error) {
+    logManagerError("Error in manageLostAndFound: ", error);
+    if (error instanceof functions.https.HttpsError) throw error;
+    throw new functions.https.HttpsError("internal", "Internal server error.", error.message);
+  }
+});
