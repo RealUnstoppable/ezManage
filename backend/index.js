@@ -341,7 +341,7 @@ exports.manageTasks = functions.https.onCall(async (data, context) => {
     if (error instanceof HttpsError) {
       throw error;
     }
-    throw new HttpsError("internal", error.message);
+    throw new HttpsError("internal", "An internal error occurred.");
   }
 });
 
@@ -414,7 +414,7 @@ exports.manageShiftNotes = functions.https.onCall(async (data, context) => {
   } catch (error) {
     logManagerError("Shift Note Error for uid:", uid, error);
 
-    throw new HttpsError("internal", error.message);
+    throw new HttpsError("internal", "An internal error occurred.");
   }
 });
 
@@ -422,6 +422,76 @@ exports.manageShiftNotes = functions.https.onCall(async (data, context) => {
  * Manage Employees API
  * Handles creation, updating, and deletion of employees.
  */
+exports.manageCertifications = functions.https.onCall(async (data, context) => {
+  try {
+    const {uid, userOrgId, isAdmin, userName, action, payload} = await getAuthAndPayload(data, context, admin);
+
+    if (!userOrgId) {
+      throw new HttpsError("permission-denied", "User must be part of an organization to manage certifications.");
+    }
+
+    if (action === "create") {
+      checkRequiredFields(payload, ["empId", "empName", "certName", "expiryDate"]);
+
+      const certRef = await admin.firestore().collection("certifications").add({
+        empId: payload.empId,
+        empName: payload.empName,
+        certName: payload.certName,
+        issueDate: payload.issueDate || null,
+        expiryDate: payload.expiryDate,
+        status: "Valid", // Frontend logic can update this if needed, or backend can verify
+        orgId: userOrgId,
+        loggedByUid: uid,
+        loggedByName: userName,
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+
+      return {success: true, message: "Certification created", id: certRef.id};
+    } else if (action === "get") {
+      const certsQuery = await admin.firestore().collection("certifications")
+          .where("orgId", "==", userOrgId)
+          .orderBy("createdAt", "desc")
+          .get();
+
+      let certs = [];
+      certsQuery.forEach((doc) => {
+        certs.push({id: doc.id, ...doc.data()});
+      });
+      return {success: true, certifications: certs};
+    } else if (action === "delete") {
+      checkRequiredFields(payload, ["certId"]);
+
+      const certRef = admin.firestore().collection("certifications").doc(payload.certId);
+      const doc = await certRef.get();
+      if (!doc.exists) throw new HttpsError("not-found", "Certification not found.");
+      if (doc.data().orgId !== userOrgId && !isAdmin) {
+          throw new HttpsError("permission-denied", "Cannot delete a certification outside your organization.");
+      }
+
+      await certRef.delete();
+      return {success: true, message: "Certification deleted"};
+    } else if (action === "updateStatus") {
+      checkRequiredFields(payload, ["certId", "status"]);
+
+      const certRef = admin.firestore().collection("certifications").doc(payload.certId);
+      const doc = await certRef.get();
+      if (!doc.exists) throw new HttpsError("not-found", "Certification not found.");
+      if (doc.data().orgId !== userOrgId && !isAdmin) {
+          throw new HttpsError("permission-denied", "Cannot update a certification outside your organization.");
+      }
+
+      await certRef.update({status: payload.status});
+      return {success: true, message: "Certification updated"};
+    } else {
+      throw new HttpsError("invalid-argument", "Unknown action");
+    }
+  } catch (error) {
+    logManagerError("Error in manageCertifications: ", error);
+    if (error instanceof HttpsError) throw error;
+    throw new HttpsError("internal", error.message);
+  }
+});
+
 exports.manageEmployees = functions.https.onCall(async (data, context) => {
   const {uid, userOrgId, isAdmin, userName, action, payload} = await getAuthAndPayload(data, context, admin);
 
@@ -507,7 +577,7 @@ exports.manageEmployees = functions.https.onCall(async (data, context) => {
     if (error instanceof HttpsError) {
       throw error;
     }
-    throw new HttpsError("internal", error.message);
+    throw new HttpsError("internal", "An internal error occurred.");
   }
 });
 
@@ -519,7 +589,11 @@ async function handleCreateShiftGroup(payload, uid) {
 
   const salt = crypto.randomBytes(16).toString("hex");
   const hash = crypto.scryptSync(password, salt, 64).toString("hex");
-  const hashedPassword = `$scrypt${hash}:${salt}`;
+  const hashedPassword = `$scrypt$${hash}:${salt}`;
+
+  const salt = crypto.randomBytes(16).toString("hex");
+  const hash = crypto.scryptSync(password, salt, 64).toString("hex");
+  const hashedPassword = `$scrypt$${hash}:${salt}`;
 
   const newGroup = {
     ownerId: authorId || uid,
@@ -549,20 +623,6 @@ async function handleRequestJoinShiftGroup(payload, uid) {
     throw new HttpsError("not-found", "Group not found");
   }
 
-  if (groupDoc.data().password !== password) {
-    throw new HttpsError(
-        "permission-denied", "Invalid password");
-  }
-
-  // Create a join request
-  await admin.firestore().collection("shift_group_requests").add({
-    groupId,
-    userId: uid,
-    userName: userName || "Anonymous",
-    status: "Pending",
-    timestamp: admin.firestore.FieldValue.serverTimestamp(),
-  });
-
   const storedPassword = groupDoc.data().password;
   let isValid = false;
 
@@ -590,6 +650,33 @@ async function handleRequestJoinShiftGroup(payload, uid) {
         "permission-denied", "Invalid password");
   }
 
+  // Create a join request
+  await admin.firestore().collection("shift_group_requests").add({
+    groupId,
+    userId: uid,
+    userName: userName || "Anonymous",
+    status: "Pending",
+    timestamp: admin.firestore.FieldValue.serverTimestamp(),
+  });
+
+  return {success: true};
+}
+
+    // Upgrade to salted hash if correct
+    if (isValid) {
+      const salt = crypto.randomBytes(16).toString("hex");
+      const hash = crypto.scryptSync(password, salt, 64).toString("hex");
+      await admin.firestore().collection("shift_groups").doc(groupId).update({
+        password: `$scrypt$${hash}:${salt}`,
+      });
+    }
+  }
+
+  if (!isValid) {
+    throw new HttpsError(
+        "permission-denied", "Invalid password");
+  }
+
   async function handleRetractJoinShiftGroup(payload, uid) {
     const {requestId} = payload;
     if (!requestId) {
@@ -598,9 +685,7 @@ async function handleRequestJoinShiftGroup(payload, uid) {
     const requestDocRef = admin.firestore().collection("shift_group_requests").doc(requestId);
     const requestDoc = await requestDocRef.get();
 
-    if (!requestDoc.exists) {
-      throw new HttpsError("not-found", "Request not found");
-    }
+  checkRequiredFields(payload, ["requestId"]);
 
     if (requestDoc.data().userId !== uid) {
       throw new HttpsError("permission-denied", "You can only retract your own requests.");
@@ -634,10 +719,7 @@ async function handleRequestJoinShiftGroup(payload, uid) {
           "permission-denied", "Unauthorized");
     }
 
-    // Update the requesting user's orgId
-    await admin.firestore().collection("users").doc(userId).set({
-      orgId: groupId,
-    }, {merge: true});
+  checkRequiredFields(payload, ["userId", "groupId"]);
 
     // Update request status
     await requestDocRef.update({
@@ -691,7 +773,9 @@ async function handleRequestJoinShiftGroup(payload, uid) {
       }
       throw new HttpsError("internal", error.message);
     }
-  });
+    throw new HttpsError("internal", "An internal error occurred.");
+  }
+});
 
 
   /**
@@ -811,7 +895,9 @@ async function handleRequestJoinShiftGroup(payload, uid) {
       }
       throw new HttpsError("internal", error.message);
     }
-  });
+    throw new HttpsError("internal", "An internal error occurred.");
+  }
+});
 
   /**
  * Manage Time Logs API
@@ -900,7 +986,108 @@ async function handleRequestJoinShiftGroup(payload, uid) {
       }
       throw new HttpsError("internal", error.message);
     }
-  });
+    throw new HttpsError("internal", "An internal error occurred.");
+  }
+});
+
+/**
+ * Manage Maintenance Logs API
+ * Handles creation, reading, status updates, and deletion of maintenance logs.
+ */
+exports.manageMaintenanceLogs = functions.https.onCall(async (data, context) => {
+  const {uid, userOrgId, isAdmin, userName, action, payload} = await getAuthAndPayload(data, context, admin);
+
+  try {
+    const actualOrgId = userOrgId;
+
+    if (!actualOrgId) {
+      throw new HttpsError("permission-denied", "User must be part of an organization to report maintenance issues.");
+    }
+
+    if (action === "create") {
+      const {title, description, priority, cost} = payload;
+
+      checkRequiredFields(payload, ["title", "description", "priority"], "Missing required maintenance details");
+
+      const newMaintenanceLog = {
+        title,
+        description,
+        priority,
+        cost: cost ? Number(cost) : 0,
+        status: "Open",
+        reportedByUid: uid,
+        reportedByName: context.auth.token.name || "Anonymous",
+        orgId: actualOrgId,
+        timestamp: admin.firestore.FieldValue.serverTimestamp(),
+      };
+
+      const docRef = await admin.firestore().collection("maintenance_logs").add(newMaintenanceLog);
+      return {success: true, id: docRef.id};
+    }
+
+    if (action === "get") {
+      const snapshot = await admin.firestore().collection("maintenance_logs")
+          .where("orgId", "==", actualOrgId)
+          .orderBy("timestamp", "desc")
+          .limit(100)
+          .get();
+
+      const logs = [];
+      snapshot.forEach((doc) => logs.push({id: doc.id, ...doc.data()}));
+      return {success: true, logs};
+    }
+
+    if (action === "updateStatus") {
+      const {logId, status} = payload;
+      if (!logId || !status) {
+        throw new HttpsError("invalid-argument", "Missing log ID or status");
+      }
+
+      const logRef = admin.firestore().collection("maintenance_logs").doc(logId);
+      const logDoc = await logRef.get();
+
+      if (!logDoc.exists) {
+        throw new HttpsError("not-found", "Maintenance log not found");
+      }
+
+      if (logDoc.data().orgId !== actualOrgId) {
+        throw new HttpsError("permission-denied", "Unauthorized to update this log");
+      }
+
+      await logRef.update({status});
+      return {success: true};
+    }
+
+    if (action === "delete") {
+      const {logId} = payload;
+      if (!logId) {
+        throw new HttpsError("invalid-argument", "Missing log ID");
+      }
+
+      const logRef = admin.firestore().collection("maintenance_logs").doc(logId);
+      const logDoc = await logRef.get();
+
+      if (!logDoc.exists) {
+        throw new HttpsError("not-found", "Maintenance log not found");
+      }
+
+      if (logDoc.data().orgId !== actualOrgId) {
+        throw new HttpsError("permission-denied", "Unauthorized to delete this log");
+      }
+
+      await logRef.delete();
+      return {success: true};
+    }
+
+    throw new HttpsError("invalid-argument", "Invalid action");
+  } catch (error) {
+    logManagerError(`Manage Maintenance Logs Error for uid: ${uid}`, error);
+    if (error instanceof HttpsError) {
+      throw error;
+    }
+    throw new HttpsError("internal", error.message);
+  }
+});
 
   /**
  * Manage Waste Logs API
@@ -977,7 +1164,9 @@ async function handleRequestJoinShiftGroup(payload, uid) {
       }
       throw new HttpsError("internal", error.message);
     }
-  });
+    throw new HttpsError("internal", "An internal error occurred.");
+  }
+});
 
   /**
  * Manage Temperature Logs API
@@ -991,8 +1180,8 @@ async function handleRequestJoinShiftGroup(payload, uid) {
   exports.manageRecognitions = functions.https.onCall(async (data, context) => {
     const {uid, userOrgId, isAdmin, userName, action, payload} = await getAuthAndPayload(data, context, admin);
 
-    try {
-      const actualOrgId = userOrgId || null;
+  try {
+    const actualOrgId = userOrgId || null;
 
       if (!actualOrgId) {
         throw new HttpsError("permission-denied", "User must be part of an organization to manage recognitions.");
@@ -1079,7 +1268,9 @@ async function handleRequestJoinShiftGroup(payload, uid) {
       }
       throw new HttpsError("internal", error.message);
     }
-  });
+    throw new HttpsError("internal", "An internal error occurred.");
+  }
+});
 
 
   /**
@@ -1165,7 +1356,9 @@ async function handleRequestJoinShiftGroup(payload, uid) {
       }
       throw new HttpsError("internal", error.message);
     }
-  });
+    throw new HttpsError("internal", "An internal error occurred.");
+  }
+});
 
   exports.trainGlobalAI = require("./trainGlobalAI").trainGlobalAI;
 
@@ -1240,8 +1433,12 @@ async function handleRequestJoinShiftGroup(payload, uid) {
     }
   });
 
-  exports.manageVendorDeliveries = functions.https.onCall(async (data, context) => {
-    const {uid, userOrgId, isAdmin, userName, action, payload} = await getAuthAndPayload(data, context, admin);
+    throw new HttpsError("invalid-argument", "Invalid action.");
+  } catch (error) {
+    logManagerError("Error in manageTemperatureLogs: ", error);
+    throw new HttpsError("internal", "An internal error occurred.");
+  }
+});
 
     try {
       if (action === "create") {
@@ -1308,96 +1505,117 @@ async function handleRequestJoinShiftGroup(payload, uid) {
       if (error instanceof HttpsError) throw error;
       throw new HttpsError("internal", error.message);
     }
-  });
+
+    throw new HttpsError("invalid-argument", "Invalid action specified.");
+  } catch (error) {
+    logManagerError("Error in manageVendorDeliveries: ", error);
+    if (error instanceof HttpsError) throw error;
+    throw new HttpsError("internal", "An internal error occurred.");
+  }
+});
 
 
-  exports.manageShiftMarketplace = functions.https.onCall(async (data, context) => {
+exports.manageShiftMarketplace = functions.https.onCall(async (data, context) => {
     const {uid, userOrgId, isAdmin, userName, action, payload} = await getAuthAndPayload(data, context, admin);
 
     try {
-      const orgId = userOrgId || uid;
-      const isManager = orgId === uid;
+        const orgId = userOrgId || uid;
+        const isManager = orgId === uid || isAdmin;
+
+        if (action === "create") {
+            const { originalEmployeeId, originalEmployeeName, shiftDate, shiftStart, shiftEnd, role } = payload;
+            if (!originalEmployeeId || !shiftDate) {
+                throw new HttpsError('invalid-argument', 'Missing required shift data');
+            }
+            const docRef = await admin.firestore().collection('shift_marketplace').add({
+                orgId: orgId,
+                originalEmployeeId: originalEmployeeId,
+                originalEmployeeName: originalEmployeeName || 'Unknown',
+                shiftDate: shiftDate,
+                shiftStart: shiftStart || '',
+                shiftEnd: shiftEnd || '',
+                role: role || '',
+                status: 'Open',
+                coveringEmployeeId: null,
+                coveringEmployeeName: null,
+                createdAt: admin.firestore.FieldValue.serverTimestamp()
+            });
+            return { success: true, shiftId: docRef.id };
+        }
+        else if (action === "offer_cover") {
+            const { shiftId, coveringEmployeeId, coveringEmployeeName } = payload;
+            if (!shiftId || !coveringEmployeeId) throw new HttpsError('invalid-argument', 'Missing cover info');
+
+            const shiftRef = admin.firestore().collection('shift_marketplace').doc(shiftId);
+            const shiftDoc = await shiftRef.get();
+            if (!shiftDoc.exists || shiftDoc.data().orgId !== orgId) throw new HttpsError('not-found', 'Shift not found');
+            if (shiftDoc.data().status !== 'Open') throw new HttpsError('failed-precondition', 'Shift is not open for coverage');
+
+            await shiftRef.update({
+                coveringEmployeeId: coveringEmployeeId,
+                coveringEmployeeName: coveringEmployeeName,
+                status: 'Pending Approval'
+            });
+            return { success: true };
+        }
+        else if (action === "approve") {
+            if (!isManager) throw new HttpsError('permission-denied', 'Only managers can approve swaps');
+            const { shiftId } = payload;
+            if (!shiftId) throw new HttpsError('invalid-argument', 'Missing shift ID');
+
+            const shiftRef = admin.firestore().collection('shift_marketplace').doc(shiftId);
+            const shiftDoc = await shiftRef.get();
+            if (!shiftDoc.exists || shiftDoc.data().orgId !== orgId) throw new HttpsError('not-found', 'Shift not found');
 
       if (action === "create") {
         const {originalEmployeeId, originalEmployeeName, shiftDate, shiftStart, shiftEnd, role} = payload;
         if (!originalEmployeeId || !shiftDate) {
           throw new functions.https.HttpsError("invalid-argument", "Missing required shift data");
         }
-        const docRef = await admin.firestore().collection("shift_marketplace").add({
-          orgId: orgId,
-          originalEmployeeId: originalEmployeeId,
-          originalEmployeeName: originalEmployeeName || "Unknown",
-          shiftDate: shiftDate,
-          shiftStart: shiftStart || "",
-          shiftEnd: shiftEnd || "",
-          role: role || "",
-          status: "Open",
-          coveringEmployeeId: null,
-          coveringEmployeeName: null,
-          createdAt: admin.firestore.FieldValue.serverTimestamp(),
-        });
-        return {success: true, shiftId: docRef.id};
-      } else if (action === "offer_cover") {
-        const {shiftId, coveringEmployeeId, coveringEmployeeName} = payload;
-        if (!shiftId || !coveringEmployeeId) throw new functions.https.HttpsError("invalid-argument", "Missing cover info");
+        else if (action === "deny") {
+            if (!isManager) throw new HttpsError('permission-denied', 'Only managers can deny swaps');
+            const { shiftId } = payload;
+            if (!shiftId) throw new HttpsError('invalid-argument', 'Missing shift ID');
 
-        const shiftRef = admin.firestore().collection("shift_marketplace").doc(shiftId);
-        const shiftDoc = await shiftRef.get();
-        if (!shiftDoc.exists || shiftDoc.data().orgId !== orgId) throw new functions.https.HttpsError("not-found", "Shift not found");
-        if (shiftDoc.data().status !== "Open") throw new functions.https.HttpsError("failed-precondition", "Shift is not open for coverage");
+            const shiftRef = admin.firestore().collection('shift_marketplace').doc(shiftId);
+            const shiftDoc = await shiftRef.get();
+            if (!shiftDoc.exists || shiftDoc.data().orgId !== orgId) throw new HttpsError('not-found', 'Shift not found');
 
-        await shiftRef.update({
-          coveringEmployeeId: coveringEmployeeId,
-          coveringEmployeeName: coveringEmployeeName,
-          status: "Pending Approval",
-        });
-        return {success: true};
-      } else if (action === "approve") {
-        if (!isManager) throw new functions.https.HttpsError("permission-denied", "Only managers can approve swaps");
-        const {shiftId} = payload;
-        if (!shiftId) throw new functions.https.HttpsError("invalid-argument", "Missing shift ID");
+            await shiftRef.update({
+                coveringEmployeeId: null,
+                coveringEmployeeName: null,
+                status: 'Open'
+            });
+            return { success: true };
+        }
+        else if (action === "get") {
+            const snapshot = await admin.firestore().collection('shift_marketplace')
+                .where('orgId', '==', orgId)
+                .orderBy('createdAt', 'desc')
+                .get();
 
-        const shiftRef = admin.firestore().collection("shift_marketplace").doc(shiftId);
-        const shiftDoc = await shiftRef.get();
-        if (!shiftDoc.exists || shiftDoc.data().orgId !== orgId) throw new functions.https.HttpsError("not-found", "Shift not found");
+            let shifts = [];
+            snapshot.forEach(doc => {
+                shifts.push({ id: doc.id, ...doc.data() });
+            });
+            return { success: true, shifts: shifts };
+        }
+        else if (action === "delete") {
+            const { shiftId } = payload;
+            if (!shiftId) throw new HttpsError('invalid-argument', 'Missing shift ID');
 
-        await shiftRef.update({status: "Approved"});
-        return {success: true};
-      } else if (action === "deny") {
-        if (!isManager) throw new functions.https.HttpsError("permission-denied", "Only managers can deny swaps");
-        const {shiftId} = payload;
-        if (!shiftId) throw new functions.https.HttpsError("invalid-argument", "Missing shift ID");
+            const shiftRef = admin.firestore().collection('shift_marketplace').doc(shiftId);
+            const shiftDoc = await shiftRef.get();
+            if (!shiftDoc.exists || shiftDoc.data().orgId !== orgId) throw new HttpsError('not-found', 'Shift not found');
+            if (!isManager && shiftDoc.data().originalEmployeeId !== uid) {
+                 throw new HttpsError('permission-denied', 'Cannot delete this shift');
+            }
 
-        const shiftRef = admin.firestore().collection("shift_marketplace").doc(shiftId);
-        const shiftDoc = await shiftRef.get();
-        if (!shiftDoc.exists || shiftDoc.data().orgId !== orgId) throw new functions.https.HttpsError("not-found", "Shift not found");
-
-        await shiftRef.update({
-          coveringEmployeeId: null,
-          coveringEmployeeName: null,
-          status: "Open",
-        });
-        return {success: true};
-      } else if (action === "get") {
-        const snapshot = await admin.firestore().collection("shift_marketplace")
-            .where("orgId", "==", orgId)
-            .orderBy("createdAt", "desc")
-            .get();
-
-        const shifts = [];
-        snapshot.forEach((doc) => {
-          shifts.push({id: doc.id, ...doc.data()});
-        });
-        return {success: true, shifts: shifts};
-      } else if (action === "delete") {
-        const {shiftId} = payload;
-        if (!shiftId) throw new functions.https.HttpsError("invalid-argument", "Missing shift ID");
-
-        const shiftRef = admin.firestore().collection("shift_marketplace").doc(shiftId);
-        const shiftDoc = await shiftRef.get();
-        if (!shiftDoc.exists || shiftDoc.data().orgId !== orgId) throw new functions.https.HttpsError("not-found", "Shift not found");
-        if (!isManager && shiftDoc.data().originalEmployeeId !== uid) {
-          throw new functions.https.HttpsError("permission-denied", "Cannot delete this shift");
+            await shiftRef.delete();
+            return { success: true };
+        }
+        else {
+             throw new HttpsError('invalid-argument', 'Invalid action');
         }
 
         await shiftRef.delete();
@@ -1406,9 +1624,86 @@ async function handleRequestJoinShiftGroup(payload, uid) {
         throw new functions.https.HttpsError("invalid-argument", "Invalid action");
       }
     } catch (error) {
-      console.error("Error managing shift marketplace:", error);
-      if (error instanceof functions.https.HttpsError) throw error;
-      throw new functions.https.HttpsError("internal", "Internal server error", error.message);
+        console.error("Error managing shift marketplace:", error);
+        if (error instanceof HttpsError) throw error;
+        throw new HttpsError('internal', 'Internal server error', error.message);
     }
-  });
-}
+  } catch (error) {
+    console.error("Error managing shift marketplace:", error);
+    if (error instanceof functions.https.HttpsError) throw error;
+    throw new functions.https.HttpsError("internal", "Internal server error");
+  }
+});
+
+exports.manageLostAndFound = functions.https.onCall(async (data, context) => {
+  const {uid, userOrgId, isAdmin, userName, action, payload} = await getAuthAndPayload(data, context, admin);
+
+  try {
+    const actualOrgId = userOrgId || null;
+
+    if (!actualOrgId) {
+      throw new functions.https.HttpsError("permission-denied", "User must be part of an organization to manage lost & found items.");
+    }
+
+    if (action === "create") {
+      const {itemName, description, status, dateFound} = payload;
+      checkRequiredFields(payload, ["itemName", "status"]);
+
+      const newItem = {
+        orgId: actualOrgId,
+        itemName,
+        description: description || "",
+        status,
+        dateFound: dateFound || new Date().toISOString(),
+        loggedByUid: uid,
+        loggedByName: userName,
+        timestamp: admin.firestore.FieldValue.serverTimestamp(),
+      };
+
+      const docRef = await admin.firestore().collection("lost_and_found").add(newItem);
+      return {success: true, itemId: docRef.id};
+    } else if (action === "get") {
+      const snapshot = await admin.firestore().collection("lost_and_found")
+          .where("orgId", "==", actualOrgId)
+          .orderBy("timestamp", "desc")
+          .limit(50)
+          .get();
+
+      const items = [];
+      snapshot.forEach((docSnap) => {
+        items.push({id: docSnap.id, ...docSnap.data()});
+      });
+
+      return {success: true, items};
+    } else if (action === "updateStatus") {
+      const {itemId, status} = payload;
+      checkRequiredFields(payload, ["itemId", "status"]);
+
+      const {docRef, docSnap} = await verifyDocAndAuth("lost_and_found", itemId, actualOrgId, "Item not found.", "Unauthorized access to this item.");
+
+      await docRef.update({
+        status,
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+      return {success: true};
+    } else if (action === "delete") {
+      const {itemId} = payload;
+      checkRequiredFields(payload, ["itemId"]);
+
+      const {docRef, docSnap} = await verifyDocAndAuth("lost_and_found", itemId, actualOrgId, "Item not found.", "Unauthorized access to this item.");
+
+      if (!isAdmin && docSnap.data().loggedByUid !== uid) {
+        throw new functions.https.HttpsError("permission-denied", "Only admins or the creator can delete this item.");
+      }
+
+      await docRef.delete();
+      return {success: true};
+    } else {
+      throw new functions.https.HttpsError("invalid-argument", "Invalid action.");
+    }
+  } catch (error) {
+    logManagerError("Error in manageLostAndFound: ", error);
+    if (error instanceof functions.https.HttpsError) throw error;
+    throw new functions.https.HttpsError("internal", "Internal server error.", error.message);
+  }
+});
