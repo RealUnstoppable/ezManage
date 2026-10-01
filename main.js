@@ -26,7 +26,7 @@ function createWindow() {
 
   // Assuming your Express server (server.cjs) runs on port 3000
   // Change this port if your server uses a different one!
-  mainWindow.loadURL('http://localhost:3000');
+  mainWindow.loadURL('http://localhost:3000').catch(err => console.error('Manager Troubleshooting: Failed to load URL:', err));
 
   mainWindow.on('closed', function () {
     mainWindow = null;

@@ -11,14 +11,14 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-messaging-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-functions-compat.js"></script>
     <script>
-      const app = !window.firebase.apps.length ? window.firebase.initializeApp(window.ezManageFirebaseConfig) : window.firebase.app();
+      window.app = !window.firebase.apps.length ? window.firebase.initializeApp(window.ezManageFirebaseConfig) : window.firebase.app();
       try {
           window.firebase.firestore().settings({ experimentalForceLongPolling: true });
       } catch (e) {
           console.warn("Firestore settings already configured or errored: ", e);
       }
-      const auth = window.firebase.auth();
-      const db = window.firebase.firestore();
+      window.auth = window.firebase.auth();
+      window.db = window.firebase.firestore();
     </script>
   <script type="module">
     import { escapeHTML, logManagerError } from './js/utils.js';
@@ -497,6 +497,9 @@
             <a href="#" onclick="navTo('temperatures'); fetchTemperatureLogs();"
                 class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="thermometer"></i>
                 Equipment Temps</a>
+            <a href="#" onclick="navTo('certifications'); fetchCertifications();"
+                class="flex items-center gap-4 font-bold text-lg hover:text-sky-500 text-amber-600"><i data-lucide="shield-check"></i>
+                Certifications</a>
             <a href="#" onclick="navTo('tasks')"
                 class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="check-square"></i>
                 Task Manager</a>
@@ -943,7 +946,7 @@
                                     </div>
                                     <div>
                                         <label for="announcementContent" class="text-[10px] font-black uppercase tracking-widest text-slate-400">Message</label>
-                                        <textarea id="trackerAnnouncementContent" placeholder="Enter the announcement message..." rows="3" required class="w-full"></textarea>
+                                        <textarea id="trackerAnnouncementContent" placeholder="Enter the announcement message..." rows="3" required class="w-full" aria-label="Announcement Content"></textarea>
                                     </div>
                                     <div class="flex items-end gap-4">
                                         <div class="flex-1">
@@ -1332,7 +1335,7 @@
                 <div class="card shadow-2xl mb-12 text-center py-12">
                     <h2 class="text-2xl font-bold mb-6" id="timeclockStatusText">Loading Status...</h2>
                     <p class="text-slate-500 mb-8" id="timeclockSubText">Please wait.</p>
-                    <button id="clockInOutBtn" onclick="toggleClock()" class="btn btn-accent px-12 py-6 text-xl disabled:opacity-50 disabled:cursor-not-allowed">
+                    <button id="clockInOutBtn" onclick="toggleClock()" class="btn btn-accent px-12 py-6 text-xl disabled:opacity-50 disabled:cursor-not-allowed" aria-label="Toggle Time Clock">
                         <i data-lucide="loader-2" class="w-6 h-6 animate-spin"></i>
                     </button>
                 </div>
@@ -1677,6 +1680,8 @@
                                 <option value="High">High Priority</option>
                                 <option value="Critical">Critical Issue</option>
                             </select>
+                            <input type="number" id="maintenanceCost" placeholder="Estimated Cost ($)" aria-label="Estimated Cost"
+                                class="flex-1 bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
                         </div>
 
                         <div class="flex justify-end gap-3 pt-2">
@@ -1781,6 +1786,65 @@
 
                 <div id="temperatureLogsContainer" class="space-y-4">
                     <!-- Temp logs populated via JS -->
+                </div>
+            </div>
+        </div>
+
+        <div id="view-certifications" class="view-section px-6 py-12 hidden">
+            <div class="max-w-4xl mx-auto">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+                    <h1 class="text-4xl font-black text-amber-600 flex items-center gap-3"><i data-lucide="shield-check" class="w-8 h-8"></i> Compliance & Certifications</h1>
+                    <button onclick="document.getElementById('addCertModal').classList.remove('hidden'); populateCertAssigneeDropdown();"
+                        class="btn btn-primary flex items-center gap-2 px-6">
+                        <i data-lucide="plus-circle" class="w-5 h-5"></i> Log Certification
+                    </button>
+                </div>
+
+                <div id="addCertModal"
+                    class="hidden bg-white dark:bg-slate-900 rounded-3xl p-6 md:p-8 shadow-sm border border-slate-100 dark:border-slate-800 mb-12">
+                    <h2 class="text-xl font-bold mb-4">Log Employee Certification</h2>
+                    <div class="space-y-4">
+                        <select id="certAssignee" aria-label="Employee" class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
+                            <option value="" disabled selected>Select Employee</option>
+                        </select>
+                        <select id="certName" aria-label="Certification Type" class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
+                            <option value="ServSafe Manager">ServSafe Manager</option>
+                            <option value="Food Handler Permit">Food Handler Permit</option>
+                            <option value="Allergen Training">Allergen Training</option>
+                            <option value="Alcohol Service Permit">Alcohol Service Permit (TIPS/LEAD)</option>
+                            <option value="First Aid / CPR">First Aid / CPR</option>
+                            <option value="Other">Other</option>
+                        </select>
+
+                        <div class="grid md:grid-cols-2 gap-4">
+                            <div>
+                                <label for="certIssueDate" class="block text-xs font-bold mb-1 text-slate-500">Issue Date (Optional)</label>
+                                <input type="date" id="certIssueDate" class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
+                            </div>
+                            <div>
+                                <label for="certExpiryDate" class="block text-xs font-bold mb-1 text-slate-500">Expiration Date *</label>
+                                <input type="date" id="certExpiryDate" class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500" required>
+                            </div>
+                        </div>
+
+                        <div class="flex justify-end gap-3 pt-2">
+                            <button onclick="document.getElementById('addCertModal').classList.add('hidden')"
+                                class="btn btn-outline px-6 py-2">Cancel</button>
+                            <button onclick="submitCertification()" class="btn btn-accent px-6 py-2">Save Record</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-black">Active Records</h2>
+                    <button onclick="fetchCertifications()"
+                        class="text-sm font-bold text-sky-500 hover:text-sky-600 flex items-center gap-2">
+                        <i data-lucide="refresh-cw" class="w-4 h-4"></i> Refresh
+                    </button>
+                </div>
+
+                <div id="certificationsContainer" class="space-y-4">
+                    <!-- Certifications populated via JS -->
                 </div>
             </div>
         </div>
@@ -2453,11 +2517,16 @@
     <script>
 
         // Initialization is handled by firebase.js, we just get references
-        const auth = window.firebase.auth();
-        const db = window.firebase.firestore();
-        const cloudFunctions = window.firebase.functions();
 
-        db.enablePersistence().catch(err => console.error("Offline sync error:", err));
+        // Ensure singleton check since it relies on firebaseConfig
+        const firebaseConfig = window.ezManageFirebaseConfig;
+        window.app = !window.firebase.apps.length ? window.firebase.initializeApp(firebaseConfig) : window.firebase.app();
+        window.auth = window.firebase.auth();
+
+        window.db = window.firebase.firestore();
+        window.cloudFunctions = window.firebase.functions();
+
+        window.db.enablePersistence().catch(err => console.error("Offline sync error:", err));
 
         let currentUser = null;
         let currentUserData = null;
@@ -2476,7 +2545,7 @@
 
         async function callCloudFunction(functionName, payload) {
             try {
-                const func = firebase.functions().httpsCallable(functionName);
+                const func = window.firebase.functions().httpsCallable(functionName);
                 return await func(payload);
             } catch (error) {
                 window.logManagerError("Error calling cloud function " + functionName, error);
@@ -2487,7 +2556,7 @@
         // Legal & Privacy Settings
         let cloudSyncEnabled = false;
 
-        auth.onAuthStateChanged((user) => {
+        window.auth.onAuthStateChanged((user) => {
             currentUser = user;
             const navStatus = document.getElementById('navUserStatus');
 
@@ -2507,7 +2576,7 @@
                     }
                 }
 
-                unsubscribeUser = db.collection("users").doc(user.uid).onSnapshot(async doc => {
+                unsubscribeUser = window.db.collection("users").doc(user.uid).onSnapshot(async doc => {
                     isInitializingAuth = false;
                     if (doc.exists) {
                         currentUserData = doc.data();
@@ -2593,7 +2662,7 @@
                                 try {
                                     const emailDoc = await fetchUserDoc(user.email);
                                     if (emailDoc.exists) {
-                                        await db.collection("users").doc(user.uid).set(emailDoc.data(), { merge: true });
+                                        await window.db.collection("users").doc(user.uid).set(emailDoc.data(), { merge: true });
                                         return;
                                     } else {
                                         navTo('setup');
@@ -2602,7 +2671,7 @@
                             }
                         }
                         if (!doc.exists || !doc.data().name) {
-                            await db.collection("users").doc(user.uid).set({
+                            await window.db.collection("users").doc(user.uid).set({
                                 name: user.displayName || "Manager",
                                 email: user.email
                             }, { merge: true });
@@ -2675,7 +2744,7 @@
             document.getElementById('profileCloudSyncToggle').checked = true;
             document.getElementById('tosModal').classList.add('hidden');
 
-            db.collection('users').doc(currentUser.uid).set({ cloudSyncEnabled: true }, { merge: true });
+            window.db.collection('users').doc(currentUser.uid).set({ cloudSyncEnabled: true }, { merge: true });
             localStorage.setItem(`ezManage_cloudEnabled_${currentUser.uid}`, 'true');
             updateCloudSyncUI();
             debouncedTriggerDraftSync();
@@ -2690,7 +2759,7 @@
         function disableCloudSync() {
             if (!currentUser) return;
             cloudSyncEnabled = false;
-            db.collection('users').doc(currentUser.uid).set({ cloudSyncEnabled: false }, { merge: true });
+            window.db.collection('users').doc(currentUser.uid).set({ cloudSyncEnabled: false }, { merge: true });
             localStorage.setItem(`ezManage_cloudEnabled_${currentUser.uid}`, 'false');
             updateCloudSyncUI();
         }
@@ -2783,7 +2852,7 @@
             btn.disabled = true;
 
             if (isRegisterMode) {
-                auth.createUserWithEmailAndPassword(email, pass)
+                window.auth.createUserWithEmailAndPassword(email, pass)
                     .then(() => navTo('setup'))
                     .catch(err => {
                         if (err.code === 'auth/network-request-failed' || err.code === 'firestore/unavailable') {
@@ -2797,7 +2866,7 @@
                         btn.disabled = false;
                     });
             } else {
-                auth.signInWithEmailAndPassword(email, pass)
+                window.auth.signInWithEmailAndPassword(email, pass)
                     .catch(err => {
                         if (err.code === 'auth/network-request-failed' || err.code === 'firestore/unavailable') {
                             alert("Network error: Could not connect to the server. Please check your connection.");
@@ -2815,15 +2884,14 @@
         window.signInWithGoogle = signInWithGoogle;
         function signInWithGoogle() {
             const provider = new firebase.auth.GoogleAuthProvider();
-            auth.signInWithPopup(provider).then(cred => {
+            window.auth.signInWithPopup(provider).then(cred => {
                 fetchUserDoc(cred.user.uid).then(doc => {
                     if (!doc.exists) navTo('setup');
                 });
             }).catch(err => alert(err.message));
         }
 
-        window.signOut = signOut;
-        function signOut() { auth.signOut().then(() => window.location.reload()); }
+        function signOut() { window.auth.signOut().then(() => window.location.reload()); }
 
         async function completeSetup() {
             if (!currentUser) return;
@@ -2843,7 +2911,7 @@
             if (!data.name) return alert("Name is required.");
 
             try {
-                await db.collection('users').doc(currentUser.uid).set(data, { merge: true });
+                await window.db.collection('users').doc(currentUser.uid).set(data, { merge: true });
                 currentUser.updateProfile({ displayName: data.name });
                 document.getElementById('shiftManager').value = data.name;
                 navTo('tracker');
@@ -2867,7 +2935,7 @@
             if (!currentUser || !currentUserData || !currentUserData.orgId) return;
 
             try {
-                const snapshot = await db.collection('announcements')
+                const snapshot = await window.db.collection('announcements')
                     .where('orgId', '==', currentUserData.orgId)
                     .orderBy('createdAt', 'desc')
                     .get();
@@ -2951,7 +3019,7 @@
             }
 
             try {
-                await db.collection('announcements').add({
+                await window.db.collection('announcements').add({
                     orgId: currentUserData.orgId,
                     authorId: currentUser.uid,
                     authorName: currentUserData.name || currentUser.email.split('@')[0],
@@ -2985,7 +3053,7 @@
         async function deleteAnnouncement(id) {
             if (!confirm("Are you sure you want to delete this announcement?")) return;
             try {
-                await db.collection('announcements').doc(id).delete();
+                await window.db.collection('announcements').doc(id).delete();
                 fetchTrackerAnnouncements();
             } catch (error) {
                 console.error("Error deleting announcement:", error);
@@ -3000,7 +3068,7 @@
                 localStorage.setItem('navTo', viewId);
                 return;
             }
-            if (!currentUser && (['history', 'presets', 'performance', 'request', 'profile', 'shiftNotes', 'team', 'employees', 'timeoff', 'tasks', 'announcements', 'deliveries', 'marketplace'].includes(viewId))) {
+            if (!currentUser && (['history', 'presets', 'performance', 'request', 'profile', 'shiftNotes', 'team', 'employees', 'timeoff', 'tasks', 'announcements', 'deliveries', 'marketplace', 'certifications'].includes(viewId))) {
                 viewId = 'auth';
             }
             if (viewId === 'maintenance' && currentUser) {
@@ -3298,7 +3366,7 @@
             if (cloudSyncEnabled) {
                 clearTimeout(cloudSyncTimeout);
                 cloudSyncTimeout = setTimeout(() => {
-                    db.collection('users').doc(currentUser.uid).set({ trackerDraft: state }, { merge: true });
+                    window.db.collection('users').doc(currentUser.uid).set({ trackerDraft: state }, { merge: true });
                 }, 3000);
             }
         }
@@ -3396,7 +3464,7 @@
             if (!cloudSyncEnabled) return alert("Enterprise Cloud Sync is required to save shift history to the cloud.");
 
             const state = getTrackerState();
-            db.collection('users').doc(currentUser.uid).set({
+            window.db.collection('users').doc(currentUser.uid).set({
                 shiftHistory: firebase.firestore.FieldValue.arrayUnion(state)
             }, { merge: true }).then(() => {
                 alert("Shift saved to Cloud History!");
@@ -3548,7 +3616,7 @@
             if (!currentUserData || !confirm("Are you sure you want to delete this shift from history permanently? This action cannot be undone.")) return;
             const shift = (currentUserData.shiftHistory || []).find(s => s.id === id);
             if (shift) {
-                db.collection('users').doc(currentUser.uid).update({
+                window.db.collection('users').doc(currentUser.uid).update({
                     shiftHistory: firebase.firestore.FieldValue.arrayRemove(shift)
                 });
             }
@@ -3744,7 +3812,7 @@
                 deposits: state.deposits
             };
 
-            db.collection('users').doc(currentUser.uid).set({
+            window.db.collection('users').doc(currentUser.uid).set({
                 customPresets: firebase.firestore.FieldValue.arrayUnion(presetData)
             }, { merge: true }).then(() => {
                 alert("Tracker Layout Saved Successfully!");
@@ -3756,7 +3824,7 @@
             if (!currentUserData || !confirm("Are you sure you want to delete this preset permanently? This action cannot be undone.")) return;
             const preset = (currentUserData.customPresets || []).find(p => p.id === id);
             if (preset) {
-                db.collection('users').doc(currentUser.uid).update({
+                window.db.collection('users').doc(currentUser.uid).update({
                     customPresets: firebase.firestore.FieldValue.arrayRemove(preset)
                 });
             }
@@ -3966,7 +4034,7 @@
             if (profileDebounceTimeout) clearTimeout(profileDebounceTimeout);
 
             profileDebounceTimeout = setTimeout(() => {
-                db.collection('users').doc(currentUser.uid).set(data, { merge: true }).then(() => {
+                window.db.collection('users').doc(currentUser.uid).set(data, { merge: true }).then(() => {
                     localStorage.setItem(`ezManage_aiEnabled_${currentUser.uid}`, data.aiTrainingEnabled);
                     localStorage.setItem(`ezManage_cloudEnabled_${currentUser.uid}`, cloudSyncEnabled);
                     alert("Profile Updated!");
@@ -3976,7 +4044,7 @@
 
         function changePassword() {
             if (!currentUser) return;
-            auth.sendPasswordResetEmail(currentUser.email).then(() => {
+            window.auth.sendPasswordResetEmail(currentUser.email).then(() => {
                 alert("A password reset email has been sent to " + currentUser.email);
             }).catch(err => alert(err.message));
         }
@@ -3996,7 +4064,7 @@
                 const data = await res.json();
                 if (data.success) {
                     alert("Subscription canceled successfully.");
-                    db.collection('users').doc(currentUser.uid).update({
+                    window.db.collection('users').doc(currentUser.uid).update({
                         "subscription.status": "canceled",
                         plan: "Free",
                         cloudSyncEnabled: false
@@ -4012,7 +4080,7 @@
             if (!currentUser) return;
             if (!confirm("WARNING: Are you sure you want to permanently delete your account and all associated data? This right to forget action cannot be undone.")) return;
 
-            db.collection('users').doc(currentUser.uid).delete().then(() => {
+            window.db.collection('users').doc(currentUser.uid).delete().then(() => {
                 localStorage.removeItem(`ezManage_draft_${currentUser.uid}`);
                 currentUser.delete().then(() => {
                     alert("Your account has been deleted.");
@@ -4119,7 +4187,7 @@
             lucide.createIcons();
 
             try {
-                await db.collection('assigned_tasks').add({
+                await window.db.collection('assigned_tasks').add({
                     title: title,
                     description: desc,
                     assigneeName: assignee,
@@ -4172,7 +4240,7 @@
 
             if (unsubscribeTasks) unsubscribeTasks();
 
-            unsubscribeTasks = db.collection('assigned_tasks')
+            unsubscribeTasks = window.db.collection('assigned_tasks')
                 .where('orgId', '==', currentUserData.orgId)
                 .onSnapshot(snap => {
                     container.innerHTML = '';
@@ -4228,7 +4296,7 @@
 
         async function updateAssignedTaskStatus(taskId, newStatus) {
             try {
-                await db.collection('assigned_tasks').doc(taskId).update({
+                await window.db.collection('assigned_tasks').doc(taskId).update({
                     status: newStatus,
                     updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
                     orgId: currentUserData.orgId
@@ -4242,7 +4310,7 @@
         async function deleteAssignedTask(taskId) {
             if (!confirm("Are you sure you want to delete this task?")) return;
             try {
-                await db.collection('assigned_tasks').doc(taskId).delete();
+                await window.db.collection('assigned_tasks').doc(taskId).delete();
             } catch (error) {
                 console.error("Manager Troubleshooting: Error deleting task:", error);
                 alert("Failed to delete task. " + error.message);
@@ -4258,9 +4326,10 @@
             const title = document.getElementById('maintenanceTitle').value.trim();
             const desc = document.getElementById('maintenanceDesc').value.trim();
             const priority = document.getElementById('maintenancePriority').value;
+            const cost = document.getElementById('maintenanceCost').value;
 
-            if (!title) {
-                alert("Please provide a title or issue name.");
+            if (!title || !desc) {
+                alert("Please provide a title and description.");
                 return;
             }
 
@@ -4271,7 +4340,7 @@
             lucide.createIcons();
 
             try {
-                await db.collection('maintenance_logs').add({
+                await window.db.collection('maintenance_logs').add({
                     title: title,
                     description: desc,
                     priority: priority,
@@ -4286,6 +4355,7 @@
                 document.getElementById('maintenanceTitle').value = '';
                 document.getElementById('maintenanceDesc').value = '';
                 document.getElementById('maintenancePriority').value = 'Low';
+                document.getElementById('maintenanceCost').value = '';
                 document.getElementById('reportMaintenanceModal').classList.add('hidden');
 
                 alert("Maintenance ticket submitted successfully.");
@@ -4326,7 +4396,7 @@
             lucide.createIcons();
 
             try {
-                await db.collection('tasks').add({
+                await window.db.collection('tasks').add({
                     title: title,
                     description: desc,
                     assignedTo: assignee,
@@ -4360,7 +4430,7 @@
             }
         }
 
-        function fetchMaintenanceTickets() {
+        async function fetchMaintenanceTickets() {
             if (!currentUser || !currentUserData || !currentUserData.orgId) {
                 document.getElementById('maintenanceContainer').innerHTML = `
                     <div class="text-center py-16 bg-slate-50 dark:bg-slate-900 rounded-3xl border-2 border-dashed border-slate-200 dark:border-slate-800">
@@ -4377,15 +4447,15 @@
             container.innerHTML = '<div class="text-center py-8"><i data-lucide="loader-2" class="w-8 h-8 animate-spin mx-auto text-sky-500 mb-4"></i><p class="text-slate-500">Loading tickets...</p></div>';
             lucide.createIcons();
 
-            if (window.maintenanceUnsubscribe) {
-                window.maintenanceUnsubscribe();
-            }
+            try {
+                const result = await callCloudFunction('manageMaintenanceLogs', { action: "get", payload: {} });
 
-            window.maintenanceUnsubscribe = db.collection('maintenance_logs')
+            window.maintenanceUnsubscribe = window.db.collection('maintenance_logs')
                 .where('orgId', '==', currentUserData.orgId)
                 .onSnapshot(snap => {
                     container.innerHTML = '';
-                    if (snap.empty) {
+
+                    if (tickets.length === 0) {
                         container.innerHTML = `
                             <div class="text-center py-16 bg-slate-50 dark:bg-slate-900 rounded-3xl border-2 border-dashed border-slate-200 dark:border-slate-800">
                                 <i data-lucide="check-circle-2" class="w-12 h-12 text-emerald-400 mx-auto mb-4"></i>
@@ -4397,18 +4467,9 @@
                         return;
                     }
 
-                    let tickets = [];
-                    snap.forEach(doc => tickets.push({ id: doc.id, ...doc.data() }));
+                    const fragment = document.createDocumentFragment();
 
-                    // Sort locally since composite index is likely missing
-                    tickets.sort((a, b) => {
-                        const aTime = a.createdAt ? a.createdAt.toMillis() : 0;
-                        const bTime = b.createdAt ? b.createdAt.toMillis() : 0;
-                        return bTime - aTime;
-                    });
-
-                    // ⚡ Bolt Optimization: Replace O(n²) string concatenation inside loop with array map().join('')
-                    container.innerHTML = tickets.map(ticket => {
+                    tickets.forEach(ticket => {
                         const statusColors = {
                             'Open': 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400 border-amber-200 dark:border-amber-800',
                             'In Progress': 'bg-sky-100 text-sky-800 dark:bg-sky-900/30 dark:text-sky-400 border-sky-200 dark:border-sky-800',
@@ -4421,57 +4482,65 @@
                             'Critical': 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400 animate-pulse'
                         };
 
-                        const dateStr = ticket.createdAt ? new Date(ticket.createdAt.toMillis()).toLocaleString() : 'Just now';
+                        const dateStr = ticket.timestamp ? new Date(ticket.timestamp._seconds * 1000).toLocaleString() : 'Just now';
 
-                        return `
-                            <div class="card p-6 border-l-4 ${ticket.priority === 'Critical' ? 'border-l-red-500' : ticket.priority === 'High' ? 'border-l-orange-500' : 'border-l-sky-500'}">
-                                <div class="flex flex-col md:flex-row justify-between gap-4 mb-4">
-                                    <div>
-                                        <h3 class="text-lg font-bold">${escapeHTML(ticket.title)}</h3>
-                                        <p class="text-sm text-slate-500">Reported by ${escapeHTML(ticket.reportedByName)} • ${dateStr}</p>
-                                    </div>
-                                    <div class="flex gap-2 items-start">
-                                        <span class="px-3 py-1 rounded-full text-xs font-bold ${prioColors[ticket.priority] || prioColors['Low']}">${escapeHTML(ticket.priority)}</span>
-                                        <select aria-label="Update ticket status" class="ticket-status-select px-3 py-1 rounded-full text-xs font-bold border appearance-none cursor-pointer focus:outline-none ${statusColors[ticket.status] || statusColors['Open']}" data-ticket-id="${escapeHTML(ticket.id)}">
-                                            <option value="Open" ${ticket.status === 'Open' ? 'selected' : ''}>Open</option>
-                                            <option value="In Progress" ${ticket.status === 'In Progress' ? 'selected' : ''}>In Progress</option>
-                                            <option value="Resolved" ${ticket.status === 'Resolved' ? 'selected' : ''}>Resolved</option>
-                                        </select>
-                                    </div>
+                        const div = document.createElement('div');
+                        div.id = `maintenance-${escapeHTML(ticket.id)}`;
+                        div.className = `card p-6 border-l-4 ${ticket.priority === 'Critical' ? 'border-l-red-500' : ticket.priority === 'High' ? 'border-l-orange-500' : 'border-l-sky-500'}`;
+
+                        div.innerHTML = `
+                            <div class="flex flex-col md:flex-row justify-between gap-4 mb-4">
+                                <div>
+                                    <h3 class="text-lg font-bold">${escapeHTML(ticket.title)}</h3>
+                                    <p class="text-sm text-slate-500">Reported by ${escapeHTML(ticket.reportedByName)} • ${dateStr}</p>
+                                    ${ticket.cost > 0 ? `<p class="text-sm text-slate-500 mt-1 font-mono">Est. Cost: $${Number(ticket.cost).toFixed(2)}</p>` : ''}
                                 </div>
-                                <p class="text-slate-700 dark:text-slate-300 whitespace-pre-wrap">${escapeHTML(ticket.description)}</p>
+                                <div class="flex gap-2 items-start">
+                                    <span class="px-3 py-1 rounded-full text-xs font-bold ${prioColors[ticket.priority] || prioColors['Low']}">${escapeHTML(ticket.priority)}</span>
+                                    <select aria-label="Update maintenance status" data-action="updateMaintenanceStatus" data-id="${escapeHTML(ticket.id)}" class="px-3 py-1 rounded-full text-xs font-bold border appearance-none cursor-pointer focus:outline-none maintenance-status-select ${statusColors[ticket.status] || statusColors['Open']}">
+                                        <option value="Open" ${ticket.status === 'Open' ? 'selected' : ''}>Open</option>
+                                        <option value="In Progress" ${ticket.status === 'In Progress' ? 'selected' : ''}>In Progress</option>
+                                        <option value="Resolved" ${ticket.status === 'Resolved' ? 'selected' : ''}>Resolved</option>
+                                    </select>
+                                    <button data-action="deleteMaintenanceTicket" data-id="${escapeHTML(ticket.id)}" class="text-red-400 p-1 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md ml-2" aria-label="Delete Maintenance Ticket"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                                </div>
                             </div>
+                            <p class="text-slate-700 dark:text-slate-300 whitespace-pre-wrap">${escapeHTML(ticket.description)}</p>
                         `;
-                    }).join('');
-                }, err => {
-                    console.error("Error fetching tickets:", err);
-                    container.innerHTML = '';
-                    const errDiv = document.createElement('div');
-                    errDiv.className = 'text-red-500 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl text-center';
-                    errDiv.textContent = `Failed to load tickets: ${window.escapeHTML ? window.escapeHTML(err.message) : err.message}`;
-                    container.appendChild(errDiv);
-                });
+                        fragment.appendChild(div);
+                    });
+                    container.appendChild(fragment);
+                    lucide.createIcons();
+                }
+            } catch (error) {
+                console.error("Error fetching maintenance tickets:", error);
+                container.innerHTML = `<div class="text-red-500 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl text-center">Failed to load tickets: ${window.escapeHTML ? window.escapeHTML(error.message) : error.message}</div>`;
+            }
         }
 
-        document.getElementById('maintenanceContainer').addEventListener('change', function(e) {
-            if (e.target && e.target.classList.contains('ticket-status-select')) {
-                const ticketId = e.target.getAttribute('data-ticket-id');
-                if (ticketId) {
-                    updateTicketStatus(ticketId, e.target.value);
-                }
-            }
-        });
-
-        async function updateTicketStatus(ticketId, newStatus) {
+        async function deleteMaintenanceTicket(ticketId) {
+            if (!confirm("Are you sure you want to permanently delete this maintenance ticket?")) return;
+            const incEl = document.getElementById('maintenance-' + escapeHTML(ticketId));
+            if (incEl) incEl.style.display = 'none'; // Optimistically hide
             try {
-                await db.collection('maintenance_logs').doc(ticketId).update({
+                await callCloudFunction('manageMaintenanceLogs', { action: "delete", payload: { logId: ticketId } });
+                fetchMaintenanceTickets();
+            } catch (err) {
+                logManagerError("Error deleting maintenance ticket:", err);
+                alert("Failed to delete ticket.");
+                fetchMaintenanceTickets(); // Revert on failure
+            }
+        }
+
+        async function updateMaintenanceStatus(ticketId, newStatus) {
+            try {
+                await window.db.collection('maintenance_logs').doc(ticketId).update({
                     status: newStatus,
                     updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
                     orgId: currentUserData.orgId
                 });
-                // Optimistic UI update already handled by changing the select value
             } catch (error) {
-                window.logManagerError("Error updating ticket:", error);
+                window.logManagerError("Error updating maintenance ticket:", error);
                 alert("Failed to update status. " + error.message);
                 fetchMaintenanceTickets(); // revert
             }
@@ -4481,7 +4550,7 @@
             const msg = document.getElementById('featureReqText').value;
             if (!msg) return;
             try {
-                await db.collection('feature_requests').add({
+                await window.db.collection('feature_requests').add({
                     uid: currentUser.uid,
                     email: currentUser.email,
                     message: msg,
@@ -4519,7 +4588,7 @@
             saveBtn.disabled = true;
 
             try {
-                await db.collection('employees').add({
+                await window.db.collection('employees').add({
                     name,
                     role,
                     phone,
@@ -4589,7 +4658,7 @@
             lucide.createIcons();
 
             try {
-                await db.collection('time_off_requests').add({
+                await window.db.collection('time_off_requests').add({
                     uid: currentUser.uid,
                     employeeName: currentUserData.username || currentUser.email,
                     orgId: currentUserData.orgId,
@@ -4633,7 +4702,7 @@
                 document.getElementById('managerTasksSection').style.display = 'none';
             }
 
-            unsubscribeTasks = db.collection('tasks')
+            unsubscribeTasks = window.db.collection('tasks')
                 .where('orgId', '==', actualOrgId)
                 .onSnapshot(snap => {
                     const myContainer = document.getElementById('myTasksContainer');
@@ -4702,7 +4771,7 @@
              if (!currentUser || !currentUserData) return;
              if (unsubscribeTimeOff) unsubscribeTimeOff();
 
-             let query = db.collection('time_off_requests');
+             let query = window.db.collection('time_off_requests');
 
              // If manager/admin (assuming they have an orgId and are not just a base user, or using some flag. We will check if they own the org or just use orgId)
              // For simplicity, we fetch all for the org if they are an org owner, otherwise just their own.
@@ -4790,7 +4859,7 @@
 
         async function updateTimeOffStatus(id, status) {
             try {
-                await db.collection('time_off_requests').doc(id).update({ status: status });
+                await window.db.collection('time_off_requests').doc(id).update({ status: status });
             } catch (err) {
                 window.logManagerError("Error updating time off status", err);
                 alert("Error updating status.");
@@ -4800,7 +4869,7 @@
         async function deleteTimeOffRequest(id) {
             if (!confirm("Are you sure you want to cancel this request?")) return;
             try {
-                await db.collection('time_off_requests').doc(id).delete();
+                await window.db.collection('time_off_requests').doc(id).delete();
             } catch (err) {
                 window.logManagerError("Error deleting time off request", err);
                 alert("Error cancelling request.");
@@ -4818,7 +4887,7 @@
 
             const queryOrgId = currentUserData.orgId || currentUser.uid;
 
-            unsubscribeEmployees = db.collection('employees')
+            unsubscribeEmployees = window.db.collection('employees')
                 .where('orgId', '==', queryOrgId)
                 .onSnapshot(snap => {
                     if (container) container.innerHTML = '';
@@ -4887,7 +4956,7 @@
         async function toggleEmployeeStatus(id, currentStatus) {
             const newStatus = currentStatus === 'Active' ? 'Inactive' : 'Active';
             try {
-                await db.collection('employees').doc(id).update({ status: newStatus });
+                await window.db.collection('employees').doc(id).update({ status: newStatus });
             } catch (err) {
                 window.logManagerError("Error updating status:", err);
                 alert("Failed to update employee status.");
@@ -4908,7 +4977,7 @@
 
             const queryOrgId = currentUserData.orgId || currentUser.uid;
 
-            db.collection('employees')
+            window.db.collection('employees')
                 .where('orgId', '==', queryOrgId)
                 .where('status', '==', 'Active')
                 .get()
@@ -4993,7 +5062,7 @@
             };
 
             const date = dateInput.value;
-            const scheduleRef = db.collection('schedules').doc(`${currentUser.uid}_${date}`);
+            const scheduleRef = window.db.collection('schedules').doc(`${currentUser.uid}_${date}`);
 
             try {
                 const doc = await scheduleRef.get();
@@ -5034,7 +5103,7 @@
             const listContainer = document.getElementById('scheduleList');
             if (listContainer) listContainer.innerHTML = '<p class="text-sm text-slate-500">Loading schedule...</p>';
 
-            unsubscribeSchedule = db.collection('schedules')
+            unsubscribeSchedule = window.db.collection('schedules')
                 .doc(`${currentUser.uid}_${date}`)
                 .onSnapshot(doc => {
                     if (listContainer) {
@@ -5084,7 +5153,7 @@
             if (!dateInput || !dateInput.value) return;
 
             const date = dateInput.value;
-            const scheduleRef = db.collection('schedules').doc(`${currentUser.uid}_${date}`);
+            const scheduleRef = window.db.collection('schedules').doc(`${currentUser.uid}_${date}`);
 
             try {
                 const doc = await scheduleRef.get();
@@ -5102,7 +5171,7 @@
 
         function fetchFeatureRequests() {
             if (!currentUser) return;
-            db.collection('feature_requests')
+            window.db.collection('feature_requests')
                 .where('uid', '==', currentUser.uid)
                 .onSnapshot(snap => {
                     const container = document.getElementById('myFeatureRequests');
@@ -5167,7 +5236,7 @@ function checkAndRenderOrgControls() {
             fetchMySentRequests();
 
             // If they are the owner, show the request panel logic
-            db.collection('shift_groups').doc(currentUserData.orgId).get().then(doc => {
+            window.db.collection('shift_groups').doc(currentUserData.orgId).get().then(doc => {
                 if (doc.exists && doc.data().ownerId === currentUser.uid) {
                     controls.innerHTML = `
                         <div class="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700">
@@ -5211,7 +5280,7 @@ function checkAndRenderOrgControls() {
             container.innerHTML = '<div class="text-center py-8"><i data-lucide="loader-2" class="w-8 h-8 animate-spin mx-auto text-sky-500 mb-4"></i><p class="text-slate-500">Loading notes...</p></div>';
             lucide.createIcons();
 
-            db.collection('shift_notes')
+            window.db.collection('shift_notes')
                 .where('orgId', '==', currentUserData.orgId)
                 .get() // orderBy timestamp desc requires composite index if where filters are used
                 .then(snap => {
@@ -5346,7 +5415,7 @@ function checkAndRenderOrgControls() {
 
             try {
                 // Ensure write fully completes before allowing further actions or redirects to avoid race conditions.
-                await db.collection('shift_notes').add({
+                await window.db.collection('shift_notes').add({
                     authorId: currentUser.uid,
                     authorName: currentUser.email.split('@')[0],
                     content: content,
@@ -5513,7 +5582,7 @@ function checkAndRenderOrgControls() {
 
         function fetchGroupRequests(groupId) {
             if (window.groupRequestsUnsubscribe) window.groupRequestsUnsubscribe();
-            window.groupRequestsUnsubscribe = db.collection('shift_group_requests')
+            window.groupRequestsUnsubscribe = window.db.collection('shift_group_requests')
                 .where('groupId', '==', groupId)
                 .where('status', '==', 'Pending')
                 .onSnapshot(snap => {
@@ -5546,7 +5615,7 @@ function checkAndRenderOrgControls() {
         function fetchMySentRequests() {
             if (window.mySentRequestsUnsubscribe) window.mySentRequestsUnsubscribe();
             if (!currentUser) return;
-            window.mySentRequestsUnsubscribe = db.collection('shift_group_requests')
+            window.mySentRequestsUnsubscribe = window.db.collection('shift_group_requests')
                 .where('userId', '==', currentUser.uid)
                 .where('status', '==', 'Pending')
                 .onSnapshot(snap => {
@@ -5763,6 +5832,192 @@ function checkAndRenderOrgControls() {
                 console.error("Error updating delivery:", error);
                 alert("Failed to update status. " + error.message);
                 fetchDeliveries(); // revert
+            }
+        }
+
+        // ==========================
+        // COMPLIANCE & CERTIFICATIONS
+        // ==========================
+
+        function populateCertAssigneeDropdown() {
+            const select = document.getElementById('certAssignee');
+            if (!select || !currentUserData) return;
+
+            const queryOrgId = currentUserData.orgId || currentUser.uid;
+
+            db.collection('employees')
+                .where('orgId', '==', queryOrgId)
+                .where('status', '==', 'Active')
+                .get()
+                .then(snap => {
+                    select.innerHTML = '<option value="" disabled selected>Select Employee</option>';
+                    let employees = [];
+                    snap.forEach(doc => employees.push({id: doc.id, ...doc.data()}));
+                    employees.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+
+                    const fragment = document.createDocumentFragment();
+                    employees.forEach(emp => {
+                        const opt = document.createElement('option');
+                        opt.value = emp.id;
+                        opt.dataset.name = emp.name;
+                        opt.textContent = `${emp.name} (${emp.role})`;
+                        fragment.appendChild(opt);
+                    });
+                    select.appendChild(fragment);
+                })
+                .catch(err => window.logManagerError("Error populating cert assignee dropdown:", err));
+        }
+
+        async function submitCertification() {
+            if (!currentUser || !currentUserData || !currentUserData.orgId) {
+                alert("You must be part of an organization to log certifications.");
+                return;
+            }
+
+            const assigneeSelect = document.getElementById('certAssignee');
+            const empId = assigneeSelect.value;
+            const empName = assigneeSelect.options[assigneeSelect.selectedIndex]?.dataset?.name;
+            const certName = document.getElementById('certName').value;
+            const issueDate = document.getElementById('certIssueDate').value;
+            const expiryDate = document.getElementById('certExpiryDate').value;
+
+            if (!empId || !expiryDate) {
+                alert("Please select an employee and provide an expiration date.");
+                return;
+            }
+
+            const submitBtn = document.querySelector('#addCertModal .btn-accent');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> Saving...';
+            submitBtn.disabled = true;
+            lucide.createIcons();
+
+            try {
+                await callCloudFunction('manageCertifications', {
+                    action: "create",
+                    payload: { empId, empName, certName, issueDate, expiryDate }
+                });
+
+                document.getElementById('certAssignee').value = '';
+                document.getElementById('certName').value = 'ServSafe Manager';
+                document.getElementById('certIssueDate').value = '';
+                document.getElementById('certExpiryDate').value = '';
+                document.getElementById('addCertModal').classList.add('hidden');
+
+                alert("Certification logged successfully.");
+                fetchCertifications();
+            } catch (error) {
+                console.error("Error logging certification:", error);
+                alert("Failed to log certification. " + error.message);
+            } finally {
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+                lucide.createIcons();
+            }
+        }
+
+        async function fetchCertifications() {
+            if (!currentUser || !currentUserData || !currentUserData.orgId) {
+                const container = document.getElementById('certificationsContainer');
+                if (container) {
+                    container.innerHTML = `
+                        <div class="text-center py-16 bg-slate-50 dark:bg-slate-900 rounded-3xl border-2 border-dashed border-slate-200 dark:border-slate-800">
+                            <i data-lucide="shield-alert" class="w-12 h-12 text-slate-400 mx-auto mb-4"></i>
+                            <h3 class="text-xl font-bold mb-2">Join or Create a Group</h3>
+                            <p class="text-slate-500">You must be in a Management Group to view certifications.</p>
+                        </div>
+                    `;
+                    lucide.createIcons();
+                }
+                return;
+            }
+
+            const container = document.getElementById('certificationsContainer');
+            container.innerHTML = '<div class="text-center py-8"><i data-lucide="loader-2" class="w-8 h-8 animate-spin mx-auto text-sky-500 mb-4"></i><p class="text-slate-500">Loading certifications...</p></div>';
+            lucide.createIcons();
+
+            try {
+                const result = await callCloudFunction('manageCertifications', { action: "get", payload: {} });
+
+                if (result.data.success) {
+                    const certs = result.data.certifications || [];
+                    container.innerHTML = '';
+
+                    if (certs.length === 0) {
+                        container.innerHTML = `
+                            <div class="text-center py-16 bg-slate-50 dark:bg-slate-900 rounded-3xl border-2 border-dashed border-slate-200 dark:border-slate-800">
+                                <i data-lucide="shield-check" class="w-12 h-12 text-emerald-400 mx-auto mb-4"></i>
+                                <h3 class="text-xl font-bold mb-2">No Certifications Logged</h3>
+                                <p class="text-slate-500">Keep track of important compliance documents here.</p>
+                            </div>
+                        `;
+                        lucide.createIcons();
+                        return;
+                    }
+
+                    const fragment = document.createDocumentFragment();
+
+                    certs.forEach(cert => {
+                        const div = document.createElement('div');
+                        div.id = `cert-${escapeHTML(cert.id)}`;
+
+                        // Calculate status
+                        let status = "Valid";
+                        let statusColors = 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800';
+                        let borderLeft = 'border-l-emerald-500';
+
+                        if (cert.expiryDate) {
+                            const exp = new Date(cert.expiryDate);
+                            const now = new Date();
+                            const diffDays = Math.ceil((exp - now) / (1000 * 60 * 60 * 24));
+
+                            if (diffDays < 0) {
+                                status = "Expired";
+                                statusColors = 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400 border-red-200 dark:border-red-800';
+                                borderLeft = 'border-l-red-500';
+                            } else if (diffDays <= 30) {
+                                status = "Expiring Soon";
+                                statusColors = 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400 border-amber-200 dark:border-amber-800';
+                                borderLeft = 'border-l-amber-500';
+                            }
+                        }
+
+                        div.className = `card p-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-l-4 ${borderLeft}`;
+
+                        div.innerHTML = `
+                            <div>
+                                <h3 class="text-lg font-bold">${escapeHTML(cert.empName)} - ${escapeHTML(cert.certName)}</h3>
+                                <p class="text-sm text-slate-500">Expires: <span class="font-bold text-slate-800 dark:text-slate-200">${escapeHTML(cert.expiryDate)}</span></p>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <span class="px-3 py-1 rounded-full text-xs font-bold border ${statusColors}">${status}</span>
+                                <button data-action="deleteCert" data-id="${escapeHTML(cert.id)}" class="btn btn-outline btn-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20" aria-label="Delete Certification">
+                                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                </button>
+                            </div>
+                        `;
+                        fragment.appendChild(div);
+                    });
+                    container.appendChild(fragment);
+                    lucide.createIcons();
+                }
+            } catch (error) {
+                console.error("Error fetching certifications:", error);
+                container.innerHTML = `<div class="text-red-500 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl text-center">Failed to load certifications: ${window.escapeHTML ? window.escapeHTML(error.message) : error.message}</div>`;
+            }
+        }
+
+        async function deleteCertification(certId) {
+            if (!confirm("Are you sure you want to permanently delete this certification record?")) return;
+            const el = document.getElementById('cert-' + escapeHTML(certId));
+            if (el) el.style.display = 'none'; // Optimistically hide
+            try {
+                await callCloudFunction('manageCertifications', { action: "delete", payload: { certId } });
+                fetchCertifications();
+            } catch (err) {
+                logManagerError("Error deleting certification:", err);
+                alert("Failed to delete record.");
+                fetchCertifications(); // Revert on failure
             }
         }
 
@@ -6360,7 +6615,7 @@ async function submitWasteLog() {
                 lucide.createIcons();
                 submitBtn.disabled = true;
 
-                await db.collection('tasks').add({
+                await window.db.collection('tasks').add({
                     title: title,
                     description: desc,
                     assigneeId: assigneeId,
@@ -6412,7 +6667,7 @@ async function submitWasteLog() {
                     unsubscribeAnnouncements();
                 }
 
-                const query = db.collection('announcements')
+                const query = window.db.collection('announcements')
                     .where('orgId', '==', actualOrgId)
                     .orderBy('createdAt', 'desc');
 
@@ -6508,7 +6763,7 @@ async function submitWasteLog() {
             const actualOrgId = currentUserData.orgId || currentUser.uid;
 
             try {
-                await db.collection('announcements').add({
+                await window.db.collection('announcements').add({
                     orgId: actualOrgId,
                     title: title,
                     content: content,
@@ -6532,7 +6787,7 @@ async function submitWasteLog() {
         async function deleteAnnouncement(id) {
             if (!confirm('Are you sure you want to delete this announcement?')) return;
             try {
-                await db.collection('announcements').doc(id).delete();
+                await window.db.collection('announcements').doc(id).delete();
             } catch (error) {
                 window.logManagerError("Error deleting announcement", error);
                 alert("Failed to delete announcement.");
@@ -6653,7 +6908,7 @@ async function submitWasteLog() {
 
             const queryOrgId = currentUserData.orgId || currentUser.uid;
 
-            db.collection('employees')
+            window.db.collection('employees')
                 .where('orgId', '==', queryOrgId)
                 .where('status', '==', 'Active')
                 .get()
@@ -6721,7 +6976,7 @@ async function submitWasteLog() {
             lucide.createIcons();
 
             try {
-                await db.collection('tasks').add({
+                await window.db.collection('tasks').add({
                     title: title,
                     description: desc,
                     assignedTo: assignee,
@@ -6784,7 +7039,7 @@ async function submitWasteLog() {
                 unsubscribeTasks();
             }
 
-            unsubscribeTasks = db.collection('tasks')
+            unsubscribeTasks = window.db.collection('tasks')
                 .where('orgId', '==', currentUserData.orgId)
                 .onSnapshot(snap => {
                     activeTasksList = [];
@@ -6878,7 +7133,7 @@ async function submitWasteLog() {
 
         async function updateTaskStatus(taskId, newStatus) {
             try {
-                await db.collection('tasks').doc(taskId).update({
+                await window.db.collection('tasks').doc(taskId).update({
                     status: newStatus,
                     updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
                     orgId: currentUserData.orgId
@@ -6893,7 +7148,7 @@ async function submitWasteLog() {
         async function deleteTask(taskId) {
             if (!confirm("Are you sure you want to delete this task permanently?")) return;
             try {
-                await db.collection('tasks').doc(taskId).delete();
+                await window.db.collection('tasks').doc(taskId).delete();
             } catch (error) {
                 window.logManagerError("Error deleting task:", error);
                 alert("Failed to delete task. " + error.message);
@@ -6908,7 +7163,7 @@ async function submitWasteLog() {
 
             const queryOrgId = currentUserData.orgId || currentUser.uid;
 
-            db.collection('employees')
+            window.db.collection('employees')
                 .where('orgId', '==', queryOrgId)
                 .where('status', '==', 'Active')
                 .get()
@@ -7107,7 +7362,7 @@ async function submitWasteLog() {
             const action = isClockedIn ? 'clock_out' : 'clock_in';
 
             try {
-                const manageTimeLogs = cloudFunctions.httpsCallable('manageTimeLogs');
+                const manageTimeLogs = window.cloudFunctions.httpsCallable('manageTimeLogs');
                 await manageTimeLogs({ action: action, payload: {} });
 
                 // Optimistically update state
@@ -7167,7 +7422,7 @@ async function submitWasteLog() {
             lucide.createIcons();
 
             try {
-                const manageTimeLogs = cloudFunctions.httpsCallable('manageTimeLogs');
+                const manageTimeLogs = window.cloudFunctions.httpsCallable('manageTimeLogs');
                 const result = await manageTimeLogs({ action: "get_logs", payload: {} });
 
                 if (result.data.success) {
@@ -7267,7 +7522,9 @@ async function submitWasteLog() {
             else if (action === 'deleteTempLog') deleteTempLog(id);
             else if (action === 'deleteDelivery') deleteDelivery(id);
             else if (action === 'deleteIncident') deleteIncident(id);
+            else if (action === 'deleteMaintenanceTicket') deleteMaintenanceTicket(id);
             else if (action === 'deleteAnnouncement') deleteAnnouncement(id);
+            else if (action === 'deleteCert') deleteCertification(id);
             else if (action === 'updateAssignedTaskStatus') updateAssignedTaskStatus(id, status);
             else if (action === 'deleteAssignedTask') deleteAssignedTask(id);
             else if (action === 'deleteRecognition') deleteRecognition(id);
@@ -7795,7 +8052,7 @@ window.onload = () => {
             lucide.createIcons();
 
             try {
-                const manageFeedbacks = cloudFunctions.httpsCallable('manageFeedbacks');
+                const manageFeedbacks = window.cloudFunctions.httpsCallable('manageFeedbacks');
                 await manageFeedbacks({
                     action: "create",
                     payload: { empId, empName, rating, comment }
@@ -7821,7 +8078,7 @@ window.onload = () => {
             lucide.createIcons();
 
             try {
-                const manageFeedbacks = cloudFunctions.httpsCallable('manageFeedbacks');
+                const manageFeedbacks = window.cloudFunctions.httpsCallable('manageFeedbacks');
                 const result = await manageFeedbacks({
                     action: "get",
                     payload: { empId }
@@ -7878,7 +8135,7 @@ window.onload = () => {
         async function deleteFeedback(feedbackId, empId) {
             if (!confirm("Are you sure you want to delete this feedback?")) return;
             try {
-                const manageFeedbacks = cloudFunctions.httpsCallable('manageFeedbacks');
+                const manageFeedbacks = window.cloudFunctions.httpsCallable('manageFeedbacks');
                 await manageFeedbacks({
                     action: "delete",
                     payload: { feedbackId }
@@ -7921,7 +8178,9 @@ window.onload = () => {
                 if (action === 'updateTaskStatus') updateTaskStatus(id, status);
                 if (action === 'deleteWasteLog') deleteWasteLog(id);
                 if (action === 'deleteIncident') deleteIncident(id);
+                if (action === 'deleteMaintenanceTicket') deleteMaintenanceTicket(id);
                 if (action === 'deleteAnnouncement') deleteAnnouncement(id);
+                if (action === 'deleteCert') deleteCertification(id);
                 if (action === 'updateAssignedTaskStatus') updateAssignedTaskStatus(id, status);
                 if (action === 'deleteAssignedTask') deleteAssignedTask(id);
                 if (action === 'deleteRecognition') deleteRecognition(id);
@@ -7934,6 +8193,7 @@ window.onload = () => {
             if (e.type === 'change' && el.tagName === 'SELECT') {
                 const id = el.getAttribute('data-id');
                 if (action === 'updateTaskStatus') updateTaskStatus(id, el.value);
+                if (action === 'updateMaintenanceStatus') updateMaintenanceStatus(id, el.value);
             }
         });
     </script>
