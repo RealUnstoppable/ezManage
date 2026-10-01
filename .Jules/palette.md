@@ -69,3 +69,6 @@
 ## 2024-05-24 - Missing ARIA Labels on Async State Loading Buttons
 **Learning:** Buttons that represent an action but load initially with only an animated icon (like a loader) often lack implicit accessible names. Screen readers may not be able to provide any context upon load until the text explicitly changes.
 **Action:** Always provide an explicit `aria-label` on dynamic buttons that utilize icons for loading states to ensure immediate and persistent screen reader accessibility.
+## 2024-05-24 - Missing ARIA Labels on Async State Loading Buttons
+**Learning:** Buttons that represent an action but load initially with only an animated icon (like a loader) often lack implicit accessible names. Screen readers may not be able to provide any context upon load until the text explicitly changes.
+**Action:** Always provide an explicit `aria-label` on dynamic buttons that utilize icons for loading states to ensure immediate and persistent screen reader accessibility.
