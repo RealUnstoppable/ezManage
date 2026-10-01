@@ -340,6 +340,7 @@
                     if (firstDayOfMonth > 0) {
                         daysGrid.innerHTML = Array(firstDayOfMonth).fill('<div class="calendar-day empty"></div>').join('');
                     }
+
                     const daysInMonth = new Date(year, month + 1, 0).getDate();
                     const fragment = document.createDocumentFragment();
                     for (let day = 1; day <= daysInMonth; day++) {
