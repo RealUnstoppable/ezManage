@@ -65,3 +65,7 @@
 ## 2026-09-16 - Form accessibility enhancements and deduplicating IDs
 **Learning:** Duplicate HTML IDs across different forms not only invalidate HTML but also break explicit `<label for="">` accessibility mappings. When resolving these conflicts by splitting a shared ID into unique suffixed IDs (like `taskAssignee1`, `taskAssignee2`), all shared JavaScript DOM population functions (like dropdown populators) must be updated to target an array of all the new IDs to prevent breaking downstream functionality.
 **Action:** When fixing conflicting IDs for accessibility mapping, always trace where those IDs are being populated dynamically via Javascript and update those population functions to target the newly split IDs via `[].forEach()` or similar logic.
+
+## 2024-05-27 - Loading States on Optimistic UI Actions
+**Learning:** Even when performing an optimistic UI update (like appending a shift note to the DOM immediately), the originating button ("Post Note") still requires an explicitly visible loading state to prevent users from rapidly multi-clicking if network latency delays the resolution. A spinner and explicit `disabled:opacity-70 disabled:cursor-not-allowed` styling provides unambiguous system status.
+**Action:** Always wrap async actions that utilize optimistic UI updates with immediate visual button disablement and loading states, explicitly restoring them in a `finally` block in case of both success and failure.
