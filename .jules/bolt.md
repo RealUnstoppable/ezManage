@@ -54,7 +54,7 @@
 ## 2024-11-09 - Duplicate state declaration
 **Learning:** Avoid duplicate cache state variable declarations within the same scope. The layout thrashing prevention code was throwing due to `let lastGreeting = ""` declared twice within `script.js`'s `updateGreeting` logic.
 **Action:** Remove the inner redundant declaration while keeping the cache check `newGreeting !== lastGreeting` functional.
-## $(date +%Y-%m-%d) - [Repeated Firebase DB Docs Fetch]
+## 2026-10-01 - [Repeated Firebase DB Docs Fetch]
 **Learning:** Functions invoked via callbacks from listeners that span multiple files (e.g., `auth.onAuthStateChanged`) will fire simultaneously. Without a caching layer, they execute redundant concurrent network fetch queries (like `db.collection('users').doc(uid).get()`), causing latency and blocking operations.
 **Action:** Always wrap independent multi-listener fetched resources with a generic memoization layer using a `Map` cache to immediately resolve redundant Promise requests.
 ## 2026-10-27 - [DRY Refactoring and Error Handling]
@@ -66,3 +66,6 @@
 ## 2026-06-15 - [Input Debouncing with Map]
 **Learning:** When debouncing input events for multiple distinct items (like cart quantities), using a single global timeout cancels updates for other items when multiple inputs are modified rapidly.
 **Action:** Use a `Map` to track timeouts by unique identifiers (e.g., `productId`) to ensure each item is debounced independently.
+## 2026-10-01 - [Simulated Animation Layout Thrashing]
+**Learning:** Using `setInterval` for simulated loading progress bars and repeatedly assigning DOM properties (like `status.innerText`) without a cache check causes severe layout thrashing and high CPU usage on the main thread.
+**Action:** Replace `setInterval` with `requestAnimationFrame` to sync with the browser's display refresh rate, and cache string values before updating the DOM (e.g. `if (newStatus !== lastStatus) { status.innerText = newStatus; lastStatus = newStatus; }`).
