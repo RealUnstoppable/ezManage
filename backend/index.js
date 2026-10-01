@@ -55,7 +55,7 @@ async function verifyDocAndAuth(collection, docId, expectedOrgId, notFoundMessag
 
     return {docRef, docSnap};
   } catch (error) {
-    logManagerError(`Error verifying document auth for ${collection}/${docId}:`, error);
+    console.error('Manager Troubleshooting:', `Error verifying document auth for ${collection}/${docId}:`, error);
     if (error instanceof HttpsError) throw error;
     throw new HttpsError("internal", "Unable to verify document permissions");
   }
@@ -86,7 +86,7 @@ async function getActualOrgId(admin, uid) {
     }
     return userDoc.data().orgId || null;
   } catch (error) {
-    logManagerError("Error fetching user organization data for uid: " + uid, error);
+    console.error('Manager Troubleshooting:', "Error fetching user organization data for uid: " + uid, error);
     if (error instanceof HttpsError) throw error;
     throw new HttpsError("internal", "Unable to verify user organization");
   }
@@ -111,7 +111,7 @@ exports.createCheckoutSession = onRequest({invoker: "public"}, (req, res) => {
         const userDoc = await admin.firestore().collection("users").doc(uid).get();
         if (userDoc.exists) userData = userDoc.data();
       } catch (err) {
-        logManagerError("Error fetching user data for checkout", err);
+        console.error('Manager Troubleshooting:', "Error fetching user data for checkout", err);
       }
     }
 
@@ -171,7 +171,7 @@ exports.createCheckoutSession = onRequest({invoker: "public"}, (req, res) => {
 
       res.status(200).json({url: session.url});
     } catch (err) {
-      logManagerError("Checkout Error for uid:", uid, err);
+      console.error('Manager Troubleshooting:', "Checkout Error for uid:", uid, err);
       res.status(500).json({error: err.message});
     }
   });
@@ -185,7 +185,7 @@ exports.stripeWebhook = onRequest({invoker: "public"}, async (req, res) => {
   try {
     event = stripe.webhooks.constructEvent(req.rawBody, sig, endpointSecret);
   } catch (err) {
-    logManagerError("Webhook Error:", err);
+    console.error('Manager Troubleshooting:', "Webhook Error:", err);
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
 
@@ -209,7 +209,7 @@ exports.stripeWebhook = onRequest({invoker: "public"}, async (req, res) => {
         }, {merge: true});
         console.log(`✅ Successfully upgraded user ${uid} to ${planName}`);
       } catch (error) {
-        logManagerError("Error updating user subscription status:", error);
+        console.error('Manager Troubleshooting:', "Error updating user subscription status:", error);
       }
     }
   }
@@ -234,13 +234,13 @@ exports.stripeWebhook = onRequest({invoker: "public"}, async (req, res) => {
           });
           console.log(`❌ Reverted user ${doc.id} back to Free plan.`);
         } catch (err) {
-          logManagerError(`Error reverting user ${doc.id} back to Free plan:`, err);
+          console.error('Manager Troubleshooting:', `Error reverting user ${doc.id} back to Free plan:`, err);
         }
       });
 
       await Promise.all(updatePromises);
     } catch (webhookError) {
-      logManagerError("Error processing Stripe webhook subscription cancellation:", webhookError);
+      console.error('Manager Troubleshooting:', "Error processing Stripe webhook subscription cancellation:", webhookError);
     }
   }
 
@@ -263,7 +263,7 @@ exports.cancelSubscription = onRequest({invoker: "public"}, (req, res) => {
       );
       res.status(200).json({success: true});
     } catch (err) {
-      logManagerError("Cancel Error for customerId:", customerId, err);
+      console.error('Manager Troubleshooting:', "Cancel Error for customerId:", customerId, err);
       res.status(500).json({error: err.message});
     }
   });
@@ -345,7 +345,7 @@ exports.manageTasks = functions.https.onCall(async (data, context) => {
 
     throw new HttpsError("invalid-argument", "Invalid action");
   } catch (error) {
-    logManagerError("Manage Tasks Error for uid:", uid, error);
+    console.error('Manager Troubleshooting:', "Manage Tasks Error for uid:", uid, error);
     if (error instanceof HttpsError) {
       throw error;
     }
@@ -432,7 +432,7 @@ exports.manageShiftNotes = functions.https.onCall(async (data, context) => {
     throw new HttpsError(
         "invalid-argument", "Invalid action");
   } catch (error) {
-    logManagerError("Shift Note Error for uid:", uid, error);
+    console.error('Manager Troubleshooting:', "Shift Note Error for uid:", uid, error);
 
     throw new HttpsError("internal", error.message);
   }
@@ -533,7 +533,7 @@ exports.manageEmployees = functions.https.onCall(async (data, context) => {
 
     throw new HttpsError("invalid-argument", "Invalid action");
   } catch (error) {
-    logManagerError("Manage Employees Error for uid:", uid, error);
+    console.error('Manager Troubleshooting:', "Manage Employees Error for uid:", uid, error);
     if (error instanceof HttpsError) {
       throw error;
     }
@@ -700,7 +700,7 @@ exports.manageShiftGroups = functions.https.onCall(async (data, context) => {
 
     throw new HttpsError("invalid-argument", "Invalid action");
   } catch (error) {
-    logManagerError("Shift Groups Error for uid:", uid, error);
+    console.error('Manager Troubleshooting:', "Shift Groups Error for uid:", uid, error);
 
     if (error instanceof HttpsError) {
       throw error;
@@ -831,7 +831,7 @@ exports.manageIncidents = functions.https.onCall(async (data, context) => {
 
     throw new HttpsError("invalid-argument", "Invalid action");
   } catch (error) {
-    logManagerError("Manage Incidents Error for uid:", uid, error);
+    console.error('Manager Troubleshooting:', "Manage Incidents Error for uid:", uid, error);
     if (error instanceof HttpsError) {
       throw error;
     }
@@ -935,7 +935,7 @@ exports.manageTimeLogs = functions.https.onCall(async (data, context) => {
 
     throw new HttpsError("invalid-argument", "Invalid action");
   } catch (error) {
-    logManagerError(`Manage Time Logs Error for uid: ${uid}`, error);
+    console.error('Manager Troubleshooting:', `Manage Time Logs Error for uid: ${uid}`, error);
     if (error instanceof HttpsError) {
       throw error;
     }
@@ -1022,7 +1022,7 @@ exports.manageWaste = functions.https.onCall(async (data, context) => {
 
     throw new HttpsError("invalid-argument", "Invalid action");
   } catch (error) {
-    logManagerError(`Manage Waste Error for uid: ${uid}`, error);
+    console.error('Manager Troubleshooting:', `Manage Waste Error for uid: ${uid}`, error);
     if (error instanceof HttpsError) {
       throw error;
     }
@@ -1040,24 +1040,13 @@ exports.manageWaste = functions.https.onCall(async (data, context) => {
  * Handles creation, reading, and deletion of recognitions (Kudos / Private Feedback).
  */
 exports.manageRecognitions = functions.https.onCall(async (data, context) => {
-  const adapted = adaptGen2Params(data, context);
-  data = adapted.data;
-  context = adapted.context;
-
-  if (!context || !context.auth) {
-    throw new HttpsError("unauthenticated", "User must be logged in.");
-  }
-
-  const {action, payload} = data;
+  const {uid, userOrgId: actualOrgId, userDoc, action, payload} = await getAuthAndPayload(data, context, admin);
   checkRequiredFields({action, payload}, ["action", "payload"]);
-  const uid = context.auth.uid;
 
   try {
-    const userDoc = await admin.firestore().collection("users").doc(uid).get();
     if (!userDoc.exists) {
       throw new HttpsError("not-found", "User not found");
     }
-    const actualOrgId = userDoc.data().orgId || null;
 
     if (!actualOrgId) {
       throw new HttpsError("permission-denied", "User must be part of an organization to manage recognitions.");
@@ -1138,7 +1127,7 @@ exports.manageRecognitions = functions.https.onCall(async (data, context) => {
 
     throw new HttpsError("invalid-argument", "Invalid action");
   } catch (error) {
-    logManagerError(`Manage Recognitions Error for uid: ${uid}`, error);
+    console.error('Manager Troubleshooting:', `Manage Recognitions Error for uid: ${uid}`, error);
     if (error instanceof HttpsError) {
       throw error;
     }
@@ -1152,25 +1141,13 @@ exports.manageRecognitions = functions.https.onCall(async (data, context) => {
  * Handles creation, reading, and deletion of employee feedbacks.
  */
 exports.manageFeedbacks = functions.https.onCall(async (data, context) => {
-  if (data && typeof data === "object" && "rawRequest" in data && "auth" in data) {
-    context = data;
-    data = data.data;
-  }
-
-  if (!context || !context.auth) {
-    throw new HttpsError("unauthenticated", "User must be logged in.");
-  }
-
-  const {action, payload} = data;
+  const {uid, userOrgId: actualOrgId, userDoc, action, payload} = await getAuthAndPayload(data, context, admin);
   checkRequiredFields({action, payload}, ["action", "payload"]);
-  const uid = context.auth.uid;
 
   try {
-    const userDoc = await admin.firestore().collection("users").doc(uid).get();
     if (!userDoc.exists) {
       throw new HttpsError("not-found", "User not found");
     }
-    const actualOrgId = userDoc.data().orgId || null;
 
     if (!actualOrgId) {
       throw new HttpsError("permission-denied", "User must be part of an organization to manage feedbacks.");
@@ -1239,7 +1216,7 @@ exports.manageFeedbacks = functions.https.onCall(async (data, context) => {
 
     throw new HttpsError("invalid-argument", "Invalid action");
   } catch (error) {
-    logManagerError(`Manage Feedbacks Error for uid: ${uid}`, error);
+    console.error('Manager Troubleshooting:', `Manage Feedbacks Error for uid: ${uid}`, error);
     if (error instanceof HttpsError) {
       throw error;
     }
@@ -1315,7 +1292,7 @@ exports.manageTemperatureLogs = functions.https.onCall(async (data, context) => 
 
     throw new HttpsError("invalid-argument", "Invalid action.");
   } catch (error) {
-    logManagerError("Error in manageTemperatureLogs: ", error);
+    console.error('Manager Troubleshooting:', "Error in manageTemperatureLogs: ", error);
     throw new HttpsError("internal", error.message);
   }
 });
@@ -1384,7 +1361,7 @@ exports.manageVendorDeliveries = functions.https.onCall(async (data, context) =>
 
     throw new HttpsError("invalid-argument", "Invalid action specified.");
   } catch (error) {
-    logManagerError("Error in manageVendorDeliveries: ", error);
+    console.error('Manager Troubleshooting:', "Error in manageVendorDeliveries: ", error);
     if (error instanceof HttpsError) throw error;
     throw new HttpsError("internal", error.message);
   }
