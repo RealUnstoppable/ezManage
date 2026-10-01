@@ -1,4 +1,4 @@
-import { logManagerError, escapeHTML } from './utils.js';
+import { escapeHTML, logManagerError } from './utils.js';
 
 import { auth, db } from './auth.js';
 
@@ -231,21 +231,29 @@ function setupEventListeners() {
                 handleRemoveFromCart(productId);
             }
         });
+        const quantityTimeouts = new Map();
         // ⚡ Bolt Optimization: Debounce quantity inputs to prevent rapid multiple Firestore updates and re-renders
         // Impact: Reduces overlapping rapid inputs, DOM updates, and Firestore writes when using spinners or typing quickly.
-        const updateQuantityTimeouts = new Map();
         cartItemsContainer.addEventListener('input', (e) => {
             if (e.target.classList.contains('item-quantity-input')) {
                 const productId = e.target.dataset.id;
                 const quantity = parseInt(e.target.value, 10);
 
+                if (quantityTimeouts.has(productId)) {
+                    clearTimeout(quantityTimeouts.get(productId));
+                }
+
+                quantityTimeouts.set(productId, setTimeout(() => {
+                    handleUpdateQuantity(productId, quantity);
+                    quantityTimeouts.delete(productId);
+                }, 300));
                 if (updateQuantityTimeouts.has(productId)) {
                     clearTimeout(updateQuantityTimeouts.get(productId));
                 }
 
                 const timeoutId = setTimeout(() => {
                     handleUpdateQuantity(productId, quantity);
-                    updateQuantityTimeouts.delete(productId);
+                    quantityTimeouts.delete(productId);
                 }, 300);
 
                 updateQuantityTimeouts.set(productId, timeoutId);
@@ -283,7 +291,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                     cart = mergedCart;
                 } catch (error) {
-                    console.error("Error fetching user cart", error);
+                    logManagerError("Error fetching user cart", error);
                     cart = localCart;
                 }
             }
