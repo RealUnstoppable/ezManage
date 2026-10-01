@@ -1586,6 +1586,6 @@ exports.manageShiftMarketplace = functions.https.onCall(async (data, context) =>
     } catch (error) {
         console.error("Error managing shift marketplace:", error);
         if (error instanceof functions.https.HttpsError) throw error;
-        throw new functions.https.HttpsError('internal', 'Internal server error', error.message);
+        throw new functions.https.HttpsError('internal', 'Internal server error', 'An unexpected error occurred');
     }
 });
