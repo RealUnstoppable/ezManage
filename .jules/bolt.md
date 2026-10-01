@@ -66,3 +66,7 @@
 ## 2026-06-15 - [Input Debouncing with Map]
 **Learning:** When debouncing input events for multiple distinct items (like cart quantities), using a single global timeout cancels updates for other items when multiple inputs are modified rapidly.
 **Action:** Use a `Map` to track timeouts by unique identifiers (e.g., `productId`) to ensure each item is debounced independently.
+
+## $(date +%Y-%m-%d) - Incremental DOM Rendering with Firestore onSnapshot
+**Learning:** Using `innerHTML = ''` and iterating over the entire dataset on every Firestore real-time update (`onSnapshot`) causes an O(N) performance bottleneck via repeated DOM re-renders.
+**Action:** When subscribing to Firestore real-time updates via `onSnapshot` to render lists or tables, do not clear the DOM container and recreate it all. Instead, use `snapshot.docChanges()` to incrementally render, update, or remove specific rows (identified by a stable `id`), drastically reducing unnecessary DOM re-renders and layout thrashing.
