@@ -32,7 +32,7 @@ onAuthStateChanged(auth, async (user) => {
                 if (currentOrgId) {
                     loadInventory();
                 } else {
-                    console.error("User does not belong to an organization.");
+                    logManagerError("User does not belong to an organization.");
                 }
             }
         } catch (error) {
@@ -55,28 +55,61 @@ function loadInventory() {
 
     const q = query(collection(db, "inventory"), where("orgId", "==", currentOrgId));
 
+    let isInitialLoad = true;
     unsubscribeInventory = onSnapshot(q, (snapshot) => {
         loadingSpinner.classList.add('hidden');
-        inventoryTableBody.innerHTML = '';
 
         if (snapshot.empty) {
             emptyState.classList.remove('hidden');
+            inventoryTableBody.innerHTML = '';
             return;
         }
 
         emptyState.classList.add('hidden');
 
-        const fragment = document.createDocumentFragment();
-        snapshot.forEach((docSnap) => {
-            const data = docSnap.data();
-            const id = docSnap.id;
-            const row = renderItemRow(id, data);
-            fragment.appendChild(row);
-        });
-        inventoryTableBody.appendChild(fragment);
+        if (isInitialLoad) {
+            inventoryTableBody.innerHTML = '';
+            const fragment = document.createDocumentFragment();
+            snapshot.forEach((docSnap) => {
+                const data = docSnap.data();
+                const id = docSnap.id;
+                const row = renderItemRow(id, data);
+                row.id = `item-${id}`;
+                fragment.appendChild(row);
+            });
+            inventoryTableBody.appendChild(fragment);
+            isInitialLoad = false;
+        } else {
+            snapshot.docChanges().forEach((change) => {
+                const docSnap = change.doc;
+                const data = docSnap.data();
+                const id = docSnap.id;
+
+                if (change.type === "added") {
+                    const row = renderItemRow(id, data);
+                    row.id = `item-${id}`;
+                    inventoryTableBody.appendChild(row);
+                }
+                if (change.type === "modified") {
+                    const oldRow = document.getElementById(`item-${id}`);
+                    if (oldRow) {
+                        const newRow = renderItemRow(id, data);
+                        newRow.id = `item-${id}`;
+                        inventoryTableBody.replaceChild(newRow, oldRow);
+                    }
+                }
+                if (change.type === "removed") {
+                    const oldRow = document.getElementById(`item-${id}`);
+                    if (oldRow) {
+                        inventoryTableBody.removeChild(oldRow);
+                    }
+                }
+            });
+        }
+
         if (window.lucide) window.lucide.createIcons();
     }, (error) => {
-        console.error("Error fetching inventory:", error);
+        logManagerError("Error fetching inventory:", error);
         loadingSpinner.classList.add('hidden');
         alert("Failed to load inventory. Please try again.");
     });
