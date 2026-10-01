@@ -303,6 +303,9 @@
 
             // --- 5. Component Generation ---
             const generateHorizontalScroller = () => {
+                // ⚡ Bolt Optimization: Use DocumentFragment to batch DOM insertions
+                // Impact: Reduces reflows and repaints, improving UI thread performance.
+                const fragment = document.createDocumentFragment();
                 for (let i = 0; i < 90; i++) {
                     const date = new Date();
                     date.setDate(today.getDate() - i);
@@ -316,13 +319,17 @@
                     const month = date.toLocaleString('en-US', { month: 'short' });
                     const dayNum = date.getDate();
                     square.innerHTML = `<span>${month}</span><span>${dayNum}</span>`;
-                    dateScroller.appendChild(square);
+                    fragment.appendChild(square);
                 }
+                dateScroller.appendChild(fragment);
             };
 
             const generateFullCalendar = () => {
                 const startDate = new Date('2025-01-01');
                 let currentDate = new Date(startDate);
+                // ⚡ Bolt Optimization: Use DocumentFragment for months and batch string generation for days
+                // Impact: Prevent layout thrashing and unnecessary reflows when generating full calendar DOM.
+                const calendarFragment = document.createDocumentFragment();
                 while (currentDate <= today) {
                     const year = currentDate.getFullYear();
                     const month = currentDate.getMonth();
@@ -335,9 +342,14 @@
                     `;
                     const daysGrid = monthContainer.querySelector('.days-grid');
                     const firstDayOfMonth = new Date(year, month, 1).getDay();
+
+                    let emptyDaysHTML = '';
                     for (let i = 0; i < firstDayOfMonth; i++) {
-                        daysGrid.innerHTML += '<div class="calendar-day empty"></div>';
+                        emptyDaysHTML += '<div class="calendar-day empty"></div>';
                     }
+                    daysGrid.innerHTML = emptyDaysHTML;
+
+                    const daysFragment = document.createDocumentFragment();
                     const daysInMonth = new Date(year, month + 1, 0).getDate();
                     for (let day = 1; day <= daysInMonth; day++) {
                         const dayDate = new Date(year, month, day);
@@ -352,11 +364,13 @@
                         } else {
                             dayCell.classList.add('past-day');
                         }
-                        daysGrid.appendChild(dayCell);
+                        daysFragment.appendChild(dayCell);
                     }
-                    calendarGridContainer.appendChild(monthContainer);
+                    daysGrid.appendChild(daysFragment);
+                    calendarFragment.appendChild(monthContainer);
                     currentDate.setMonth(currentDate.getMonth() + 1);
                 }
+                calendarGridContainer.appendChild(calendarFragment);
                 isCalendarGenerated = true;
             };
 
