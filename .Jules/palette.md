@@ -65,3 +65,7 @@
 ## 2026-09-16 - Form accessibility enhancements and deduplicating IDs
 **Learning:** Duplicate HTML IDs across different forms not only invalidate HTML but also break explicit `<label for="">` accessibility mappings. When resolving these conflicts by splitting a shared ID into unique suffixed IDs (like `taskAssignee1`, `taskAssignee2`), all shared JavaScript DOM population functions (like dropdown populators) must be updated to target an array of all the new IDs to prevent breaking downstream functionality.
 **Action:** When fixing conflicting IDs for accessibility mapping, always trace where those IDs are being populated dynamically via Javascript and update those population functions to target the newly split IDs via `[].forEach()` or similar logic.
+
+## 2024-10-27 - Loading states on form submission
+**Learning:** Using `aria-label` along with loading spinners and disabled state during async form submissions prevents duplicate requests and makes the application feel more robust and responsive to the user.
+**Action:** Always add loading states to async submission buttons to enhance user experience.

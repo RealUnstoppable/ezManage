@@ -4482,6 +4482,13 @@
         async function submitFeatureRequest() {
             const msg = document.getElementById('featureReqText').value;
             if (!msg) return;
+
+            const btn = document.getElementById('btnSubmitFeatureReq');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin mx-auto inline-block"></i> Sending...';
+            btn.disabled = true;
+            if (window.lucide) window.lucide.createIcons();
+
             try {
                 await db.collection('feature_requests').add({
                     uid: currentUser.uid,
@@ -4499,6 +4506,10 @@
                 } else {
                     alert("Failed to send request. " + err.message);
                 }
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+                if (window.lucide) window.lucide.createIcons();
             }
         }
 
@@ -4674,7 +4685,7 @@
                         // Employee specific view (Can mark their own as complete)
                         if (task.assigneeId === currentUser.uid && task.status === 'Pending') {
                             myTasksHtml.push(taskCard + `
-                                    <button data-action="updateTaskStatus" data-id="${task.id}" data-status="Completed" class="btn btn-sm bg-green-500 text-white hover:bg-green-600"><i data-lucide="check" class="w-4 h-4 mr-1"></i>Complete</button>
+                                    <button data-action="updateTaskStatus" data-id="${task.id}" data-status="Completed" class="btn btn-sm bg-green-500 text-white hover:bg-green-600" aria-label="Mark task as complete"><i data-lucide="check" class="w-4 h-4 mr-1"></i>Complete</button>
                                 </div></div>
                             `);
                         } else if (task.assigneeId === currentUser.uid) {
