@@ -2832,12 +2832,14 @@
             document.getElementById('authToggleLink').innerText = isRegisterMode ? "Sign In" : "Create one";
         }
 
+        window.toggleAuthMode = toggleAuthMode;
         function toggleAuthMode(e) {
             if (e) e.preventDefault();
             isRegisterMode = !isRegisterMode;
             toggleAuthModeUI();
         }
 
+        window.handleAuth = handleAuth;
         async function handleAuth(e) {
             e.preventDefault();
             const email = document.getElementById('authEmail').value;
@@ -2879,6 +2881,7 @@
             }
         }
 
+        window.signInWithGoogle = signInWithGoogle;
         function signInWithGoogle() {
             const provider = new firebase.auth.GoogleAuthProvider();
             window.auth.signInWithPopup(provider).then(cred => {

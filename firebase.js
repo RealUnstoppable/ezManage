@@ -14,7 +14,7 @@ const firebaseConfig = typeof window !== 'undefined' && window.ezManageFirebaseC
 // to prevent token mismatches and duplicate initialization errors.
 // Use experimentalForceLongPolling for fallback on CORS/network issues
 if (!window.firebase.apps.length) {
-    window.firebase.initializeApp(firebaseConfig);
+    const app = !window.firebase.apps.length ? window.firebase.initializeApp(firebaseConfig) : window.firebase.app();
     try {
         window.firebase.firestore().settings({
             experimentalForceLongPolling: true
