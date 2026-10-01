@@ -339,7 +339,7 @@ exports.manageTasks = functions.https.onCall(async (data, context) => {
     if (error instanceof HttpsError) {
       throw error;
     }
-    throw new HttpsError("internal", error.message);
+    throw new HttpsError("internal", "An internal error occurred.");
   }
 });
 
@@ -412,7 +412,7 @@ exports.manageShiftNotes = functions.https.onCall(async (data, context) => {
   } catch (error) {
     logManagerError("Shift Note Error for uid:", uid, error);
 
-    throw new HttpsError("internal", error.message);
+    throw new HttpsError("internal", "An internal error occurred.");
   }
 });
 
@@ -575,7 +575,7 @@ exports.manageEmployees = functions.https.onCall(async (data, context) => {
     if (error instanceof HttpsError) {
       throw error;
     }
-    throw new HttpsError("internal", error.message);
+    throw new HttpsError("internal", "An internal error occurred.");
   }
 });
 
@@ -583,7 +583,11 @@ exports.manageEmployees = functions.https.onCall(async (data, context) => {
 async function handleCreateShiftGroup(payload, uid) {
   const {authorId, orgId, ownerName, groupName, password} = payload;
 
-  checkRequiredFields(payload, ['groupName', 'password']);
+  checkRequiredFields(payload, ["groupName", "password"]);
+
+  const salt = crypto.randomBytes(16).toString("hex");
+  const hash = crypto.scryptSync(password, salt, 64).toString("hex");
+  const hashedPassword = `$scrypt$${hash}:${salt}`;
 
   const salt = crypto.randomBytes(16).toString("hex");
   const hash = crypto.scryptSync(password, salt, 64).toString("hex");
@@ -608,7 +612,7 @@ async function handleCreateShiftGroup(payload, uid) {
 async function handleRequestJoinShiftGroup(payload, uid) {
   const {userName, groupId, password} = payload;
 
-  checkRequiredFields(payload, ['groupId', 'password']);
+  checkRequiredFields(payload, ["groupId", "password"]);
 
   const groupDoc = await admin.firestore()
       .collection("shift_groups").doc(groupId).get();
@@ -679,7 +683,7 @@ async function handleRetractJoinShiftGroup(payload, uid) {
 async function handleApproveJoinShiftGroup(payload, uid) {
   const {requestId} = payload;
 
-  checkRequiredFields(payload, ['requestId']);
+  checkRequiredFields(payload, ["requestId"]);
 
   const requestDocRef = admin.firestore()
       .collection("shift_group_requests").doc(requestId);
@@ -717,7 +721,7 @@ async function handleApproveJoinShiftGroup(payload, uid) {
 async function handleRemoveManagerShiftGroup(payload, uid) {
   const {userId, groupId} = payload;
 
-  checkRequiredFields(payload, ['userId', 'groupId']);
+  checkRequiredFields(payload, ["userId", "groupId"]);
 
   const groupDoc = await admin.firestore()
       .collection("shift_groups").doc(groupId).get();
@@ -755,7 +759,7 @@ exports.manageShiftGroups = functions.https.onCall(async (data, context) => {
     if (error instanceof HttpsError) {
       throw error;
     }
-    throw new HttpsError("internal", error.message);
+    throw new HttpsError("internal", "An internal error occurred.");
   }
 });
 
@@ -875,7 +879,7 @@ exports.manageIncidents = functions.https.onCall(async (data, context) => {
     if (error instanceof HttpsError) {
       throw error;
     }
-    throw new HttpsError("internal", error.message);
+    throw new HttpsError("internal", "An internal error occurred.");
   }
 });
 
@@ -964,7 +968,7 @@ exports.manageTimeLogs = functions.https.onCall(async (data, context) => {
     if (error instanceof HttpsError) {
       throw error;
     }
-    throw new HttpsError("internal", error.message);
+    throw new HttpsError("internal", "An internal error occurred.");
   }
 });
 
@@ -1140,7 +1144,7 @@ exports.manageWaste = functions.https.onCall(async (data, context) => {
     if (error instanceof HttpsError) {
       throw error;
     }
-    throw new HttpsError("internal", error.message);
+    throw new HttpsError("internal", "An internal error occurred.");
   }
 });
 
@@ -1157,7 +1161,7 @@ exports.manageRecognitions = functions.https.onCall(async (data, context) => {
   const {uid, userOrgId, isAdmin, userName, action, payload} = await getAuthAndPayload(data, context, admin);
 
   try {
-        const actualOrgId = userOrgId || null;
+    const actualOrgId = userOrgId || null;
 
     if (!actualOrgId) {
       throw new HttpsError("permission-denied", "User must be part of an organization to manage recognitions.");
@@ -1242,7 +1246,7 @@ exports.manageRecognitions = functions.https.onCall(async (data, context) => {
     if (error instanceof HttpsError) {
       throw error;
     }
-    throw new HttpsError("internal", error.message);
+    throw new HttpsError("internal", "An internal error occurred.");
   }
 });
 
@@ -1328,7 +1332,7 @@ exports.manageFeedbacks = functions.https.onCall(async (data, context) => {
     if (error instanceof HttpsError) {
       throw error;
     }
-    throw new HttpsError("internal", error.message);
+    throw new HttpsError("internal", "An internal error occurred.");
   }
 });
 
@@ -1401,7 +1405,7 @@ exports.manageTemperatureLogs = functions.https.onCall(async (data, context) => 
     throw new HttpsError("invalid-argument", "Invalid action.");
   } catch (error) {
     logManagerError("Error in manageTemperatureLogs: ", error);
-    throw new HttpsError("internal", error.message);
+    throw new HttpsError("internal", "An internal error occurred.");
   }
 });
 
@@ -1471,7 +1475,7 @@ exports.manageVendorDeliveries = functions.https.onCall(async (data, context) =>
   } catch (error) {
     logManagerError("Error in manageVendorDeliveries: ", error);
     if (error instanceof HttpsError) throw error;
-    throw new HttpsError("internal", error.message);
+    throw new HttpsError("internal", "An internal error occurred.");
   }
 });
 
@@ -1581,4 +1585,9 @@ exports.manageShiftMarketplace = functions.https.onCall(async (data, context) =>
         if (error instanceof HttpsError) throw error;
         throw new HttpsError('internal', 'Internal server error', error.message);
     }
+  } catch (error) {
+    console.error("Error managing shift marketplace:", error);
+    if (error instanceof functions.https.HttpsError) throw error;
+    throw new functions.https.HttpsError("internal", "Internal server error");
+  }
 });
