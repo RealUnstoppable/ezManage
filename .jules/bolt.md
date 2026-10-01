@@ -66,3 +66,6 @@
 ## 2026-06-15 - [Input Debouncing with Map]
 **Learning:** When debouncing input events for multiple distinct items (like cart quantities), using a single global timeout cancels updates for other items when multiple inputs are modified rapidly.
 **Action:** Use a `Map` to track timeouts by unique identifiers (e.g., `productId`) to ensure each item is debounced independently.
+## 2024-06-25 - [O(n²) DOM Updates Avoidance in Calendar Grid]
+**Learning:** Using `innerHTML +=` inside loops, such as when generating empty days in a calendar grid (`daysGrid.innerHTML += '<div class="calendar-day empty"></div>'`), creates significant O(n²) performance degradation and layout thrashing as the browser continually parses and renders the container.
+**Action:** Replace sequential string concatenations inside loops with batched array generation (e.g., `Array(n).fill(html).join('')`) followed by a single `.innerHTML` assignment.
