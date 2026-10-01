@@ -1,4 +1,4 @@
-import { logManagerError, escapeHTML } from './utils.js';
+import { escapeHTML, logManagerError } from './utils.js';
 
 import { auth, db } from './auth.js';
 
@@ -247,6 +247,16 @@ function setupEventListeners() {
                     handleUpdateQuantity(productId, quantity);
                     quantityTimeouts.delete(productId);
                 }, 300));
+                if (updateQuantityTimeouts.has(productId)) {
+                    clearTimeout(updateQuantityTimeouts.get(productId));
+                }
+
+                const timeoutId = setTimeout(() => {
+                    handleUpdateQuantity(productId, quantity);
+                    quantityTimeouts.delete(productId);
+                }, 300);
+
+                updateQuantityTimeouts.set(productId, timeoutId);
             }
         });
     }
@@ -281,7 +291,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                     cart = mergedCart;
                 } catch (error) {
-                    console.error("Error fetching user cart", error);
+                    logManagerError("Error fetching user cart", error);
                     cart = localCart;
                 }
             }

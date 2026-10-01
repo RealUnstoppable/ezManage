@@ -946,7 +946,7 @@
                                     </div>
                                     <div>
                                         <label for="announcementContent" class="text-[10px] font-black uppercase tracking-widest text-slate-400">Message</label>
-                                        <textarea id="trackerAnnouncementContent" placeholder="Enter the announcement message..." rows="3" required class="w-full"></textarea>
+                                        <textarea id="trackerAnnouncementContent" placeholder="Enter the announcement message..." rows="3" required class="w-full" aria-label="Announcement Content"></textarea>
                                     </div>
                                     <div class="flex items-end gap-4">
                                         <div class="flex-1">
@@ -1335,7 +1335,7 @@
                 <div class="card shadow-2xl mb-12 text-center py-12">
                     <h2 class="text-2xl font-bold mb-6" id="timeclockStatusText">Loading Status...</h2>
                     <p class="text-slate-500 mb-8" id="timeclockSubText">Please wait.</p>
-                    <button id="clockInOutBtn" onclick="toggleClock()" class="btn btn-accent px-12 py-6 text-xl disabled:opacity-50 disabled:cursor-not-allowed">
+                    <button id="clockInOutBtn" onclick="toggleClock()" class="btn btn-accent px-12 py-6 text-xl disabled:opacity-50 disabled:cursor-not-allowed" aria-label="Toggle Time Clock">
                         <i data-lucide="loader-2" class="w-6 h-6 animate-spin"></i>
                     </button>
                 </div>
@@ -1680,6 +1680,8 @@
                                 <option value="High">High Priority</option>
                                 <option value="Critical">Critical Issue</option>
                             </select>
+                            <input type="number" id="maintenanceCost" placeholder="Estimated Cost ($)" aria-label="Estimated Cost"
+                                class="flex-1 bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
                         </div>
 
                         <div class="flex justify-end gap-3 pt-2">
@@ -2516,8 +2518,7 @@
 
         // Initialization is handled by firebase.js, we just get references
 
-// Wait, since this script is not a module, we need to make sure firebase.js runs before it.
-        // Let's just make the inline script check for singleton.
+        // Ensure singleton check since it relies on firebaseConfig
         const firebaseConfig = window.ezManageFirebaseConfig;
         window.app = !window.firebase.apps.length ? window.firebase.initializeApp(firebaseConfig) : window.firebase.app();
         window.auth = window.firebase.auth();
@@ -4322,9 +4323,10 @@
             const title = document.getElementById('maintenanceTitle').value.trim();
             const desc = document.getElementById('maintenanceDesc').value.trim();
             const priority = document.getElementById('maintenancePriority').value;
+            const cost = document.getElementById('maintenanceCost').value;
 
-            if (!title) {
-                alert("Please provide a title or issue name.");
+            if (!title || !desc) {
+                alert("Please provide a title and description.");
                 return;
             }
 
@@ -4350,6 +4352,7 @@
                 document.getElementById('maintenanceTitle').value = '';
                 document.getElementById('maintenanceDesc').value = '';
                 document.getElementById('maintenancePriority').value = 'Low';
+                document.getElementById('maintenanceCost').value = '';
                 document.getElementById('reportMaintenanceModal').classList.add('hidden');
 
                 alert("Maintenance ticket submitted successfully.");
@@ -4424,7 +4427,7 @@
             }
         }
 
-        function fetchMaintenanceTickets() {
+        async function fetchMaintenanceTickets() {
             if (!currentUser || !currentUserData || !currentUserData.orgId) {
                 document.getElementById('maintenanceContainer').innerHTML = `
                     <div class="text-center py-16 bg-slate-50 dark:bg-slate-900 rounded-3xl border-2 border-dashed border-slate-200 dark:border-slate-800">
@@ -4441,15 +4444,15 @@
             container.innerHTML = '<div class="text-center py-8"><i data-lucide="loader-2" class="w-8 h-8 animate-spin mx-auto text-sky-500 mb-4"></i><p class="text-slate-500">Loading tickets...</p></div>';
             lucide.createIcons();
 
-            if (window.maintenanceUnsubscribe) {
-                window.maintenanceUnsubscribe();
-            }
+            try {
+                const result = await callCloudFunction('manageMaintenanceLogs', { action: "get", payload: {} });
 
             window.maintenanceUnsubscribe = window.db.collection('maintenance_logs')
                 .where('orgId', '==', currentUserData.orgId)
                 .onSnapshot(snap => {
                     container.innerHTML = '';
-                    if (snap.empty) {
+
+                    if (tickets.length === 0) {
                         container.innerHTML = `
                             <div class="text-center py-16 bg-slate-50 dark:bg-slate-900 rounded-3xl border-2 border-dashed border-slate-200 dark:border-slate-800">
                                 <i data-lucide="check-circle-2" class="w-12 h-12 text-emerald-400 mx-auto mb-4"></i>
@@ -4461,18 +4464,9 @@
                         return;
                     }
 
-                    let tickets = [];
-                    snap.forEach(doc => tickets.push({ id: doc.id, ...doc.data() }));
+                    const fragment = document.createDocumentFragment();
 
-                    // Sort locally since composite index is likely missing
-                    tickets.sort((a, b) => {
-                        const aTime = a.createdAt ? a.createdAt.toMillis() : 0;
-                        const bTime = b.createdAt ? b.createdAt.toMillis() : 0;
-                        return bTime - aTime;
-                    });
-
-                    // ⚡ Bolt Optimization: Replace O(n²) string concatenation inside loop with array map().join('')
-                    container.innerHTML = tickets.map(ticket => {
+                    tickets.forEach(ticket => {
                         const statusColors = {
                             'Open': 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400 border-amber-200 dark:border-amber-800',
                             'In Progress': 'bg-sky-100 text-sky-800 dark:bg-sky-900/30 dark:text-sky-400 border-sky-200 dark:border-sky-800',
@@ -4485,57 +4479,65 @@
                             'Critical': 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400 animate-pulse'
                         };
 
-                        const dateStr = ticket.createdAt ? new Date(ticket.createdAt.toMillis()).toLocaleString() : 'Just now';
+                        const dateStr = ticket.timestamp ? new Date(ticket.timestamp._seconds * 1000).toLocaleString() : 'Just now';
 
-                        return `
-                            <div class="card p-6 border-l-4 ${ticket.priority === 'Critical' ? 'border-l-red-500' : ticket.priority === 'High' ? 'border-l-orange-500' : 'border-l-sky-500'}">
-                                <div class="flex flex-col md:flex-row justify-between gap-4 mb-4">
-                                    <div>
-                                        <h3 class="text-lg font-bold">${escapeHTML(ticket.title)}</h3>
-                                        <p class="text-sm text-slate-500">Reported by ${escapeHTML(ticket.reportedByName)} • ${dateStr}</p>
-                                    </div>
-                                    <div class="flex gap-2 items-start">
-                                        <span class="px-3 py-1 rounded-full text-xs font-bold ${prioColors[ticket.priority] || prioColors['Low']}">${escapeHTML(ticket.priority)}</span>
-                                        <select aria-label="Update ticket status" class="ticket-status-select px-3 py-1 rounded-full text-xs font-bold border appearance-none cursor-pointer focus:outline-none ${statusColors[ticket.status] || statusColors['Open']}" data-ticket-id="${escapeHTML(ticket.id)}">
-                                            <option value="Open" ${ticket.status === 'Open' ? 'selected' : ''}>Open</option>
-                                            <option value="In Progress" ${ticket.status === 'In Progress' ? 'selected' : ''}>In Progress</option>
-                                            <option value="Resolved" ${ticket.status === 'Resolved' ? 'selected' : ''}>Resolved</option>
-                                        </select>
-                                    </div>
+                        const div = document.createElement('div');
+                        div.id = `maintenance-${escapeHTML(ticket.id)}`;
+                        div.className = `card p-6 border-l-4 ${ticket.priority === 'Critical' ? 'border-l-red-500' : ticket.priority === 'High' ? 'border-l-orange-500' : 'border-l-sky-500'}`;
+
+                        div.innerHTML = `
+                            <div class="flex flex-col md:flex-row justify-between gap-4 mb-4">
+                                <div>
+                                    <h3 class="text-lg font-bold">${escapeHTML(ticket.title)}</h3>
+                                    <p class="text-sm text-slate-500">Reported by ${escapeHTML(ticket.reportedByName)} • ${dateStr}</p>
+                                    ${ticket.cost > 0 ? `<p class="text-sm text-slate-500 mt-1 font-mono">Est. Cost: $${Number(ticket.cost).toFixed(2)}</p>` : ''}
                                 </div>
-                                <p class="text-slate-700 dark:text-slate-300 whitespace-pre-wrap">${escapeHTML(ticket.description)}</p>
+                                <div class="flex gap-2 items-start">
+                                    <span class="px-3 py-1 rounded-full text-xs font-bold ${prioColors[ticket.priority] || prioColors['Low']}">${escapeHTML(ticket.priority)}</span>
+                                    <select aria-label="Update maintenance status" data-action="updateMaintenanceStatus" data-id="${escapeHTML(ticket.id)}" class="px-3 py-1 rounded-full text-xs font-bold border appearance-none cursor-pointer focus:outline-none maintenance-status-select ${statusColors[ticket.status] || statusColors['Open']}">
+                                        <option value="Open" ${ticket.status === 'Open' ? 'selected' : ''}>Open</option>
+                                        <option value="In Progress" ${ticket.status === 'In Progress' ? 'selected' : ''}>In Progress</option>
+                                        <option value="Resolved" ${ticket.status === 'Resolved' ? 'selected' : ''}>Resolved</option>
+                                    </select>
+                                    <button data-action="deleteMaintenanceTicket" data-id="${escapeHTML(ticket.id)}" class="text-red-400 p-1 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md ml-2" aria-label="Delete Maintenance Ticket"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                                </div>
                             </div>
+                            <p class="text-slate-700 dark:text-slate-300 whitespace-pre-wrap">${escapeHTML(ticket.description)}</p>
                         `;
-                    }).join('');
-                }, err => {
-                    console.error("Error fetching tickets:", err);
-                    container.innerHTML = '';
-                    const errDiv = document.createElement('div');
-                    errDiv.className = 'text-red-500 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl text-center';
-                    errDiv.textContent = `Failed to load tickets: ${window.escapeHTML ? window.escapeHTML(err.message) : err.message}`;
-                    container.appendChild(errDiv);
-                });
+                        fragment.appendChild(div);
+                    });
+                    container.appendChild(fragment);
+                    lucide.createIcons();
+                }
+            } catch (error) {
+                console.error("Error fetching maintenance tickets:", error);
+                container.innerHTML = `<div class="text-red-500 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl text-center">Failed to load tickets: ${window.escapeHTML ? window.escapeHTML(error.message) : error.message}</div>`;
+            }
         }
 
-        document.getElementById('maintenanceContainer').addEventListener('change', function(e) {
-            if (e.target && e.target.classList.contains('ticket-status-select')) {
-                const ticketId = e.target.getAttribute('data-ticket-id');
-                if (ticketId) {
-                    updateTicketStatus(ticketId, e.target.value);
-                }
+        async function deleteMaintenanceTicket(ticketId) {
+            if (!confirm("Are you sure you want to permanently delete this maintenance ticket?")) return;
+            const incEl = document.getElementById('maintenance-' + escapeHTML(ticketId));
+            if (incEl) incEl.style.display = 'none'; // Optimistically hide
+            try {
+                await callCloudFunction('manageMaintenanceLogs', { action: "delete", payload: { logId: ticketId } });
+                fetchMaintenanceTickets();
+            } catch (err) {
+                logManagerError("Error deleting maintenance ticket:", err);
+                alert("Failed to delete ticket.");
+                fetchMaintenanceTickets(); // Revert on failure
             }
-        });
+        }
 
-        async function updateTicketStatus(ticketId, newStatus) {
+        async function updateMaintenanceStatus(ticketId, newStatus) {
             try {
                 await window.db.collection('maintenance_logs').doc(ticketId).update({
                     status: newStatus,
                     updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
                     orgId: currentUserData.orgId
                 });
-                // Optimistic UI update already handled by changing the select value
             } catch (error) {
-                window.logManagerError("Error updating ticket:", error);
+                window.logManagerError("Error updating maintenance ticket:", error);
                 alert("Failed to update status. " + error.message);
                 fetchMaintenanceTickets(); // revert
             }
@@ -7517,6 +7519,7 @@ async function submitWasteLog() {
             else if (action === 'deleteTempLog') deleteTempLog(id);
             else if (action === 'deleteDelivery') deleteDelivery(id);
             else if (action === 'deleteIncident') deleteIncident(id);
+            else if (action === 'deleteMaintenanceTicket') deleteMaintenanceTicket(id);
             else if (action === 'deleteAnnouncement') deleteAnnouncement(id);
             else if (action === 'deleteCert') deleteCertification(id);
             else if (action === 'updateAssignedTaskStatus') updateAssignedTaskStatus(id, status);
@@ -8172,6 +8175,7 @@ window.onload = () => {
                 if (action === 'updateTaskStatus') updateTaskStatus(id, status);
                 if (action === 'deleteWasteLog') deleteWasteLog(id);
                 if (action === 'deleteIncident') deleteIncident(id);
+                if (action === 'deleteMaintenanceTicket') deleteMaintenanceTicket(id);
                 if (action === 'deleteAnnouncement') deleteAnnouncement(id);
                 if (action === 'deleteCert') deleteCertification(id);
                 if (action === 'updateAssignedTaskStatus') updateAssignedTaskStatus(id, status);
@@ -8186,6 +8190,7 @@ window.onload = () => {
             if (e.type === 'change' && el.tagName === 'SELECT') {
                 const id = el.getAttribute('data-id');
                 if (action === 'updateTaskStatus') updateTaskStatus(id, el.value);
+                if (action === 'updateMaintenanceStatus') updateMaintenanceStatus(id, el.value);
             }
         });
     </script>
