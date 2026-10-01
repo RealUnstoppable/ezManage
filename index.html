@@ -2545,7 +2545,7 @@
 
         async function callCloudFunction(functionName, payload) {
             try {
-                const func = firebase.functions().httpsCallable(functionName);
+                const func = window.firebase.functions().httpsCallable(functionName);
                 return await func(payload);
             } catch (error) {
                 window.logManagerError("Error calling cloud function " + functionName, error);
