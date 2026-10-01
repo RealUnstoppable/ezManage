@@ -1,6 +1,12 @@
 import { logManagerError } from './utils.js';
 import { auth, db, getUserRedirectPath, fetchUserDoc } from './auth.js';
 
+if (typeof window.navTo !== 'function') {
+    window.navTo = function(viewId) {
+        localStorage.setItem('navTo', viewId);
+        window.location.href = 'index.html';
+    };
+}
 
 export function loadNavbar() {
     // ezManage has its own native fixed navbar (nav.glass-nav).

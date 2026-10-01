@@ -27,7 +27,6 @@
         });
         window.escapeHTML = escapeHTML;
     </script>
-    <script src="js/firebase-config.js"></script>
     <script>
         tailwind.config = {
             darkMode: ['class', '.dark-mode'],
@@ -225,50 +224,50 @@
 
         <div class="flex-1 overflow-y-auto overscroll-contain px-8 py-4 custom-scrollbar">
             <nav class="space-y-6">
-            <a href="#" onclick="navTo('tracker')"
+            <a href="index.html#tracker" onclick="navTo('tracker'); return false;"
                 class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="edit-3"></i> Active
                 Tracker</a>
-            <a href="#" onclick="navTo('schedule')"
+            <a href="index.html#schedule" onclick="navTo('schedule'); return false;"
                 class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="calendar"></i>
                 Schedule</a>
             <a href="easy-ai.html" class="flex items-center gap-4 font-bold text-lg text-sky-500 hover:text-sky-600"><i
                     data-lucide="brain"></i> AI Predictor</a>
-            <a href="#" onclick="navTo('presets')"
+            <a href="index.html#presets" onclick="navTo('presets'); return false;"
                 class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="layout"></i>
                 Templates</a>
-            <a href="#" onclick="navTo('history')"
+            <a href="index.html#history" onclick="navTo('history'); return false;"
                 class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="clock"></i>
                 History</a>
-            <a href="#" onclick="navTo('shiftNotes')"
+            <a href="index.html#shiftNotes" onclick="navTo('shiftNotes'); return false;"
                 class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i
                     data-lucide="clipboard-list"></i>
                 Shift Notes</a>
-            <a href="#" onclick="navTo('team')"
+            <a href="index.html#team" onclick="navTo('team'); return false;"
                 class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="users"></i>
                 Team Directory</a>
-            <a href="#" onclick="navTo('employees')"
+            <a href="index.html#employees" onclick="navTo('employees'); return false;"
                 class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i
                     data-lucide="users"></i>
                 Team Roster</a>
-            <a href="#" onclick="navTo('maintenance')"
+            <a href="index.html#maintenance" onclick="navTo('maintenance'); return false;"
                 class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="wrench"></i>
                 Maintenance</a>
-            <a href="#" onclick="navTo('performance')"
+            <a href="index.html#performance" onclick="navTo('performance'); return false;"
                 class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="bar-chart-3"></i>
                 Performance</a>
             <div class="h-px bg-slate-100 dark:bg-slate-800 my-8"></div>
             <a href="#" onclick="handleNavAccountClick()"
                 class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="user"></i> My
                 Profile</a>
-            <a href="#" onclick="navTo('pricing')"
+            <a href="index.html#pricing" onclick="navTo('pricing'); return false;"
                 class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="credit-card"></i>
                 Pricing & Plans</a>
 
-            <a href="#" onclick="navTo('timeoff')"
+            <a href="index.html#timeoff" onclick="navTo('timeoff'); return false;"
                 class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="calendar-clock"></i>
                 Time Off</a>
 
-            <a href="#" onclick="navTo('request')"
+            <a href="index.html#request" onclick="navTo('request'); return false;"
                 class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="lightbulb"></i>
                 Feature Request</a>
             </nav>
