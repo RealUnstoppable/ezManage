@@ -303,8 +303,6 @@
 
             // --- 5. Component Generation ---
             const generateHorizontalScroller = () => {
-                // ⚡ Bolt Optimization: Use DocumentFragment to batch DOM insertions
-                // Impact: Reduces reflows and repaints, improving UI thread performance.
                 const fragment = document.createDocumentFragment();
                 for (let i = 0; i < 90; i++) {
                     const date = new Date();
@@ -342,15 +340,12 @@
                     `;
                     const daysGrid = monthContainer.querySelector('.days-grid');
                     const firstDayOfMonth = new Date(year, month, 1).getDay();
-
-                    let emptyDaysHTML = '';
-                    for (let i = 0; i < firstDayOfMonth; i++) {
-                        emptyDaysHTML += '<div class="calendar-day empty"></div>';
+                    if (firstDayOfMonth > 0) {
+                        daysGrid.innerHTML = Array(firstDayOfMonth).fill('<div class="calendar-day empty"></div>').join('');
                     }
-                    daysGrid.innerHTML = emptyDaysHTML;
 
-                    const daysFragment = document.createDocumentFragment();
                     const daysInMonth = new Date(year, month + 1, 0).getDate();
+                    const fragment = document.createDocumentFragment();
                     for (let day = 1; day <= daysInMonth; day++) {
                         const dayDate = new Date(year, month, day);
                         if (dayDate > today) break;
@@ -364,10 +359,10 @@
                         } else {
                             dayCell.classList.add('past-day');
                         }
-                        daysFragment.appendChild(dayCell);
+                        fragment.appendChild(dayCell);
                     }
-                    daysGrid.appendChild(daysFragment);
-                    calendarFragment.appendChild(monthContainer);
+                    daysGrid.appendChild(fragment);
+                    calendarGridContainer.appendChild(monthContainer);
                     currentDate.setMonth(currentDate.getMonth() + 1);
                 }
                 calendarGridContainer.appendChild(calendarFragment);
