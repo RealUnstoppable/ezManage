@@ -66,3 +66,6 @@
 ## 2026-06-15 - [Input Debouncing with Map]
 **Learning:** When debouncing input events for multiple distinct items (like cart quantities), using a single global timeout cancels updates for other items when multiple inputs are modified rapidly.
 **Action:** Use a `Map` to track timeouts by unique identifiers (e.g., `productId`) to ensure each item is debounced independently.
+## 2026-10-01 - [O(N²) DOM Insertion Bottleneck]
+**Learning:** Appending HTML strings using `element.innerHTML += ...` inside loops causes severe layout thrashing and an O(n²) performance degradation by constantly re-parsing and re-rendering the entire container.
+**Action:** Always batch DOM insertions by accumulating string templates in an array and using `.join('')`, or by utilizing a `DocumentFragment` for batched element appends before updating the DOM.
