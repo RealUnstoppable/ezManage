@@ -3990,12 +3990,9 @@
             if (!confirm("Are you sure you want to cancel your subscription?")) return;
 
             try {
-                const res = await fetch("https://cancelsubscription-dsy7tdoigq-uc.a.run.app", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ customerId: currentUserData.subscription.customerId })
-                });
-                const data = await res.json();
+                const cancelSubFn = firebase.functions().httpsCallable('cancelSubscription');
+                const result = await cancelSubFn();
+                const data = result.data;
                 if (data.success) {
                     alert("Subscription canceled successfully.");
                     db.collection('users').doc(currentUser.uid).update({
@@ -4007,7 +4004,9 @@
                 } else {
                     alert("Error: " + data.error);
                 }
-            } catch (e) { alert("Failed to contact payment server. Try again later."); }
+            } catch (e) {
+                alert("Failed to contact payment server: " + e.message);
+            }
         }
 
         function deleteAccount() {
