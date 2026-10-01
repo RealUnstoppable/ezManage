@@ -303,6 +303,7 @@
 
             // --- 5. Component Generation ---
             const generateHorizontalScroller = () => {
+                const fragment = document.createDocumentFragment();
                 for (let i = 0; i < 90; i++) {
                     const date = new Date();
                     date.setDate(today.getDate() - i);
@@ -316,8 +317,9 @@
                     const month = date.toLocaleString('en-US', { month: 'short' });
                     const dayNum = date.getDate();
                     square.innerHTML = `<span>${month}</span><span>${dayNum}</span>`;
-                    dateScroller.appendChild(square);
+                    fragment.appendChild(square);
                 }
+                dateScroller.appendChild(fragment);
             };
 
             const generateFullCalendar = () => {
@@ -335,10 +337,12 @@
                     `;
                     const daysGrid = monthContainer.querySelector('.days-grid');
                     const firstDayOfMonth = new Date(year, month, 1).getDay();
-                    for (let i = 0; i < firstDayOfMonth; i++) {
-                        daysGrid.innerHTML += '<div class="calendar-day empty"></div>';
+                    if (firstDayOfMonth > 0) {
+                        daysGrid.innerHTML = Array(firstDayOfMonth).fill('<div class="calendar-day empty"></div>').join('');
                     }
+
                     const daysInMonth = new Date(year, month + 1, 0).getDate();
+                    const fragment = document.createDocumentFragment();
                     for (let day = 1; day <= daysInMonth; day++) {
                         const dayDate = new Date(year, month, day);
                         if (dayDate > today) break;
@@ -352,8 +356,9 @@
                         } else {
                             dayCell.classList.add('past-day');
                         }
-                        daysGrid.appendChild(dayCell);
+                        fragment.appendChild(dayCell);
                     }
+                    daysGrid.appendChild(fragment);
                     calendarGridContainer.appendChild(monthContainer);
                     currentDate.setMonth(currentDate.getMonth() + 1);
                 }
