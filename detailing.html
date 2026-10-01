@@ -273,23 +273,23 @@
                 <form id="booking-form">
                     <div class="form-grid">
                         <div>
-                            <label>Name</label>
+                            <label for="client-name">Name</label>
                             <input type="text" id="client-name" required placeholder="John Doe">
                         </div>
                         <div>
-                            <label>Phone</label>
+                            <label for="client-phone">Phone</label>
                             <input type="tel" id="client-phone" required placeholder="(555) 000-0000">
                         </div>
                         <div class="full-width">
-                            <label>Email</label>
+                            <label for="client-email">Email</label>
                             <input type="email" id="client-email" required placeholder="john@example.com">
                         </div>
                         <div>
-                            <label>Vehicle Make/Model</label>
+                            <label for="vehicle-model">Vehicle Make/Model</label>
                             <input type="text" id="vehicle-model" required placeholder="e.g. 2020 Honda Civic">
                         </div>
                         <div>
-                            <label>Service Package</label>
+                            <label for="service-select">Service Package</label>
                             <select id="service-select">
                                 <option value="refresh">The Refresh ($80+)</option>
                                 <option value="deep-clean">The Deep Clean ($180+)</option>
@@ -298,11 +298,11 @@
                             </select>
                         </div>
                         <div class="full-width">
-                            <label>Preferred Date & Time</label>
+                            <label for="appointment-time">Preferred Date & Time</label>
                             <input type="datetime-local" id="appointment-time" required>
                         </div>
                         <div class="full-width">
-                            <label>Special Requests / Issues</label>
+                            <label for="notes">Special Requests / Issues</label>
                             <textarea id="notes" rows="3" placeholder="e.g. Dog hair removal needed, scratch on rear bumper..."></textarea>
                         </div>
                     </div>
