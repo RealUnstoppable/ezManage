@@ -249,25 +249,26 @@ exports.stripeWebhook = onRequest({invoker: "public"}, async (req, res) => {
 });
 
 // 🔻 Cancel Subscription Manually
-exports.cancelSubscription = onRequest({invoker: "public"}, (req, res) => {
-  cors(req, res, async () => {
-    if (req.method !== "POST") {
-      return res.status(405).send("Method Not Allowed");
-    }
+exports.cancelSubscription = functions.https.onCall(async (data, context) => {
+  const {uid, userDoc, payload} = await getAuthAndPayload(data, context, admin);
 
-    const {customerId} = req.body;
+  const {customerId} = payload;
+  checkRequiredFields(payload, ["customerId"]);
 
-    try {
-      const subs = await stripe.subscriptions.list({customer: customerId});
-      await Promise.all(
-          subs.data.map((sub) => stripe.subscriptions.cancel(sub.id)),
-      );
-      res.status(200).json({success: true});
-    } catch (err) {
-      logManagerError(`Cancel Error for customerId: ${customerId}`, err);
-      res.status(500).json({error: err.message});
-    }
-  });
+  if (!userDoc.exists || !userDoc.data().subscription || userDoc.data().subscription.customerId !== customerId) {
+    throw new HttpsError("permission-denied", "Unauthorized to cancel this subscription.");
+  }
+
+  try {
+    const subs = await stripe.subscriptions.list({customer: customerId});
+    await Promise.all(
+        subs.data.map((sub) => stripe.subscriptions.cancel(sub.id)),
+    );
+    return {success: true};
+  } catch (err) {
+    logManagerError(`Cancel Error for customerId: ${customerId}`, err);
+    throw new HttpsError("internal", err.message);
+  }
 });
 
 /**

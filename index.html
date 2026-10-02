@@ -4053,12 +4053,12 @@
             if (!confirm("Are you sure you want to cancel your subscription?")) return;
 
             try {
-                const res = await fetch("https://cancelsubscription-dsy7tdoigq-uc.a.run.app", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ customerId: currentUserData.subscription.customerId })
+                const cancelSubCall = window.firebase.functions().httpsCallable('cancelSubscription');
+                const result = await cancelSubCall({
+                    payload: { customerId: currentUserData.subscription.customerId }
                 });
-                const data = await res.json();
+
+                const data = result.data;
                 if (data.success) {
                     alert("Subscription canceled successfully.");
                     window.db.collection('users').doc(currentUser.uid).update({
@@ -4068,9 +4068,12 @@
                     });
                     updateCloudSyncUI();
                 } else {
-                    alert("Error: " + data.error);
+                    alert("Failed to cancel subscription: " + (data.error || "Unknown error"));
                 }
-            } catch (e) { alert("Failed to contact payment server. Try again later."); }
+            } catch (err) {
+                console.error("Cancel Error:", err);
+                alert("Failed to cancel subscription: " + (err.message || "Unknown error"));
+            }
         }
 
         function deleteAccount() {
