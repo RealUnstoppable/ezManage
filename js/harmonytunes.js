@@ -166,6 +166,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="card-desc">${escapeHTML(pl.desc)}</div>
             </div>
         `).join('');
+        if (window.lucide) window.lucide.createIcons();
 
         document.querySelectorAll('.music-card .card-play-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
