@@ -10,15 +10,13 @@ global.window.firebase = {
     functions: jest.fn(() => ({ httpsCallable: jest.fn() }))
 };
 
-const originalLocation = window.location;
-beforeEach(() => {
-  // Delete the JSDOM non-configurable property
-  delete window.location;
+// Mock window location
+delete global.window.location;
 
-  // Assign your mock object
-  window.location = {
-    href: 'http://localhost/',
-    search: '?group=test_group',
+delete global.window.location;
+global.window.location = {
+    search: "?group=test_group",
+    href: "http://localhost/shop.html",
     assign: jest.fn(),
     replace: jest.fn(),
     reload: jest.fn(),
@@ -29,6 +27,7 @@ afterAll(() => {
   // Restore it after tests complete
   window.location = originalLocation;
 });
+
 
 describe('calculateCartTotal', () => {
     let calculateCartTotal;

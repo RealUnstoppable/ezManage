@@ -74,9 +74,6 @@ function ShiftNotesManager({ currentUser, currentUserData }) {
         const previousContent = trimmedContent;
         const previousShiftNotes = [...shiftNotes];
 
-        // 2. Apply optimistic UI update
-        setShiftNotes([newNote, ...shiftNotes]);
-
         setNoteContent('');
         setIsSubmitting(true);
 
@@ -93,8 +90,11 @@ function ShiftNotesManager({ currentUser, currentUserData }) {
                 timestamp: serverTimestamp() // Compatibility field
             });
 
+            // 5. The write completed successfully, refetch to get the real doc id and server timestamp
+            await fetchShiftNotes();
+
         } catch (error) {
-            // 5. Rollback optimistic UI if network request fails
+            // 6. Rollback optimistic UI if network request fails
             console.error("Error posting note", error);
 
             // Remove the temporary note, explicitly passing previous array to reset state correctly.
@@ -103,7 +103,7 @@ function ShiftNotesManager({ currentUser, currentUserData }) {
             // Restore the content to the input
             setNoteContent(previousContent);
 
-            if (error.code === 'unavailable' || error.code === 'auth/network-request-failed') {
+            if (error.code === 'unavailable' || error.code === 'auth/network-request-failed' || error.code === 'firestore/unavailable') {
                 alert("Network error: Could not connect to the server. Please check your connection.");
             } else {
                 alert("Failed to post note: " + error.message);
