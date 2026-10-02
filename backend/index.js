@@ -173,7 +173,7 @@ exports.createCheckoutSession = onRequest({invoker: "public"}, (req, res) => {
       res.status(200).json({url: session.url});
     } catch (err) {
       logManagerError("Checkout Error for uid:", uid, err);
-      res.status(500).json({error: err.message});
+      res.status(500).json({error: "An internal server error occurred. Please try again later."});
     }
   });
 });
@@ -187,7 +187,7 @@ exports.stripeWebhook = onRequest({invoker: "public"}, async (req, res) => {
     event = stripe.webhooks.constructEvent(req.rawBody, sig, endpointSecret);
   } catch (err) {
     logManagerError("Webhook Error:", err);
-    return res.status(400).send(`Webhook Error: ${err.message}`);
+    return res.status(400).send("Webhook Error: Invalid payload or signature");
   }
 
   // 🎯 Handle Events
@@ -265,7 +265,7 @@ exports.cancelSubscription = onRequest({invoker: "public"}, (req, res) => {
       res.status(200).json({success: true});
     } catch (err) {
       logManagerError(`Cancel Error for customerId: ${customerId}`, err);
-      res.status(500).json({error: err.message});
+      res.status(500).json({error: "An internal server error occurred. Please try again later."});
     }
   });
 });
@@ -532,7 +532,7 @@ async function handleCreateShiftGroup(payload, uid) {
       const hash = crypto.scryptSync(password, salt, 64).toString("hex");
       const hashedPassword = `$scrypt$${hash}:${salt}`;
 
-      const newGroup = {
+      const newHashedGroup = {
         ownerId: authorId || uid,
         orgId: orgId || uid,
         ownerName: ownerName || "Anonymous",
@@ -1431,3 +1431,4 @@ exports.manageShiftMarketplace = functions.https.onCall(async (data, context) =>
         throw new functions.https.HttpsError('internal', 'Internal server error', error.message);
     }
 });
+}

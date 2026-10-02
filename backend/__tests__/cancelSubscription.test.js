@@ -120,7 +120,7 @@ describe("cancelSubscription", () => {
     expect(consoleSpy).toHaveBeenCalledWith(`Manager Troubleshooting: Cancel Error for customerId: ${req.body.customerId}`, error);
 
     expect(res.status).toHaveBeenCalledWith(500);
-    expect(res.json).toHaveBeenCalledWith({error: "Stripe List Error"});
+    expect(res.json).toHaveBeenCalledWith({error: "An internal server error occurred. Please try again later."});
 
     consoleSpy.mockRestore();
   });
@@ -149,7 +149,7 @@ describe("cancelSubscription", () => {
     expect(consoleSpy).toHaveBeenCalledWith(`Manager Troubleshooting: Cancel Error for customerId: ${req.body.customerId}`, error);
 
     expect(res.status).toHaveBeenCalledWith(500);
-    expect(res.json).toHaveBeenCalledWith({error: "Stripe Cancel Error"});
+    expect(res.json).toHaveBeenCalledWith({error: "An internal server error occurred. Please try again later."});
 
     consoleSpy.mockRestore();
   });

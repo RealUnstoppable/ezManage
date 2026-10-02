@@ -135,6 +135,6 @@ describe("createCheckoutSession", () => {
     await createCheckoutSession(req, res);
 
     expect(res.status).toHaveBeenCalledWith(500);
-    expect(res.json).toHaveBeenCalledWith({error: "Stripe Error"});
+    expect(res.json).toHaveBeenCalledWith({error: "An internal server error occurred. Please try again later."});
   });
 });
