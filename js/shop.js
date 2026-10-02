@@ -1,4 +1,4 @@
-import { logManagerError, escapeHTML } from './utils.js';
+import { escapeHTML, logManagerError } from './utils.js';
 
 import { auth, db } from './auth.js';
 
@@ -244,7 +244,7 @@ function setupEventListeners() {
 
                 const timeoutId = setTimeout(() => {
                     handleUpdateQuantity(productId, quantity);
-                    updateQuantityTimeouts.delete(productId);
+                    quantityTimeouts.delete(productId);
                 }, 300);
 
                 updateQuantityTimeouts.set(productId, timeoutId);
@@ -282,7 +282,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                     cart = mergedCart;
                 } catch (error) {
-                    console.error("Error fetching user cart", error);
+                    logManagerError("Error fetching user cart", error);
                     cart = localCart;
                 }
             }
