@@ -32,7 +32,7 @@ onAuthStateChanged(auth, async (user) => {
                 if (currentOrgId) {
                     loadInventory();
                 } else {
-                    console.error("User does not belong to an organization.");
+                    logManagerError("User does not belong to an organization.");
                 }
             }
         } catch (error) {
@@ -57,26 +57,45 @@ function loadInventory() {
 
     unsubscribeInventory = onSnapshot(q, (snapshot) => {
         loadingSpinner.classList.add('hidden');
-        inventoryTableBody.innerHTML = '';
 
         if (snapshot.empty) {
             emptyState.classList.remove('hidden');
+            inventoryTableBody.innerHTML = '';
             return;
         }
 
         emptyState.classList.add('hidden');
 
-        const fragment = document.createDocumentFragment();
-        snapshot.forEach((docSnap) => {
-            const data = docSnap.data();
-            const id = docSnap.id;
-            const row = renderItemRow(id, data);
-            fragment.appendChild(row);
+        snapshot.docChanges().forEach((change) => {
+            if (change.type === 'added') {
+                const row = renderItemRow(change.doc.id, change.doc.data());
+                inventoryTableBody.insertBefore(row, inventoryTableBody.children[change.newIndex] || null);
+            }
+            if (change.type === 'modified') {
+                const row = renderItemRow(change.doc.id, change.doc.data());
+                const oldRowBtn = inventoryTableBody.querySelector(`button[data-id="${change.doc.id}"]`);
+                if (oldRowBtn) {
+                     const oldRow = oldRowBtn.closest('tr');
+                     if(change.oldIndex === change.newIndex) {
+                        inventoryTableBody.replaceChild(row, oldRow);
+                     } else {
+                         oldRow.remove();
+                         inventoryTableBody.insertBefore(row, inventoryTableBody.children[change.newIndex] || null);
+                     }
+                }
+            }
+            if (change.type === 'removed') {
+                const oldRowBtn = inventoryTableBody.querySelector(`button[data-id="${change.doc.id}"]`);
+                if (oldRowBtn) {
+                    const oldRow = oldRowBtn.closest('tr');
+                    if (oldRow) oldRow.remove();
+                }
+            }
         });
-        inventoryTableBody.appendChild(fragment);
+
         if (window.lucide) window.lucide.createIcons();
     }, (error) => {
-        console.error("Error fetching inventory:", error);
+        logManagerError("Error fetching inventory:", error);
         loadingSpinner.classList.add('hidden');
         alert("Failed to load inventory. Please try again.");
     });

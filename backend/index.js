@@ -3,7 +3,7 @@ const {onRequest} = require("firebase-functions/v2/https");
 const HttpsError = functions.https.HttpsError;
 const admin = require("firebase-admin");
 const cors = require("cors")({origin: true});
-const {adaptGen2Params, logManagerError, checkRequiredFields} = require("./utils"); // Added comment for patch visibility
+const {adaptGen2Params, logManagerError, handleInternalError, checkRequiredFields} = require("./utils"); // Added comment for patch visibility
 const crypto = require("crypto");
 
 /**
@@ -55,11 +55,7 @@ async function verifyDocAndAuth(collection, docId, expectedOrgId, notFoundMessag
     }
 
     return {docRef, docSnap};
-  } catch (error) {
-    logManagerError(`Error verifying document auth for ${collection}/${docId}:`, error);
-    if (error instanceof HttpsError) throw error;
-    throw new HttpsError("internal", "Unable to verify document permissions");
-  }
+  } catch (error) { handleInternalError(`Error verifying document auth for ${collection}/${docId}:`, error); }
 }
 
 admin.initializeApp();
@@ -86,11 +82,7 @@ async function getActualOrgId(admin, uid) {
       throw new HttpsError("not-found", "User not found");
     }
     return userDoc.data().orgId || null;
-  } catch (error) {
-    logManagerError("Error fetching user organization data for uid: " + uid, error);
-    if (error instanceof HttpsError) throw error;
-    throw new HttpsError("internal", "Unable to verify user organization");
-  }
+  } catch (error) { handleInternalError("Error fetching user organization data for uid: " + uid, error); }
 }
 
 exports.createCheckoutSession = onRequest({invoker: "public"}, (req, res) => {
@@ -334,13 +326,7 @@ exports.manageTasks = functions.https.onCall(async (data, context) => {
     }
 
     throw new HttpsError("invalid-argument", "Invalid action");
-  } catch (error) {
-    logManagerError("Manage Tasks Error for uid:", uid, error);
-    if (error instanceof HttpsError) {
-      throw error;
-    }
-    throw new HttpsError("internal", error.message);
-  }
+  } catch (error) { handleInternalError("Manage Tasks Error for uid:", error); }
 });
 
 /**
@@ -409,11 +395,7 @@ exports.manageShiftNotes = functions.https.onCall(async (data, context) => {
 
     throw new HttpsError(
         "invalid-argument", "Invalid action");
-  } catch (error) {
-    logManagerError("Shift Note Error for uid:", uid, error);
-
-    throw new HttpsError("internal", error.message);
-  }
+  } catch (error) { handleInternalError("Shift Note Error for uid:", error); }
 });
 
 /**
@@ -483,11 +465,7 @@ exports.manageCertifications = functions.https.onCall(async (data, context) => {
     } else {
       throw new HttpsError("invalid-argument", "Unknown action");
     }
-  } catch (error) {
-    logManagerError("Error in manageCertifications: ", error);
-    if (error instanceof HttpsError) throw error;
-    throw new HttpsError("internal", error.message);
-  }
+  } catch (error) { handleInternalError("Error in manageCertifications: ", error); }
 });
 
 exports.manageEmployees = functions.https.onCall(async (data, context) => {
@@ -570,13 +548,7 @@ exports.manageEmployees = functions.https.onCall(async (data, context) => {
     }
 
     throw new HttpsError("invalid-argument", "Invalid action");
-  } catch (error) {
-    logManagerError("Manage Employees Error for uid:", uid, error);
-    if (error instanceof HttpsError) {
-      throw error;
-    }
-    throw new HttpsError("internal", error.message);
-  }
+  } catch (error) { handleInternalError("Manage Employees Error for uid:", error); }
 });
 
 
@@ -749,14 +721,7 @@ exports.manageShiftGroups = functions.https.onCall(async (data, context) => {
     if (action === "remove_manager") return await handleRemoveManagerShiftGroup(payload, uid);
 
     throw new HttpsError("invalid-argument", "Invalid action");
-  } catch (error) {
-    logManagerError("Shift Groups Error for uid:", uid, error);
-
-    if (error instanceof HttpsError) {
-      throw error;
-    }
-    throw new HttpsError("internal", error.message);
-  }
+  } catch (error) { handleInternalError("Shift Groups Error for uid:", error); }
 });
 
 
@@ -870,13 +835,7 @@ exports.manageIncidents = functions.https.onCall(async (data, context) => {
     }
 
     throw new HttpsError("invalid-argument", "Invalid action");
-  } catch (error) {
-    logManagerError("Manage Incidents Error for uid:", uid, error);
-    if (error instanceof HttpsError) {
-      throw error;
-    }
-    throw new HttpsError("internal", error.message);
-  }
+  } catch (error) { handleInternalError("Manage Incidents Error for uid:", error); }
 });
 
 /**
@@ -959,13 +918,7 @@ exports.manageTimeLogs = functions.https.onCall(async (data, context) => {
     }
 
     throw new HttpsError("invalid-argument", "Invalid action");
-  } catch (error) {
-    logManagerError(`Manage Time Logs Error for uid: ${uid}`, error);
-    if (error instanceof HttpsError) {
-      throw error;
-    }
-    throw new HttpsError("internal", error.message);
-  }
+  } catch (error) { handleInternalError(`Manage Time Logs Error for uid: ${uid}`, error); }
 });
 
 /**
@@ -1058,13 +1011,7 @@ exports.manageMaintenanceLogs = functions.https.onCall(async (data, context) => 
     }
 
     throw new HttpsError("invalid-argument", "Invalid action");
-  } catch (error) {
-    logManagerError(`Manage Maintenance Logs Error for uid: ${uid}`, error);
-    if (error instanceof HttpsError) {
-      throw error;
-    }
-    throw new HttpsError("internal", error.message);
-  }
+  } catch (error) { handleInternalError(`Manage Maintenance Logs Error for uid: ${uid}`, error); }
 });
 
 /**
@@ -1135,13 +1082,7 @@ exports.manageWaste = functions.https.onCall(async (data, context) => {
     }
 
     throw new HttpsError("invalid-argument", "Invalid action");
-  } catch (error) {
-    logManagerError(`Manage Waste Error for uid: ${uid}`, error);
-    if (error instanceof HttpsError) {
-      throw error;
-    }
-    throw new HttpsError("internal", error.message);
-  }
+  } catch (error) { handleInternalError(`Manage Waste Error for uid: ${uid}`, error); }
 });
 
 /**
@@ -1237,13 +1178,7 @@ exports.manageRecognitions = functions.https.onCall(async (data, context) => {
     }
 
     throw new HttpsError("invalid-argument", "Invalid action");
-  } catch (error) {
-    logManagerError(`Manage Recognitions Error for uid: ${uid}`, error);
-    if (error instanceof HttpsError) {
-      throw error;
-    }
-    throw new HttpsError("internal", error.message);
-  }
+  } catch (error) { handleInternalError(`Manage Recognitions Error for uid: ${uid}`, error); }
 });
 
 
@@ -1323,13 +1258,7 @@ exports.manageFeedbacks = functions.https.onCall(async (data, context) => {
     }
 
     throw new HttpsError("invalid-argument", "Invalid action");
-  } catch (error) {
-    logManagerError(`Manage Feedbacks Error for uid: ${uid}`, error);
-    if (error instanceof HttpsError) {
-      throw error;
-    }
-    throw new HttpsError("internal", error.message);
-  }
+  } catch (error) { handleInternalError(`Manage Feedbacks Error for uid: ${uid}`, error); }
 });
 
 exports.trainGlobalAI = require("./trainGlobalAI").trainGlobalAI;
@@ -1399,10 +1328,7 @@ exports.manageTemperatureLogs = functions.https.onCall(async (data, context) => 
     }
 
     throw new HttpsError("invalid-argument", "Invalid action.");
-  } catch (error) {
-    logManagerError("Error in manageTemperatureLogs: ", error);
-    throw new HttpsError("internal", error.message);
-  }
+  } catch (error) { handleInternalError("Error in manageTemperatureLogs: ", error); }
 });
 
 exports.manageVendorDeliveries = functions.https.onCall(async (data, context) => {
@@ -1468,11 +1394,7 @@ exports.manageVendorDeliveries = functions.https.onCall(async (data, context) =>
     }
 
     throw new HttpsError("invalid-argument", "Invalid action specified.");
-  } catch (error) {
-    logManagerError("Error in manageVendorDeliveries: ", error);
-    if (error instanceof HttpsError) throw error;
-    throw new HttpsError("internal", error.message);
-  }
+  } catch (error) { handleInternalError("Error in manageVendorDeliveries: ", error); }
 });
 
 
@@ -1576,9 +1498,5 @@ exports.manageShiftMarketplace = functions.https.onCall(async (data, context) =>
         else {
              throw new HttpsError('invalid-argument', 'Invalid action');
         }
-    } catch (error) {
-        console.error("Error managing shift marketplace:", error);
-        if (error instanceof HttpsError) throw error;
-        throw new HttpsError('internal', 'Internal server error', error.message);
-    }
+    } catch (error) { handleInternalError("Error managing shift marketplace:", error); }
 });
