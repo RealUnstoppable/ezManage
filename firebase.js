@@ -35,6 +35,5 @@ if (!window.firebase.apps.length) {
 const db = typeof window !== "undefined" && window.firebase ? window.firebase.firestore() : null;
 const functions = typeof window !== "undefined" && window.firebase ? window.firebase.functions() : null;
 
-const app = typeof window !== "undefined" && window.firebase ? window.firebase.app() : null;
 const auth = typeof window !== "undefined" && window.firebase ? window.firebase.auth() : null;
 export { app, auth, db, functions, firebaseConfig };
