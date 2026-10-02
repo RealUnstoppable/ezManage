@@ -13,14 +13,19 @@ const firebaseConfig = typeof window !== 'undefined' && window.ezManageFirebaseC
 // Ensure Firebase is initialized strictly as a global singleton using the compat SDK
 // to prevent token mismatches and duplicate initialization errors.
 // Use experimentalForceLongPolling for fallback on CORS/network issues
-if (!window.firebase.apps.length) {
-    window.firebase.initializeApp(firebaseConfig);
-    try {
-        window.firebase.firestore().settings({
-            experimentalForceLongPolling: true
-        });
-    } catch (e) {
-        console.warn("Firestore settings already configured or errored: ", e);
+let app;
+if (typeof window !== 'undefined' && window.firebase) {
+    if (!window.firebase.apps.length) {
+        app = window.firebase.initializeApp(firebaseConfig);
+        try {
+            window.firebase.firestore().settings({
+                experimentalForceLongPolling: true
+            });
+        } catch (e) {
+            console.warn("Firestore settings already configured or errored: ", e);
+        }
+    } else {
+        app = window.firebase.app();
     }
 }
 
@@ -31,11 +36,7 @@ if (!window.firebase.apps.length) {
 // Note: Firestore rules are handled via firestore.rules file deployment.
 
 const auth = typeof window !== "undefined" && window.firebase ? window.firebase.auth() : null;
-
-
-
-const db = window.firebase.firestore();
-const functions = window.firebase.functions();
-const app = window.firebase.app();
+const db = typeof window !== "undefined" && window.firebase ? window.firebase.firestore() : null;
+const functions = typeof window !== "undefined" && window.firebase ? window.firebase.functions() : null;
 
 export { app, auth, db, functions, firebaseConfig };

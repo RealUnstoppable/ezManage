@@ -403,7 +403,7 @@
         function signOut() { auth.signOut().then(() => window.location.href = 'index.html'); }
 
         const firebaseConfig = window.ezManageFirebaseConfig;
-        const app = !window.firebase.apps.length ? window.firebase.initializeApp(firebaseConfig) : window.firebase.app();
+        const app = window.firebase.apps.length === 0 ? window.firebase.initializeApp(firebaseConfig) : window.firebase.app();
         const auth = firebase.auth();
         const db = firebase.firestore();
         db.settings({ experimentalForceLongPolling: true });

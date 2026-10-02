@@ -11,7 +11,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-messaging-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-functions-compat.js"></script>
     <script>
-      window.app = !window.firebase.apps.length ? window.firebase.initializeApp(window.ezManageFirebaseConfig) : window.firebase.app();
+      window.app = window.firebase.apps.length === 0 ? window.firebase.initializeApp(window.ezManageFirebaseConfig) : window.firebase.app();
       try {
           window.firebase.firestore().settings({ experimentalForceLongPolling: true });
       } catch (e) {
@@ -2520,7 +2520,7 @@
 
         // Ensure singleton check since it relies on firebaseConfig
         const firebaseConfig = window.ezManageFirebaseConfig;
-        window.app = !window.firebase.apps.length ? window.firebase.initializeApp(firebaseConfig) : window.firebase.app();
+        window.app = window.firebase.apps.length === 0 ? window.firebase.initializeApp(firebaseConfig) : window.firebase.app();
         window.auth = window.firebase.auth();
 
         window.db = window.firebase.firestore();
@@ -4014,7 +4014,7 @@
             document.getElementById('profileAIToggle').checked = aiEnabled;
         }
 
-        function saveProfileToFirebase() {
+        async function saveProfileToFirebase() {
             if (!currentUser) return;
 
             const cloudToggle = document.getElementById('profileCloudSyncToggle').checked;
@@ -4030,13 +4030,19 @@
 
             if (profileDebounceTimeout) clearTimeout(profileDebounceTimeout);
 
-            profileDebounceTimeout = setTimeout(() => {
-                window.db.collection('users').doc(currentUser.uid).set(data, { merge: true }).then(() => {
-                    localStorage.setItem(`ezManage_aiEnabled_${currentUser.uid}`, data.aiTrainingEnabled);
-                    localStorage.setItem(`ezManage_cloudEnabled_${currentUser.uid}`, cloudSyncEnabled);
-                    alert("Profile Updated!");
-                });
-            }, 1000);
+            try {
+                await window.db.collection('users').doc(currentUser.uid).set(data, { merge: true });
+                localStorage.setItem(`ezManage_aiEnabled_${currentUser.uid}`, data.aiTrainingEnabled);
+                localStorage.setItem(`ezManage_cloudEnabled_${currentUser.uid}`, cloudSyncEnabled);
+                alert("Profile Updated!");
+            } catch (error) {
+                window.logManagerError("Error saving profile:", error);
+                if (error.code === 'auth/network-request-failed' || error.code === 'unavailable') {
+                    alert("Network error: Could not connect to the server.");
+                } else {
+                    alert("Failed to save profile: " + error.message);
+                }
+            }
         }
 
         function changePassword() {
