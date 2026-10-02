@@ -2,6 +2,7 @@ const mockCreateSession = jest.fn();
 
 jest.mock("firebase-admin", () => {
   const firestoreMock = {
+    initializeApp: jest.fn(),
     collection: jest.fn().mockReturnThis(),
     doc: jest.fn().mockReturnThis(),
     where: jest.fn().mockReturnThis(),
@@ -39,6 +40,16 @@ jest.mock("cors", () => {
     };
   });
 });
+
+// Mock the utils to spy on logManagerError
+jest.mock("../utils.js", () => {
+  const originalModule = jest.requireActual("../utils.js");
+  return {
+    ...originalModule,
+    logManagerError: jest.fn(),
+  };
+});
+const { logManagerError } = require("../utils.js");
 
 const {createCheckoutSession} = require("../index.js");
 
@@ -136,5 +147,32 @@ describe("createCheckoutSession", () => {
 
     expect(res.status).toHaveBeenCalledWith(500);
     expect(res.json).toHaveBeenCalledWith({error: "Stripe Error"});
+  });
+
+  it("should handle error when fetching user doc and call logManagerError", async () => {
+    req.body = {
+      uid: "test-uid",
+      email: "test@example.com",
+      plan: "Business Pro",
+    };
+
+    // We mock firestore to throw an error when fetching user doc
+    const mockFirestore = require("firebase-admin").firestore;
+    const error = new Error("Firestore Error");
+    mockFirestore().collection().doc().get.mockRejectedValueOnce(error);
+
+    mockCreateSession.mockResolvedValueOnce({url: "http://stripe.checkout.url"});
+
+    await createCheckoutSession(req, res);
+
+    expect(logManagerError).toHaveBeenCalledWith("Error fetching user data for checkout", error);
+
+    // The function should still proceed and create the session without the promo code
+    expect(mockCreateSession).toHaveBeenCalled();
+    const createArgs = mockCreateSession.mock.calls[0][0];
+    // Regular price should apply
+    expect(createArgs.line_items).toEqual([
+      { price: "price_1THHbVBp2C5GdKaKvCVoMf1X", quantity: 1 }
+    ]);
   });
 });
