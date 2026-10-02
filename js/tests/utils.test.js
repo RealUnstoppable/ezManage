@@ -2,7 +2,7 @@
  * @jest-environment jsdom
  */
 import { jest } from '@jest/globals';
-import { getDayOfWeek, showToast } from '../utils.js';
+import { getDayOfWeek, showToast, logManagerError } from '../utils.js';
 
 describe('getDayOfWeek', () => {
     it('returns correct day for YYYY-MM-DD format', () => {
@@ -79,5 +79,33 @@ describe('showToast', () => {
         jest.advanceTimersByTime(300);
         toast = document.querySelector('.toast-notification');
         expect(toast).toBeNull();
+    });
+});
+
+describe('logManagerError', () => {
+    let consoleErrorSpy;
+
+    beforeEach(() => {
+        consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    });
+
+    afterEach(() => {
+        consoleErrorSpy.mockRestore();
+    });
+
+    it('prefixes the message with "Manager Troubleshooting: "', () => {
+        logManagerError('test message');
+        expect(consoleErrorSpy).toHaveBeenCalledWith('Manager Troubleshooting: test message');
+    });
+
+    it('handles extra arguments correctly', () => {
+        const error = new Error('Test error');
+        logManagerError('something failed', error, { detail: 'yes' });
+        expect(consoleErrorSpy).toHaveBeenCalledWith('Manager Troubleshooting: something failed', error, { detail: 'yes' });
+    });
+
+    it('handles being called with empty arguments', () => {
+        logManagerError();
+        expect(consoleErrorSpy).toHaveBeenCalledWith('Manager Troubleshooting: undefined');
     });
 });
