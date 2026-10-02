@@ -33,8 +33,7 @@ app.post("/create-checkout-session", async (req, res) => {
 
     res.json({ url: session.url });
   } catch (err) {
-    console.error("Error creating checkout session:", err);
-    res.status(500).json({ error: "An unexpected error occurred" });
+    res.status(500).json({ error: err.message });
   }
 });
 
