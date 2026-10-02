@@ -54,7 +54,7 @@
 ## 2024-11-09 - Duplicate state declaration
 **Learning:** Avoid duplicate cache state variable declarations within the same scope. The layout thrashing prevention code was throwing due to `let lastGreeting = ""` declared twice within `script.js`'s `updateGreeting` logic.
 **Action:** Remove the inner redundant declaration while keeping the cache check `newGreeting !== lastGreeting` functional.
-## $(date +%Y-%m-%d) - [Repeated Firebase DB Docs Fetch]
+## 2026-10-01 - [Repeated Firebase DB Docs Fetch]
 **Learning:** Functions invoked via callbacks from listeners that span multiple files (e.g., `auth.onAuthStateChanged`) will fire simultaneously. Without a caching layer, they execute redundant concurrent network fetch queries (like `db.collection('users').doc(uid).get()`), causing latency and blocking operations.
 **Action:** Always wrap independent multi-listener fetched resources with a generic memoization layer using a `Map` cache to immediately resolve redundant Promise requests.
 ## 2026-10-27 - [DRY Refactoring and Error Handling]
@@ -63,3 +63,10 @@
 ## 2024-05-24 - [Draft Sync Debouncing]
 **Learning:** High-frequency input events (like `oninput` on dynamically generated form fields) that trigger expensive operations (like `triggerDraftSync` which parses DOM state and writes to localStorage/Firestore) must be debounced using `setTimeout` to prevent layout thrashing and excessive syncs. If multiple DOM elements reference a global debounce function via inline event handlers, ensure that function is properly defined and exposed to avoid ReferenceErrors that silently break functionality or fail to throttle executions.
 **Action:** Always implement a dedicated debounce wrapper (`debouncedTriggerDraftSync`) for high-frequency inline input events and verify it exists in the global scope when invoked via `oninput="..."`.
+## 2026-06-15 - [Input Debouncing with Map]
+**Learning:** When debouncing input events for multiple distinct items (like cart quantities), using a single global timeout cancels updates for other items when multiple inputs are modified rapidly.
+**Action:** Use a `Map` to track timeouts by unique identifiers (e.g., `productId`) to ensure each item is debounced independently.
+
+## $(date +%Y-%m-%d) - Incremental DOM Rendering with Firestore onSnapshot
+**Learning:** Using `innerHTML = ''` and iterating over the entire dataset on every Firestore real-time update (`onSnapshot`) causes an O(N) performance bottleneck via repeated DOM re-renders.
+**Action:** When subscribing to Firestore real-time updates via `onSnapshot` to render lists or tables, do not clear the DOM container and recreate it all. Instead, use `snapshot.docChanges()` to incrementally render, update, or remove specific rows (identified by a stable `id`), drastically reducing unnecessary DOM re-renders and layout thrashing.
