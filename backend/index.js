@@ -3,7 +3,7 @@ const {onRequest} = require("firebase-functions/v2/https");
 const HttpsError = functions.https.HttpsError;
 const admin = require("firebase-admin");
 const cors = require("cors")({origin: true});
-const {adaptGen2Params, logManagerError, checkRequiredFields} = require("./utils"); // Added comment for patch visibility
+const {adaptGen2Params, logManagerError, handleInternalError, checkRequiredFields} = require("./utils"); // Added comment for patch visibility
 const crypto = require("crypto");
 
 /**
@@ -55,11 +55,7 @@ async function verifyDocAndAuth(collection, docId, expectedOrgId, notFoundMessag
     }
 
     return {docRef, docSnap};
-  } catch (error) {
-    logManagerError(`Error verifying document auth for ${collection}/${docId}:`, error);
-    if (error instanceof HttpsError) throw error;
-    throw new HttpsError("internal", "Unable to verify document permissions");
-  }
+  } catch (error) { handleInternalError(`Error verifying document auth for ${collection}/${docId}:`, error); }
 }
 
 admin.initializeApp();
@@ -86,11 +82,7 @@ async function getActualOrgId(admin, uid) {
       throw new HttpsError("not-found", "User not found");
     }
     return userDoc.data().orgId || null;
-  } catch (error) {
-    logManagerError("Error fetching user organization data for uid: " + uid, error);
-    if (error instanceof HttpsError) throw error;
-    throw new HttpsError("internal", "Unable to verify user organization");
-  }
+  } catch (error) { handleInternalError("Error fetching user organization data for uid: " + uid, error); }
 }
 
 exports.createCheckoutSession = onRequest({invoker: "public"}, (req, res) => {
@@ -494,11 +486,7 @@ exports.manageCertifications = functions.https.onCall(async (data, context) => {
     } else {
       throw new HttpsError("invalid-argument", "Unknown action");
     }
-  } catch (error) {
-    logManagerError("Error in manageCertifications: ", error);
-    if (error instanceof HttpsError) throw error;
-    throw new HttpsError("internal", error.message);
-  }
+  } catch (error) { handleInternalError("Error in manageCertifications: ", error); }
 });
 
 exports.manageEmployees = functions.https.onCall(async (data, context) => {
