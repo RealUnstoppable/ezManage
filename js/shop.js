@@ -243,20 +243,12 @@ function setupEventListeners() {
                     clearTimeout(quantityTimeouts.get(productId));
                 }
 
-                quantityTimeouts.set(productId, setTimeout(() => {
-                    handleUpdateQuantity(productId, quantity);
-                    quantityTimeouts.delete(productId);
-                }, 300));
-                if (updateQuantityTimeouts.has(productId)) {
-                    clearTimeout(updateQuantityTimeouts.get(productId));
-                }
-
                 const timeoutId = setTimeout(() => {
                     handleUpdateQuantity(productId, quantity);
                     quantityTimeouts.delete(productId);
                 }, 300);
 
-                updateQuantityTimeouts.set(productId, timeoutId);
+                quantityTimeouts.set(productId, timeoutId);
             }
         });
     }
