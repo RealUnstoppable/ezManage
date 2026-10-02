@@ -1723,3 +1723,5 @@ exports.manageLostAndFound = functions.https.onCall(async (data, context) => {
     throw new functions.https.HttpsError("internal", "Internal server error.", error.message);
   }
 });
+
+exports.handleCreateShiftGroup = handleCreateShiftGroup;
