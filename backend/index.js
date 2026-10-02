@@ -515,19 +515,6 @@ async function handleCreateShiftGroup(payload, uid) {
 
   checkRequiredFields(payload, ['groupName', 'password']);
 
-  const newGroup = {
-    ownerId: authorId || uid,
-    orgId: orgId || uid,
-    ownerName: ownerName || "Anonymous",
-    groupName,
-    password, // Basic password for joining (in a real app, hash this)
-    createdAt: admin.firestore.FieldValue.serverTimestamp(),
-  };
-
-  const docRef = await admin.firestore()
-      .collection("shift_groups")
-      .add(newGroup);
-
       const salt = crypto.randomBytes(16).toString("hex");
       const hash = crypto.scryptSync(password, salt, 64).toString("hex");
       const hashedPassword = `$scrypt$${hash}:${salt}`;
@@ -540,6 +527,10 @@ async function handleCreateShiftGroup(payload, uid) {
         password: hashedPassword,
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
       };
+
+  const docRef = await admin.firestore()
+      .collection("shift_groups")
+      .add(newGroup);
 
   return {success: true, groupId: docRef.id};
 }
@@ -1431,3 +1422,4 @@ exports.manageShiftMarketplace = functions.https.onCall(async (data, context) =>
         throw new functions.https.HttpsError('internal', 'Internal server error', error.message);
     }
 });
+}
