@@ -3245,7 +3245,7 @@
             div.appendChild(span);
             div.appendChild(btn);
 
-            (targetNode || document.getElementById('routineContainer')).appendChild(div);
+            if (targetNode) { targetNode.appendChild(div); } else { document.getElementById('routineContainer').appendChild(div); }
             document.getElementById('newRoutineTask').value = "";
             lucide.createIcons();
             if (initialDraftLoaded) debouncedTriggerDraftSync();
@@ -4286,7 +4286,7 @@
                     lucide.createIcons();
                 }, err => {
                     console.error("Error fetching tasks:", err);
-                    container.innerHTML = `<div class="text-red-500 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl text-center">Failed to load tasks: ${window.escapeHTML ? window.escapeHTML(err.message) : err.message}</div>`;
+                    container.textContent = "Failed to load tasks: " + err.message; container.className = "text-red-500 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl text-center";
                 });
         }
 
@@ -4511,7 +4511,7 @@
                 }
             } catch (error) {
                 console.error("Error fetching maintenance tickets:", error);
-                container.innerHTML = `<div class="text-red-500 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl text-center">Failed to load tickets: ${window.escapeHTML ? window.escapeHTML(error.message) : error.message}</div>`;
+                container.textContent = "Failed to load tickets: " + error.message; container.className = "text-red-500 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl text-center";
             }
         }
 
@@ -5801,7 +5801,7 @@ function checkAndRenderOrgControls() {
                 }
             } catch (error) {
                 console.error("Error fetching deliveries:", error);
-                container.innerHTML = `<div class="text-red-500 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl text-center">Failed to load deliveries: ${window.escapeHTML ? window.escapeHTML(error.message) : error.message}</div>`;
+                container.textContent = "Failed to load deliveries: " + error.message; container.className = "text-red-500 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl text-center";
             }
         }
 
@@ -6000,7 +6000,7 @@ function checkAndRenderOrgControls() {
                 }
             } catch (error) {
                 console.error("Error fetching certifications:", error);
-                container.innerHTML = `<div class="text-red-500 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl text-center">Failed to load certifications: ${window.escapeHTML ? window.escapeHTML(error.message) : error.message}</div>`;
+                container.textContent = "Failed to load certifications: " + error.message; container.className = "text-red-500 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl text-center";
             }
         }
 
@@ -6132,7 +6132,7 @@ async function submitWasteLog() {
                 }
             } catch (error) {
                 console.error("Error fetching waste logs:", error);
-                container.innerHTML = `<div class="text-red-500 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl text-center">Failed to load waste logs: ${window.escapeHTML ? window.escapeHTML(error.message) : error.message}</div>`;
+                container.textContent = "Failed to load waste logs: " + error.message; container.className = "text-red-500 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl text-center";
             }
         }
 
@@ -6266,7 +6266,7 @@ async function submitWasteLog() {
                 }
             } catch (error) {
                 console.error("Error fetching temperature logs:", error);
-                container.innerHTML = `<div class="text-red-500 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl text-center">Failed to load logs: ${window.escapeHTML ? window.escapeHTML(error.message) : error.message}</div>`;
+                container.textContent = "Failed to load logs: " + error.message; container.className = "text-red-500 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl text-center";
             }
         }
 
@@ -6438,7 +6438,7 @@ async function submitWasteLog() {
                 }
             } catch (error) {
                 console.error("Error fetching incidents:", error);
-                container.innerHTML = `<div class="text-red-500 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl text-center">Failed to load incidents: ${window.escapeHTML ? window.escapeHTML(error.message) : error.message}</div>`;
+                container.textContent = "Failed to load incidents: " + error.message; container.className = "text-red-500 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl text-center";
             }
         }
 
@@ -7051,7 +7051,7 @@ async function submitWasteLog() {
                     renderFilteredTasks();
                 }, err => {
                     console.error("Error fetching tasks:", err);
-                    container.innerHTML = `<div class="text-red-500 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl text-center">Failed to load tasks: ${window.escapeHTML ? window.escapeHTML(err.message) : err.message}</div>`;
+                    container.textContent = "Failed to load tasks: " + err.message; container.className = "text-red-500 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl text-center";
                 });
         }
 
@@ -7322,7 +7322,7 @@ async function submitWasteLog() {
                 }
             } catch (error) {
                 console.error("Error fetching recognitions:", error);
-                container.innerHTML = `<div class="text-red-500 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl text-center">Failed to load recognitions: ${window.escapeHTML ? window.escapeHTML(error.message) : error.message}</div>`;
+                container.textContent = "Failed to load recognitions: " + error.message; container.className = "text-red-500 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl text-center";
             }
         }
 
@@ -7498,7 +7498,7 @@ async function submitWasteLog() {
                 }
             } catch (error) {
                 console.error("Error fetching time logs:", error);
-                if (container) container.innerHTML = `<div class="text-red-500 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl text-center">Failed to load time logs: ${window.escapeHTML ? window.escapeHTML(error.message) : error.message}</div>`;
+                if (container) { container.textContent = "Failed to load time logs: " + error.message; container.className = "text-red-500 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl text-center"; }
             }
         }
 
