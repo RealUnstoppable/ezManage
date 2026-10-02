@@ -251,25 +251,34 @@ exports.stripeWebhook = onRequest({invoker: "public"}, async (req, res) => {
 });
 
 // 🔻 Cancel Subscription Manually
-exports.cancelSubscription = onRequest({invoker: "public"}, (req, res) => {
-  cors(req, res, async () => {
-    if (req.method !== "POST") {
-      return res.status(405).send("Method Not Allowed");
+exports.cancelSubscription = functions.https.onCall(async (data, context) => {
+  if (!context || !context.auth) {
+    throw new HttpsError("unauthenticated", "You must be logged in.");
+  }
+
+  const uid = context.auth.uid;
+
+  try {
+    const userDoc = await admin.firestore().collection("users").doc(uid).get();
+    if (!userDoc.exists) {
+      throw new HttpsError("not-found", "User not found");
     }
 
-    const {customerId} = req.body;
-
-    try {
-      const subs = await stripe.subscriptions.list({customer: customerId});
-      await Promise.all(
-          subs.data.map((sub) => stripe.subscriptions.cancel(sub.id)),
-      );
-      res.status(200).json({success: true});
-    } catch (err) {
-      logManagerError(`Cancel Error for customerId: ${customerId}`, err);
-      res.status(500).json({error: err.message});
+    const customerId = userDoc.data().subscription && userDoc.data().subscription.customerId;
+    if (!customerId) {
+      throw new HttpsError("failed-precondition", "No active subscription found.");
     }
-  });
+
+    const subs = await stripe.subscriptions.list({customer: customerId});
+    await Promise.all(
+        subs.data.map((sub) => stripe.subscriptions.cancel(sub.id)),
+    );
+    return {success: true};
+  } catch (err) {
+    logManagerError(`Cancel Error for uid: ${uid}`, err);
+    if (err instanceof HttpsError) throw err;
+    throw new HttpsError("internal", err.message);
+  }
 });
 
 /**
