@@ -1,4 +1,4 @@
-import { logManagerError, escapeHTML } from './utils.js';
+import { escapeHTML, logManagerError } from './utils.js';
 
 import { auth, db } from './auth.js';
 
