@@ -1094,7 +1094,7 @@ exports.manageMaintenanceLogs = functions.https.onCall(async (data, context) => 
     if (error instanceof HttpsError) {
       throw error;
     }
-    throw new HttpsError("internal", error.message);
+    throw new HttpsError("internal", "Internal server error");
   }
 });
 
