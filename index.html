@@ -3541,7 +3541,7 @@ window.updateNetworkStatus = updateNetworkStatus;
             div.appendChild(span);
             div.appendChild(btn);
 
-            (targetNode || document.getElementById('routineContainer')).appendChild(div);
+            if (targetNode) { targetNode.appendChild(div); } else { document.getElementById('routineContainer').appendChild(div); }
             document.getElementById('newRoutineTask').value = "";
             lucide.createIcons();
             if (initialDraftLoaded) debouncedTriggerDraftSync();
@@ -4833,7 +4833,7 @@ window.updateNetworkStatus = updateNetworkStatus;
                 }
             } catch (error) {
                 console.error("Error fetching maintenance tickets:", error);
-                container.innerHTML = `<div class="text-red-500 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl text-center">Failed to load tickets: ${window.escapeHTML ? window.escapeHTML(error.message) : error.message}</div>`;
+                container.textContent = "Failed to load tickets: " + error.message; container.className = "text-red-500 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl text-center";
             }
         }
 
@@ -6376,7 +6376,7 @@ function checkAndRenderOrgControls() {
                 }
             } catch (error) {
                 console.error("Error fetching certifications:", error);
-                container.innerHTML = `<div class="text-red-500 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl text-center">Failed to load certifications: ${window.escapeHTML ? window.escapeHTML(error.message) : error.message}</div>`;
+                container.textContent = "Failed to load certifications: " + error.message; container.className = "text-red-500 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl text-center";
             }
         }
 

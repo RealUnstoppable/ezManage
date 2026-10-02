@@ -21,6 +21,7 @@
     "url": "https://github.com/RealUnstoppable/ezManage/issues"
   },
   "homepage": "https://github.com/RealUnstoppable/ezManage#readme",
+  "type": "module",
   "devDependencies": {
     "@babel/core": "^7.29.7",
     "@babel/preset-env": "^7.29.7",
