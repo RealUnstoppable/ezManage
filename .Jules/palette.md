@@ -69,6 +69,9 @@
 ## 2024-05-24 - Missing ARIA Labels on Async State Loading Buttons
 **Learning:** Buttons that represent an action but load initially with only an animated icon (like a loader) often lack implicit accessible names. Screen readers may not be able to provide any context upon load until the text explicitly changes.
 **Action:** Always provide an explicit `aria-label` on dynamic buttons that utilize icons for loading states to ensure immediate and persistent screen reader accessibility.
-## 2024-05-24 - Missing ARIA Labels on Async State Loading Buttons
-**Learning:** Buttons that represent an action but load initially with only an animated icon (like a loader) often lack implicit accessible names. Screen readers may not be able to provide any context upon load until the text explicitly changes.
-**Action:** Always provide an explicit `aria-label` on dynamic buttons that utilize icons for loading states to ensure immediate and persistent screen reader accessibility.
+## 2024-05-24 - ARIA labels for dynamic toggle buttons
+**Learning:** Buttons that dynamically toggle sections, like the "X Variations" button that toggles open the canonical item variations in , need s to inform screen readers of their action and target, especially when they only contain minimal text and a toggle icon.
+**Action:** Add explicit s to dynamic toggle buttons (e.g., 'Toggle variations for [Item Name]') to ensure screen reader users understand what section will be expanded or collapsed.
+## 2024-05-24 - ARIA labels for dynamic toggle buttons
+**Learning:** Buttons that dynamically toggle sections, like the "X Variations" button that toggles open the canonical item variations in `easy-ai.html`, need `aria-label`s to inform screen readers of their action and target, especially when they only contain minimal text and a toggle icon.
+**Action:** Add explicit `aria-label`s to dynamic toggle buttons (e.g., 'Toggle variations for [Item Name]') to ensure screen reader users understand what section will be expanded or collapsed.
