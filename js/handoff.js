@@ -1,15 +1,21 @@
 import { db, auth, fetchUserDoc } from './auth.js';
 import { logManagerError } from './utils.js';
 
-export async function createHandoff(notes, urgentAlerts, shiftType) {
+async function getCurrentUserOrgAndProfile() {
     const user = auth.currentUser;
-    if (!user) throw new Error("Must be logged in to create a handoff.");
+    if (!user) throw new Error("Must be logged in to access handoffs.");
 
     const userDoc = await fetchUserDoc(user.uid);
     if (!userDoc.exists) throw new Error("User profile not found.");
 
     const orgId = userDoc.data().orgId;
     if (!orgId) throw new Error("User is not associated with an organization.");
+
+    return { user, userDoc, orgId };
+}
+
+export async function createHandoff(notes, urgentAlerts, shiftType) {
+    const { user, userDoc, orgId } = await getCurrentUserOrgAndProfile();
 
     const handoffData = {
         orgId,
@@ -32,14 +38,7 @@ export async function createHandoff(notes, urgentAlerts, shiftType) {
 }
 
 export async function fetchRecentHandoffs(limitCount = 10) {
-    const user = auth.currentUser;
-    if (!user) throw new Error("Must be logged in to view handoffs.");
-
-    const userDoc = await fetchUserDoc(user.uid);
-    if (!userDoc.exists) throw new Error("User profile not found.");
-
-    const orgId = userDoc.data().orgId;
-    if (!orgId) throw new Error("User is not associated with an organization.");
+    const { orgId } = await getCurrentUserOrgAndProfile();
 
     try {
         const snapshot = await db.collection('shift_handoffs')
