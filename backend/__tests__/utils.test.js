@@ -13,11 +13,11 @@ jest.mock("firebase-functions", () => ({
   },
 }));
 
-const { checkRequiredFields } = require("../utils");
+const {checkRequiredFields} = require("../utils");
 
 describe("checkRequiredFields", () => {
   it("should not throw if all required fields are present and truthy", () => {
-    const payload = { action: "test", data: "value" };
+    const payload = {action: "test", data: "value"};
     const requiredKeys = ["action", "data"];
 
     expect(() => checkRequiredFields(payload, requiredKeys)).not.toThrow();
@@ -43,7 +43,7 @@ describe("checkRequiredFields", () => {
   });
 
   it("should throw an HttpsError with default message if a required key is missing", () => {
-    const payload = { action: "test" };
+    const payload = {action: "test"};
     const requiredKeys = ["action", "missingKey"];
 
     expect(() => checkRequiredFields(payload, requiredKeys)).toThrow("Missing required fields");
@@ -56,7 +56,7 @@ describe("checkRequiredFields", () => {
   });
 
   it("should throw an HttpsError with custom message if a required key is missing", () => {
-    const payload = { action: "test" };
+    const payload = {action: "test"};
     const requiredKeys = ["action", "missingKey"];
     const customError = "Custom error missing fields";
 
@@ -64,7 +64,7 @@ describe("checkRequiredFields", () => {
   });
 
   it("should throw an HttpsError if a required key is present but falsy", () => {
-    const payload = { action: "test", emptyString: "", zero: 0, nulled: null, undef: undefined, falsed: false };
+    const payload = {action: "test", emptyString: "", zero: 0, nulled: null, undef: undefined, falsed: false};
 
     expect(() => checkRequiredFields(payload, ["emptyString"])).toThrow("Missing required fields");
     expect(() => checkRequiredFields(payload, ["zero"])).toThrow("Missing required fields");

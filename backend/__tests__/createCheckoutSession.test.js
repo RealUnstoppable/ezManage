@@ -49,7 +49,7 @@ jest.mock("../utils.js", () => {
     logManagerError: jest.fn(),
   };
 });
-const { logManagerError } = require("../utils.js");
+const {logManagerError} = require("../utils.js");
 
 const {createCheckoutSession} = require("../index.js");
 
@@ -172,7 +172,7 @@ describe("createCheckoutSession", () => {
     const createArgs = mockCreateSession.mock.calls[0][0];
     // Regular price should apply
     expect(createArgs.line_items).toEqual([
-      { price: "price_1THHbVBp2C5GdKaKvCVoMf1X", quantity: 1 }
+      {price: "price_1THHbVBp2C5GdKaKvCVoMf1X", quantity: 1},
     ]);
   });
 });
