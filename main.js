@@ -2,15 +2,26 @@
 import { app, BrowserWindow } from 'electron';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { spawn } from 'child_process';
+import fs from 'fs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Import and start your existing Express server
 try {
-  await import('./server.cjs');
+  const serverProcess = spawn('node', ['--input-type=commonjs'], {
+    stdio: ['pipe', 'inherit', 'inherit']
+  });
+  const serverCode = fs.readFileSync(path.join(__dirname, 'server.js'), 'utf8');
+  serverProcess.stdin.write(serverCode);
+  serverProcess.stdin.end();
+
+  app.on('before-quit', () => {
+    serverProcess.kill();
+  });
 } catch (err) {
-  console.error('Failed to load server.cjs:', err);
+  console.error('Failed to load server.js:', err);
 }
 
 let mainWindow;
