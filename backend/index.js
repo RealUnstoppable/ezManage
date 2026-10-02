@@ -515,31 +515,22 @@ async function handleCreateShiftGroup(payload, uid) {
 
   checkRequiredFields(payload, ['groupName', 'password']);
 
+  const salt = crypto.randomBytes(16).toString("hex");
+  const hash = crypto.scryptSync(password, salt, 64).toString("hex");
+  const hashedPassword = `$scrypt${hash}:${salt}`;
+
   const newGroup = {
     ownerId: authorId || uid,
     orgId: orgId || uid,
     ownerName: ownerName || "Anonymous",
     groupName,
-    password, // Basic password for joining (in a real app, hash this)
+    password: hashedPassword,
     createdAt: admin.firestore.FieldValue.serverTimestamp(),
   };
 
   const docRef = await admin.firestore()
       .collection("shift_groups")
       .add(newGroup);
-
-      const salt = crypto.randomBytes(16).toString("hex");
-      const hash = crypto.scryptSync(password, salt, 64).toString("hex");
-      const hashedPassword = `$scrypt$${hash}:${salt}`;
-
-      const newGroup = {
-        ownerId: authorId || uid,
-        orgId: orgId || uid,
-        ownerName: ownerName || "Anonymous",
-        groupName,
-        password: hashedPassword,
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
-      };
 
   return {success: true, groupId: docRef.id};
 }
