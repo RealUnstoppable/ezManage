@@ -8,7 +8,7 @@
     "start": "npm run shell",
     "deploy": "firebase deploy --only functions",
     "logs": "firebase functions:log",
-    "test": "mocha tests/**/*.test.js"
+    "test": "mocha __tests__/**/*.test.js"
   },
   "engines": {
     "node": "20"

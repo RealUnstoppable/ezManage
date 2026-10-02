@@ -1678,3 +1678,4 @@ exports.manageLostAndFound = functions.https.onCall(async (data, context) => {
 });
 
 exports.handleCreateShiftGroup = handleCreateShiftGroup;
+exports.getActualOrgId = getActualOrgId;
