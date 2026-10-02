@@ -822,8 +822,8 @@
                             class="bg-white dark:bg-[#0a0a0a] px-2 text-slate-400">Or continue with</span></div>
                 </div>
 
-                <button onclick="signInWithGoogle()"
-                    class="btn btn-outline w-full py-4 font-bold flex items-center justify-center gap-3">
+                <button onclick="signInWithGoogle(event)"
+                    class="btn btn-outline w-full py-4 font-bold flex items-center justify-center gap-3 disabled:opacity-70 disabled:cursor-not-allowed">
                     <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google logo" class="w-5"> Google
                 </button>
 
@@ -873,7 +873,7 @@
                         <input type="text" id="setupLocation" placeholder="Buford, GA">
                     </div>
                 </div>
-                <button onclick="completeSetup()" class="btn btn-accent w-full py-5 mt-8 text-lg">Finish Setup</button>
+                <button onclick="completeSetup(event)" class="btn btn-accent w-full py-5 mt-8 text-lg disabled:opacity-70 disabled:cursor-not-allowed">Finish Setup</button>
             </div>
         </div>
 
@@ -2155,7 +2155,7 @@
                         Management</h3>
                     <div class="space-y-6">
                         <div class="flex flex-col sm:flex-row gap-4">
-                            <button onclick="changePassword()" class="btn btn-outline flex-1 text-sm"><i
+                            <button onclick="changePassword(event)" class="btn btn-outline flex-1 text-sm disabled:opacity-70 disabled:cursor-not-allowed"><i
                                     data-lucide="key" class="w-4 h-4"></i> Change Password</button>
                             <button onclick="cancelSubscription()"
                                 class="btn btn-outline flex-1 text-sm text-amber-500 border-amber-200 hover:bg-amber-50 dark:border-amber-900/50 dark:hover:bg-amber-900/20"><i
@@ -2948,16 +2948,33 @@
         window.signInWithGoogle = signInWithGoogle;
         function signInWithGoogle() {
             const provider = new firebase.auth.GoogleAuthProvider();
+            let btn;
+            let originalHTML = '';
+            if (e && e.currentTarget) {
+                btn = e.currentTarget;
+                originalHTML = btn.innerHTML;
+                btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> Loading...`;
+                if (window.lucide) window.lucide.createIcons();
+                btn.disabled = true;
+            }
             window.auth.signInWithPopup(provider).then(cred => {
                 fetchUserDoc(cred.user.uid).then(doc => {
                     if (!doc.exists) navTo('setup');
                 });
-            }).catch(err => alert(err.message));
+            }).catch(err => {
+                alert(err.message);
+            }).finally(() => {
+                if (btn) {
+                    btn.innerHTML = originalHTML;
+                    btn.disabled = false;
+                    if (window.lucide) window.lucide.createIcons();
+                }
+            });
         }
 
         function signOut() { window.auth.signOut().then(() => window.location.reload()); }
 
-        async function completeSetup() {
+        async function completeSetup(e) {
             if (!currentUser) return;
             const data = {
                 name: document.getElementById('setupName').value,
@@ -2974,6 +2991,16 @@
 
             if (!data.name) return alert("Name is required.");
 
+            let btn;
+            let originalHTML = '';
+            if (e && e.currentTarget) {
+                btn = e.currentTarget;
+                originalHTML = btn.innerHTML;
+                btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> Finishing...`;
+                if (window.lucide) window.lucide.createIcons();
+                btn.disabled = true;
+            }
+
             try {
                 await window.db.collection('users').doc(currentUser.uid).set(data, { merge: true });
                 currentUser.updateProfile({ displayName: data.name });
@@ -2984,6 +3011,12 @@
                     alert("Network error: Could not connect to the server.");
                 } else {
                     alert("Setup failed: " + err.message);
+                }
+            } finally {
+                if (btn) {
+                    btn.innerHTML = originalHTML;
+                    btn.disabled = false;
+                    if (window.lucide) window.lucide.createIcons();
                 }
             }
         }
@@ -4106,11 +4139,28 @@
             }, 1000);
         }
 
-        function changePassword() {
+        function changePassword(e) {
             if (!currentUser) return;
+
+            let btn;
+            let originalHTML = '';
+            if (e && e.currentTarget) {
+                btn = e.currentTarget;
+                originalHTML = btn.innerHTML;
+                btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Sending...`;
+                if (window.lucide) window.lucide.createIcons();
+                btn.disabled = true;
+            }
+
             window.auth.sendPasswordResetEmail(currentUser.email).then(() => {
                 alert("A password reset email has been sent to " + currentUser.email);
-            }).catch(err => alert(err.message));
+            }).catch(err => alert(err.message)).finally(() => {
+                if (btn) {
+                    btn.innerHTML = originalHTML;
+                    btn.disabled = false;
+                    if (window.lucide) window.lucide.createIcons();
+                }
+            });
         }
 
         async function cancelSubscription() {
