@@ -604,6 +604,10 @@ async function handleCreateShiftGroup(payload, uid) {
   const hash = crypto.scryptSync(password, salt, 64).toString("hex");
   const hashedPassword = `$scrypt$${hash}:${salt}`;
 
+  const salt = crypto.randomBytes(16).toString("hex");
+  const hash = crypto.scryptSync(password, salt, 64).toString("hex");
+  const hashedPassword = `$scrypt$${hash}:${salt}`;
+
   const newGroup = {
     ownerId: authorId || uid,
     orgId: orgId || uid,

@@ -22,7 +22,6 @@ if (!window.firebase.apps.length) {
     } catch (e) {
         console.warn("Firestore settings already configured or errored: ", e);
     }
-}
 
 // INSTRUCTIONS FOR AUTHORIZED DOMAINS:
 // To whitelist `ezmanage.realunstoppable.store` in the Firebase Console:
