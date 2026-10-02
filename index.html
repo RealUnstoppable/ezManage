@@ -10,16 +10,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-messaging-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-functions-compat.js"></script>
-    <script>
-      window.app = !window.firebase.apps.length ? window.firebase.initializeApp(window.ezManageFirebaseConfig) : window.firebase.app();
-      try {
-          window.firebase.firestore().settings({ experimentalForceLongPolling: true });
-      } catch (e) {
-          console.warn("Firestore settings already configured or errored: ", e);
-      }
-      window.auth = window.firebase.auth();
-      window.db = window.firebase.firestore();
-    </script>
+    <script type="module" src="firebase.js"></script>
   <script type="module">
     import { escapeHTML, logManagerError } from './js/utils.js';
     import { loadNavbar } from './js/navbar.js';
@@ -428,6 +419,7 @@
                 <a href="#" onclick="navTo('tasks')" class="hover:text-sky-600 transition-colors">Tasks</a>
                 <a href="easy-ai.html" class="hover:text-sky-600 transition-colors text-sky-500">AI Predictor</a>
                 <a href="inventory.html" class="hover:text-sky-600 transition-colors text-sky-500">Inventory</a>
+                <a href="expenses.html" class="hover:text-sky-600 transition-colors text-sky-500">Expenses</a>
                 <a href="#" onclick="navTo('pricing')" class="hover:text-sky-600 transition-colors">Pricing</a>
             </div>
 
@@ -467,6 +459,8 @@
                     data-lucide="brain"></i> AI Predictor</a>
             <a href="inventory.html" class="flex items-center gap-4 font-bold text-lg text-sky-500 hover:text-sky-600"><i
                     data-lucide="package"></i> Inventory</a>
+            <a href="expenses.html" class="flex items-center gap-4 font-bold text-lg text-sky-500 hover:text-sky-600"><i
+                    data-lucide="dollar-sign"></i> Expenses</a>
             <a href="#" onclick="navTo('presets')"
                 class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="layout"></i>
                 Templates</a>
@@ -525,6 +519,9 @@
             <a href="#" onclick="navTo('deliveries')"
                 class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="truck"></i>
                 Vendor Deliveries</a>
+            <a href="#" onclick="navTo('lostandfound')"
+                class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="package-search"></i>
+                Lost & Found</a>
 
             <a href="#" onclick="navTo('marketplace')"
                 class="flex items-center gap-4 font-bold text-lg hover:text-sky-500"><i data-lucide="arrow-left-right"></i>
@@ -816,8 +813,8 @@
                             class="bg-white dark:bg-[#0a0a0a] px-2 text-slate-400">Or continue with</span></div>
                 </div>
 
-                <button onclick="signInWithGoogle()"
-                    class="btn btn-outline w-full py-4 font-bold flex items-center justify-center gap-3">
+                <button onclick="signInWithGoogle(event)"
+                    class="btn btn-outline w-full py-4 font-bold flex items-center justify-center gap-3 disabled:opacity-70 disabled:cursor-not-allowed">
                     <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google logo" class="w-5"> Google
                 </button>
 
@@ -867,7 +864,7 @@
                         <input type="text" id="setupLocation" placeholder="Buford, GA">
                     </div>
                 </div>
-                <button onclick="completeSetup()" class="btn btn-accent w-full py-5 mt-8 text-lg">Finish Setup</button>
+                <button onclick="completeSetup(event)" class="btn btn-accent w-full py-5 mt-8 text-lg disabled:opacity-70 disabled:cursor-not-allowed">Finish Setup</button>
             </div>
         </div>
 
@@ -908,10 +905,10 @@
                             aria-label="Export JSON"><i data-lucide="download" class="w-4"></i></button>
                         <input type="file" id="jsonImportInput" accept=".json" class="hidden" aria-label="Import JSON File"
                             onchange="importDataJSON(event)">
-                        <button aria-label="Templates" onclick="navTo('presets')" class="btn btn-outline btn-sm"><i data-lucide="layout"
+                        <button onclick="navTo('presets')" class="btn btn-outline btn-sm"><i data-lucide="layout"
                                 class="w-4"></i> Templates</button>
                         <button onclick="clearData()"
-                            class="btn btn-outline btn-sm text-red-500 border-red-200 hover:bg-red-50" aria-label="Clear Data"><i
+                            class="btn btn-outline btn-sm text-red-500 border-red-200 hover:bg-red-50"><i
                                 data-lucide="trash-2" class="w-4"></i> Reset</button>
                     </div>
                 </div>
@@ -1507,7 +1504,7 @@
                             <option value="Normal">Normal Priority</option>
                             <option value="Urgent">🚨 Urgent Issue</option>
                         </select>
-                        <button onclick="submitShiftNote()" class="btn btn-primary px-8 py-3">Post Note</button>
+                        <button id="btnSubmitShiftNote" onclick="submitShiftNote()" class="btn btn-primary px-8 py-3 disabled:opacity-70 disabled:cursor-not-allowed">Post Note</button>
                     </div>
                 </div>
 
@@ -1649,6 +1646,64 @@
 
                 <div id="incidentsContainer" class="space-y-4">
                     <!-- Incidents populated via JS -->
+                </div>
+            </div>
+        </div>
+
+
+        <div id="view-lostandfound" class="view-section px-6 py-12 hidden">
+            <div class="max-w-6xl mx-auto">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-12">
+                    <div>
+                        <div class="flex items-center gap-3 mb-2"><i data-lucide="package-search"
+                                class="text-sky-500 w-8 h-8"></i>
+                            <span class="text-xs font-black uppercase tracking-widest text-sky-500">Asset Tracking</span>
+                        </div>
+                        <h1 class="text-4xl font-black">Lost & Found</h1>
+                    </div>
+                    <button onclick="document.getElementById('lostAndFoundModal').classList.toggle('hidden')"
+                        class="btn btn-accent px-8 py-3 w-full md:w-auto shadow-lg shadow-sky-500/20 text-sm font-bold">
+                        <i data-lucide="plus" class="w-4 h-4 inline-block mr-2"></i>Add Found Item
+                    </button>
+                </div>
+
+                <div id="lostAndFoundModal"
+                    class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                    <div class="bg-white dark:bg-black rounded-3xl p-8 max-w-md w-full shadow-2xl border border-slate-100 dark:border-slate-800">
+                        <h3 class="text-2xl font-black mb-6">Log Found Item</h3>
+                        <div class="space-y-4">
+                            <input type="text" id="lfItemName" placeholder="Item Name (e.g. Blue Wallet)" aria-label="Item Name"
+                                class="w-full bg-slate-50 dark:bg-slate-900 p-4 rounded-xl border-none focus:ring-2 focus:ring-sky-500 text-sm font-medium">
+                            <textarea id="lfDescription" placeholder="Description & Details..." aria-label="Description" rows="3"
+                                class="w-full bg-slate-50 dark:bg-slate-900 p-4 rounded-xl border-none focus:ring-2 focus:ring-sky-500 text-sm font-medium resize-none"></textarea>
+                            <select id="lfStatus" aria-label="Item Status"
+                                class="w-full bg-slate-50 dark:bg-slate-900 p-4 rounded-xl border-none focus:ring-2 focus:ring-sky-500 text-sm font-medium">
+                                <option value="Unclaimed">Unclaimed</option>
+                                <option value="Claimed">Claimed</option>
+                                <option value="Discarded">Discarded</option>
+                            </select>
+
+                            <div class="flex gap-4 pt-4 mt-6 border-t border-slate-100 dark:border-slate-800">
+                                <button onclick="document.getElementById('lostAndFoundModal').classList.add('hidden')"
+                                    class="flex-1 px-4 py-3 rounded-xl font-bold text-sm bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">Cancel</button>
+                                <button onclick="submitLostAndFound()" class="flex-1 btn btn-accent px-4 py-3 text-sm">Save Item</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-xl font-black">Logged Items</h2>
+                        <button onclick="fetchLostAndFound()"
+                            class="text-xs font-bold text-slate-500 hover:text-sky-500 uppercase tracking-widest transition-colors"><i
+                                data-lucide="refresh-cw" class="inline w-3 h-3 mr-1"></i>Refresh</button>
+                    </div>
+                    <div id="lostAndFoundContainer" class="space-y-4">
+                        <div class="flex items-center justify-center py-12">
+                            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-sky-500"></div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1845,6 +1900,56 @@
 
                 <div id="certificationsContainer" class="space-y-4">
                     <!-- Certifications populated via JS -->
+                </div>
+            </div>
+        </div>
+
+        <div id="view-refunds" class="view-section px-6 py-12 hidden">
+            <div class="max-w-4xl mx-auto">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+                    <h1 class="text-4xl font-black">Refunds & Voids</h1>
+                    <button onclick="document.getElementById('addRefundModal').classList.toggle('hidden')"
+                        class="btn btn-primary flex items-center gap-2 px-6">
+                        <i data-lucide="plus-circle" class="w-5 h-5"></i> Log Refund/Void
+                    </button>
+                </div>
+
+                <div id="addRefundModal"
+                    class="hidden bg-white dark:bg-slate-900 rounded-3xl p-6 md:p-8 shadow-sm border border-slate-100 dark:border-slate-800 mb-12">
+                    <h2 class="text-xl font-bold mb-4">Log New Refund/Void</h2>
+                    <div class="space-y-4">
+                        <div class="grid md:grid-cols-2 gap-4">
+                            <select id="refundType" aria-label="Type" class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
+                                <option value="Refund">Refund</option>
+                                <option value="Void">Void</option>
+                                <option value="Discount">Discount</option>
+                            </select>
+                            <input type="number" step="0.01" id="refundAmount" placeholder="Amount ($)" aria-label="Amount"
+                                class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
+                        </div>
+                        <input type="text" id="refundRegisterNumber" placeholder="Register Number (e.g. Reg 1)" aria-label="Register Number"
+                            class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
+                        <textarea id="refundReason" placeholder="Reason (e.g. Customer changed mind, wrong item wrung up...)" aria-label="Reason" rows="3"
+                            class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500 resize-none"></textarea>
+
+                        <div class="flex justify-end gap-3 pt-2">
+                            <button onclick="document.getElementById('addRefundModal').classList.add('hidden')"
+                                class="btn btn-outline px-6 py-2">Cancel</button>
+                            <button onclick="submitRefundLog()" class="btn btn-accent px-6 py-2">Save Entry</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-black">Recent Logs</h2>
+                    <button onclick="fetchRefundLogs()"
+                        class="text-sm font-bold text-sky-500 hover:text-sky-600 flex items-center gap-2">
+                        <i data-lucide="refresh-cw" class="w-4 h-4"></i> Refresh
+                    </button>
+                </div>
+
+                <div id="refundLogsContainer" class="space-y-4">
+                    <!-- Refund logs populated via JS -->
                 </div>
             </div>
         </div>
@@ -2091,9 +2196,9 @@
                         Management</h3>
                     <div class="space-y-6">
                         <div class="flex flex-col sm:flex-row gap-4">
-                            <button onclick="changePassword()" class="btn btn-outline flex-1 text-sm"><i
+                            <button onclick="changePassword(event)" class="btn btn-outline flex-1 text-sm disabled:opacity-70 disabled:cursor-not-allowed"><i
                                     data-lucide="key" class="w-4 h-4"></i> Change Password</button>
-                            <button aria-label="Cancel Subscription" onclick="cancelSubscription()"
+                            <button onclick="cancelSubscription()"
                                 class="btn btn-outline flex-1 text-sm text-amber-500 border-amber-200 hover:bg-amber-50 dark:border-amber-900/50 dark:hover:bg-amber-900/20"><i
                                     data-lucide="x-circle" class="w-4 h-4"></i> Cancel Sub</button>
                             <button onclick="deleteAccount()"
@@ -2514,15 +2619,160 @@
         </div>
     </div>
 
-    <script>
+    <script type="module">
+
+window.checkAndRenderOrgControls = checkAndRenderOrgControls;
+window.submitWasteLog = submitWasteLog;
+
+        // Initialization is handled by firebase.js
+window.callCloudFunction = callCloudFunction;
+window.runAIPatternLogic = runAIPatternLogic;
+window.triggerCloudOptIn = triggerCloudOptIn;
+window.acceptToSAndEnableCloud = acceptToSAndEnableCloud;
+window.declineToS = declineToS;
+window.disableCloudSync = disableCloudSync;
+window.updateCloudSyncUI = updateCloudSyncUI;
+window.exportDataJSON = exportDataJSON;
+window.importDataJSON = importDataJSON;
+window.toggleAuthModeUI = toggleAuthModeUI;
+window.toggleAuthMode = toggleAuthMode;
+window.handleAuth = handleAuth;
+window.signInWithGoogle = signInWithGoogle;
+window.signOut = signOut;
+window.completeSetup = completeSetup;
+window.toggleSidebar = toggleSidebar;
+window.fetchTrackerAnnouncements = fetchTrackerAnnouncements;
+window.createTrackerAnnouncement = createTrackerAnnouncement;
+window.deleteAnnouncement = deleteAnnouncement;
+window.navTo = navTo;
+window.handleNavAccountClick = handleNavAccountClick;
+window.toggleTheme = toggleTheme;
+window.toggleShiftTimer = toggleShiftTimer;
+window.updateTimerUI = updateTimerUI;
+window.addDrawerItem = addDrawerItem;
+window.calcDrawer = calcDrawer;
+window.addDepositItem = addDepositItem;
+window.addRoutineTask = addRoutineTask;
+window.addInventoryItem = addInventoryItem;
+window.sortInventory = sortInventory;
+window.getTrackerState = getTrackerState;
+window.debouncedTriggerDraftSync = debouncedTriggerDraftSync;
+window.triggerDraftSync = triggerDraftSync;
+window.populateTrackerFromState = populateTrackerFromState;
+window.syncDraftFromServer = syncDraftFromServer;
+window.manualSaveHistory = manualSaveHistory;
+window.debouncedRenderHistory = debouncedRenderHistory;
+window.renderHistory = renderHistory;
+window.deleteHistoryShift = deleteHistoryShift;
+window.updateStorageBar = updateStorageBar;
+window.loadHistoryShift = loadHistoryShift;
+window.exportPerformanceCSV = exportPerformanceCSV;
+window.calculatePerformance = calculatePerformance;
+window.renderPerformanceChart = renderPerformanceChart;
+window.loadPresetList = loadPresetList;
+window.saveCustomPreset = saveCustomPreset;
+window.deleteCustomPreset = deleteCustomPreset;
+window.loadCustomPresets = loadCustomPresets;
+window.applyCustomPreset = applyCustomPreset;
+window.generateReport = generateReport;
+window.loadProfileUI = loadProfileUI;
+window.saveProfileToFirebase = saveProfileToFirebase;
+window.changePassword = changePassword;
+window.cancelSubscription = cancelSubscription;
+window.deleteAccount = deleteAccount;
+window.clearData = clearData;
+window.initDefaults = initDefaults;
+window.processCheckout = processCheckout;
+window.submitAssignedTask = submitAssignedTask;
+window.fetchAssignedTasks = fetchAssignedTasks;
+window.updateAssignedTaskStatus = updateAssignedTaskStatus;
+window.deleteAssignedTask = deleteAssignedTask;
+window.submitMaintenanceTicket = submitMaintenanceTicket;
+window.submitTaskAlt = submitTaskAlt;
+window.fetchMaintenanceTickets = fetchMaintenanceTickets;
+window.deleteMaintenanceTicket = deleteMaintenanceTicket;
+window.updateMaintenanceStatus = updateMaintenanceStatus;
+window.submitFeatureRequest = submitFeatureRequest;
+window.addEmployee = addEmployee;
+window.submitTimeOffRequest = submitTimeOffRequest;
+window.fetchTasks = fetchTasks;
+window.fetchTimeOffRequests = fetchTimeOffRequests;
+window.updateTimeOffStatus = updateTimeOffStatus;
+window.deleteTimeOffRequest = deleteTimeOffRequest;
+window.fetchEmployees = fetchEmployees;
+window.toggleEmployeeStatus = toggleEmployeeStatus;
+window.populateScheduleDropdown = populateScheduleDropdown;
+window.addShiftToSchedule = addShiftToSchedule;
+window.fetchSchedules = fetchSchedules;
+window.removeShift = removeShift;
+window.fetchFeatureRequests = fetchFeatureRequests;
+window.checkAndRenderOrgControls = checkAndRenderOrgControls;
+window.fetchShiftNotes = fetchShiftNotes;
+window.submitShiftNote = submitShiftNote;
+window.resolveShiftNote = resolveShiftNote;
+window.createShiftGroup = createShiftGroup;
+window.requestJoinShiftGroup = requestJoinShiftGroup;
+window.fetchGroupRequests = fetchGroupRequests;
+window.fetchMySentRequests = fetchMySentRequests;
+window.retractGroupRequest = retractGroupRequest;
+window.approveGroupRequest = approveGroupRequest;
+window.submitDelivery = submitDelivery;
+window.fetchDeliveries = fetchDeliveries;
+window.deleteDelivery = deleteDelivery;
+window.updateDeliveryStatus = updateDeliveryStatus;
+window.populateCertAssigneeDropdown = populateCertAssigneeDropdown;
+window.submitCertification = submitCertification;
+window.fetchCertifications = fetchCertifications;
+window.deleteCertification = deleteCertification;
+window.submitWasteLog = submitWasteLog;
+window.fetchWasteLogs = fetchWasteLogs;
+window.submitTemperatureLog = submitTemperatureLog;
+window.fetchTemperatureLogs = fetchTemperatureLogs;
+window.deleteTempLog = deleteTempLog;
+window.deleteWasteLog = deleteWasteLog;
+window.submitIncidentTicket = submitIncidentTicket;
+window.fetchIncidents = fetchIncidents;
+window.deleteIncident = deleteIncident;
+window.updateIncidentStatus = updateIncidentStatus;
+window.closeEmployeeModal = closeEmployeeModal;
+window.closeEmployeeModalAlt = closeEmployeeModalAlt;
+window.openEditEmployeeModal = openEditEmployeeModal;
+window.submitEmployee = submitEmployee;
+window.createTask = createTask;
+window.fetchAnnouncements = fetchAnnouncements;
+window.createAnnouncement = createAnnouncement;
+window.fetchTeamDirectory = fetchTeamDirectory;
+window.updateScheduleEmployeeDropdown = updateScheduleEmployeeDropdown;
+window.populateTaskAssigneeDropdown = populateTaskAssigneeDropdown;
+window.submitTask = submitTask;
+window.renderFilteredTasks = renderFilteredTasks;
+window.updateTaskStatus = updateTaskStatus;
+window.deleteTask = deleteTask;
+window.populateRecognitionDropdown = populateRecognitionDropdown;
+window.submitRecognition = submitRecognition;
+window.fetchRecognitions = fetchRecognitions;
+window.deleteRecognition = deleteRecognition;
+window.toggleClock = toggleClock;
+window.updateTimeClockUI = updateTimeClockUI;
+window.fetchTimeLogs = fetchTimeLogs;
+window.switchMarketplaceTab = switchMarketplaceTab;
+window.postShiftToMarketplace = postShiftToMarketplace;
+window.fetchMarketplaceShifts = fetchMarketplaceShifts;
+window.renderMarketplaceShifts = renderMarketplaceShifts;
+window.attachMpEventListeners = attachMpEventListeners;
+window.offerCoverShift = offerCoverShift;
+window.approveMarketplaceShift = approveMarketplaceShift;
+window.denyMarketplaceShift = denyMarketplaceShift;
+window.deleteMarketplaceShift = deleteMarketplaceShift;
+window.openFeedbackModal = openFeedbackModal;
+window.closeFeedbackModal = closeFeedbackModal;
+window.submitFeedback = submitFeedback;
+window.fetchFeedbacksForEmployee = fetchFeedbacksForEmployee;
+window.deleteFeedback = deleteFeedback;
+window.updateNetworkStatus = updateNetworkStatus;
 
         // Initialization is handled by firebase.js, we just get references
-
-        // Ensure singleton check since it relies on firebaseConfig
-        const firebaseConfig = window.ezManageFirebaseConfig;
-        window.app = !window.firebase.apps.length ? window.firebase.initializeApp(firebaseConfig) : window.firebase.app();
         window.auth = window.firebase.auth();
-
         window.db = window.firebase.firestore();
         window.cloudFunctions = window.firebase.functions();
 
@@ -2545,7 +2795,7 @@
 
         async function callCloudFunction(functionName, payload) {
             try {
-                const func = firebase.functions().httpsCallable(functionName);
+                const func = window.firebase.functions().httpsCallable(functionName);
                 return await func(payload);
             } catch (error) {
                 window.logManagerError("Error calling cloud function " + functionName, error);
@@ -2832,12 +3082,14 @@
             document.getElementById('authToggleLink').innerText = isRegisterMode ? "Sign In" : "Create one";
         }
 
+        window.toggleAuthMode = toggleAuthMode;
         function toggleAuthMode(e) {
             if (e) e.preventDefault();
             isRegisterMode = !isRegisterMode;
             toggleAuthModeUI();
         }
 
+        window.handleAuth = handleAuth;
         async function handleAuth(e) {
             e.preventDefault();
             const email = document.getElementById('authEmail').value;
@@ -2879,18 +3131,36 @@
             }
         }
 
+        window.signInWithGoogle = signInWithGoogle;
         function signInWithGoogle() {
             const provider = new firebase.auth.GoogleAuthProvider();
+            let btn;
+            let originalHTML = '';
+            if (e && e.currentTarget) {
+                btn = e.currentTarget;
+                originalHTML = btn.innerHTML;
+                btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> Loading...`;
+                if (window.lucide) window.lucide.createIcons();
+                btn.disabled = true;
+            }
             window.auth.signInWithPopup(provider).then(cred => {
                 fetchUserDoc(cred.user.uid).then(doc => {
                     if (!doc.exists) navTo('setup');
                 });
-            }).catch(err => alert(err.message));
+            }).catch(err => {
+                alert(err.message);
+            }).finally(() => {
+                if (btn) {
+                    btn.innerHTML = originalHTML;
+                    btn.disabled = false;
+                    if (window.lucide) window.lucide.createIcons();
+                }
+            });
         }
 
         function signOut() { window.auth.signOut().then(() => window.location.reload()); }
 
-        async function completeSetup() {
+        async function completeSetup(e) {
             if (!currentUser) return;
             const data = {
                 name: document.getElementById('setupName').value,
@@ -2907,6 +3177,16 @@
 
             if (!data.name) return alert("Name is required.");
 
+            let btn;
+            let originalHTML = '';
+            if (e && e.currentTarget) {
+                btn = e.currentTarget;
+                originalHTML = btn.innerHTML;
+                btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> Finishing...`;
+                if (window.lucide) window.lucide.createIcons();
+                btn.disabled = true;
+            }
+
             try {
                 await window.db.collection('users').doc(currentUser.uid).set(data, { merge: true });
                 currentUser.updateProfile({ displayName: data.name });
@@ -2917,6 +3197,12 @@
                     alert("Network error: Could not connect to the server.");
                 } else {
                     alert("Setup failed: " + err.message);
+                }
+            } finally {
+                if (btn) {
+                    btn.innerHTML = originalHTML;
+                    btn.disabled = false;
+                    if (window.lucide) window.lucide.createIcons();
                 }
             }
         }
@@ -2988,7 +3274,11 @@
 
             } catch (error) {
                 console.error("Error fetching announcements:", error);
-                document.getElementById('trackerAnnouncementsContainer').innerHTML = `<p class="text-red-500 text-sm">Failed to load announcements.</p>`;
+                document.getElementById('trackerAnnouncementsContainer').innerHTML = '';
+                const errP = document.createElement('p');
+                errP.className = 'text-red-500 text-sm';
+                errP.textContent = 'Failed to load announcements.';
+                document.getElementById('trackerAnnouncementsContainer').appendChild(errP);
             }
         }
 
@@ -3068,7 +3358,7 @@
                 localStorage.setItem('navTo', viewId);
                 return;
             }
-            if (!currentUser && (['history', 'presets', 'performance', 'request', 'profile', 'shiftNotes', 'team', 'employees', 'timeoff', 'tasks', 'announcements', 'deliveries', 'marketplace', 'certifications'].includes(viewId))) {
+            if (!currentUser && (['history', 'presets', 'performance', 'request', 'profile', 'shiftNotes', 'team', 'employees', 'timeoff', 'tasks', 'announcements', 'deliveries', 'marketplace', 'certifications', 'refunds'].includes(viewId))) {
                 viewId = 'auth';
             }
             if (viewId === 'maintenance' && currentUser) {
@@ -3083,6 +3373,9 @@
             }
             if (viewId === 'tasks' && currentUser) {
                 fetchTasks();
+            }
+            if (viewId === 'refunds' && currentUser) {
+                fetchRefundLogs();
             }
             if (viewId === 'team' && currentUser) {
                 fetchTeamDirectory();
@@ -3590,7 +3883,7 @@
                             <div class="text-[10px] font-bold uppercase tracking-widest text-slate-400 mt-1">Duration: ${escapeHTML(data.durationMins || 0)}m • Saved at ${escapeHTML(data.timeSaved || 'N/A')}</div>
                         </div>
                         <div class="flex gap-2">
-                            <button class="btn btn-outline btn-sm bg-white dark:bg-slate-900 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity history-load" aria-label="Load History Record">
+                            <button class="btn btn-outline btn-sm bg-white dark:bg-slate-900 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity history-load">
                                 <i data-lucide="download"></i> Load
                             </button>
                             <button class="text-red-400 p-2 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity history-delete" title="Delete" aria-label="Delete history record">
@@ -3845,7 +4138,7 @@
                 div.innerHTML = `
                     <span class="font-bold preset-name"></span>
                     <div class="flex gap-2">
-                        <button class="btn btn-sm btn-outline opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity load-btn" aria-label="Load Template">Load</button>
+                        <button class="btn btn-sm btn-outline opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity load-btn">Load</button>
                         <button class="text-red-400 p-2 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity delete-btn" title="Delete" aria-label="Delete template"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
                     </div>
                 `;
@@ -4017,7 +4310,7 @@
             document.getElementById('profileAIToggle').checked = aiEnabled;
         }
 
-        function saveProfileToFirebase() {
+        async function saveProfileToFirebase() {
             if (!currentUser) return;
 
             const cloudToggle = document.getElementById('profileCloudSyncToggle').checked;
@@ -4033,20 +4326,43 @@
 
             if (profileDebounceTimeout) clearTimeout(profileDebounceTimeout);
 
-            profileDebounceTimeout = setTimeout(() => {
-                window.db.collection('users').doc(currentUser.uid).set(data, { merge: true }).then(() => {
-                    localStorage.setItem(`ezManage_aiEnabled_${currentUser.uid}`, data.aiTrainingEnabled);
-                    localStorage.setItem(`ezManage_cloudEnabled_${currentUser.uid}`, cloudSyncEnabled);
-                    alert("Profile Updated!");
-                });
-            }, 1000);
+            try {
+                await window.db.collection('users').doc(currentUser.uid).set(data, { merge: true });
+                localStorage.setItem(`ezManage_aiEnabled_${currentUser.uid}`, data.aiTrainingEnabled);
+                localStorage.setItem(`ezManage_cloudEnabled_${currentUser.uid}`, cloudSyncEnabled);
+                alert("Profile Updated!");
+            } catch (error) {
+                window.logManagerError("Error saving profile:", error);
+                if (error.code === 'auth/network-request-failed' || error.code === 'unavailable') {
+                    alert("Network error: Could not connect to the server.");
+                } else {
+                    alert("Failed to save profile: " + error.message);
+                }
+            }
         }
 
-        function changePassword() {
+        function changePassword(e) {
             if (!currentUser) return;
+
+            let btn;
+            let originalHTML = '';
+            if (e && e.currentTarget) {
+                btn = e.currentTarget;
+                originalHTML = btn.innerHTML;
+                btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Sending...`;
+                if (window.lucide) window.lucide.createIcons();
+                btn.disabled = true;
+            }
+
             window.auth.sendPasswordResetEmail(currentUser.email).then(() => {
                 alert("A password reset email has been sent to " + currentUser.email);
-            }).catch(err => alert(err.message));
+            }).catch(err => alert(err.message)).finally(() => {
+                if (btn) {
+                    btn.innerHTML = originalHTML;
+                    btn.disabled = false;
+                    if (window.lucide) window.lucide.createIcons();
+                }
+            });
         }
 
         async function cancelSubscription() {
@@ -4056,12 +4372,9 @@
             if (!confirm("Are you sure you want to cancel your subscription?")) return;
 
             try {
-                const res = await fetch("https://cancelsubscription-dsy7tdoigq-uc.a.run.app", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ customerId: currentUserData.subscription.customerId })
-                });
-                const data = await res.json();
+                const cancelSubFn = firebase.functions().httpsCallable('cancelSubscription');
+                const result = await cancelSubFn();
+                const data = result.data;
                 if (data.success) {
                     alert("Subscription canceled successfully.");
                     window.db.collection('users').doc(currentUser.uid).update({
@@ -4071,9 +4384,11 @@
                     });
                     updateCloudSyncUI();
                 } else {
-                    alert("Error: " + data.error);
+                    alert("Failed to cancel subscription: " + (data.error || "Unknown error"));
                 }
-            } catch (e) { alert("Failed to contact payment server. Try again later."); }
+            } catch (e) {
+                alert("Failed to contact payment server: " + e.message);
+            }
         }
 
         function deleteAccount() {
@@ -4289,7 +4604,11 @@
                     lucide.createIcons();
                 }, err => {
                     console.error("Error fetching tasks:", err);
-                    container.innerHTML = `<div class="text-red-500 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl text-center">Failed to load tasks: ${window.escapeHTML ? window.escapeHTML(err.message) : err.message}</div>`;
+                    container.innerHTML = '';
+                    const errDiv = document.createElement('div');
+                    errDiv.className = 'text-red-500 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl text-center';
+                    errDiv.textContent = `Failed to load tasks: ${err.message}`;
+                    container.appendChild(errDiv);
                 });
         }
 
@@ -4550,10 +4869,10 @@
             const msg = document.getElementById('featureReqText').value;
             if (!msg) return;
 
-            const submitBtn = document.getElementById('btnSubmitFeatureReq');
-            const originalText = submitBtn.innerHTML;
-            submitBtn.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin mr-2 inline-block"></i> Sending...';
-            submitBtn.disabled = true;
+            const btn = document.getElementById('btnSubmitFeatureReq');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin mx-auto inline-block"></i> Sending...';
+            btn.disabled = true;
             if (window.lucide) window.lucide.createIcons();
 
             try {
@@ -4574,8 +4893,8 @@
                     alert("Failed to send request. " + err.message);
                 }
             } finally {
-                submitBtn.innerHTML = originalText;
-                submitBtn.disabled = false;
+                btn.innerHTML = originalText;
+                btn.disabled = false;
                 if (window.lucide) window.lucide.createIcons();
             }
         }
@@ -4752,7 +5071,7 @@
                         // Employee specific view (Can mark their own as complete)
                         if (task.assigneeId === currentUser.uid && task.status === 'Pending') {
                             myTasksHtml.push(taskCard + `
-                                    <button data-action="updateTaskStatus" data-id="${task.id}" data-status="Completed" class="btn btn-sm bg-green-500 text-white hover:bg-green-600"><i data-lucide="check" class="w-4 h-4 mr-1"></i>Complete</button>
+                                    <button data-action="updateTaskStatus" data-id="${task.id}" data-status="Completed" class="btn btn-sm bg-green-500 text-white hover:bg-green-600" aria-label="Mark task as complete"><i data-lucide="check" class="w-4 h-4 mr-1"></i>Complete</button>
                                 </div></div>
                             `);
                         } else if (task.assigneeId === currentUser.uid) {
@@ -4945,8 +5264,8 @@
                                 </div>
                             </div>
                             <div class="flex gap-2 self-start sm:self-center">
-                                <button class="btn btn-outline btn-sm text-blue-500 hover:bg-blue-50 feedback-emp-btn" aria-label="Leave Feedback"><i data-lucide="message-square" class="w-3 h-3"></i> Feedback</button>
-                                <button class="btn btn-outline btn-sm toggle-emp-btn" aria-label="Toggle Employee Status">${emp.status === 'Active' ? 'Deactivate' : 'Activate'}</button>
+                                <button class="btn btn-outline btn-sm text-blue-500 hover:bg-blue-50 feedback-emp-btn"><i data-lucide="message-square" class="w-3 h-3"></i> Feedback</button>
+                                <button class="btn btn-outline btn-sm toggle-emp-btn">${emp.status === 'Active' ? 'Deactivate' : 'Activate'}</button>
                                 <button class="btn btn-outline btn-sm text-red-500 hover:bg-red-50 delete-emp-btn" aria-label="Delete Employee"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
                             </div>
                         `;
@@ -4960,7 +5279,13 @@
                     populateScheduleDropdown();
                 }, err => {
                     console.error("Manager Troubleshooting: Error fetching employees:", err);
-                    if (container) { container.innerHTML = '<p class="text-red-500 text-center py-8">Failed to load roster.</p>'; }
+                    if (container) {
+                        container.innerHTML = '';
+                        const errP = document.createElement('p');
+                        errP.className = 'text-red-500 text-center py-8';
+                        errP.textContent = 'Failed to load roster.';
+                        container.appendChild(errP);
+                    }
                 });
         }
 
@@ -5145,7 +5470,7 @@
                                 </div>
                                 <div class="text-right">
                                     <p class="font-mono bg-slate-50 dark:bg-slate-800 px-3 py-1 rounded-lg border border-slate-100 dark:border-slate-700">${escapeHTML(shift.startTime)} - ${escapeHTML(shift.endTime)}</p>
-                                    <button class="text-red-500 text-xs mt-2 hover:underline remove-shift-btn" data-shift-idx="${index}" aria-label="Remove Shift">Remove</button>
+                                    <button class="text-red-500 text-xs mt-2 hover:underline remove-shift-btn" data-shift-idx="${index}">Remove</button>
                                 </div>
                             `;
                             div.querySelector('.remove-shift-btn').onclick = function() { removeShift(parseInt(this.getAttribute('data-shift-idx'), 10)); };
@@ -5233,8 +5558,8 @@ function checkAndRenderOrgControls() {
             if (!currentUserData || !currentUserData.orgId) {
                 // Not in an org
                 controls.innerHTML = `
-                    <button aria-label="Create Group" onclick="document.getElementById('createGroupModal').classList.remove('hidden')" class="btn btn-outline btn-sm"><i data-lucide="plus" class="w-4 h-4"></i> Create Group</button>
-                    <button aria-label="Join Group" onclick="document.getElementById('joinGroupModal').classList.remove('hidden')" class="btn btn-outline btn-sm"><i data-lucide="log-in" class="w-4 h-4"></i> Join Group</button>
+                    <button onclick="document.getElementById('createGroupModal').classList.remove('hidden')" class="btn btn-outline btn-sm"><i data-lucide="plus" class="w-4 h-4"></i> Create Group</button>
+                    <button onclick="document.getElementById('joinGroupModal').classList.remove('hidden')" class="btn btn-outline btn-sm"><i data-lucide="log-in" class="w-4 h-4"></i> Join Group</button>
                 `;
                 postArea.classList.add('hidden');
                 lucide.createIcons();
@@ -5350,7 +5675,7 @@ function checkAndRenderOrgControls() {
                             </div>
                             <p class="text-slate-700 dark:text-slate-300 font-medium mb-6 whitespace-pre-wrap pl-1 shift-note-text"></p>
                             <div class="flex justify-end border-t border-slate-100 dark:border-slate-800 pt-4 mt-2">
-                                <button class="text-sm font-bold text-slate-400 hover:text-emerald-500 flex items-center gap-2 transition-colors resolve-note-btn" aria-label="Resolve Shift Note" data-note-id="${escapeHTML(docId)}">
+                                <button class="text-sm font-bold text-slate-400 hover:text-emerald-500 flex items-center gap-2 transition-colors resolve-note-btn" data-note-id="${escapeHTML(docId)}">
                                     <i data-lucide="check-circle" class="w-4 h-4"></i> Mark Resolved
                                 </button>
                             </div>
@@ -5364,7 +5689,13 @@ function checkAndRenderOrgControls() {
                 })
                 .catch(err => {
                     console.error("Manager Troubleshooting: Error fetching notes:", err);
-                    if (container) { container.innerHTML = '<p class="text-red-500 text-center py-8">Failed to load shift notes. Please check your connection.</p>'; }
+                    if (container) {
+                        container.innerHTML = '';
+                        const errP = document.createElement('p');
+                        errP.className = 'text-red-500 text-center py-8';
+                        errP.textContent = 'Failed to load shift notes. Please check your connection.';
+                        container.appendChild(errP);
+                    }
                 });
         }
 
@@ -5377,6 +5708,15 @@ function checkAndRenderOrgControls() {
             const priority = document.getElementById('shiftNotePriority').value;
 
             if (!content) return alert("Please enter note content.");
+
+            const submitBtn = document.querySelector('button[onclick="submitShiftNote()"]');
+            const originalBtnText = submitBtn ? submitBtn.innerHTML : 'Post Note';
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.classList.add('opacity-70', 'cursor-not-allowed');
+                submitBtn.innerHTML = '<i data-lucide="loader-2" class="animate-spin w-4 h-4 inline-block mr-2"></i> Saving...';
+                if (window.lucide) window.lucide.createIcons();
+            }
 
             // Optimistic UI update
             const container = document.getElementById('shiftNotesContainer');
@@ -5419,7 +5759,15 @@ function checkAndRenderOrgControls() {
             if (emptyState) emptyState.remove();
 
             container.prepend(noteDiv);
+
+            const submitBtn = document.getElementById('btnSubmitShiftNote');
+            const originalText = submitBtn ? submitBtn.innerHTML : "Post Note";
+            if (submitBtn) {
+                submitBtn.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> Posting...';
+                submitBtn.disabled = true;
+            }
             if (window.lucide) window.lucide.createIcons();
+
             // Store the content so we can restore it if the write fails
             const previousContent = document.getElementById('shiftNoteContent').value;
             document.getElementById('shiftNoteContent').value = "";
@@ -5433,8 +5781,8 @@ function checkAndRenderOrgControls() {
                     priority: priority,
                     status: 'Active',
                     orgId: currentUserData.orgId,
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                    createdAt: window.firebase.firestore.FieldValue.serverTimestamp(),
+                    timestamp: window.firebase.firestore.FieldValue.serverTimestamp()
                 });
 
                 document.getElementById('shiftNoteContent').value = "";
@@ -5468,7 +5816,7 @@ function checkAndRenderOrgControls() {
                     </div>
                     <p class="text-slate-700 dark:text-slate-300 font-medium mb-6 whitespace-pre-wrap pl-1 shift-note-text"></p>
                     <div class="flex justify-end border-t border-slate-100 dark:border-slate-800 pt-4 mt-2">
-                        <button class="text-sm font-bold text-slate-400 hover:text-emerald-500 flex items-center gap-2 transition-colors resolve-note-btn" aria-label="Resolve Shift Note">
+                        <button class="text-sm font-bold text-slate-400 hover:text-emerald-500 flex items-center gap-2 transition-colors resolve-note-btn">
                             <i data-lucide="check-circle" class="w-4 h-4"></i> Mark Resolved
                         </button>
                     </div>
@@ -5482,7 +5830,11 @@ function checkAndRenderOrgControls() {
                 if (window.lucide) window.lucide.createIcons();
 
             } catch (err) {
-                console.error("Error posting note", err);
+                if (window.logManagerError) {
+                    window.logManagerError("Error posting note", err);
+                } else {
+                    console.error("Error posting note", err);
+                }
 
                 // Rollback optimistic UI
                 if (noteDiv && noteDiv.parentNode) {
@@ -5491,9 +5843,15 @@ function checkAndRenderOrgControls() {
                 document.getElementById('shiftNoteContent').value = previousContent;
 
                 if (err.code === 'unavailable' || err.code === 'auth/network-request-failed' || err.code === 'firestore/unavailable') {
-                    alert("Network error: Could not connect to the server. Please check your connection or whitelist the domain.");
+                    alert("Network error: Could not connect to the server. Please check your connection or whitelist the domain (e.g. ezmanage.realunstoppable.store).");
                 } else {
                     alert("Failed to post note: " + err.message);
+                }
+            } finally {
+                if (submitBtn) {
+                    submitBtn.innerHTML = originalText;
+                    submitBtn.disabled = false;
+                    if (window.lucide) window.lucide.createIcons();
                 }
             }
         }
@@ -5615,7 +5973,7 @@ function checkAndRenderOrgControls() {
                                 <p class="font-bold text-sm">${escapeHTML(data.userName)}</p>
                                 <p class="text-xs text-slate-500">Wants to join your group</p>
                             </div>
-                            <button class="btn btn-primary btn-sm px-4 approve-group-btn" aria-label="Approve Group Request">Approve</button>`;
+                            <button class="btn btn-primary btn-sm px-4 approve-group-btn">Approve</button>`;
                         div.querySelector('.approve-group-btn').onclick = () => approveGroupRequest(doc.id);
                         fragment.appendChild(div);
                     });
@@ -5649,7 +6007,7 @@ function checkAndRenderOrgControls() {
                                 <p class="font-bold text-sm">Group ID: ${escapeHTML(data.groupId)}</p>
                                 <p class="text-xs text-slate-500">Awaiting approval</p>
                             </div>
-                            <button class="btn btn-outline btn-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 retract-group-btn" aria-label="Retract Group Request">Retract</button>`;
+                            <button class="btn btn-outline btn-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 retract-group-btn">Retract</button>`;
                         div.querySelector('.retract-group-btn').onclick = () => retractGroupRequest(doc.id);
                         fragment.appendChild(div);
                     });
@@ -5815,7 +6173,11 @@ function checkAndRenderOrgControls() {
                 }
             } catch (error) {
                 console.error("Error fetching deliveries:", error);
-                container.innerHTML = `<div class="text-red-500 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl text-center">Failed to load deliveries: ${window.escapeHTML ? window.escapeHTML(error.message) : error.message}</div>`;
+                container.innerHTML = '';
+                    const errDiv = document.createElement('div');
+                    errDiv.className = 'text-red-500 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl text-center';
+                    errDiv.textContent = `Failed to load deliveries: ${error.message}`;
+                    container.appendChild(errDiv);
             }
         }
 
@@ -6078,6 +6440,151 @@ async function submitWasteLog() {
             }
         }
 
+        async function submitRefundLog() {
+            if (!currentUser || !currentUserData || !currentUserData.orgId) {
+                alert("You must be part of an organization to log refunds/voids.");
+                return;
+            }
+
+            const type = document.getElementById('refundType').value;
+            const amount = document.getElementById('refundAmount').value;
+            const registerNumber = document.getElementById('refundRegisterNumber').value.trim();
+            const reason = document.getElementById('refundReason').value.trim();
+
+            if (!amount || !registerNumber || !reason) {
+                alert("Please fill in all required fields (Amount, Register Number, Reason).");
+                return;
+            }
+
+            const submitBtn = document.querySelector('#addRefundModal .btn-accent');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> Saving...';
+            submitBtn.disabled = true;
+            lucide.createIcons();
+
+            try {
+                await callCloudFunction('manageRefundsVoids', {
+                    action: "create",
+                    payload: { type, amount, reason, registerNumber }
+                });
+
+                document.getElementById('refundType').value = 'Refund';
+                document.getElementById('refundAmount').value = '';
+                document.getElementById('refundRegisterNumber').value = '';
+                document.getElementById('refundReason').value = '';
+                document.getElementById('addRefundModal').classList.add('hidden');
+
+                alert("Log entry saved successfully.");
+                fetchRefundLogs();
+            } catch (error) {
+                window.logManagerError("Error logging refund/void:", error);
+                alert("Failed to log entry. " + error.message);
+            } finally {
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+                lucide.createIcons();
+            }
+        }
+
+        async function fetchRefundLogs() {
+            if (!currentUser || !currentUserData || !currentUserData.orgId) {
+                const container = document.getElementById('refundLogsContainer');
+                if (container) {
+                    container.innerHTML = `
+                        <div class="text-center py-16 bg-slate-50 dark:bg-slate-900 rounded-3xl border-2 border-dashed border-slate-200 dark:border-slate-800">
+                            <i data-lucide="users" class="w-12 h-12 text-slate-400 mx-auto mb-4"></i>
+                            <h3 class="text-xl font-bold mb-2">Join or Create a Group</h3>
+                            <p class="text-slate-500">You must be in a Management Group to view refunds & voids logs.</p>
+                        </div>
+                    `;
+                    lucide.createIcons();
+                }
+                return;
+            }
+
+            const container = document.getElementById('refundLogsContainer');
+            container.innerHTML = '<div class="text-center py-8"><i data-lucide="loader-2" class="w-8 h-8 animate-spin mx-auto text-sky-500 mb-4"></i><p class="text-slate-500">Loading logs...</p></div>';
+            lucide.createIcons();
+
+            try {
+                const result = await callCloudFunction('manageRefundsVoids', { action: "get", payload: {} });
+
+                if (result.data.success) {
+                    const logs = result.data.logs || [];
+                    container.innerHTML = '';
+
+                    if (logs.length === 0) {
+                        container.innerHTML = `
+                            <div class="text-center py-16 bg-slate-50 dark:bg-slate-900 rounded-3xl border-2 border-dashed border-slate-200 dark:border-slate-800">
+                                <i data-lucide="check-circle-2" class="w-12 h-12 text-emerald-400 mx-auto mb-4"></i>
+                                <h3 class="text-xl font-bold mb-2">No Logs Found!</h3>
+                                <p class="text-slate-500">There are no recent refunds, voids, or discounts.</p>
+                            </div>
+                        `;
+                        lucide.createIcons();
+                        return;
+                    }
+
+                    const fragment = document.createDocumentFragment();
+
+                    logs.forEach(log => {
+                        const div = document.createElement('div');
+                        div.id = `refund-log-${escapeHTML(log.id)}`;
+                        div.className = "card p-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4";
+
+                        const dateStr = log.timestamp ? new Date(log.timestamp._seconds * 1000).toLocaleString() : 'Just now';
+
+                        let typeColorClass = '';
+                        let typeIcon = '';
+                        if (log.type === 'Refund') {
+                            typeColorClass = 'bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-400';
+                            typeIcon = 'rotate-ccw';
+                        } else if (log.type === 'Void') {
+                            typeColorClass = 'bg-orange-50 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400';
+                            typeIcon = 'x-circle';
+                        } else {
+                            typeColorClass = 'bg-purple-50 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400';
+                            typeIcon = 'tag';
+                        }
+
+                        div.innerHTML = `
+                            <div>
+                                <h3 class="text-lg font-bold">${escapeHTML(log.type)} - ${escapeHTML(log.registerNumber)}</h3>
+                                <p class="text-sm text-slate-500">Logged by ${escapeHTML(log.loggedByName)} • ${dateStr}</p>
+                                <div class="mt-2 flex gap-2 items-center">
+                                    <span class="px-2 py-1 ${typeColorClass} rounded-lg text-xs font-bold font-mono flex items-center gap-1"><i data-lucide="${typeIcon}" class="w-3 h-3"></i> ${Number(log.amount).toFixed(2)}</span>
+                                    <span class="px-2 py-1 bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 rounded-lg text-xs font-bold">${escapeHTML(log.reason)}</span>
+                                </div>
+                            </div>
+                            <button data-action="deleteRefundLog" data-id="${escapeHTML(log.id)}" class="btn btn-outline btn-sm text-red-500 hover:bg-red-50" aria-label="Delete Log">
+                                <i data-lucide="trash-2" class="w-4 h-4"></i> Remove
+                            </button>
+                        `;
+                        fragment.appendChild(div);
+                    });
+                    container.appendChild(fragment);
+                    lucide.createIcons();
+                }
+            } catch (error) {
+                window.logManagerError("Error fetching refund logs:", error);
+                container.innerHTML = `<div class="text-red-500 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl text-center">Failed to load logs: ${window.escapeHTML ? window.escapeHTML(error.message) : error.message}</div>`;
+            }
+        }
+
+        async function deleteRefundLog(logId) {
+            if (!confirm("Are you sure you want to permanently delete this log entry?")) return;
+            const logEl = document.getElementById('refund-log-' + escapeHTML(logId));
+            if (logEl) logEl.style.display = 'none'; // Optimistically hide
+            try {
+                await callCloudFunction('manageRefundsVoids', { action: "delete", payload: { logId } });
+                fetchRefundLogs();
+            } catch (err) {
+                window.logManagerError("Error deleting refund log:", err);
+                alert("Failed to delete log.");
+                fetchRefundLogs(); // Revert on failure
+            }
+        }
+
         async function fetchWasteLogs() {
             if (!currentUser || !currentUserData || !currentUserData.orgId) {
                 const container = document.getElementById('wasteLogsContainer');
@@ -6135,7 +6642,7 @@ async function submitWasteLog() {
                                     <span class="px-2 py-1 bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 rounded-lg text-xs font-bold">${escapeHTML(log.reason)}</span>
                                 </div>
                             </div>
-                            <button data-action="deleteWasteLog" data-id="${escapeHTML(log.id)}" class="btn btn-outline btn-sm text-red-500 hover:bg-red-50" aria-label="Delete Waste Log">
+                            <button data-action="deleteWasteLog" data-id="${escapeHTML(log.id)}" class="btn btn-outline btn-sm text-red-500 hover:bg-red-50">
                                 <i data-lucide="trash-2" class="w-4 h-4"></i> Remove
                             </button>
                         `;
@@ -6146,7 +6653,11 @@ async function submitWasteLog() {
                 }
             } catch (error) {
                 console.error("Error fetching waste logs:", error);
-                container.innerHTML = `<div class="text-red-500 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl text-center">Failed to load waste logs: ${window.escapeHTML ? window.escapeHTML(error.message) : error.message}</div>`;
+                container.innerHTML = '';
+                    const errDiv = document.createElement('div');
+                    errDiv.className = 'text-red-500 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl text-center';
+                    errDiv.textContent = `Failed to load waste logs: ${error.message}`;
+                    container.appendChild(errDiv);
             }
         }
 
@@ -6269,7 +6780,7 @@ async function submitWasteLog() {
                                 </div>
                                 ${log.notes ? `<p class="text-sm mt-2 text-slate-700 dark:text-slate-300 italic">"${escapeHTML(log.notes)}"</p>` : ''}
                             </div>
-                            <button data-action="deleteTempLog" data-id="${escapeHTML(log.id)}" class="btn btn-outline btn-sm text-red-500 hover:bg-red-50" aria-label="Delete Temperature Log">
+                            <button data-action="deleteTempLog" data-id="${escapeHTML(log.id)}" class="btn btn-outline btn-sm text-red-500 hover:bg-red-50">
                                 <i data-lucide="trash-2" class="w-4 h-4"></i> Remove
                             </button>
                         `;
@@ -6280,7 +6791,11 @@ async function submitWasteLog() {
                 }
             } catch (error) {
                 console.error("Error fetching temperature logs:", error);
-                container.innerHTML = `<div class="text-red-500 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl text-center">Failed to load logs: ${window.escapeHTML ? window.escapeHTML(error.message) : error.message}</div>`;
+                container.innerHTML = '';
+                    const errDiv = document.createElement('div');
+                    errDiv.className = 'text-red-500 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl text-center';
+                    errDiv.textContent = `Failed to load logs: ${error.message}`;
+                    container.appendChild(errDiv);
             }
         }
 
@@ -6452,7 +6967,11 @@ async function submitWasteLog() {
                 }
             } catch (error) {
                 console.error("Error fetching incidents:", error);
-                container.innerHTML = `<div class="text-red-500 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl text-center">Failed to load incidents: ${window.escapeHTML ? window.escapeHTML(error.message) : error.message}</div>`;
+                container.innerHTML = '';
+                    const errDiv = document.createElement('div');
+                    errDiv.className = 'text-red-500 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl text-center';
+                    errDiv.textContent = `Failed to load incidents: ${error.message}`;
+                    container.appendChild(errDiv);
             }
         }
 
@@ -6752,7 +7271,11 @@ async function submitWasteLog() {
 
                 }, (error) => {
                     window.logManagerError('Error listening to announcements:', error);
-                    container.innerHTML = '<div class="text-red-500 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl border border-red-200 dark:border-red-800">Failed to load announcements.</div>';
+                    container.innerHTML = '';
+                    const errDiv = document.createElement('div');
+                    errDiv.className = 'text-red-500 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl border border-red-200 dark:border-red-800';
+                    errDiv.textContent = 'Failed to load announcements.';
+                    container.appendChild(errDiv);
                 });
             } catch (error) {
                 window.logManagerError('Error fetching announcements:', error);
@@ -6866,8 +7389,8 @@ async function submitWasteLog() {
                                 </div>
                             </div>
                             <div class="flex gap-2 border-t border-slate-100 dark:border-slate-800 pt-4 mt-2">
-                                <button class="btn btn-outline btn-sm flex-1 edit-emp-btn" aria-label="Edit Employee"><i data-lucide="edit-2" class="w-3 h-3"></i> Edit</button>
-                                <button class="btn btn-outline btn-sm text-red-500 hover:bg-red-50 flex-1 remove-emp-btn" aria-label="Remove Employee"><i data-lucide="user-minus" class="w-3 h-3"></i> Remove</button>
+                                <button class="btn btn-outline btn-sm flex-1 edit-emp-btn"><i data-lucide="edit-2" class="w-3 h-3"></i> Edit</button>
+                                <button class="btn btn-outline btn-sm text-red-500 hover:bg-red-50 flex-1 remove-emp-btn"><i data-lucide="user-minus" class="w-3 h-3"></i> Remove</button>
                             </div>
                         `;
                         div.querySelector('.edit-emp-btn').onclick = () => openEditEmployeeModal(emp.id);
@@ -6881,7 +7404,7 @@ async function submitWasteLog() {
                 container.innerHTML = '';
                 const errDiv = document.createElement('div');
                 errDiv.className = 'col-span-1 md:col-span-2 text-red-500 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl text-center';
-                errDiv.textContent = `Failed to load roster: ${window.escapeHTML ? window.escapeHTML(error.message) : error.message}`;
+                errDiv.textContent = `Failed to load roster: ${error.message}`;
                 container.appendChild(errDiv);
             }
         }
@@ -7065,7 +7588,11 @@ async function submitWasteLog() {
                     renderFilteredTasks();
                 }, err => {
                     console.error("Error fetching tasks:", err);
-                    container.innerHTML = `<div class="text-red-500 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl text-center">Failed to load tasks: ${window.escapeHTML ? window.escapeHTML(err.message) : err.message}</div>`;
+                    container.innerHTML = '';
+                    const errDiv = document.createElement('div');
+                    errDiv.className = 'text-red-500 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl text-center';
+                    errDiv.textContent = `Failed to load tasks: ${err.message}`;
+                    container.appendChild(errDiv);
                 });
         }
 
@@ -7336,7 +7863,11 @@ async function submitWasteLog() {
                 }
             } catch (error) {
                 console.error("Error fetching recognitions:", error);
-                container.innerHTML = `<div class="text-red-500 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl text-center">Failed to load recognitions: ${window.escapeHTML ? window.escapeHTML(error.message) : error.message}</div>`;
+                container.innerHTML = '';
+                    const errDiv = document.createElement('div');
+                    errDiv.className = 'text-red-500 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl text-center';
+                    errDiv.textContent = `Failed to load recognitions: ${error.message}`;
+                    container.appendChild(errDiv);
             }
         }
 
@@ -7512,7 +8043,13 @@ async function submitWasteLog() {
                 }
             } catch (error) {
                 console.error("Error fetching time logs:", error);
-                if (container) container.innerHTML = `<div class="text-red-500 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl text-center">Failed to load time logs: ${window.escapeHTML ? window.escapeHTML(error.message) : error.message}</div>`;
+                if (container) {
+                    container.innerHTML = '';
+                    const errDiv = document.createElement('div');
+                    errDiv.className = 'text-red-500 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl text-center';
+                    errDiv.textContent = `Failed to load time logs: ${error.message}`;
+                    container.appendChild(errDiv);
+                }
             }
         }
 
@@ -7530,6 +8067,7 @@ async function submitWasteLog() {
             else if (action === 'openEditEmployeeModal') openEditEmployeeModal(id);
             else if (action === 'deleteTask') deleteTask(id);
             else if (action === 'deleteWasteLog') deleteWasteLog(id);
+            else if (action === 'deleteRefundLog') deleteRefundLog(id);
             else if (action === 'deleteTempLog') deleteTempLog(id);
             else if (action === 'deleteDelivery') deleteDelivery(id);
             else if (action === 'deleteIncident') deleteIncident(id);
@@ -7688,7 +8226,13 @@ async function submitWasteLog() {
                 console.error("Error fetching shifts:", error);
                 containers.forEach(id => {
                     const el = document.getElementById(id);
-                    if(el) el.innerHTML = '<p class="text-red-500 text-center">Failed to load shifts.</p>';
+                    if(el) {
+                        el.innerHTML = '';
+                        const errP = document.createElement('p');
+                        errP.className = 'text-red-500 text-center';
+                        errP.textContent = 'Failed to load shifts.';
+                        el.appendChild(errP);
+                    }
                 });
             }
         }
@@ -8139,7 +8683,11 @@ window.onload = () => {
 
             } catch (error) {
                 console.error("Error fetching feedbacks:", error);
-                container.innerHTML = '<p class="text-sm text-red-500">Failed to load feedback history.</p>';
+                container.innerHTML = '';
+                const errP = document.createElement('p');
+                errP.className = 'text-sm text-red-500';
+                errP.textContent = 'Failed to load feedback history.';
+                container.appendChild(errP);
             }
         }
 
@@ -8188,6 +8736,7 @@ window.onload = () => {
                 if (action === 'deleteTask') deleteTask(id);
                 if (action === 'updateTaskStatus') updateTaskStatus(id, status);
                 if (action === 'deleteWasteLog') deleteWasteLog(id);
+                if (action === 'deleteRefundLog') deleteRefundLog(id);
                 if (action === 'deleteIncident') deleteIncident(id);
                 if (action === 'deleteMaintenanceTicket') deleteMaintenanceTicket(id);
                 if (action === 'deleteAnnouncement') deleteAnnouncement(id);

@@ -218,7 +218,7 @@
                     <li>Window Cleaning</li>
                     <li>Tire Shine Application</li>
                 </ul>
-                <button class="cta-button" style="width:100%; background: transparent; border: 1px solid var(--accent-blue);" onclick="selectService('refresh')">Select Plan</button>
+                <button style="width:100%; background: transparent; border: 1px solid var(--accent-blue);" data-service="refresh" class="service-select-btn cta-button">Select Plan</button>
             </div>
 
             <div class="service-card reveal" style="border-color: var(--accent-blue); transform: scale(1.02);">
@@ -233,7 +233,7 @@
                     <li>Carpet & Seat Shampoo</li>
                     <li>3-Month Spray Wax</li>
                 </ul>
-                <button class="cta-button" style="width:100%;" onclick="selectService('deep-clean')">Select Plan</button>
+                <button style="width:100%;" data-service="deep-clean" class="service-select-btn cta-button">Select Plan</button>
             </div>
 
             <div class="service-card reveal">
@@ -247,7 +247,7 @@
                     <li>1-Year Ceramic Coating</li>
                     <li>Headlight Restoration</li>
                 </ul>
-                <button class="cta-button" style="width:100%; background: transparent; border: 1px solid var(--accent-blue);" onclick="selectService('showroom')">Select Plan</button>
+                <button style="width:100%; background: transparent; border: 1px solid var(--accent-blue);" data-service="showroom" class="service-select-btn cta-button">Select Plan</button>
             </div>
         </section>
 
@@ -386,6 +386,16 @@
             } finally {
                 btn.disabled = false;
                 btn.textContent = "Confirm Booking Request";
+            }
+        });
+    </script>
+
+
+    <script>
+        document.addEventListener('click', function(e) {
+            const btn = e.target.closest('[data-service]');
+            if (btn && typeof window.selectService === 'function') {
+                window.selectService(btn.dataset.service);
             }
         });
     </script>

@@ -3,7 +3,7 @@
 
 <head>
     <!-- 🛡️ Sentinel: Added Content Security Policy for defense-in-depth -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com https://unpkg.com https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.firebase.com;">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://unpkg.com https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.firebase.com;">
     <link rel="manifest" href="manifest.json">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -17,6 +17,12 @@
     <meta name="apple-mobile-web-app-title" content="ezManage AI">
 
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="js/firebase-config.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-messaging-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-functions-compat.js"></script>
     <script type="module">
         import { escapeHTML } from './js/utils.js';
         import { loadNavbar } from './js/navbar.js';
@@ -27,7 +33,6 @@
         });
         window.escapeHTML = escapeHTML;
     </script>
-    <script src="js/firebase-config.js"></script>
     <script>
         tailwind.config = {
             darkMode: ['class', '.dark-mode'],
@@ -41,11 +46,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
         rel="stylesheet">
 
-    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-storage-compat.js"></script>
-    <script src="js/firebase-config.js"></script>
 
     <script src="https://unpkg.com/brain.js@2.0.0-beta.23/dist/browser.js"></script>
 
@@ -328,8 +329,8 @@
                         <i data-lucide="brain" class="text-sky-500"></i>
                         <h3 class="text-xl font-black">AI Prediction Results</h3>
                     </div>
-                    <button id="importAllBtn" onclick="importAllPredictions()"
-                        class="btn btn-sm btn-accent hidden">Import All</button>
+                    <button id="importAllBtn" onclick="importAllPredictions(this)"
+                        class="btn btn-sm btn-accent hidden" aria-label="Import all predictions">Import All</button>
                 </div>
 
                 <div id="resultsContainer" class="p-6">
@@ -403,7 +404,7 @@
         function signOut() { auth.signOut().then(() => window.location.href = 'index.html'); }
 
         const firebaseConfig = window.ezManageFirebaseConfig;
-        const app = !window.firebase.apps.length ? window.firebase.initializeApp(firebaseConfig) : window.firebase.app();
+        const app = window.firebase.apps.length === 0 ? window.firebase.initializeApp(firebaseConfig) : window.firebase.app();
         const auth = firebase.auth();
         const db = firebase.firestore();
         db.settings({ experimentalForceLongPolling: true });
@@ -708,7 +709,7 @@
                 let toggleBtnHtml = '';
                 if (item.originalNames.size > 0) {
                     toggleBtnHtml = `
-                        <button class="text-[10px] uppercase font-bold text-slate-400 hover:text-sky-500 flex items-center gap-1 mt-1 toggle-variants-btn">
+                        <button class="text-[10px] uppercase font-bold text-slate-400 hover:text-sky-500 flex items-center gap-1 mt-1 toggle-variants-btn" aria-label="Toggle variations for ${escapeHTML(canonical)}">
                             <i data-lucide="chevron-down" class="w-3 h-3 transition-transform duration-200"></i> ${item.originalNames.size} Variations
                         </button>
                     `;
@@ -743,7 +744,7 @@
                     </div>
 
                     <div class="col-span-2 md:col-span-1 flex justify-end">
-                        <button class="btn btn-sm btn-accent w-full md:w-auto import-btn">Import</button>
+                        <button class="btn btn-sm btn-accent w-full md:w-auto import-btn" aria-label="Import prediction for ${escapeHTML(canonical)}">Import</button>
                     </div>
                 `;
 
@@ -770,7 +771,8 @@
                     }
                 }
 
-                mainRow.querySelector('.import-btn').onclick = () => importPrediction(canonical, bl, cl, fr);
+                const importBtn = mainRow.querySelector('.import-btn');
+                importBtn.onclick = () => importPrediction(canonical, bl, cl, fr, importBtn);
 
                 fragment.appendChild(div);
                 addedCount++;
@@ -786,7 +788,7 @@
             }
         }
 
-        function importPrediction(name, bl, cl, fr) {
+        async function importPrediction(name, bl, cl, fr, btnElem) {
             if (!currentUser) return alert("Please sign in to import data.");
 
             if (confirm(`Import ${name} predictions to your active shift tracker? This will update your current draft.`)) {
@@ -794,11 +796,30 @@
                 if (!draft) return;
 
                 applyPredictionToDraft(draft, name, bl, cl, fr);
-                saveDraft(draft, `${name} imported!`);
+
+                let originalHtml = "";
+                if (btnElem) {
+                    originalHtml = btnElem.innerHTML;
+                    btnElem.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i>`;
+                    btnElem.classList.add('opacity-70', 'cursor-not-allowed');
+                    btnElem.disabled = true;
+                    if (window.lucide) window.lucide.createIcons();
+                }
+
+                try {
+                    await saveDraft(draft, `${name} imported!`);
+                } finally {
+                    if (btnElem) {
+                        btnElem.innerHTML = originalHtml;
+                        btnElem.classList.remove('opacity-70', 'cursor-not-allowed');
+                        btnElem.disabled = false;
+                        if (window.lucide) window.lucide.createIcons();
+                    }
+                }
             }
         }
 
-        function importAllPredictions() {
+        async function importAllPredictions(btnElem) {
             if (!currentUser || !window.latestGroupedPredictions) return;
 
             if (confirm("Import ALL predictions to your active shift tracker? This will update your current draft for all items shown below.")) {
@@ -812,7 +833,25 @@
                     }
                 });
 
-                saveDraft(draft, "All predictions imported to your tracker!");
+                let originalHtml = "";
+                if (btnElem) {
+                    originalHtml = btnElem.innerHTML;
+                    btnElem.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 mr-2 animate-spin inline-block"></i> Importing...`;
+                    btnElem.classList.add('opacity-70', 'cursor-not-allowed');
+                    btnElem.disabled = true;
+                    if (window.lucide) window.lucide.createIcons();
+                }
+
+                try {
+                    await saveDraft(draft, "All predictions imported to your tracker!");
+                } finally {
+                    if (btnElem) {
+                        btnElem.innerHTML = originalHtml;
+                        btnElem.classList.remove('opacity-70', 'cursor-not-allowed');
+                        btnElem.disabled = false;
+                        if (window.lucide) window.lucide.createIcons();
+                    }
+                }
             }
         }
 
@@ -858,7 +897,7 @@
             localStorage.setItem(draftKey, JSON.stringify(draft));
 
             if (currentUserData && currentUserData.cloudSyncEnabled) {
-                db.collection('users').doc(currentUser.uid).set({ trackerDraft: draft }, { merge: true })
+                return db.collection('users').doc(currentUser.uid).set({ trackerDraft: draft }, { merge: true })
                     .then(() => alert(successMsg + " (Cloud & Local Sync Complete)"))
                     .catch(err => {
                         console.error("Cloud sync error", err);
@@ -866,6 +905,7 @@
                     });
             } else {
                 alert(successMsg + " (Saved to local tracker)");
+                return Promise.resolve();
             }
         }
 
