@@ -339,7 +339,7 @@ exports.manageTasks = functions.https.onCall(async (data, context) => {
     if (error instanceof HttpsError) {
       throw error;
     }
-    throw new HttpsError("internal", error.message);
+    throw new HttpsError("internal", "Internal server error");
   }
 });
 
@@ -412,7 +412,7 @@ exports.manageShiftNotes = functions.https.onCall(async (data, context) => {
   } catch (error) {
     logManagerError("Shift Note Error for uid:", uid, error);
 
-    throw new HttpsError("internal", error.message);
+    throw new HttpsError("internal", "Internal server error");
   }
 });
 
@@ -505,7 +505,7 @@ exports.manageEmployees = functions.https.onCall(async (data, context) => {
     if (error instanceof HttpsError) {
       throw error;
     }
-    throw new HttpsError("internal", error.message);
+    throw new HttpsError("internal", "Internal server error");
   }
 });
 
@@ -696,7 +696,7 @@ exports.manageShiftGroups = functions.https.onCall(async (data, context) => {
     if (error instanceof HttpsError) {
       throw error;
     }
-    throw new HttpsError("internal", error.message);
+    throw new HttpsError("internal", "Internal server error");
   }
 });
 
@@ -816,7 +816,7 @@ exports.manageIncidents = functions.https.onCall(async (data, context) => {
     if (error instanceof HttpsError) {
       throw error;
     }
-    throw new HttpsError("internal", error.message);
+    throw new HttpsError("internal", "Internal server error");
   }
 });
 
@@ -905,7 +905,7 @@ exports.manageTimeLogs = functions.https.onCall(async (data, context) => {
     if (error instanceof HttpsError) {
       throw error;
     }
-    throw new HttpsError("internal", error.message);
+    throw new HttpsError("internal", "Internal server error");
   }
 });
 
@@ -982,7 +982,7 @@ exports.manageWaste = functions.https.onCall(async (data, context) => {
     if (error instanceof HttpsError) {
       throw error;
     }
-    throw new HttpsError("internal", error.message);
+    throw new HttpsError("internal", "Internal server error");
   }
 });
 
@@ -1084,7 +1084,7 @@ exports.manageRecognitions = functions.https.onCall(async (data, context) => {
     if (error instanceof HttpsError) {
       throw error;
     }
-    throw new HttpsError("internal", error.message);
+    throw new HttpsError("internal", "Internal server error");
   }
 });
 
@@ -1170,7 +1170,7 @@ exports.manageFeedbacks = functions.https.onCall(async (data, context) => {
     if (error instanceof HttpsError) {
       throw error;
     }
-    throw new HttpsError("internal", error.message);
+    throw new HttpsError("internal", "Internal server error");
   }
 });
 
@@ -1243,7 +1243,7 @@ exports.manageTemperatureLogs = functions.https.onCall(async (data, context) => 
     throw new HttpsError("invalid-argument", "Invalid action.");
   } catch (error) {
     logManagerError("Error in manageTemperatureLogs: ", error);
-    throw new HttpsError("internal", error.message);
+    throw new HttpsError("internal", "Internal server error");
   }
 });
 
@@ -1313,7 +1313,7 @@ exports.manageVendorDeliveries = functions.https.onCall(async (data, context) =>
   } catch (error) {
     logManagerError("Error in manageVendorDeliveries: ", error);
     if (error instanceof HttpsError) throw error;
-    throw new HttpsError("internal", error.message);
+    throw new HttpsError("internal", "Internal server error");
   }
 });
 
@@ -1428,6 +1428,6 @@ exports.manageShiftMarketplace = functions.https.onCall(async (data, context) =>
     } catch (error) {
         console.error("Error managing shift marketplace:", error);
         if (error instanceof functions.https.HttpsError) throw error;
-        throw new functions.https.HttpsError('internal', 'Internal server error', error.message);
+        throw new functions.https.HttpsError('internal', 'Internal server error');
     }
 });
