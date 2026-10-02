@@ -7,11 +7,14 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Import and start your existing Express server
-try {
-  await import('./server.cjs');
-} catch (err) {
-  console.error('Failed to load server.cjs:', err);
-}
+import { spawn } from 'child_process';
+const serverProcess = spawn('node --input-type=commonjs < server.js', {
+  shell: true,
+  stdio: 'inherit'
+});
+serverProcess.on('error', (err) => {
+  console.error('Failed to start server subprocess.', err);
+});
 
 let mainWindow;
 

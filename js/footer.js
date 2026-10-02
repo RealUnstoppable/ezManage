@@ -5,7 +5,7 @@ export function loadFooter() {
         <div class="footer-container max-w-7xl mx-auto px-6 py-12">
             <div class="footer-top-brand flex flex-col md:flex-row justify-between items-start md:items-center pb-10 mb-10 border-b border-slate-800/80 gap-6">
                 <div class="flex items-center gap-4">
-                    <div class="relative group cursor-pointer" onclick="if(window.navTo) window.navTo('welcome');">
+                    <div class="relative group cursor-pointer" data-navto="welcome">
                         <img src="ManagerPro.jpg" alt="ezManage Logo" class="w-12 h-12 rounded-2xl shadow-lg border border-slate-700 object-cover">
                     </div>
                     <div>
@@ -28,12 +28,12 @@ export function loadFooter() {
                         <i data-lucide="layout-grid" class="w-4 h-4"></i> Navigate
                     </h5>
                     <ul class="space-y-2.5 text-sm font-medium text-slate-300">
-                        <li><a href="index.html#welcome" onclick="if(window.navTo){event.preventDefault();window.navTo('welcome');}">Overview & Home</a></li>
-                        <li><a href="index.html#tracker" onclick="if(window.navTo){event.preventDefault();window.navTo('tracker');}">Active Shift Tracker</a></li>
-                        <li><a href="index.html#schedule" onclick="if(window.navTo){event.preventDefault();window.navTo('schedule');}">Shift Schedule & Roster</a></li>
-                        <li><a href="index.html#announcements" onclick="if(window.navTo){event.preventDefault();window.navTo('announcements');}">Team Notices</a></li>
-                        <li><a href="index.html#tasks" onclick="if(window.navTo){event.preventDefault();window.navTo('tasks');}">Task Manager</a></li>
-                        <li><a href="index.html#presets" onclick="if(window.navTo){event.preventDefault();window.navTo('presets');}">Routine Presets</a></li>
+                        <li><a href="index.html#welcome" data-navto="welcome">Overview & Home</a></li>
+                        <li><a href="index.html#tracker" data-navto="tracker">Active Shift Tracker</a></li>
+                        <li><a href="index.html#schedule" data-navto="schedule">Shift Schedule & Roster</a></li>
+                        <li><a href="index.html#announcements" data-navto="announcements">Team Notices</a></li>
+                        <li><a href="index.html#tasks" data-navto="tasks">Task Manager</a></li>
+                        <li><a href="index.html#presets" data-navto="presets">Routine Presets</a></li>
                     </ul>
                 </div>
 
@@ -47,7 +47,7 @@ export function loadFooter() {
                         <li><a href="panel-ai-admin.html">Admin Intelligence Panel</a></li>
                         <li><a href="admin.html">Shift Lead Dashboard</a></li>
                         <li><a href="account.html">Account & Cloud Sync</a></li>
-                        <li><a href="index.html#pricing" onclick="if(window.navTo){event.preventDefault();window.navTo('pricing');}">Pricing & Licenses</a></li>
+                        <li><a href="index.html#pricing" data-navto="pricing">Pricing & Licenses</a></li>
                     </ul>
                 </div>
 
@@ -56,9 +56,9 @@ export function loadFooter() {
                         <i data-lucide="shield-check" class="w-4 h-4"></i> Company
                     </h5>
                     <ul class="space-y-2.5 text-sm font-medium text-slate-300">
-                        <li><a href="index.html#incidents" onclick="if(window.navTo){event.preventDefault();window.navTo('incidents');}">Incident & Audit Reports</a></li>
-                        <li><a href="#" onclick="event.preventDefault(); if(document.getElementById('tosModal')) document.getElementById('tosModal').classList.remove('hidden');">Terms & Security Policy</a></li>
-                        <li><a href="#" onclick="event.preventDefault(); if(document.getElementById('orgTutorialModal')) document.getElementById('orgTutorialModal').classList.remove('hidden');">Store Connection Guide</a></li>
+                        <li><a href="index.html#incidents" data-navto="incidents">Incident & Audit Reports</a></li>
+                        <li><a href="#" data-modal="tosModal">Terms & Security Policy</a></li>
+                        <li><a href="#" data-modal="orgTutorialModal">Store Connection Guide</a></li>
                         <li><a href="mailto:unstoppableplays2016@hotmail.com">Contact Support</a></li>
                     </ul>
                 </div>
@@ -89,5 +89,24 @@ export function loadFooter() {
     if (footer) {
         footer.innerHTML = footerHTML;
         if (window.lucide) window.lucide.createIcons();
+
+        footer.addEventListener('click', function(e) {
+                const navToBtn = e.target.closest('[data-navto]');
+                if (navToBtn && window.navTo) {
+                    e.preventDefault();
+                    window.navTo(navToBtn.dataset.navto);
+                }
+
+                const modalBtn = e.target.closest('[data-modal]');
+                if (modalBtn) {
+                    e.preventDefault();
+                    const modalId = modalBtn.dataset.modal;
+                    const modalEl = document.getElementById(modalId);
+                    if (modalEl) {
+                        modalEl.classList.remove('hidden');
+                    }
+                }
+            });
+
     }
 }

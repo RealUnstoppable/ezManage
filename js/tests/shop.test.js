@@ -11,6 +11,7 @@ global.window.firebase = {
 };
 
 // Mock window location
+
 delete global.window.location;
 global.window.location = {
     search: '?group=test_group',

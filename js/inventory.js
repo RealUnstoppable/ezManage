@@ -76,7 +76,7 @@ function loadInventory() {
         inventoryTableBody.appendChild(fragment);
         if (window.lucide) window.lucide.createIcons();
     }, (error) => {
-        console.error("Error fetching inventory:", error);
+        logManagerError("Error fetching inventory:", error);
         loadingSpinner.classList.add('hidden');
         alert("Failed to load inventory. Please try again.");
     });
