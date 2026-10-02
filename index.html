@@ -4318,7 +4318,7 @@ window.updateNetworkStatus = updateNetworkStatus;
                     });
                     updateCloudSyncUI();
                 } else {
-                    alert("Error: " + data.error);
+                    alert("Failed to cancel subscription: " + (data.error || "Unknown error"));
                 }
             } catch (e) {
                 alert("Failed to contact payment server: " + e.message);
