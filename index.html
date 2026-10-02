@@ -1510,7 +1510,7 @@
                             <option value="Normal">Normal Priority</option>
                             <option value="Urgent">🚨 Urgent Issue</option>
                         </select>
-                        <button onclick="submitShiftNote()" class="btn btn-primary px-8 py-3">Post Note</button>
+                        <button id="btnSubmitShiftNote" onclick="submitShiftNote()" class="btn btn-primary px-8 py-3 disabled:opacity-70 disabled:cursor-not-allowed">Post Note</button>
                     </div>
                 </div>
 
@@ -5472,6 +5472,13 @@ function checkAndRenderOrgControls() {
             if (emptyState) emptyState.remove();
 
             container.prepend(noteDiv);
+
+            const submitBtn = document.getElementById('btnSubmitShiftNote');
+            const originalText = submitBtn ? submitBtn.innerHTML : "Post Note";
+            if (submitBtn) {
+                submitBtn.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> Posting...';
+                submitBtn.disabled = true;
+            }
             if (window.lucide) window.lucide.createIcons();
             // Store the content so we can restore it if the write fails
             const previousContent = document.getElementById('shiftNoteContent').value;
@@ -5547,6 +5554,12 @@ function checkAndRenderOrgControls() {
                     alert("Network error: Could not connect to the server. Please check your connection or whitelist the domain.");
                 } else {
                     alert("Failed to post note: " + err.message);
+                }
+            } finally {
+                if (submitBtn) {
+                    submitBtn.innerHTML = originalText;
+                    submitBtn.disabled = false;
+                    if (window.lucide) window.lucide.createIcons();
                 }
             }
         }
