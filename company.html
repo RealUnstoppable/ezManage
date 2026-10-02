@@ -12,9 +12,14 @@
     <link rel="apple-touch-icon" href="ManagerPro.jpg">
 
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="js/firebase-config.js"></script>
     <script>
     </script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="js/firebase-config.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-messaging-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-functions-compat.js"></script>
     <script type="module">
         import { escapeHTML, logManagerError } from './js/utils.js';
         import { loadNavbar } from './js/navbar.js';
@@ -38,11 +43,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@400;500;600;700;800;900&display=swap"
         rel="stylesheet">
 
-    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-functions-compat.js"></script>
-    <script src="js/firebase-config.js"></script>
 
     <style>
         :root {
@@ -246,7 +246,7 @@
                         <input type="password" id="loginPass" required placeholder="Password"
                             class="w-full bg-slate-50 dark:bg-slate-800 p-4 rounded-xl border-none focus:ring-2 focus:ring-indigo-500">
                     </div>
-                    <button type="submit" class="btn btn-primary w-full py-4 text-lg mt-2">Sign In</button>
+                    <button type="submit" class="btn btn-primary w-full py-4 text-lg mt-2 disabled:opacity-70 disabled:cursor-not-allowed">Sign In</button>
                     <div class="text-center pt-4">
                         <button onclick="navTo('register')"
                             class="text-sm font-bold text-indigo-500 hover:text-indigo-600">Need a corporate account?
@@ -299,7 +299,7 @@
                             class="w-full bg-white dark:bg-slate-900 text-center text-3xl font-black p-6 rounded-2xl border-4 border-slate-100 dark:border-slate-800 focus:border-indigo-500 focus:ring-0 transition-colors shadow-sm mb-8 placeholder:text-slate-300 dark:placeholder:text-slate-700"
                             onkeydown="handleEnterKey(event, 3)">
                         <button type="button" onclick="nextOnboardingStep(3)"
-                            class="btn btn-primary w-full py-5 text-xl rounded-2xl shadow-lg border-b-4 border-indigo-700 active:border-b-0 active:mt-1">Continue</button>
+                            class="btn btn-primary w-full py-5 text-xl rounded-2xl shadow-lg border-b-4 border-indigo-700 active:border-b-0 active:mt-1 disabled:opacity-70 disabled:cursor-not-allowed">Continue</button>
                     </div>
 
                     <!-- Step 3: Admin Email -->
@@ -310,7 +310,7 @@
                             class="w-full bg-white dark:bg-slate-900 text-center text-3xl font-black p-6 rounded-2xl border-4 border-slate-100 dark:border-slate-800 focus:border-indigo-500 focus:ring-0 transition-colors shadow-sm mb-8 placeholder:text-slate-300 dark:placeholder:text-slate-700"
                             onkeydown="handleEnterKey(event, 4)">
                         <button type="button" onclick="nextOnboardingStep(4)"
-                            class="btn btn-primary w-full py-5 text-xl rounded-2xl shadow-lg border-b-4 border-indigo-700 active:border-b-0 active:mt-1">Continue</button>
+                            class="btn btn-primary w-full py-5 text-xl rounded-2xl shadow-lg border-b-4 border-indigo-700 active:border-b-0 active:mt-1 disabled:opacity-70 disabled:cursor-not-allowed">Continue</button>
                     </div>
 
                     <!-- Step 4: Password -->
@@ -321,7 +321,7 @@
                             class="w-full bg-white dark:bg-slate-900 text-center text-3xl font-black p-6 rounded-2xl border-4 border-slate-100 dark:border-slate-800 focus:border-indigo-500 focus:ring-0 transition-colors shadow-sm mb-8 placeholder:text-slate-300 dark:placeholder:text-slate-700"
                             onkeydown="handleEnterKey(event, 5)">
                         <button type="button" onclick="nextOnboardingStep(5)"
-                            class="btn btn-primary w-full py-5 text-xl rounded-2xl shadow-lg border-b-4 border-indigo-700 active:border-b-0 active:mt-1"
+                            class="btn btn-primary w-full py-5 text-xl rounded-2xl shadow-lg border-b-4 border-indigo-700 active:border-b-0 active:mt-1 disabled:opacity-70 disabled:cursor-not-allowed"
                             id="btnFinishOnboarding">Create Workspace</button>
                     </div>
 
@@ -361,7 +361,7 @@
                             <option value="200+">200+ Employees</option>
                         </select>
                         <button type="button" onclick="advanceOnboarding()"
-                            class="btn btn-primary w-full py-5 text-xl rounded-2xl shadow-lg border-b-4 border-indigo-700 active:border-b-0 active:mt-1">Continue</button>
+                            class="btn btn-primary w-full py-5 text-xl rounded-2xl shadow-lg border-b-4 border-indigo-700 active:border-b-0 active:mt-1 disabled:opacity-70 disabled:cursor-not-allowed">Continue</button>
                     </div>
 
                     <!-- NEW: Step Plan -->
@@ -399,7 +399,7 @@
                             </div>
                         </div>
                         <button type="button" onclick="advanceOnboarding()"
-                            class="btn btn-primary w-full py-5 text-xl rounded-2xl shadow-lg border-b-4 border-indigo-700 active:border-b-0 active:mt-1">Continue</button>
+                            class="btn btn-primary w-full py-5 text-xl rounded-2xl shadow-lg border-b-4 border-indigo-700 active:border-b-0 active:mt-1 disabled:opacity-70 disabled:cursor-not-allowed">Continue</button>
                     </div>
 
                     <!-- NEW: Step Roles -->
@@ -430,7 +430,7 @@
                         </div>
 
                         <button type="button" onclick="advanceOnboarding()"
-                            class="btn btn-primary w-full py-5 text-xl rounded-2xl shadow-lg border-b-4 border-indigo-700 active:border-b-0 active:mt-1">Continue</button>
+                            class="btn btn-primary w-full py-5 text-xl rounded-2xl shadow-lg border-b-4 border-indigo-700 active:border-b-0 active:mt-1 disabled:opacity-70 disabled:cursor-not-allowed">Continue</button>
                     </div>
 
                     <!-- NEW: Step Config -->
@@ -474,7 +474,7 @@
                         </div>
 
                         <button type="button" onclick="advanceOnboarding()"
-                            class="btn btn-primary w-full py-5 text-xl rounded-2xl shadow-lg border-b-4 border-indigo-700 active:border-b-0 active:mt-1">Complete
+                            class="btn btn-primary w-full py-5 text-xl rounded-2xl shadow-lg border-b-4 border-indigo-700 active:border-b-0 active:mt-1 disabled:opacity-70 disabled:cursor-not-allowed">Complete
                             Setup</button>
                     </div>
 
@@ -519,7 +519,7 @@
                                 Everything you need to manage your business is now accessible in one beautiful, unified
                                 view.</p>
                             <button type="button" onclick="finishTutorial()"
-                                class="btn btn-primary w-full py-5 text-xl rounded-2xl shadow-[0_8px_30px_rgba(99,102,241,0.3)] hover:scale-[1.02] transition-transform">Enter
+                                class="btn btn-primary w-full py-5 text-xl rounded-2xl shadow-[0_8px_30px_rgba(99,102,241,0.3)] hover:scale-[1.02] transition-transform disabled:opacity-70 disabled:cursor-not-allowed">Enter
                                 Dashboard</button>
                         </div>
                     </div>
@@ -605,7 +605,7 @@
                         <h2 class="text-xl font-bold mb-4"><i data-lucide="users" class="inline w-5 h-5 mr-2 text-sky-500"></i> Manager Administration</h2>
                         <form id="createManagerForm" class="flex flex-col md:flex-row gap-4 mb-6">
                             <input type="email" id="newManagerEmail" placeholder="Manager Email" aria-label="Manager Email" class="input input-bordered w-full md:flex-1" required>
-                            <button type="submit" class="btn btn-primary whitespace-nowrap"><i data-lucide="user-plus" class="w-4 h-4 mr-2"></i> Add Manager</button>
+                            <button type="submit" class="btn btn-primary whitespace-nowrap disabled:opacity-70 disabled:cursor-not-allowed"><i data-lucide="user-plus" class="w-4 h-4 mr-2"></i> Add Manager</button>
                         </form>
                         <div class="overflow-x-auto">
                             <table class="w-full text-left text-sm text-slate-600 dark:text-slate-400">
@@ -728,7 +728,7 @@
                                     Requests <span id="pendingRequestsBadge"
                                         class="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] w-5 h-5 rounded-full flex items-center justify-center hidden shadow-sm">0</span>
                                 </button>
-                                <button aria-label="Invite Manager" onclick="showInviteModal()" class="btn btn-primary btn-sm"><i
+                                <button aria-label="Invite Manager" onclick="showInviteModal()" class="btn btn-primary btn-sm disabled:opacity-70 disabled:cursor-not-allowed"><i
                                         data-lucide="user-plus" class="w-4 h-4"></i> Invite</button>
                             </div>
                         </div>
@@ -774,7 +774,7 @@
     <script>
         // --- Firebase Configuration ---
         const firebaseConfig = window.ezManageFirebaseConfig;
-        const app = !window.firebase.apps.length ? window.firebase.initializeApp(firebaseConfig) : window.firebase.app();
+        const app = window.firebase.apps.length === 0 ? window.firebase.initializeApp(firebaseConfig) : window.firebase.app();
         const auth = firebase.auth();
         firebase.firestore().settings({ experimentalForceLongPolling: true });
         const db = firebase.firestore();
