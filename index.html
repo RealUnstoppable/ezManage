@@ -7095,6 +7095,12 @@ async function submitWasteLog() {
             else if (action === 'retractGroupRequest') retractGroupRequest(id);
             else if (action === 'openEditEmployeeModal') openEditEmployeeModal(id);
             else if (action === 'deleteTask') deleteTask(id);
+                if (action === 'deleteCert') deleteCertification(id);
+                if (action === 'updateAssignedTaskStatus') updateAssignedTaskStatus(id, status);
+                if (action === 'deleteAssignedTask') deleteAssignedTask(id);
+            else if (action === 'deleteCert') deleteCertification(id);
+            else if (action === 'updateAssignedTaskStatus') updateAssignedTaskStatus(id, status);
+            else if (action === 'deleteAssignedTask') deleteAssignedTask(id);
             else if (action === 'deleteWasteLog') deleteWasteLog(id);
             else if (action === 'deleteTempLog') deleteTempLog(id);
             else if (action === 'deleteDelivery') deleteDelivery(id);
@@ -7102,6 +7108,12 @@ async function submitWasteLog() {
             else if (action === 'deleteAnnouncement') deleteAnnouncement(id);
             else if (action === 'updateTaskStatus') updateTaskStatus(id, status);
             else if (action === 'deleteTask') deleteTask(id);
+                if (action === 'deleteCert') deleteCertification(id);
+                if (action === 'updateAssignedTaskStatus') updateAssignedTaskStatus(id, status);
+                if (action === 'deleteAssignedTask') deleteAssignedTask(id);
+            else if (action === 'deleteCert') deleteCertification(id);
+            else if (action === 'updateAssignedTaskStatus') updateAssignedTaskStatus(id, status);
+            else if (action === 'deleteAssignedTask') deleteAssignedTask(id);
             else if (action === 'deleteRecognition') deleteRecognition(id);
             else if (action === 'updateTaskStatus') updateTaskStatus(id, status);
 
@@ -7111,8 +7123,20 @@ async function submitWasteLog() {
             else if (action === 'deleteTimeOffRequest') deleteTimeOffRequest(id);
             else if (action === 'updateTaskStatus') updateTaskStatus(id, status);
             else if (action === 'deleteTask') deleteTask(id);
+                if (action === 'deleteCert') deleteCertification(id);
+                if (action === 'updateAssignedTaskStatus') updateAssignedTaskStatus(id, status);
+                if (action === 'deleteAssignedTask') deleteAssignedTask(id);
+            else if (action === 'deleteCert') deleteCertification(id);
+            else if (action === 'updateAssignedTaskStatus') updateAssignedTaskStatus(id, status);
+            else if (action === 'deleteAssignedTask') deleteAssignedTask(id);
             else if (action === 'removeShift') removeShift(btn.dataset.index);
             else if (action === 'deleteTask') deleteTask(id);
+                if (action === 'deleteCert') deleteCertification(id);
+                if (action === 'updateAssignedTaskStatus') updateAssignedTaskStatus(id, status);
+                if (action === 'deleteAssignedTask') deleteAssignedTask(id);
+            else if (action === 'deleteCert') deleteCertification(id);
+            else if (action === 'updateAssignedTaskStatus') updateAssignedTaskStatus(id, status);
+            else if (action === 'deleteAssignedTask') deleteAssignedTask(id);
             else if (action === 'deleteWasteLog') deleteWasteLog(id);
             else if (action === 'deleteIncident') deleteIncident(id);
             else if (action === 'updateTaskStatus') {
@@ -7750,12 +7774,18 @@ window.onload = () => {
                 const status = btn.getAttribute('data-status');
 
                 if (action === 'deleteTask') deleteTask(id);
+                if (action === 'deleteCert') deleteCertification(id);
+                if (action === 'updateAssignedTaskStatus') updateAssignedTaskStatus(id, status);
+                if (action === 'deleteAssignedTask') deleteAssignedTask(id);
                 if (action === 'updateTaskStatus') updateTaskStatus(id, status);
                 if (action === 'deleteWasteLog') deleteWasteLog(id);
                 if (action === 'deleteIncident') deleteIncident(id);
                 if (action === 'deleteAnnouncement') deleteAnnouncement(id);
                 if (action === 'updateTaskStatus') updateTaskStatus(id, status);
                 if (action === 'deleteTask') deleteTask(id);
+                if (action === 'deleteCert') deleteCertification(id);
+                if (action === 'updateAssignedTaskStatus') updateAssignedTaskStatus(id, status);
+                if (action === 'deleteAssignedTask') deleteAssignedTask(id);
                 if (action === 'deleteRecognition') deleteRecognition(id);
             }
         });
