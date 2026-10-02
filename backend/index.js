@@ -173,7 +173,7 @@ exports.createCheckoutSession = onRequest({invoker: "public"}, (req, res) => {
       res.status(200).json({url: session.url});
     } catch (err) {
       logManagerError("Checkout Error for uid:", uid, err);
-      res.status(500).json({error: err.message});
+      res.status(500).json({error: "An internal server error occurred. Please try again later."});
     }
   });
 });
@@ -187,7 +187,7 @@ exports.stripeWebhook = onRequest({invoker: "public"}, async (req, res) => {
     event = stripe.webhooks.constructEvent(req.rawBody, sig, endpointSecret);
   } catch (err) {
     logManagerError("Webhook Error:", err);
-    return res.status(400).send(`Webhook Error: ${err.message}`);
+    return res.status(400).send("Webhook Error: Invalid payload or signature");
   }
 
   // 🎯 Handle Events
@@ -277,7 +277,7 @@ exports.cancelSubscription = functions.https.onCall(async (data, context) => {
   } catch (err) {
     logManagerError(`Cancel Error for uid: ${uid}`, err);
     if (err instanceof HttpsError) throw err;
-    throw new HttpsError("internal", err.message);
+    throw new HttpsError("internal", "An internal server error occurred. Please try again later.");
   }
 });
 
@@ -598,11 +598,7 @@ async function handleCreateShiftGroup(payload, uid) {
 
   const salt = crypto.randomBytes(16).toString("hex");
   const hash = crypto.scryptSync(password, salt, 64).toString("hex");
-  const hashedPassword = `$scrypt$${hash}:${salt}`;
-
-  const salt = crypto.randomBytes(16).toString("hex");
-  const hash = crypto.scryptSync(password, salt, 64).toString("hex");
-  const hashedPassword = `$scrypt$${hash}:${salt}`;
+  const hashedPassword = `$scrypt${hash}:${salt}`;
 
   const salt = crypto.randomBytes(16).toString("hex");
   const hash = crypto.scryptSync(password, salt, 64).toString("hex");
@@ -624,6 +620,7 @@ async function handleCreateShiftGroup(payload, uid) {
   const docRef = await admin.firestore()
       .collection("shift_groups")
       .add(newGroup);
+
 
   return {success: true, groupId: docRef.id};
 }
@@ -1641,14 +1638,9 @@ exports.manageShiftMarketplace = functions.https.onCall(async (data, context) =>
       }
     } catch (error) {
         console.error("Error managing shift marketplace:", error);
-        if (error instanceof HttpsError) throw error;
-        throw new HttpsError('internal', 'Internal server error', error.message);
+        if (error instanceof functions.https.HttpsError) throw error;
+        throw new functions.https.HttpsError("internal", "An internal server error occurred. Please try again later.");
     }
-  } catch (error) {
-    console.error("Error managing shift marketplace:", error);
-    if (error instanceof functions.https.HttpsError) throw error;
-    throw new functions.https.HttpsError("internal", "Internal server error");
-  }
 });
 
 exports.manageLostAndFound = functions.https.onCall(async (data, context) => {

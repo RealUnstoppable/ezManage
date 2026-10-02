@@ -117,8 +117,7 @@ describe("cancelSubscription", () => {
 
     const consoleSpy = jest.spyOn(console, "error").mockImplementation(() => {});
 
-    await expect(cancelSubscription.run(data, context)).rejects.toThrow("Stripe List Error");
-
+    await expect(cancelSubscription.run(data, context)).rejects.toThrow("An internal server error occurred. Please try again later.");
     expect(consoleSpy).toHaveBeenCalledWith(`Manager Troubleshooting: Cancel Error for uid: user_test_123`, error);
 
     consoleSpy.mockRestore();
@@ -141,8 +140,7 @@ describe("cancelSubscription", () => {
 
     const consoleSpy = jest.spyOn(console, "error").mockImplementation(() => {});
 
-    await expect(cancelSubscription.run(data, context)).rejects.toThrow("Stripe Cancel Error");
-
+    await expect(cancelSubscription.run(data, context)).rejects.toThrow("An internal server error occurred. Please try again later.");
     expect(consoleSpy).toHaveBeenCalledWith(`Manager Troubleshooting: Cancel Error for uid: user_test_123`, error);
 
     consoleSpy.mockRestore();
