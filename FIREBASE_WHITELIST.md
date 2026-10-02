@@ -1,19 +1,13 @@
-# Firebase Domain Whitelist Instructions
+# Authorized Domains Setup for Firebase
 
-If you are experiencing CORS errors (`auth/network-request-failed` or `firestore/unavailable`), ensure the domain `ezmanage.realunstoppable.store` is properly whitelisted in your Firebase Console.
+To whitelist the production domain `ezmanage.realunstoppable.store` in the Firebase Console:
 
-## Authentication Whitelisting
-1. Go to the Firebase Console (console.firebase.google.com).
-2. Select your project.
-3. In the left navigation pane, click on **Authentication**.
-4. Navigate to the **Settings** tab.
-5. In the **Authorized domains** section, click **Add domain**.
-6. Enter `ezmanage.realunstoppable.store` and click **Add**.
+## Authentication
+1. Go to **Authentication** -> **Settings** -> **Authorized domains**
+2. Click **Add domain**
+3. Enter `ezmanage.realunstoppable.store` and click Add.
 
-## Firestore Network / CORS Notes
-Firestore generally manages CORS out-of-the-box for SDK requests, but long-polling fallback relies on network access.
-Ensure that your network allows access to the Firestore endpoints.
+## Firestore
+Note: Firestore CORS restrictions are generally handled automatically based on your initialized domains, but you must ensure your `firestore.rules` are correctly deployed so that the production domain clients can make authenticated requests.
 
-If you are using experimental Long Polling (`experimentalForceLongPolling: true`) and still facing CORS issues when communicating with Firestore REST APIs/Cloud Functions:
-1. Verify the `cors` package is correctly applied in your Cloud Functions.
-2. If using App Check, ensure the domain is registered in the App Check settings.
+If using third-party APIs that require origin whitelisting in your Cloud Functions, make sure to add `https://ezmanage.realunstoppable.store` to their respective allowed origins lists.

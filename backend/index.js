@@ -515,24 +515,11 @@ async function handleCreateShiftGroup(payload, uid) {
 
   checkRequiredFields(payload, ['groupName', 'password']);
 
-  const newGroup = {
-    ownerId: authorId || uid,
-    orgId: orgId || uid,
-    ownerName: ownerName || "Anonymous",
-    groupName,
-    password, // Basic password for joining (in a real app, hash this)
-    createdAt: admin.firestore.FieldValue.serverTimestamp(),
-  };
-
-  const docRef = await admin.firestore()
-      .collection("shift_groups")
-      .add(newGroup);
-
       const salt = crypto.randomBytes(16).toString("hex");
       const hash = crypto.scryptSync(password, salt, 64).toString("hex");
-      const hashedPassword = `$scrypt$${hash}:${salt}`;
+      const hashedPassword = `$scrypt${hash}:${salt}`;
 
-      const newGroup = {
+      const newGroupLegacy = {
         ownerId: authorId || uid,
         orgId: orgId || uid,
         ownerName: ownerName || "Anonymous",
@@ -540,6 +527,10 @@ async function handleCreateShiftGroup(payload, uid) {
         password: hashedPassword,
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
       };
+
+      const docRef = await admin.firestore()
+          .collection("shift_groups")
+          .add(newGroupLegacy);
 
   return {success: true, groupId: docRef.id};
 }
@@ -1431,3 +1422,41 @@ exports.manageShiftMarketplace = functions.https.onCall(async (data, context) =>
         throw new functions.https.HttpsError('internal', 'Internal server error', error.message);
     }
 });
+
+module.exports = {
+  createCheckoutSession,
+  cancelSubscription,
+  manageShiftGroups,
+  manageEmployees,
+  manageSchedules,
+  manageFeedbacks,
+  manageTasks,
+  manageRecognitions,
+  manageTimeOff,
+  manageTimeLogs,
+  manageMaintenanceLogs: manageMaintenance, // Exporting under a consistent name if desired, or just manageMaintenance
+  manageIncidents,
+  manageWaste,
+  manageTemperatureLogs,
+  manageVendorDeliveries,
+  manageShiftMarketplace
+};
+
+module.exports = {
+  createCheckoutSession,
+  cancelSubscription,
+  manageShiftGroups,
+  manageEmployees,
+  manageSchedules,
+  manageFeedbacks,
+  manageTasks,
+  manageRecognitions,
+  manageTimeOff,
+  manageTimeLogs,
+  manageMaintenanceLogs: manageMaintenance, // Exporting under a consistent name if desired, or just manageMaintenance
+  manageIncidents,
+  manageWaste,
+  manageTemperatureLogs,
+  manageVendorDeliveries,
+  manageShiftMarketplace
+};
