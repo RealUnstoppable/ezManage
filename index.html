@@ -1272,57 +1272,6 @@
             </div>
         </div>
 
-        <div id="view-tasks-1" class="view-section px-6 py-12 hidden max-w-4xl mx-auto">
-            <h2 class="text-3xl font-bold mb-6 text-slate-800 dark:text-white flex items-center gap-2">
-                <i data-lucide="check-square" class="w-8 h-8 text-sky-500"></i>
-                Task Management
-            </h2>
-
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <!-- Task Creation Form -->
-                <div class="lg:col-span-1 card">
-                    <h3 class="text-xl font-semibold mb-4 text-slate-800 dark:text-white border-b border-slate-200 dark:border-slate-700 pb-2">Assign New Task</h3>
-                    <form id="createTaskForm" class="space-y-4" onsubmit="event.preventDefault(); createTask();">
-                        <div>
-                            <label for="taskTitle1" class="block text-sm font-medium mb-1">Task Title</label>
-                            <input type="text" id="taskTitle1" class="w-full" placeholder="e.g. Clean fryers" required>
-                        </div>
-                        <div>
-                            <label for="taskDesc1" class="block text-sm font-medium mb-1">Description (Optional)</label>
-                            <textarea id="taskDesc1" class="w-full h-24" placeholder="Task details..."></textarea>
-                        </div>
-                        <div>
-                            <label for="taskAssignee1" class="block text-sm font-medium mb-1">Assign To</label>
-                            <select id="taskAssignee1" class="w-full" required>
-                                <option value="">Select Employee...</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label for="taskDueDate1" class="block text-sm font-medium mb-1">Due Date</label>
-                            <input type="date" id="taskDueDate1" class="w-full" required>
-                        </div>
-                        <button type="submit" class="btn btn-primary w-full disabled:opacity-70 disabled:cursor-not-allowed">Assign Task</button>
-                    </form>
-                </div>
-
-                <!-- Task List -->
-                <div class="lg:col-span-2">
-                    <div class="flex justify-between items-center mb-4">
-                        <h3 class="text-xl font-semibold text-slate-800 dark:text-white">Assigned Tasks</h3>
-                        <select id="taskFilterStatus2" class="text-sm p-1 border rounded" onchange="fetchTasks()">
-                            <option value="All">All Tasks</option>
-                            <option value="Pending">Pending</option>
-                            <option value="In Progress">In Progress</option>
-                            <option value="Completed">Completed</option>
-                        </select>
-                    </div>
-                    <div id="taskList" class="space-y-4">
-                        <p class="text-sm text-slate-500">Loading tasks...</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
         <div id="view-timeclock" class="view-section px-6 py-12 hidden">
             <div class="max-w-4xl mx-auto">
                 <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
@@ -1521,7 +1470,7 @@
             </div>
         </div>
 
-        <div id="view-tasks-2" class="view-section px-6 py-12 hidden">
+        <div id="view-tasks" class="view-section px-6 py-12 hidden">
             <div class="max-w-4xl mx-auto">
                 <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
                     <h1 class="text-4xl font-black">Task Manager</h1>
@@ -2205,43 +2154,6 @@
                 <h3 class="text-xl font-black mb-6 border-b border-slate-200 dark:border-slate-800 pb-2">My Requests
                 </h3>
                 <div id="myFeatureRequests" class="space-y-4"></div>
-            </div>
-        </div>
-
-        <div id="view-tasks-3" class="view-section px-6 py-12 hidden">
-            <div class="max-w-4xl mx-auto">
-                <div class="card shadow-2xl mb-12" id="managerTaskCreation" style="display: none;">
-                    <h1 class="text-3xl font-black mb-4">Assign Tasks</h1>
-                    <p class="text-slate-500 mb-8">Create specific checklists and tasks for your team to complete during their shifts.</p>
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                        <div>
-                            <label for="taskTitleAlt" class="block text-sm font-bold mb-2">Task Title</label>
-                            <input type="text" id="taskTitleAlt" class="w-full" placeholder="e.g. Close Registers">
-                        </div>
-                        <div>
-                            <label for="taskAssigneeAlt" class="block text-sm font-bold mb-2">Assign To</label>
-                            <select id="taskAssigneeAlt" class="w-full">
-                                <option value="">Select Employee</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <label for="taskDescriptionAlt" class="block text-sm font-bold mb-2">Description (Optional)</label>
-                    <textarea id="taskDescriptionAlt" aria-label="Task Description" class="h-24 mb-6" placeholder="Provide extra details..."></textarea>
-
-                    <button id="btnSubmitTaskAlt" onclick="submitTaskAlt()" class="btn btn-accent w-full py-4">Assign Task</button>
-                </div>
-
-                <div class="mb-12">
-                    <h3 class="text-xl font-black mb-6 border-b border-slate-200 dark:border-slate-800 pb-2">My Assigned Tasks</h3>
-                    <div id="myTasksContainer" class="space-y-4"></div>
-                </div>
-
-                <div id="managerTasksSection" style="display: none;">
-                    <h3 class="text-xl font-black mb-6 border-b border-slate-200 dark:border-slate-800 pb-2 text-purple-600"><i data-lucide="shield" class="inline w-5 h-5 mr-2"></i>Organization Tasks</h3>
-                    <div id="orgTasksContainer" class="space-y-4"></div>
-                </div>
             </div>
         </div>
 
@@ -3044,7 +2956,7 @@
                 fetchShiftNotes();
             }
             if (viewId === 'tasks') {
-                fetchAssignedTasks();
+                fetchTasks();
             }
         }
 
@@ -4139,7 +4051,7 @@
                 document.getElementById('createTaskModal').classList.add('hidden');
 
                 alert("Task assigned successfully.");
-                fetchAssignedTasks();
+                fetchTasks();
             } catch (error) {
                 console.error("Error assigning task:", error);
                 if (error.code === 'unavailable' || error.code === 'auth/network-request-failed') {
@@ -4154,6 +4066,64 @@
             }
         }
 
+
+
+
+
+        async function submitMaintenanceTicket() {
+            if (!currentUser || !currentUserData || !currentUserData.orgId) {
+                alert("You must be part of an organization to report issues.");
+                return;
+            }
+
+            const title = document.getElementById('maintenanceTitle').value.trim();
+            const desc = document.getElementById('maintenanceDesc').value.trim();
+            const priority = document.getElementById('maintenancePriority').value;
+
+            if (!title) {
+                alert("Please provide a title or issue name.");
+                return;
+            }
+
+            const submitBtn = document.querySelector('#reportMaintenanceModal .btn-accent');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> Submitting...';
+            submitBtn.disabled = true;
+            lucide.createIcons();
+
+            try {
+                await db.collection('maintenance_logs').add({
+                    title: title,
+                    description: desc,
+                    priority: priority,
+                    status: 'Open',
+                    reportedByUid: currentUser.uid,
+                    reportedByName: currentUserData.name || currentUser.email,
+                    orgId: currentUserData.orgId || null,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                document.getElementById('maintenanceTitle').value = '';
+                document.getElementById('maintenanceDesc').value = '';
+                document.getElementById('maintenancePriority').value = 'Low';
+                document.getElementById('reportMaintenanceModal').classList.add('hidden');
+
+                alert("Maintenance ticket submitted successfully.");
+                fetchMaintenanceTickets();
+            } catch (error) {
+                window.logManagerError("Error submitting ticket:", error);
+                if (error.code === 'unavailable' || error.code === 'auth/network-request-failed' || error.code === 'firestore/unavailable') {
+                    alert("Network error: Could not connect to the server. Please check your connection.");
+                } else {
+                    alert("Failed to submit ticket. " + error.message);
+                }
+            } finally {
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+                lucide.createIcons();
+            }
+        }
 
         var unsubscribeTasks = null;
         function fetchAssignedTasks() {
@@ -4212,8 +4182,8 @@
                                     </div>
                                     <div class="flex gap-2 items-start">
                                         <span class="px-3 py-1 rounded-full text-xs font-bold ${statusColor}">${escapeHTML(task.status)}</span>
-                                        <button data-action="updateAssignedTaskStatus" data-id="${escapeHTML(task.id)}" data-status="${isCompleted ? 'Pending' : 'Completed'}" class="btn btn-sm btn-outline ${isCompleted ? '' : 'btn-success'}">${isCompleted ? 'Mark Pending' : 'Mark Complete'}</button>
-                                        <button aria-label="Delete Task" data-action="deleteAssignedTask" data-id="${escapeHTML(task.id)}" class="btn btn-sm btn-outline text-red-500 border-red-200 hover:bg-red-50"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                                        <button data-action="updateTaskStatus" data-id="${escapeHTML(task.id)}" data-status="${isCompleted ? 'Pending' : 'Completed'}" class="btn btn-sm btn-outline ${isCompleted ? '' : 'btn-success'}">${isCompleted ? 'Mark Pending' : 'Mark Complete'}</button>
+                                        <button aria-label="Delete Task" data-action="deleteTask" data-id="${escapeHTML(task.id)}" class="btn btn-sm btn-outline text-red-500 border-red-200 hover:bg-red-50"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
                                     </div>
                                 </div>
                                 <p class="text-slate-700 dark:text-slate-300 whitespace-pre-wrap ${isCompleted ? 'line-through text-slate-500' : ''}">${escapeHTML(task.description)}</p>
@@ -4228,7 +4198,7 @@
         }
 
 
-        async function updateAssignedTaskStatus(taskId, newStatus) {
+        async function updateTaskStatus(taskId, newStatus) {
             try {
                 await db.collection('assigned_tasks').doc(taskId).update({
                     status: newStatus,
@@ -4241,7 +4211,7 @@
             }
         }
 
-        async function deleteAssignedTask(taskId) {
+        async function deleteTask(taskId) {
             if (!confirm("Are you sure you want to delete this task?")) return;
             try {
                 await db.collection('assigned_tasks').doc(taskId).delete();
@@ -4617,87 +4587,6 @@
                 btn.disabled = false;
                 lucide.createIcons();
             }
-        }
-
-        function fetchTasks() {
-            if (!currentUser || !currentUserData) return;
-            if (unsubscribeTasks) unsubscribeTasks();
-
-            const isManager = currentUserData.orgId === currentUser.uid;
-            const actualOrgId = currentUserData.orgId || currentUser.uid;
-
-            // Only managers can create tasks
-            if (isManager) {
-                document.getElementById('managerTaskCreation').style.display = 'block';
-                document.getElementById('managerTasksSection').style.display = 'block';
-            } else {
-                document.getElementById('managerTaskCreation').style.display = 'none';
-                document.getElementById('managerTasksSection').style.display = 'none';
-            }
-
-            unsubscribeTasks = db.collection('tasks')
-                .where('orgId', '==', actualOrgId)
-                .onSnapshot(snap => {
-                    const myContainer = document.getElementById('myTasksContainer');
-                    const orgContainer = document.getElementById('orgTasksContainer');
-
-                    let myTasksHtml = [];
-                    let orgTasksHtml = [];
-
-                    let tasks = [];
-                    snap.forEach(doc => tasks.push({ id: doc.id, ...doc.data() }));
-
-                    tasks.sort((a, b) => {
-                        let aTime = a.createdAt ? a.createdAt.toMillis() : 0;
-                        let bTime = b.createdAt ? b.createdAt.toMillis() : 0;
-                        return bTime - aTime;
-                    });
-
-                    // ⚡ Bolt Optimization: Replace O(n²) string concatenation inside loop with array map().join('')
-                    let myTasksArr = [];
-                    let orgTasksArr = [];
-
-                    tasks.forEach(task => {
-                        let statusColor = task.status === 'Completed' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800';
-
-                        let taskCard = `
-                            <div class="card p-4 border border-slate-200 dark:border-slate-800 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                                <div>
-                                    <div class="font-bold text-lg">${escapeHTML(task.title)}</div>
-                                    <div class="text-sm text-slate-500 mb-1">Assigned to: ${escapeHTML(task.assigneeName)}</div>
-                                    ${task.description ? `<div class="text-sm italic text-slate-600 mb-2">"${escapeHTML(task.description)}"</div>` : ''}
-                                    <span class="px-2 py-1 rounded-full text-xs font-bold ${statusColor}">${escapeHTML(task.status)}</span>
-                                </div>
-                                <div class="flex items-center gap-2 mt-4 md:mt-0">
-                        `;
-
-                        // Employee specific view (Can mark their own as complete)
-                        if (task.assigneeId === currentUser.uid && task.status === 'Pending') {
-                            myTasksHtml.push(taskCard + `
-                                    <button data-action="updateTaskStatus" data-id="${task.id}" data-status="Completed" class="btn btn-sm bg-green-500 text-white hover:bg-green-600"><i data-lucide="check" class="w-4 h-4 mr-1"></i>Complete</button>
-                                </div></div>
-                            `);
-                        } else if (task.assigneeId === currentUser.uid) {
-                             myTasksHtml.push(taskCard + `</div></div>`);
-                        }
-
-                        // Manager specific view
-                        if (isManager) {
-                            let deleteBtn = `<button data-action="deleteTask" data-id="${task.id}" class="btn btn-sm btn-outline text-red-500 hover:bg-red-50" aria-label="Delete Task"><i data-lucide="trash-2" class="w-4 h-4"></i></button>`;
-                            let revertBtn = task.status === 'Completed' ? `<button data-action="updateTaskStatus" data-id="${task.id}" data-status="Pending" class="btn btn-sm btn-outline text-yellow-600" aria-label="Mark Pending"><i data-lucide="rotate-ccw" class="w-4 h-4"></i></button>` : '';
-
-                            orgTasksHtml.push(taskCard + revertBtn + deleteBtn + `</div></div>`);
-                        }
-                    });
-                    myTasksHtml = myTasksArr.join('');
-                    orgTasksHtml = orgTasksArr.join('');
-
-                    if (myContainer) myContainer.innerHTML = myTasksHtml.join('') || '<p class="text-slate-500 text-center py-4">No tasks assigned to you right now. You\'re all caught up!</p>';
-                    if (orgContainer && isManager) orgContainer.innerHTML = orgTasksHtml.join('') || '<p class="text-slate-500 text-center py-4">No active tasks in the organization.</p>';
-                    lucide.createIcons();
-                }, err => {
-                    window.logManagerError("Error fetching tasks:", err);
-                });
         }
 
         function fetchTimeOffRequests() {
@@ -6342,56 +6231,6 @@ async function submitWasteLog() {
         // TASKS MANAGEMENT SYSTEM
         // ==========================
 
-        async function createTask() {
-            if (!currentUser || !currentUserData) return;
-
-            const title = document.getElementById('taskTitle1').value;
-            const desc = document.getElementById('taskDesc1').value;
-            const assigneeId = document.getElementById('taskAssignee1').value;
-            const dueDate = document.getElementById('taskDueDate1').value;
-
-            if (!title || !assigneeId || !dueDate) {
-                showToast("Please fill all required fields.");
-                return;
-            }
-
-            try {
-                const submitBtn = document.querySelector('#createTaskForm button[type="submit"]');
-                const originalText = submitBtn.innerHTML;
-                submitBtn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin inline-block"></i> Assigning...`;
-                lucide.createIcons();
-                submitBtn.disabled = true;
-
-                await db.collection('tasks').add({
-                    title: title,
-                    description: desc,
-                    assigneeId: assigneeId,
-                    assignerId: currentUser.uid,
-                    orgId: currentUserData.orgId || currentUser.uid,
-                    dueDate: dueDate,
-                    status: 'Pending',
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                });
-
-                document.getElementById('createTaskForm').reset();
-                showToast("Task assigned successfully!");
-                fetchTasks();
-
-                submitBtn.innerHTML = originalText;
-                submitBtn.disabled = false;
-                lucide.createIcons();
-            } catch (error) {
-                window.logManagerError("Error creating task for assignerId: " + currentUser.uid, error);
-                showToast("Error assigning task.");
-                const submitBtn = document.querySelector('#createTaskForm button[type="submit"]');
-                if (submitBtn) {
-                    submitBtn.disabled = false;
-                    lucide.createIcons();
-                }
-            }
-        }
-
-
         let unsubscribeAnnouncements = null;
 
         async function fetchAnnouncements() {
@@ -6645,13 +6484,9 @@ async function submitWasteLog() {
         }
 
         function populateTaskAssigneeDropdown() {
-            const selects = [
-                document.getElementById('taskAssignee1'),
-                document.getElementById('taskAssignee2'),
-                document.getElementById('taskAssigneeAlt')
-            ].filter(Boolean);
-
-            if (selects.length === 0 || !currentUserData) return;
+            const select = document.getElementById('taskAssignee2');
+            const filterSelect = document.getElementById('taskFilterAssignee');
+            if (!select || !currentUserData) return;
 
             const queryOrgId = currentUserData.orgId || currentUser.uid;
 
@@ -6660,36 +6495,29 @@ async function submitWasteLog() {
                 .where('status', '==', 'Active')
                 .get()
                 .then(snap => {
-                    selects.forEach(select => {
-                        select.innerHTML = '<option value="" disabled selected>Assign To Employee</option>';
-                    });
+                    select.innerHTML = '<option value="" disabled selected>Assign To Employee</option>';
+                    filterSelect.innerHTML = '<option value="All">All Assignees</option>';
 
                     let employees = [];
                     snap.forEach(doc => employees.push({id: doc.id, ...doc.data()}));
                     employees.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
 
-                    const assignFragment = document.createDocumentFragment();
+                    const fragment = document.createDocumentFragment();
+                    const filterFragment = document.createDocumentFragment();
+
                     employees.forEach(emp => {
                         const opt = document.createElement('option');
                         opt.value = emp.name;
                         opt.textContent = `${emp.name} (${emp.role})`;
-                        assignFragment.appendChild(opt);
+                        fragment.appendChild(opt);
+
+                        const filterOpt = document.createElement('option');
+                        filterOpt.value = emp.name;
+                        filterOpt.textContent = emp.name;
+                        filterFragment.appendChild(filterOpt);
                     });
 
-                    selects.forEach(select => {
-                        select.appendChild(assignFragment.cloneNode(true));
-                    });
-
-                    const filterSelect = document.getElementById('taskFilterAssignee');
-                    filterSelect.innerHTML = '<option value="All">All Assignees</option>';
-
-                    const filterFragment = document.createDocumentFragment();
-                    employees.forEach(emp => {
-                        const opt = document.createElement('option');
-                        opt.value = emp.name;
-                        opt.textContent = emp.name;
-                        filterFragment.appendChild(opt);
-                    });
+                    select.appendChild(fragment);
                     filterSelect.appendChild(filterFragment);
                 })
                 .catch(err => window.logManagerError("Error populating task assignee dropdown:", err));
@@ -6704,7 +6532,7 @@ async function submitWasteLog() {
             const title = document.getElementById('taskTitle2').value.trim();
             const desc = document.getElementById('taskDesc2').value.trim();
             const assignee = document.getElementById('taskAssignee2').value;
-            const priority = document.getElementById('taskPriority2').value;
+            const priority = document.getElementById('taskPriority').value;
             const dueDate = document.getElementById('taskDueDate2').value;
 
             if (!title || !assignee) {
@@ -6712,35 +6540,32 @@ async function submitWasteLog() {
                 return;
             }
 
-            const btn1 = document.getElementById('btnSubmitTask');
-            const orig1 = btn1 ? btn1.innerHTML : '';
+            const btn = document.getElementById('btnSubmitTask');
+            const originalText = btn ? btn.innerHTML : '';
 
-            if (btn1) {
-                btn1.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin inline-block"></i> Assigning...`;
-                btn1.disabled = true;
-                btn1.classList.add('opacity-70', 'cursor-not-allowed');
+            if (btn) {
+                btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin inline-block"></i> Assigning...`;
+                btn.disabled = true;
             }
             lucide.createIcons();
 
             try {
-                await db.collection('tasks').add({
-                    title: title,
-                    description: desc,
-                    assignedTo: assignee,
-                    priority: priority,
-                    dueDate: dueDate || null,
-                    status: 'Pending',
-                    authorId: currentUser.uid,
-                    assignedByName: currentUserData.name || currentUser.email,
-                    orgId: currentUserData.orgId || null,
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                const manageTasks = cloudFunctions.httpsCallable('manageTasks');
+                await manageTasks({
+                    action: "create",
+                    payload: {
+                        title: title,
+                        description: desc,
+                        assignee: assignee,
+                        priority: priority,
+                        dueDate: dueDate
+                    }
                 });
 
                 document.getElementById('taskTitle2').value = '';
                 document.getElementById('taskDesc2').value = '';
                 document.getElementById('taskAssignee2').value = '';
-                document.getElementById('taskPriority2').value = 'Low';
+                document.getElementById('taskPriority').value = 'Low';
                 document.getElementById('taskDueDate2').value = '';
                 document.getElementById('assignTaskModal').classList.add('hidden');
 
@@ -6748,16 +6573,11 @@ async function submitWasteLog() {
                 fetchTasks();
             } catch (error) {
                 window.logManagerError("Error assigning task:", error);
-                if (error.code === 'unavailable' || error.code === 'auth/network-request-failed') {
-                    alert("Network error: Could not connect to the server. Please check your connection.");
-                } else {
-                    alert("Failed to assign task. " + error.message);
-                }
+                alert("Failed to assign task. " + error.message);
             } finally {
-                if (btn1) {
-                    btn1.innerHTML = orig1;
-                    btn1.disabled = false;
-                    btn1.classList.remove('opacity-70', 'cursor-not-allowed');
+                if (btn) {
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
                 }
                 lucide.createIcons();
             }
@@ -6765,55 +6585,59 @@ async function submitWasteLog() {
 
         let activeTasksList = [];
 
-        function fetchTasks() {
+        async function fetchTasks() {
             if (!currentUser || !currentUserData || !currentUserData.orgId) {
-                document.getElementById('tasksContainer').innerHTML = `
-                    <div class="text-center py-16 bg-slate-50 dark:bg-slate-900 rounded-3xl border-2 border-dashed border-slate-200 dark:border-slate-800">
-                        <i data-lucide="users" class="w-12 h-12 text-slate-400 mx-auto mb-4"></i>
-                        <h3 class="text-xl font-bold mb-2">Join or Create a Group</h3>
-                        <p class="text-slate-500">You must be in a Management Group to assign and view tasks.</p>
-                    </div>
-                `;
-                lucide.createIcons();
+                const container = document.getElementById('tasksContainer');
+                if (container) {
+                    container.innerHTML = `
+                        <div class="text-center py-16 bg-slate-50 dark:bg-slate-900 rounded-3xl border-2 border-dashed border-slate-200 dark:border-slate-800">
+                            <i data-lucide="users" class="w-12 h-12 text-slate-400 mx-auto mb-4"></i>
+                            <h3 class="text-xl font-bold mb-2">Join or Create a Group</h3>
+                            <p class="text-slate-500">You must be in a Management Group to assign and view tasks.</p>
+                        </div>
+                    `;
+                    lucide.createIcons();
+                }
                 return;
             }
 
             const container = document.getElementById('tasksContainer');
-            container.innerHTML = '<div class="text-center py-8"><i data-lucide="loader-2" class="w-8 h-8 animate-spin mx-auto text-sky-500 mb-4"></i><p class="text-slate-500">Loading tasks...</p></div>';
-            lucide.createIcons();
-
-            if (unsubscribeTasks) {
-                unsubscribeTasks();
+            if (container) {
+                 container.innerHTML = '<div class="text-center py-8"><i data-lucide="loader-2" class="w-8 h-8 animate-spin mx-auto text-sky-500 mb-4"></i><p class="text-slate-500">Loading tasks...</p></div>';
+                 lucide.createIcons();
             }
 
-            unsubscribeTasks = db.collection('tasks')
-                .where('orgId', '==', currentUserData.orgId)
-                .onSnapshot(snap => {
-                    activeTasksList = [];
-                    snap.forEach(doc => activeTasksList.push({ id: doc.id, ...doc.data() }));
+            try {
+                const manageTasks = cloudFunctions.httpsCallable('manageTasks');
+                const result = await manageTasks({ action: "get", payload: {} });
 
+                if (result.data.success) {
+                    activeTasksList = result.data.tasks || [];
                     activeTasksList.sort((a, b) => {
-                        const aTime = a.createdAt ? a.createdAt.toMillis() : 0;
-                        const bTime = b.createdAt ? b.createdAt.toMillis() : 0;
+                        const aTime = a.createdAt ? a.createdAt._seconds : 0;
+                        const bTime = b.createdAt ? b.createdAt._seconds : 0;
                         return bTime - aTime;
                     });
-
                     renderFilteredTasks();
-                }, err => {
-                    console.error("Error fetching tasks:", err);
-                    container.innerHTML = `<div class="text-red-500 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl text-center">Failed to load tasks: ${window.escapeHTML ? window.escapeHTML(err.message) : err.message}</div>`;
-                });
+                }
+            } catch (error) {
+                console.error("Error fetching tasks:", error);
+                if (container) {
+                    container.innerHTML = `<div class="text-red-500 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl text-center">Failed to load tasks: ${window.escapeHTML ? window.escapeHTML(error.message) : error.message}</div>`;
+                }
+            }
         }
 
         function renderFilteredTasks() {
             const container = document.getElementById('tasksContainer');
             const completedContainer = document.getElementById('completedTasksContainer');
+            if (!container || !completedContainer) return;
 
             const filterStatus = document.getElementById('taskFilterStatus1').value;
             const filterAssignee = document.getElementById('taskFilterAssignee').value;
 
             let filteredTasks = activeTasksList.filter(task => {
-                if (filterAssignee !== 'All' && task.assignedTo !== filterAssignee) return false;
+                if (filterAssignee !== 'All' && task.assigneeName !== filterAssignee && task.assigneeId !== filterAssignee) return false;
                 return true;
             });
 
@@ -6845,7 +6669,7 @@ async function submitWasteLog() {
                         'Critical': 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400 animate-pulse'
                     };
 
-                    const dateStr = task.createdAt ? new Date(task.createdAt.toMillis()).toLocaleString() : 'Just now';
+                    const dateStr = task.createdAt && task.createdAt._seconds ? new Date(task.createdAt._seconds * 1000).toLocaleString() : 'Just now';
                     const dueDateStr = task.dueDate ? `Due: ${escapeHTML(task.dueDate)}` : 'No Due Date';
 
                     return `
@@ -6853,13 +6677,13 @@ async function submitWasteLog() {
                             <div class="flex flex-col md:flex-row justify-between gap-4 mb-4">
                                 <div>
                                     <h3 class="text-lg font-bold">${escapeHTML(task.title)}</h3>
-                                    <p class="text-sm text-slate-500">Assigned to <span class="font-bold text-sky-600 dark:text-sky-400">${escapeHTML(task.assignedTo)}</span> by ${escapeHTML(task.assignedByName)} • ${dateStr}</p>
+                                    <p class="text-sm text-slate-500">Assigned to <span class="font-bold text-sky-600 dark:text-sky-400">${escapeHTML(task.assigneeName || task.assigneeId)}</span> by ${escapeHTML(task.assignedByName)} • ${dateStr}</p>
                                     <p class="text-xs font-mono text-slate-400 mt-1">${dueDateStr}</p>
                                 </div>
                                 <div class="flex flex-wrap gap-2 items-start justify-end">
                                     <span class="px-3 py-1 rounded-full text-xs font-bold ${prioColors[task.priority] || prioColors['Low']}">${escapeHTML(task.priority)}</span>
                                     <select aria-label="Update task status" class="px-3 py-1 rounded-full text-xs font-bold border appearance-none cursor-pointer focus:outline-none ${statusColors[task.status] || statusColors['Pending']}"
-                                        onchange="updateTaskStatus('${task.id}', this.value)">
+                                        data-action="updateTaskStatus" data-id="${task.id}">
                                         <option value="Pending" ${task.status === 'Pending' ? 'selected' : ''}>Pending</option>
                                         <option value="In Progress" ${task.status === 'In Progress' ? 'selected' : ''}>In Progress</option>
                                         <option value="Completed" ${task.status === 'Completed' ? 'selected' : ''}>Completed</option>
@@ -6880,11 +6704,12 @@ async function submitWasteLog() {
 
         async function updateTaskStatus(taskId, newStatus) {
             try {
-                await db.collection('tasks').doc(taskId).update({
-                    status: newStatus,
-                    updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
-                    orgId: currentUserData.orgId
+                const manageTasks = cloudFunctions.httpsCallable('manageTasks');
+                await manageTasks({
+                    action: "updateStatus",
+                    payload: { taskId, status: newStatus }
                 });
+                fetchTasks();
             } catch (error) {
                 window.logManagerError("Error updating task:", error);
                 alert("Failed to update status. " + error.message);
@@ -6895,7 +6720,12 @@ async function submitWasteLog() {
         async function deleteTask(taskId) {
             if (!confirm("Are you sure you want to delete this task permanently?")) return;
             try {
-                await db.collection('tasks').doc(taskId).delete();
+                const manageTasks = cloudFunctions.httpsCallable('manageTasks');
+                await manageTasks({
+                    action: "delete",
+                    payload: { taskId }
+                });
+                fetchTasks();
             } catch (error) {
                 window.logManagerError("Error deleting task:", error);
                 alert("Failed to delete task. " + error.message);
@@ -7270,8 +7100,8 @@ async function submitWasteLog() {
             else if (action === 'deleteDelivery') deleteDelivery(id);
             else if (action === 'deleteIncident') deleteIncident(id);
             else if (action === 'deleteAnnouncement') deleteAnnouncement(id);
-            else if (action === 'updateAssignedTaskStatus') updateAssignedTaskStatus(id, status);
-            else if (action === 'deleteAssignedTask') deleteAssignedTask(id);
+            else if (action === 'updateTaskStatus') updateTaskStatus(id, status);
+            else if (action === 'deleteTask') deleteTask(id);
             else if (action === 'deleteRecognition') deleteRecognition(id);
             else if (action === 'updateTaskStatus') updateTaskStatus(id, status);
 
@@ -7924,8 +7754,8 @@ window.onload = () => {
                 if (action === 'deleteWasteLog') deleteWasteLog(id);
                 if (action === 'deleteIncident') deleteIncident(id);
                 if (action === 'deleteAnnouncement') deleteAnnouncement(id);
-                if (action === 'updateAssignedTaskStatus') updateAssignedTaskStatus(id, status);
-                if (action === 'deleteAssignedTask') deleteAssignedTask(id);
+                if (action === 'updateTaskStatus') updateTaskStatus(id, status);
+                if (action === 'deleteTask') deleteTask(id);
                 if (action === 'deleteRecognition') deleteRecognition(id);
             }
         });

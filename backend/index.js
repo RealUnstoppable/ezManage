@@ -285,20 +285,35 @@ exports.manageTasks = functions.https.onCall(async (data, context) => {
       if (!isManager) {
         throw new HttpsError("permission-denied", "Only managers can create tasks");
       }
-      const {title, description, assigneeId, assigneeName} = payload;
-      checkRequiredFields(payload, ["title", "assigneeId"]);
+      const {title, description, assignee, dueDate, priority} = payload;
+      checkRequiredFields(payload, ["title", "assignee"]);
+
       const newTask = {
         title,
         description: description || "",
-        assigneeId,
-        assigneeName,
+        assigneeName: assignee, // The frontend sends employee names here
+        assigneeId: assignee, // In case frontend just passes the name, let's store it as assignee too
         orgId: actualOrgId,
         authorId: uid,
+        assignedByName: userName || "Manager",
+        priority: priority || "Low",
+        dueDate: dueDate || null,
         status: "Pending",
         createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       };
+
       const docRef = await admin.firestore().collection("tasks").add(newTask);
       return {success: true, id: docRef.id};
+    }
+
+    if (action === "get") {
+      let query = admin.firestore().collection("tasks").where("orgId", "==", actualOrgId);
+
+      const snapshot = await query.get();
+      const tasks = [];
+      snapshot.forEach(doc => tasks.push({ id: doc.id, ...doc.data() }));
+      return {success: true, tasks};
     }
 
     if (action === "updateStatus") {
@@ -308,11 +323,19 @@ exports.manageTasks = functions.https.onCall(async (data, context) => {
       if (!taskDoc.exists) {
         throw new HttpsError("not-found", "Task not found");
       }
-      // Allow managers or the assignee to update
-      if (!isManager && taskDoc.data().assigneeId !== uid) {
+
+      // We check if the user is a manager or the assignee
+      const taskData = taskDoc.data();
+      const isAssignee = taskData.assigneeName === userName || taskData.assigneeId === uid || taskData.assigneeId === userName;
+
+      if (!isManager && !isAssignee) {
         throw new HttpsError("permission-denied", "Not authorized to update this task");
       }
-      await taskRef.update({status});
+
+      await taskRef.update({
+          status,
+          updatedAt: admin.firestore.FieldValue.serverTimestamp()
+      });
       return {success: true};
     }
 
