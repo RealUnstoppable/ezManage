@@ -3009,10 +3009,11 @@
             }
 
             const submitBtn = e && e.target ? e.target : document.querySelector('#newAnnouncementForm button[type="button"]');
-            const originalText = submitBtn ? submitBtn.innerText : "Post";
+            const originalText = submitBtn ? submitBtn.innerHTML : "Post";
             if (submitBtn) {
-                submitBtn.innerText = "Posting...";
+                submitBtn.innerHTML = '<i data-lucide="loader-2" class="w-4 h-4 animate-spin mr-2 inline-block"></i> Posting...';
                 submitBtn.disabled = true;
+                if (window.lucide) window.lucide.createIcons();
             }
 
             try {
@@ -3033,16 +3034,18 @@
                 fetchTrackerAnnouncements();
 
                 if (submitBtn) {
-                    submitBtn.innerText = originalText;
+                    submitBtn.innerHTML = originalText;
                     submitBtn.disabled = false;
+                    if (window.lucide) window.lucide.createIcons();
                 }
 
             } catch (error) {
                 console.error("Error creating announcement:", error);
                 alert("Failed to post announcement. Please try again.");
                 if(submitBtn) {
-                    submitBtn.innerText = originalText;
+                    submitBtn.innerHTML = originalText;
                     submitBtn.disabled = false;
+                    if (window.lucide) window.lucide.createIcons();
                 }
             }
         }
@@ -4546,6 +4549,13 @@
         async function submitFeatureRequest() {
             const msg = document.getElementById('featureReqText').value;
             if (!msg) return;
+
+            const submitBtn = document.getElementById('btnSubmitFeatureReq');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin mr-2 inline-block"></i> Sending...';
+            submitBtn.disabled = true;
+            if (window.lucide) window.lucide.createIcons();
+
             try {
                 await window.db.collection('feature_requests').add({
                     uid: currentUser.uid,
@@ -4563,6 +4573,10 @@
                 } else {
                     alert("Failed to send request. " + err.message);
                 }
+            } finally {
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+                if (window.lucide) window.lucide.createIcons();
             }
         }
 
@@ -5394,7 +5408,7 @@ function checkAndRenderOrgControls() {
                 <p class="text-slate-700 dark:text-slate-300 font-medium mb-6 whitespace-pre-wrap pl-1 shift-note-text"></p>
                 <div class="flex justify-end border-t border-slate-100 dark:border-slate-800 pt-4 mt-2">
                     <button disabled class="text-sm font-bold text-slate-400 flex items-center gap-2">
-                        <i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Saving...
+                        <i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Posting...
                     </button>
                 </div>
             `;
