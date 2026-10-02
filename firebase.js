@@ -14,7 +14,7 @@ const firebaseConfig = typeof window !== 'undefined' && window.ezManageFirebaseC
 // to prevent token mismatches and duplicate initialization errors.
 // Use experimentalForceLongPolling for fallback on CORS/network issues
 if (!window.firebase.apps.length) {
-    const app = !window.firebase.apps.length ? window.firebase.initializeApp(firebaseConfig) : window.firebase.app();
+    window.firebase.initializeApp(firebaseConfig);
     try {
         window.firebase.firestore().settings({
             experimentalForceLongPolling: true
@@ -22,6 +22,7 @@ if (!window.firebase.apps.length) {
     } catch (e) {
         console.warn("Firestore settings already configured or errored: ", e);
     }
+}
 
 // INSTRUCTIONS FOR AUTHORIZED DOMAINS:
 // To whitelist `ezmanage.realunstoppable.store` in the Firebase Console:

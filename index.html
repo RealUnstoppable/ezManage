@@ -2806,7 +2806,12 @@ window.updateNetworkStatus = updateNetworkStatus;
         // Legal & Privacy Settings
         let cloudSyncEnabled = false;
 
+        let currentUid = null;
+        let isDashboardLoaded = false;
         window.auth.onAuthStateChanged((user) => {
+            if (user && user.uid === currentUid && isDashboardLoaded) return;
+            currentUid = user ? user.uid : null;
+            isDashboardLoaded = true;
             currentUser = user;
             const navStatus = document.getElementById('navUserStatus');
 
@@ -3492,8 +3497,8 @@ window.updateNetworkStatus = updateNetworkStatus;
             div.className = "flex gap-4 items-center bg-slate-50 dark:bg-slate-800 p-3 rounded-xl animate-fadeIn";
             div.innerHTML = `
                 <input type="text" placeholder="Amount" class="dep-val" style="flex:1;" aria-label="Deposit Amount" oninput="debouncedTriggerDraftSync()">
-                <label class="flex items-center gap-1 text-[10px] font-bold"><input type="checkbox" class="dep-ver accent-sky-500 w-4 h-4" onchange="debouncedTriggerDraftSync()" aria-label="Verify Deposit"> VER</label>
-                <label class="flex items-center gap-1 text-[10px] font-bold"><input type="checkbox" class="dep-val-chk accent-sky-500 w-4 h-4" onchange="debouncedTriggerDraftSync()" aria-label="Validate Deposit"> VAL</label>
+                <label class="flex items-center gap-1 text-[10px] font-bold"><input type="checkbox" class="dep-ver accent-sky-500 w-4 h-4" onchange="debouncedTriggerDraftSync()" > VER</label>
+                <label class="flex items-center gap-1 text-[10px] font-bold"><input type="checkbox" class="dep-val-chk accent-sky-500 w-4 h-4" onchange="debouncedTriggerDraftSync()" > VAL</label>
                 <button type="button" class="text-red-400 delete-deposit-btn" aria-label="Remove deposit"><i data-lucide="x" class="w-4"></i></button>
             `;
 
@@ -5071,7 +5076,7 @@ window.updateNetworkStatus = updateNetworkStatus;
                         // Employee specific view (Can mark their own as complete)
                         if (task.assigneeId === currentUser.uid && task.status === 'Pending') {
                             myTasksHtml.push(taskCard + `
-                                    <button data-action="updateTaskStatus" data-id="${task.id}" data-status="Completed" class="btn btn-sm bg-green-500 text-white hover:bg-green-600" aria-label="Mark task as complete"><i data-lucide="check" class="w-4 h-4 mr-1"></i>Complete</button>
+                                    <button data-action="updateTaskStatus" data-id="${task.id}" data-status="Completed" class="btn btn-sm bg-green-500 text-white hover:bg-green-600"><i data-lucide="check" class="w-4 h-4 mr-1"></i>Complete</button>
                                 </div></div>
                             `);
                         } else if (task.assigneeId === currentUser.uid) {

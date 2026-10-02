@@ -263,7 +263,10 @@ document.addEventListener('DOMContentLoaded', () => {
     renderProducts();
     setupEventListeners();
 
+    let currentUid = null;
     auth.onAuthStateChanged(async (user) => {
+        if (user && user.uid === currentUid && isDashboardLoaded) return;
+        currentUid = user ? user.uid : null;
         currentUser = user;
         const localCartData = localStorage.getItem('localCart');
         const localCart = localCartData ? JSON.parse(localCartData) : {};
