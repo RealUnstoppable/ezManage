@@ -614,6 +614,10 @@ async function handleCreateShiftGroup(payload, uid) {
       .add(newGroup);
 
 
+      const docRef = await admin.firestore()
+          .collection("shift_groups")
+          .add(newGroupLegacy);
+
   return {success: true, groupId: docRef.id};
 }
 
