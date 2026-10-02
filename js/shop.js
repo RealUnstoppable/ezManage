@@ -1,4 +1,4 @@
-import { logManagerError, escapeHTML } from './utils.js';
+import { escapeHTML, logManagerError } from './utils.js';
 
 import { auth, db } from './auth.js';
 
@@ -291,7 +291,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                     cart = mergedCart;
                 } catch (error) {
-                    console.error("Error fetching user cart", error);
+                    logManagerError("Error fetching user cart", error);
                     cart = localCart;
                 }
             }

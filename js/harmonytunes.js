@@ -145,7 +145,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         containerTikToks.innerHTML = tiktokData.map(tk => `
             <div class="tiktok-card" data-action="openUrl" data-url="${escapeHTML(tk.url)}">
-                <img src="${tk.img}" alt="${escapeHTML(tk.title)}" loading="lazy">
+                <img src="${escapeHTML(tk.img)}" alt="${escapeHTML(tk.title)}" loading="lazy">
                 <div class="tiktok-overlay">
                     <div class="tiktok-title">${escapeHTML(tk.title)}</div>
                 </div>
@@ -166,6 +166,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="card-desc">${escapeHTML(pl.desc)}</div>
             </div>
         `).join('');
+        if (window.lucide) window.lucide.createIcons();
 
         document.querySelectorAll('.music-card .card-play-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
@@ -184,7 +185,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return `
             <div class="music-card" data-song-id="${song.id}" data-action="playSongById" data-id="${escapeHTML(song.id)}">
                 <div class="card-img-wrapper">
-                    <img src="${song.art}" alt="${escapeHTML(song.title)}" loading="lazy">
+                    <img src="${escapeHTML(song.art)}" alt="${escapeHTML(song.title)}" loading="lazy">
                     <button class="card-play-btn">▶</button>
                 </div>
                 <div class="card-title">${escapeHTML(song.title)}</div>
