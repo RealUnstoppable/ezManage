@@ -21,8 +21,14 @@ const cancelItemBtn = document.getElementById('cancelItemBtn');
 const loadingSpinner = document.getElementById('loadingSpinner');
 const emptyState = document.getElementById('emptyState');
 
+let currentUid = null;
+let isDashboardLoaded = false;
+
 // Auth State Change
 onAuthStateChanged(auth, async (user) => {
+    if (user && user.uid === currentUid && isDashboardLoaded) return;
+    currentUid = user ? user.uid : null;
+    isDashboardLoaded = true;
     if (user) {
         try {
             // Fetch user's orgId
@@ -76,7 +82,7 @@ function loadInventory() {
         inventoryTableBody.appendChild(fragment);
         if (window.lucide) window.lucide.createIcons();
     }, (error) => {
-        console.error("Error fetching inventory:", error);
+        logManagerError("Error fetching inventory:", error);
         loadingSpinner.classList.add('hidden');
         alert("Failed to load inventory. Please try again.");
     });

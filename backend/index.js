@@ -515,31 +515,22 @@ async function handleCreateShiftGroup(payload, uid) {
 
   checkRequiredFields(payload, ['groupName', 'password']);
 
+  const salt = crypto.randomBytes(16).toString("hex");
+  const hash = crypto.scryptSync(password, salt, 64).toString("hex");
+  const hashedPassword = `$scrypt$${hash}:${salt}`;
+
   const newGroup = {
     ownerId: authorId || uid,
     orgId: orgId || uid,
     ownerName: ownerName || "Anonymous",
     groupName,
-    password, // Basic password for joining (in a real app, hash this)
+    password: hashedPassword,
     createdAt: admin.firestore.FieldValue.serverTimestamp(),
   };
 
   const docRef = await admin.firestore()
       .collection("shift_groups")
       .add(newGroup);
-
-      const salt = crypto.randomBytes(16).toString("hex");
-      const hash = crypto.scryptSync(password, salt, 64).toString("hex");
-      const hashedPassword = `$scrypt$${hash}:${salt}`;
-
-      const newGroup = {
-        ownerId: authorId || uid,
-        orgId: orgId || uid,
-        ownerName: ownerName || "Anonymous",
-        groupName,
-        password: hashedPassword,
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
-      };
 
   return {success: true, groupId: docRef.id};
 }
@@ -556,12 +547,28 @@ async function handleRequestJoinShiftGroup(payload, uid) {
     throw new HttpsError("not-found", "Group not found");
   }
 
-  if (groupDoc.data().password !== password) {
-    throw new HttpsError(
-        "permission-denied", "Invalid password");
+  const storedPassword = groupDoc.data().password;
+  let isValid = false;
+
+  if (storedPassword && storedPassword.startsWith("$scrypt$")) {
+    const [hash, salt] = storedPassword.substring(8).split(":");
+    const derivedHash = crypto.scryptSync(password, salt, 64).toString("hex");
+    isValid = (hash === derivedHash);
+  } else {
+    isValid = (storedPassword === password);
+    if (isValid) {
+      const salt = crypto.randomBytes(16).toString("hex");
+      const hash = crypto.scryptSync(password, salt, 64).toString("hex");
+      await admin.firestore().collection("shift_groups").doc(groupId).update({
+        password: `$scrypt$${hash}:${salt}`
+      });
+    }
   }
 
-  // Create a join request
+  if (!isValid) {
+    throw new HttpsError("permission-denied", "Invalid password");
+  }
+
   await admin.firestore().collection("shift_group_requests").add({
     groupId,
     userId: uid,
@@ -570,33 +577,10 @@ async function handleRequestJoinShiftGroup(payload, uid) {
     timestamp: admin.firestore.FieldValue.serverTimestamp(),
   });
 
-      const storedPassword = groupDoc.data().password;
-      let isValid = false;
+  return {success: true};
+}
 
-      // Check if it's a salted hash
-      if (storedPassword && storedPassword.startsWith("$scrypt$")) {
-        const [hash, salt] = storedPassword.substring(8).split(":");
-        const derivedHash = crypto.scryptSync(password, salt, 64).toString("hex");
-        isValid = (hash === derivedHash);
-      } else {
-        // Legacy plaintext comparison
-        isValid = (storedPassword === password);
-
-        // Upgrade to salted hash if correct
-        if (isValid) {
-          const salt = crypto.randomBytes(16).toString("hex");
-          const hash = crypto.scryptSync(password, salt, 64).toString("hex");
-          await admin.firestore().collection("shift_groups").doc(groupId).update({
-            password: `$scrypt$${hash}:${salt}`,
-          });
-        }
-      }
-
-      if (!isValid) {
-        throw new HttpsError(
-            "permission-denied", "Invalid password");
-      }
-
+// Add the missing retract function that got eaten in the merge conflict
 async function handleRetractJoinShiftGroup(payload, uid) {
   const {requestId} = payload;
   if (!requestId) {
@@ -1356,9 +1340,7 @@ exports.manageShiftMarketplace = functions.https.onCall(async (data, context) =>
             const { shiftId, coveringEmployeeId, coveringEmployeeName } = payload;
             if (!shiftId || !coveringEmployeeId) throw new functions.https.HttpsError('invalid-argument', 'Missing cover info');
 
-            const shiftRef = admin.firestore().collection('shift_marketplace').doc(shiftId);
-            const shiftDoc = await shiftRef.get();
-            if (!shiftDoc.exists || shiftDoc.data().orgId !== orgId) throw new functions.https.HttpsError('not-found', 'Shift not found');
+            const { docRef: shiftRef, docSnap: shiftDoc } = await verifyDocAndAuth("shift_marketplace", shiftId, orgId, "Shift not found.", "Unauthorized access to this shift.");
             if (shiftDoc.data().status !== 'Open') throw new functions.https.HttpsError('failed-precondition', 'Shift is not open for coverage');
 
             await shiftRef.update({
@@ -1373,9 +1355,7 @@ exports.manageShiftMarketplace = functions.https.onCall(async (data, context) =>
             const { shiftId } = payload;
             if (!shiftId) throw new functions.https.HttpsError('invalid-argument', 'Missing shift ID');
 
-            const shiftRef = admin.firestore().collection('shift_marketplace').doc(shiftId);
-            const shiftDoc = await shiftRef.get();
-            if (!shiftDoc.exists || shiftDoc.data().orgId !== orgId) throw new functions.https.HttpsError('not-found', 'Shift not found');
+            const { docRef: shiftRef, docSnap: shiftDoc } = await verifyDocAndAuth("shift_marketplace", shiftId, orgId, "Shift not found.", "Unauthorized access to this shift.");
 
             await shiftRef.update({ status: 'Approved' });
             return { success: true };
@@ -1385,9 +1365,7 @@ exports.manageShiftMarketplace = functions.https.onCall(async (data, context) =>
             const { shiftId } = payload;
             if (!shiftId) throw new functions.https.HttpsError('invalid-argument', 'Missing shift ID');
 
-            const shiftRef = admin.firestore().collection('shift_marketplace').doc(shiftId);
-            const shiftDoc = await shiftRef.get();
-            if (!shiftDoc.exists || shiftDoc.data().orgId !== orgId) throw new functions.https.HttpsError('not-found', 'Shift not found');
+            const { docRef: shiftRef, docSnap: shiftDoc } = await verifyDocAndAuth("shift_marketplace", shiftId, orgId, "Shift not found.", "Unauthorized access to this shift.");
 
             await shiftRef.update({
                 coveringEmployeeId: null,
@@ -1412,9 +1390,7 @@ exports.manageShiftMarketplace = functions.https.onCall(async (data, context) =>
             const { shiftId } = payload;
             if (!shiftId) throw new functions.https.HttpsError('invalid-argument', 'Missing shift ID');
 
-            const shiftRef = admin.firestore().collection('shift_marketplace').doc(shiftId);
-            const shiftDoc = await shiftRef.get();
-            if (!shiftDoc.exists || shiftDoc.data().orgId !== orgId) throw new functions.https.HttpsError('not-found', 'Shift not found');
+            const { docRef: shiftRef, docSnap: shiftDoc } = await verifyDocAndAuth("shift_marketplace", shiftId, orgId, "Shift not found.", "Unauthorized access to this shift.");
             if (!isManager && shiftDoc.data().originalEmployeeId !== uid) {
                  throw new functions.https.HttpsError('permission-denied', 'Cannot delete this shift');
             }
@@ -1426,7 +1402,7 @@ exports.manageShiftMarketplace = functions.https.onCall(async (data, context) =>
              throw new functions.https.HttpsError('invalid-argument', 'Invalid action');
         }
     } catch (error) {
-        console.error("Error managing shift marketplace:", error);
+        logManagerError("Error managing shift marketplace:", error);
         if (error instanceof functions.https.HttpsError) throw error;
         throw new functions.https.HttpsError('internal', 'Internal server error', error.message);
     }
