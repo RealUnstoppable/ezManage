@@ -4250,7 +4250,7 @@ window.updateNetworkStatus = updateNetworkStatus;
             document.getElementById('profileAIToggle').checked = aiEnabled;
         }
 
-        function saveProfileToFirebase() {
+        async function saveProfileToFirebase() {
             if (!currentUser) return;
 
             const cloudToggle = document.getElementById('profileCloudSyncToggle').checked;
@@ -4266,13 +4266,19 @@ window.updateNetworkStatus = updateNetworkStatus;
 
             if (profileDebounceTimeout) clearTimeout(profileDebounceTimeout);
 
-            profileDebounceTimeout = setTimeout(() => {
-                window.db.collection('users').doc(currentUser.uid).set(data, { merge: true }).then(() => {
-                    localStorage.setItem(`ezManage_aiEnabled_${currentUser.uid}`, data.aiTrainingEnabled);
-                    localStorage.setItem(`ezManage_cloudEnabled_${currentUser.uid}`, cloudSyncEnabled);
-                    alert("Profile Updated!");
-                });
-            }, 1000);
+            try {
+                await window.db.collection('users').doc(currentUser.uid).set(data, { merge: true });
+                localStorage.setItem(`ezManage_aiEnabled_${currentUser.uid}`, data.aiTrainingEnabled);
+                localStorage.setItem(`ezManage_cloudEnabled_${currentUser.uid}`, cloudSyncEnabled);
+                alert("Profile Updated!");
+            } catch (error) {
+                window.logManagerError("Error saving profile:", error);
+                if (error.code === 'auth/network-request-failed' || error.code === 'unavailable') {
+                    alert("Network error: Could not connect to the server.");
+                } else {
+                    alert("Failed to save profile: " + error.message);
+                }
+            }
         }
 
         function changePassword(e) {

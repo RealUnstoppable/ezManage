@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { db } from './firebase'; // Assume you have a configured firebase instance here
 import { collection, addDoc, serverTimestamp, query, where, orderBy, getDocs } from 'firebase/firestore';
+import { logManagerError } from './utils.js';
 
 /**
  * Example React Component for creating a Shift Note.
@@ -95,7 +96,7 @@ function ShiftNotesManager({ currentUser, currentUserData }) {
 
         } catch (error) {
             // 6. Rollback optimistic UI if network request fails
-            console.error("Error posting note", error);
+            logManagerError("Error posting note", error);
 
             // Remove the temporary note, explicitly passing previous array to reset state correctly.
             setShiftNotes(previousShiftNotes);
