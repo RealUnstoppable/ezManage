@@ -462,7 +462,7 @@ exports.manageCertifications = functions.https.onCall(async (data, context) => {
           .orderBy("createdAt", "desc")
           .get();
 
-      let certs = [];
+      const certs = [];
       certsQuery.forEach((doc) => {
         certs.push({id: doc.id, ...doc.data()});
       });
@@ -474,7 +474,7 @@ exports.manageCertifications = functions.https.onCall(async (data, context) => {
       const doc = await certRef.get();
       if (!doc.exists) throw new HttpsError("not-found", "Certification not found.");
       if (doc.data().orgId !== userOrgId && !isAdmin) {
-          throw new HttpsError("permission-denied", "Cannot delete a certification outside your organization.");
+        throw new HttpsError("permission-denied", "Cannot delete a certification outside your organization.");
       }
 
       await certRef.delete();
@@ -486,7 +486,7 @@ exports.manageCertifications = functions.https.onCall(async (data, context) => {
       const doc = await certRef.get();
       if (!doc.exists) throw new HttpsError("not-found", "Certification not found.");
       if (doc.data().orgId !== userOrgId && !isAdmin) {
-          throw new HttpsError("permission-denied", "Cannot update a certification outside your organization.");
+        throw new HttpsError("permission-denied", "Cannot update a certification outside your organization.");
       }
 
       await certRef.update({status: payload.status});
