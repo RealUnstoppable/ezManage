@@ -3274,7 +3274,11 @@ window.updateNetworkStatus = updateNetworkStatus;
 
             } catch (error) {
                 console.error("Error fetching announcements:", error);
-                document.getElementById('trackerAnnouncementsContainer').innerHTML = `<p class="text-red-500 text-sm">Failed to load announcements.</p>`;
+                document.getElementById('trackerAnnouncementsContainer').innerHTML = '';
+                const errP = document.createElement('p');
+                errP.className = 'text-red-500 text-sm';
+                errP.textContent = 'Failed to load announcements.';
+                document.getElementById('trackerAnnouncementsContainer').appendChild(errP);
             }
         }
 
@@ -5272,7 +5276,13 @@ window.updateNetworkStatus = updateNetworkStatus;
                     populateScheduleDropdown();
                 }, err => {
                     console.error("Manager Troubleshooting: Error fetching employees:", err);
-                    if (container) { container.innerHTML = '<p class="text-red-500 text-center py-8">Failed to load roster.</p>'; }
+                    if (container) {
+                        container.innerHTML = '';
+                        const errP = document.createElement('p');
+                        errP.className = 'text-red-500 text-center py-8';
+                        errP.textContent = 'Failed to load roster.';
+                        container.appendChild(errP);
+                    }
                 });
         }
 
@@ -5676,7 +5686,13 @@ function checkAndRenderOrgControls() {
                 })
                 .catch(err => {
                     console.error("Manager Troubleshooting: Error fetching notes:", err);
-                    if (container) { container.innerHTML = '<p class="text-red-500 text-center py-8">Failed to load shift notes. Please check your connection.</p>'; }
+                    if (container) {
+                        container.innerHTML = '';
+                        const errP = document.createElement('p');
+                        errP.className = 'text-red-500 text-center py-8';
+                        errP.textContent = 'Failed to load shift notes. Please check your connection.';
+                        container.appendChild(errP);
+                    }
                 });
         }
 
@@ -7252,7 +7268,11 @@ async function submitWasteLog() {
 
                 }, (error) => {
                     window.logManagerError('Error listening to announcements:', error);
-                    container.innerHTML = '<div class="text-red-500 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl border border-red-200 dark:border-red-800">Failed to load announcements.</div>';
+                    container.innerHTML = '';
+                    const errDiv = document.createElement('div');
+                    errDiv.className = 'text-red-500 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl border border-red-200 dark:border-red-800';
+                    errDiv.textContent = 'Failed to load announcements.';
+                    container.appendChild(errDiv);
                 });
             } catch (error) {
                 window.logManagerError('Error fetching announcements:', error);
@@ -8203,7 +8223,13 @@ async function submitWasteLog() {
                 console.error("Error fetching shifts:", error);
                 containers.forEach(id => {
                     const el = document.getElementById(id);
-                    if(el) el.innerHTML = '<p class="text-red-500 text-center">Failed to load shifts.</p>';
+                    if(el) {
+                        el.innerHTML = '';
+                        const errP = document.createElement('p');
+                        errP.className = 'text-red-500 text-center';
+                        errP.textContent = 'Failed to load shifts.';
+                        el.appendChild(errP);
+                    }
                 });
             }
         }
@@ -8654,7 +8680,11 @@ window.onload = () => {
 
             } catch (error) {
                 console.error("Error fetching feedbacks:", error);
-                container.innerHTML = '<p class="text-sm text-red-500">Failed to load feedback history.</p>';
+                container.innerHTML = '';
+                const errP = document.createElement('p');
+                errP.className = 'text-sm text-red-500';
+                errP.textContent = 'Failed to load feedback history.';
+                container.appendChild(errP);
             }
         }
 
