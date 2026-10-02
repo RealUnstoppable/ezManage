@@ -1,7 +1,7 @@
 import { auth, db } from '../firebase.js';
 import { collection, addDoc, updateDoc, deleteDoc, doc, getDoc, onSnapshot, query, where } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
-import { escapeHTML, logManagerError } from './utils.js';
+import { logManagerError, escapeHTML } from './utils.js';
 
 let currentOrgId = null;
 let unsubscribeInventory = null;
@@ -55,7 +55,9 @@ function loadInventory() {
 
     const q = query(collection(db, "inventory"), where("orgId", "==", currentOrgId));
 
-    let isInitialLoad = true;
+    // Flag to handle initial load vs incremental updates to avoid duplicates on re-subscription
+    let isInitialRender = true;
+
     unsubscribeInventory = onSnapshot(q, (snapshot) => {
         loadingSpinner.classList.add('hidden');
 
@@ -67,41 +69,60 @@ function loadInventory() {
 
         emptyState.classList.add('hidden');
 
-        if (isInitialLoad) {
-            inventoryTableBody.innerHTML = '';
-            const fragment = document.createDocumentFragment();
-            snapshot.forEach((docSnap) => {
-                const row = renderItemRow(docSnap.id, docSnap.data());
-                row.dataset.id = docSnap.id;
-                fragment.appendChild(row);
-            });
-            inventoryTableBody.appendChild(fragment);
-            isInitialLoad = false;
-        } else {
-            try {
-                snapshot.docChanges().forEach((change) => {
-                    if (change.type === "added") {
-                        const row = renderItemRow(change.doc.id, change.doc.data());
-                        row.dataset.id = change.doc.id;
-                        inventoryTableBody.appendChild(row);
-                    } else if (change.type === "modified") {
-                        const existingRow = inventoryTableBody.querySelector(`tr[data-id="${change.doc.id}"]`);
-                        if (existingRow) {
-                            const newRow = renderItemRow(change.doc.id, change.doc.data());
-                            newRow.dataset.id = change.doc.id;
-                            inventoryTableBody.replaceChild(newRow, existingRow);
-                        }
-                    } else if (change.type === "removed") {
-                        const existingRow = inventoryTableBody.querySelector(`tr[data-id="${change.doc.id}"]`);
-                        if (existingRow) {
-                            existingRow.remove();
+        if (isInitialRender) {
+             inventoryTableBody.innerHTML = '';
+             isInitialRender = false;
+        }
+
+        // ⚡ Bolt Optimization: Use docChanges() to incrementally update the DOM instead of recreating it all.
+        // Impact: Eliminates O(N) DOM node destruction and recreation on every update, drastically reducing layout thrashing.
+        snapshot.docChanges().forEach((change) => {
+            const data = change.doc.data();
+            const id = change.doc.id;
+
+            if (change.type === 'added') {
+                const row = renderItemRow(id, data);
+                // Respect index to maintain sort order
+                const existingNodes = inventoryTableBody.children;
+                if (existingNodes.length > change.newIndex) {
+                    inventoryTableBody.insertBefore(row, existingNodes[change.newIndex]);
+                } else {
+                    inventoryTableBody.appendChild(row);
+                }
+            }
+            if (change.type === 'modified') {
+                const oldRow = document.getElementById(`item-row-${id}`);
+                const newRow = renderItemRow(id, data);
+
+                if (oldRow) {
+                    if (change.oldIndex === change.newIndex) {
+                        inventoryTableBody.replaceChild(newRow, oldRow);
+                    } else {
+                        oldRow.remove();
+                        const existingNodes = inventoryTableBody.children;
+                        if (existingNodes.length > change.newIndex) {
+                            inventoryTableBody.insertBefore(newRow, existingNodes[change.newIndex]);
+                        } else {
+                            inventoryTableBody.appendChild(newRow);
                         }
                     }
-                });
-            } catch (innerError) {
-                logManagerError("Error processing inventory document changes:", innerError);
+                } else {
+                    const existingNodes = inventoryTableBody.children;
+                    if (existingNodes.length > change.newIndex) {
+                        inventoryTableBody.insertBefore(newRow, existingNodes[change.newIndex]);
+                    } else {
+                        inventoryTableBody.appendChild(newRow); // Fallback
+                    }
+                }
             }
-        }
+            if (change.type === 'removed') {
+                const oldRow = document.getElementById(`item-row-${id}`);
+                if (oldRow) {
+                    oldRow.remove();
+                }
+            }
+        });
+
         if (window.lucide) window.lucide.createIcons();
     }, (error) => {
         logManagerError("Error fetching inventory:", error);
@@ -114,6 +135,7 @@ function loadInventory() {
 function renderItemRow(id, data) {
     const isLowStock = parseInt(data.quantity) < parseInt(data.threshold);
     const row = document.createElement('tr');
+    row.id = `item-row-${id}`; // Needed for targeted DOM updates
     row.className = `border-b border-slate-800/50 transition-colors hover:bg-slate-800/20 ${isLowStock ? 'bg-rose-900/10' : ''}`;
 
     row.innerHTML = `
