@@ -18,8 +18,15 @@ global.window.location = {
     search: "?group=test_group",
     href: "http://localhost/shop.html",
     assign: jest.fn(),
-    replace: jest.fn()
-};
+    replace: jest.fn(),
+    reload: jest.fn(),
+    toString: () => 'http://localhost/'
+  };
+});
+afterAll(() => {
+  // Restore it after tests complete
+  window.location = originalLocation;
+});
 
 
 describe('calculateCartTotal', () => {
