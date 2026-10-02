@@ -47,38 +47,45 @@ jest.mock("cors", () => {
 });
 
 const {cancelSubscription} = require("../index.js");
+const admin = require("firebase-admin");
 
 describe("cancelSubscription", () => {
-  let req;
-  let res;
+  let data;
+  let context;
 
   beforeEach(() => {
     jest.clearAllMocks();
-    req = {
-      method: "POST",
-      body: {},
-    };
-    res = {
-      status: jest.fn().mockReturnThis(),
-      send: jest.fn(),
-      json: jest.fn(),
+    data = {};
+    context = {
+      auth: {
+        uid: "user_test_123",
+      },
     };
   });
 
-  it("should return 405 if method is not POST", async () => {
-    req.method = "GET";
-    await new Promise((resolve) => {
-      res.send.mockImplementation(() => resolve());
-      cancelSubscription(req, res);
+  it("should throw unauthenticated error if auth is missing", async () => {
+    context.auth = null;
+    await expect(cancelSubscription.run(data, context)).rejects.toThrow("You must be logged in.");
+  });
+
+  it("should throw not-found error if user document is missing", async () => {
+    admin.firestore().get.mockResolvedValueOnce({exists: false});
+    await expect(cancelSubscription.run(data, context)).rejects.toThrow("User not found");
+  });
+
+  it("should throw failed-precondition if customerId is missing from user document", async () => {
+    admin.firestore().get.mockResolvedValueOnce({
+      exists: true,
+      data: () => ({subscription: {}}),
     });
-    expect(res.status).toHaveBeenCalledWith(405);
-    expect(res.send).toHaveBeenCalledWith("Method Not Allowed");
+    await expect(cancelSubscription.run(data, context)).rejects.toThrow("No active subscription found.");
   });
 
   it("should cancel all subscriptions for a customer and return success", async () => {
-    req.body = {
-      customerId: "cus_test_123",
-    };
+    admin.firestore().get.mockResolvedValueOnce({
+      exists: true,
+      data: () => ({subscription: {customerId: "cus_test_123"}}),
+    });
 
     mockListSubscriptions.mockResolvedValueOnce({
       data: [
@@ -89,47 +96,39 @@ describe("cancelSubscription", () => {
 
     mockCancelSubscription.mockResolvedValue({});
 
-    await new Promise((resolve) => {
-      res.json.mockImplementation(() => resolve());
-      cancelSubscription(req, res);
-    });
+    const result = await cancelSubscription.run(data, context);
 
     expect(mockListSubscriptions).toHaveBeenCalledWith({customer: "cus_test_123"});
     expect(mockCancelSubscription).toHaveBeenCalledTimes(2);
     expect(mockCancelSubscription).toHaveBeenCalledWith("sub_1");
     expect(mockCancelSubscription).toHaveBeenCalledWith("sub_2");
 
-    expect(res.status).toHaveBeenCalledWith(200);
-    expect(res.json).toHaveBeenCalledWith({success: true});
+    expect(result).toEqual({success: true});
   });
 
   it("should handle error when listing subscriptions", async () => {
-    req.body = {
-      customerId: "cus_test_123",
-    };
+    admin.firestore().get.mockResolvedValueOnce({
+      exists: true,
+      data: () => ({subscription: {customerId: "cus_test_123"}}),
+    });
 
     const error = new Error("Stripe List Error");
     mockListSubscriptions.mockRejectedValueOnce(error);
 
     const consoleSpy = jest.spyOn(console, "error").mockImplementation(() => {});
 
-    await new Promise((resolve) => {
-      res.json.mockImplementation(() => resolve());
-      cancelSubscription(req, res);
-    });
+    await expect(cancelSubscription.run(data, context)).rejects.toThrow("Stripe List Error");
 
-    expect(consoleSpy).toHaveBeenCalledWith(`Manager Troubleshooting: Cancel Error for customerId: ${req.body.customerId}`, error);
-
-    expect(res.status).toHaveBeenCalledWith(500);
-    expect(res.json).toHaveBeenCalledWith({error: "Stripe List Error"});
+    expect(consoleSpy).toHaveBeenCalledWith(`Manager Troubleshooting: Cancel Error for uid: user_test_123`, error);
 
     consoleSpy.mockRestore();
   });
 
   it("should handle error when cancelling a subscription", async () => {
-    req.body = {
-      customerId: "cus_test_123",
-    };
+    admin.firestore().get.mockResolvedValueOnce({
+      exists: true,
+      data: () => ({subscription: {customerId: "cus_test_123"}}),
+    });
 
     mockListSubscriptions.mockResolvedValueOnce({
       data: [
@@ -142,15 +141,9 @@ describe("cancelSubscription", () => {
 
     const consoleSpy = jest.spyOn(console, "error").mockImplementation(() => {});
 
-    await new Promise((resolve) => {
-      res.json.mockImplementation(() => resolve());
-      cancelSubscription(req, res);
-    });
+    await expect(cancelSubscription.run(data, context)).rejects.toThrow("Stripe Cancel Error");
 
-    expect(consoleSpy).toHaveBeenCalledWith(`Manager Troubleshooting: Cancel Error for customerId: ${req.body.customerId}`, error);
-
-    expect(res.status).toHaveBeenCalledWith(500);
-    expect(res.json).toHaveBeenCalledWith({error: "Stripe Cancel Error"});
+    expect(consoleSpy).toHaveBeenCalledWith(`Manager Troubleshooting: Cancel Error for uid: user_test_123`, error);
 
     consoleSpy.mockRestore();
   });
