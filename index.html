@@ -10,16 +10,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-messaging-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-functions-compat.js"></script>
-    <script>
-      window.app = !window.firebase.apps.length ? window.firebase.initializeApp(window.ezManageFirebaseConfig) : window.firebase.app();
-      try {
-          window.firebase.firestore().settings({ experimentalForceLongPolling: true });
-      } catch (e) {
-          console.warn("Firestore settings already configured or errored: ", e);
-      }
-      window.auth = window.firebase.auth();
-      window.db = window.firebase.firestore();
-    </script>
+    <script type="module" src="firebase.js"></script>
   <script type="module">
     import { escapeHTML, logManagerError } from './js/utils.js';
     import { loadNavbar } from './js/navbar.js';
@@ -2578,15 +2569,160 @@
         </div>
     </div>
 
-    <script>
+    <script type="module">
+
+window.checkAndRenderOrgControls = checkAndRenderOrgControls;
+window.submitWasteLog = submitWasteLog;
+
+        // Initialization is handled by firebase.js
+window.callCloudFunction = callCloudFunction;
+window.runAIPatternLogic = runAIPatternLogic;
+window.triggerCloudOptIn = triggerCloudOptIn;
+window.acceptToSAndEnableCloud = acceptToSAndEnableCloud;
+window.declineToS = declineToS;
+window.disableCloudSync = disableCloudSync;
+window.updateCloudSyncUI = updateCloudSyncUI;
+window.exportDataJSON = exportDataJSON;
+window.importDataJSON = importDataJSON;
+window.toggleAuthModeUI = toggleAuthModeUI;
+window.toggleAuthMode = toggleAuthMode;
+window.handleAuth = handleAuth;
+window.signInWithGoogle = signInWithGoogle;
+window.signOut = signOut;
+window.completeSetup = completeSetup;
+window.toggleSidebar = toggleSidebar;
+window.fetchTrackerAnnouncements = fetchTrackerAnnouncements;
+window.createTrackerAnnouncement = createTrackerAnnouncement;
+window.deleteAnnouncement = deleteAnnouncement;
+window.navTo = navTo;
+window.handleNavAccountClick = handleNavAccountClick;
+window.toggleTheme = toggleTheme;
+window.toggleShiftTimer = toggleShiftTimer;
+window.updateTimerUI = updateTimerUI;
+window.addDrawerItem = addDrawerItem;
+window.calcDrawer = calcDrawer;
+window.addDepositItem = addDepositItem;
+window.addRoutineTask = addRoutineTask;
+window.addInventoryItem = addInventoryItem;
+window.sortInventory = sortInventory;
+window.getTrackerState = getTrackerState;
+window.debouncedTriggerDraftSync = debouncedTriggerDraftSync;
+window.triggerDraftSync = triggerDraftSync;
+window.populateTrackerFromState = populateTrackerFromState;
+window.syncDraftFromServer = syncDraftFromServer;
+window.manualSaveHistory = manualSaveHistory;
+window.debouncedRenderHistory = debouncedRenderHistory;
+window.renderHistory = renderHistory;
+window.deleteHistoryShift = deleteHistoryShift;
+window.updateStorageBar = updateStorageBar;
+window.loadHistoryShift = loadHistoryShift;
+window.exportPerformanceCSV = exportPerformanceCSV;
+window.calculatePerformance = calculatePerformance;
+window.renderPerformanceChart = renderPerformanceChart;
+window.loadPresetList = loadPresetList;
+window.saveCustomPreset = saveCustomPreset;
+window.deleteCustomPreset = deleteCustomPreset;
+window.loadCustomPresets = loadCustomPresets;
+window.applyCustomPreset = applyCustomPreset;
+window.generateReport = generateReport;
+window.loadProfileUI = loadProfileUI;
+window.saveProfileToFirebase = saveProfileToFirebase;
+window.changePassword = changePassword;
+window.cancelSubscription = cancelSubscription;
+window.deleteAccount = deleteAccount;
+window.clearData = clearData;
+window.initDefaults = initDefaults;
+window.processCheckout = processCheckout;
+window.submitAssignedTask = submitAssignedTask;
+window.fetchAssignedTasks = fetchAssignedTasks;
+window.updateAssignedTaskStatus = updateAssignedTaskStatus;
+window.deleteAssignedTask = deleteAssignedTask;
+window.submitMaintenanceTicket = submitMaintenanceTicket;
+window.submitTaskAlt = submitTaskAlt;
+window.fetchMaintenanceTickets = fetchMaintenanceTickets;
+window.deleteMaintenanceTicket = deleteMaintenanceTicket;
+window.updateMaintenanceStatus = updateMaintenanceStatus;
+window.submitFeatureRequest = submitFeatureRequest;
+window.addEmployee = addEmployee;
+window.submitTimeOffRequest = submitTimeOffRequest;
+window.fetchTasks = fetchTasks;
+window.fetchTimeOffRequests = fetchTimeOffRequests;
+window.updateTimeOffStatus = updateTimeOffStatus;
+window.deleteTimeOffRequest = deleteTimeOffRequest;
+window.fetchEmployees = fetchEmployees;
+window.toggleEmployeeStatus = toggleEmployeeStatus;
+window.populateScheduleDropdown = populateScheduleDropdown;
+window.addShiftToSchedule = addShiftToSchedule;
+window.fetchSchedules = fetchSchedules;
+window.removeShift = removeShift;
+window.fetchFeatureRequests = fetchFeatureRequests;
+window.checkAndRenderOrgControls = checkAndRenderOrgControls;
+window.fetchShiftNotes = fetchShiftNotes;
+window.submitShiftNote = submitShiftNote;
+window.resolveShiftNote = resolveShiftNote;
+window.createShiftGroup = createShiftGroup;
+window.requestJoinShiftGroup = requestJoinShiftGroup;
+window.fetchGroupRequests = fetchGroupRequests;
+window.fetchMySentRequests = fetchMySentRequests;
+window.retractGroupRequest = retractGroupRequest;
+window.approveGroupRequest = approveGroupRequest;
+window.submitDelivery = submitDelivery;
+window.fetchDeliveries = fetchDeliveries;
+window.deleteDelivery = deleteDelivery;
+window.updateDeliveryStatus = updateDeliveryStatus;
+window.populateCertAssigneeDropdown = populateCertAssigneeDropdown;
+window.submitCertification = submitCertification;
+window.fetchCertifications = fetchCertifications;
+window.deleteCertification = deleteCertification;
+window.submitWasteLog = submitWasteLog;
+window.fetchWasteLogs = fetchWasteLogs;
+window.submitTemperatureLog = submitTemperatureLog;
+window.fetchTemperatureLogs = fetchTemperatureLogs;
+window.deleteTempLog = deleteTempLog;
+window.deleteWasteLog = deleteWasteLog;
+window.submitIncidentTicket = submitIncidentTicket;
+window.fetchIncidents = fetchIncidents;
+window.deleteIncident = deleteIncident;
+window.updateIncidentStatus = updateIncidentStatus;
+window.closeEmployeeModal = closeEmployeeModal;
+window.closeEmployeeModalAlt = closeEmployeeModalAlt;
+window.openEditEmployeeModal = openEditEmployeeModal;
+window.submitEmployee = submitEmployee;
+window.createTask = createTask;
+window.fetchAnnouncements = fetchAnnouncements;
+window.createAnnouncement = createAnnouncement;
+window.fetchTeamDirectory = fetchTeamDirectory;
+window.updateScheduleEmployeeDropdown = updateScheduleEmployeeDropdown;
+window.populateTaskAssigneeDropdown = populateTaskAssigneeDropdown;
+window.submitTask = submitTask;
+window.renderFilteredTasks = renderFilteredTasks;
+window.updateTaskStatus = updateTaskStatus;
+window.deleteTask = deleteTask;
+window.populateRecognitionDropdown = populateRecognitionDropdown;
+window.submitRecognition = submitRecognition;
+window.fetchRecognitions = fetchRecognitions;
+window.deleteRecognition = deleteRecognition;
+window.toggleClock = toggleClock;
+window.updateTimeClockUI = updateTimeClockUI;
+window.fetchTimeLogs = fetchTimeLogs;
+window.switchMarketplaceTab = switchMarketplaceTab;
+window.postShiftToMarketplace = postShiftToMarketplace;
+window.fetchMarketplaceShifts = fetchMarketplaceShifts;
+window.renderMarketplaceShifts = renderMarketplaceShifts;
+window.attachMpEventListeners = attachMpEventListeners;
+window.offerCoverShift = offerCoverShift;
+window.approveMarketplaceShift = approveMarketplaceShift;
+window.denyMarketplaceShift = denyMarketplaceShift;
+window.deleteMarketplaceShift = deleteMarketplaceShift;
+window.openFeedbackModal = openFeedbackModal;
+window.closeFeedbackModal = closeFeedbackModal;
+window.submitFeedback = submitFeedback;
+window.fetchFeedbacksForEmployee = fetchFeedbacksForEmployee;
+window.deleteFeedback = deleteFeedback;
+window.updateNetworkStatus = updateNetworkStatus;
 
         // Initialization is handled by firebase.js, we just get references
-
-        // Ensure singleton check since it relies on firebaseConfig
-        const firebaseConfig = window.ezManageFirebaseConfig;
-        window.app = !window.firebase.apps.length ? window.firebase.initializeApp(firebaseConfig) : window.firebase.app();
         window.auth = window.firebase.auth();
-
         window.db = window.firebase.firestore();
         window.cloudFunctions = window.firebase.functions();
 
@@ -5495,6 +5631,15 @@ function checkAndRenderOrgControls() {
 
             if (!content) return alert("Please enter note content.");
 
+            const submitBtn = document.querySelector('button[onclick="submitShiftNote()"]');
+            const originalBtnText = submitBtn ? submitBtn.innerHTML : 'Post Note';
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.classList.add('opacity-70', 'cursor-not-allowed');
+                submitBtn.innerHTML = '<i data-lucide="loader-2" class="animate-spin w-4 h-4 inline-block mr-2"></i> Saving...';
+                if (window.lucide) window.lucide.createIcons();
+            }
+
             // Optimistic UI update
             const container = document.getElementById('shiftNotesContainer');
             const noteDiv = document.createElement('div');
@@ -5544,6 +5689,7 @@ function checkAndRenderOrgControls() {
                 submitBtn.disabled = true;
             }
             if (window.lucide) window.lucide.createIcons();
+
             // Store the content so we can restore it if the write fails
             const previousContent = document.getElementById('shiftNoteContent').value;
             document.getElementById('shiftNoteContent').value = "";
@@ -5557,8 +5703,8 @@ function checkAndRenderOrgControls() {
                     priority: priority,
                     status: 'Active',
                     orgId: currentUserData.orgId,
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                    createdAt: window.firebase.firestore.FieldValue.serverTimestamp(),
+                    timestamp: window.firebase.firestore.FieldValue.serverTimestamp()
                 });
 
                 document.getElementById('shiftNoteContent').value = "";
@@ -5606,7 +5752,11 @@ function checkAndRenderOrgControls() {
                 if (window.lucide) window.lucide.createIcons();
 
             } catch (err) {
-                console.error("Error posting note", err);
+                if (window.logManagerError) {
+                    window.logManagerError("Error posting note", err);
+                } else {
+                    console.error("Error posting note", err);
+                }
 
                 // Rollback optimistic UI
                 if (noteDiv && noteDiv.parentNode) {
@@ -5615,7 +5765,7 @@ function checkAndRenderOrgControls() {
                 document.getElementById('shiftNoteContent').value = previousContent;
 
                 if (err.code === 'unavailable' || err.code === 'auth/network-request-failed' || err.code === 'firestore/unavailable') {
-                    alert("Network error: Could not connect to the server. Please check your connection or whitelist the domain.");
+                    alert("Network error: Could not connect to the server. Please check your connection or whitelist the domain (e.g. ezmanage.realunstoppable.store).");
                 } else {
                     alert("Failed to post note: " + err.message);
                 }
