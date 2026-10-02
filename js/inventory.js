@@ -21,8 +21,14 @@ const cancelItemBtn = document.getElementById('cancelItemBtn');
 const loadingSpinner = document.getElementById('loadingSpinner');
 const emptyState = document.getElementById('emptyState');
 
+let currentUid = null;
+let isDashboardLoaded = false;
+
 // Auth State Change
 onAuthStateChanged(auth, async (user) => {
+    if (user && user.uid === currentUid && isDashboardLoaded) return;
+    currentUid = user ? user.uid : null;
+    isDashboardLoaded = true;
     if (user) {
         try {
             // Fetch user's orgId

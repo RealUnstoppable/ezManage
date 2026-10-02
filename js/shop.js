@@ -247,7 +247,7 @@ function setupEventListeners() {
                     quantityTimeouts.delete(productId);
                 }, 300);
 
-                updateQuantityTimeouts.set(productId, timeoutId);
+                quantityTimeouts.set(productId, timeoutId);
             }
         });
     }
