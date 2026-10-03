@@ -5,11 +5,11 @@ async function getCurrentUserOrgAndProfile() {
     const user = auth.currentUser;
     if (!user) throw new Error("Must be logged in to access handoffs.");
 
-    const userDoc = await fetchUserDoc(user.uid);
-    if (!userDoc.exists) throw new Error("User profile not found.");
+        const userDoc = await fetchUserDoc(user.uid);
+        if (!userDoc.exists) throw new Error("User profile not found.");
 
-    const orgId = userDoc.data().orgId;
-    if (!orgId) throw new Error("User is not associated with an organization.");
+        const orgId = userDoc.data().orgId;
+        if (!orgId) throw new Error("User is not associated with an organization.");
 
     return { user, userDoc, orgId };
 }
@@ -28,7 +28,6 @@ export async function createHandoff(notes, urgentAlerts, shiftType) {
         acknowledgedBy: []
     };
 
-    try {
         const docRef = await db.collection('shift_handoffs').add(handoffData);
         return docRef.id;
     } catch (e) {
@@ -40,7 +39,6 @@ export async function createHandoff(notes, urgentAlerts, shiftType) {
 export async function fetchRecentHandoffs(limitCount = 10) {
     const { orgId } = await getCurrentUserOrgAndProfile();
 
-    try {
         const snapshot = await db.collection('shift_handoffs')
             .where('orgId', '==', orgId)
             .orderBy('createdAt', 'desc')
@@ -58,10 +56,10 @@ export async function fetchRecentHandoffs(limitCount = 10) {
 }
 
 export async function acknowledgeHandoff(handoffId) {
-    const user = auth.currentUser;
-    if (!user) throw new Error("Must be logged in to acknowledge.");
-
     try {
+        const user = auth.currentUser;
+        if (!user) throw new Error("Must be logged in to acknowledge.");
+
         await db.collection('shift_handoffs').doc(handoffId).update({
             acknowledgedBy: window.firebase.firestore.FieldValue.arrayUnion(user.uid)
         });

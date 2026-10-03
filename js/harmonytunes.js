@@ -193,7 +193,7 @@ document.addEventListener("DOMContentLoaded", () => {
             <div class="music-card" data-action="loadPlaylistView" data-id="${escapeHTML(pl.id)}">
                 <div class="card-img-wrapper">
                     <img src="/images/harmony-tunes-card.jpg" alt="${escapeHTML(pl.title)}" loading="lazy">
-                    <button class="card-play-btn">▶</button>
+                    <button class="card-play-btn" aria-label="Play Track">▶</button>
                 </div>
                 <div class="card-title">${escapeHTML(pl.title)}</div>
                 <div class="card-desc">${escapeHTML(pl.desc)}</div>
@@ -219,7 +219,7 @@ document.addEventListener("DOMContentLoaded", () => {
             <div class="music-card" data-song-id="${song.id}" data-action="playSongById" data-id="${escapeHTML(song.id)}">
                 <div class="card-img-wrapper">
                     <img src="${escapeHTML(song.art)}" alt="${escapeHTML(song.title)}" loading="lazy">
-                    <button class="card-play-btn">▶</button>
+                    <button class="card-play-btn" aria-label="Play Track">▶</button>
                 </div>
                 <div class="card-title">${escapeHTML(song.title)}</div>
                 <div class="card-desc">${escapeHTML(song.artist)}</div>

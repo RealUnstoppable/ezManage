@@ -70,5 +70,9 @@
       "category": "public.app-category.business",
       "identity": null
     }
+  },
+  "jest": {
+    "testEnvironment": "jsdom",
+    "transform": {}
   }
 }

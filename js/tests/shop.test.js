@@ -12,8 +12,7 @@ global.window.firebase = {
 
 // Mock window location
 
-delete global.window.location;
-
+const originalLocation = window.location;
 delete global.window.location;
 global.window.location = {
     search: "?group=test_group",
@@ -22,7 +21,7 @@ global.window.location = {
     replace: jest.fn(),
     reload: jest.fn(),
     toString: () => 'http://localhost/'
-};
+  };
 
 
 
