@@ -57,7 +57,7 @@ function loadInventory() {
 
     loadingSpinner.classList.remove('hidden');
     emptyState.classList.add('hidden');
-    inventoryTableBody.innerHTML = '';
+    inventoryTableBody.replaceChildren();
 
     const q = query(collection(db, "inventory"), where("orgId", "==", currentOrgId));
 
@@ -69,14 +69,14 @@ function loadInventory() {
 
         if (snapshot.empty) {
             emptyState.classList.remove('hidden');
-            inventoryTableBody.innerHTML = '';
+            inventoryTableBody.replaceChildren();
             return;
         }
 
         emptyState.classList.add('hidden');
 
         if (isInitialRender) {
-             inventoryTableBody.innerHTML = '';
+             inventoryTableBody.replaceChildren();
              isInitialRender = false;
         }
 
@@ -144,7 +144,7 @@ function renderItemRow(id, data) {
     row.id = `item-row-${id}`; // Needed for targeted DOM updates
     row.className = `border-b border-slate-800/50 transition-colors hover:bg-slate-800/20 ${isLowStock ? 'bg-rose-900/10' : ''}`;
 
-    row.innerHTML = `
+    row.insertAdjacentHTML('beforeend', `
         <td class="px-6 py-4 whitespace-nowrap">
             <div class="flex items-center">
                 <div class="h-10 w-10 rounded-full bg-slate-800 flex items-center justify-center mr-3 text-slate-300">
