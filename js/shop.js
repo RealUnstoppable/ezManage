@@ -262,14 +262,18 @@ document.addEventListener('DOMContentLoaded', () => {
     renderProducts();
     setupEventListeners();
 
+    let currentUid = null;
+    let isShopLoaded = false;
     auth.onAuthStateChanged(async (user) => {
+        if (user && user.uid === currentUid && isShopLoaded) return;
+        currentUid = user ? user.uid : null;
         currentUser = user;
         const localCartData = localStorage.getItem('localCart');
         const localCart = localCartData ? JSON.parse(localCartData) : {};
 
         if (user) {
             if (!isDashboardLoaded) {
-                isDashboardLoaded = true;
+                isShopLoaded = true;
                 try {
                     const userCartRef = db.collection('carts').doc(user.uid);
                     const docSnap = await userCartRef.get();
@@ -281,7 +285,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                     cart = mergedCart;
                 } catch (error) {
-                    console.error("Error fetching user cart", error);
+                    logManagerError("Error fetching user cart", error);
                     cart = localCart;
                 }
             }

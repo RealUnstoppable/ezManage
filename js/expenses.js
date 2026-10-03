@@ -21,7 +21,12 @@ const emptyState = document.getElementById('emptyState');
 const submitExpenseBtn = document.getElementById('submitExpenseBtn');
 
 // Auth State Change
+let currentUid = null;
+let isDashboardLoaded = false;
 onAuthStateChanged(auth, async (user) => {
+    if (user && user.uid === currentUid && isDashboardLoaded) return;
+    currentUid = user ? user.uid : null;
+    isDashboardLoaded = true;
     if (user) {
         try {
             // Because window.firebase.functions isn't initialized if firebase-compat isn't used
@@ -34,7 +39,7 @@ onAuthStateChanged(auth, async (user) => {
                 if (currentOrgId) {
                     loadExpenses();
                 } else {
-                    console.error("User does not belong to an organization.");
+                    logManagerError("User does not belong to an organization.");
                 }
             }
         } catch (error) {
@@ -57,38 +62,51 @@ function loadExpenses() {
 
     const q = query(collection(db, "expenses"), where("orgId", "==", currentOrgId));
 
+    let isInitialRender = true;
     unsubscribeExpenses = onSnapshot(q, (snapshot) => {
         loadingSpinner.classList.add('hidden');
-        expenseTableBody.innerHTML = '';
 
         if (snapshot.empty) {
             emptyState.classList.remove('hidden');
+            expenseTableBody.innerHTML = '';
             return;
         }
 
         emptyState.classList.add('hidden');
 
-        // We sort client side since onSnapshot doesn't guarantee order without compound indexes sometimes.
-        const expensesData = [];
-        snapshot.forEach((docSnap) => {
-             expensesData.push({ id: docSnap.id, ...docSnap.data() });
+        if (isInitialRender) {
+             expenseTableBody.innerHTML = '';
+             isInitialRender = false;
+        }
+
+        snapshot.docChanges().forEach((change) => {
+            const data = change.doc.data();
+            const id = change.doc.id;
+
+            if (change.type === 'added') {
+                const row = renderExpenseRow(id, data);
+                if (expenseTableBody.children.length === 0 || change.newIndex >= expenseTableBody.children.length) {
+                    expenseTableBody.appendChild(row);
+                } else {
+                    expenseTableBody.insertBefore(row, expenseTableBody.children[change.newIndex]);
+                }
+            } else if (change.type === 'modified') {
+                const row = renderExpenseRow(id, data);
+                const oldRow = document.querySelector(`tr[data-id="${id}"]`);
+                if (oldRow) {
+                    expenseTableBody.replaceChild(row, oldRow);
+                }
+            } else if (change.type === 'removed') {
+                const row = document.querySelector(`tr[data-id="${id}"]`);
+                if (row) {
+                    row.remove();
+                }
+            }
         });
 
-        expensesData.sort((a, b) => {
-            const timeA = a.timestamp ? a.timestamp.toMillis() : Date.now();
-            const timeB = b.timestamp ? b.timestamp.toMillis() : Date.now();
-            return timeB - timeA;
-        });
-
-        const fragment = document.createDocumentFragment();
-        expensesData.forEach((data) => {
-            const row = renderExpenseRow(data.id, data);
-            fragment.appendChild(row);
-        });
-        expenseTableBody.appendChild(fragment);
         if (window.lucide) window.lucide.createIcons();
     }, (error) => {
-        console.error("Error fetching expenses:", error);
+        logManagerError("Error fetching expenses", error);
         loadingSpinner.classList.add('hidden');
         alert("Failed to load expenses. Please try again.");
     });
@@ -98,6 +116,7 @@ function loadExpenses() {
 function renderExpenseRow(id, data) {
     const row = document.createElement('tr');
     row.className = `border-b border-slate-800/50 transition-colors hover:bg-slate-800/20`;
+    row.dataset.id = id;
 
     const dateStr = data.timestamp ? new Date(data.timestamp.toDate()).toLocaleDateString() : 'Just now';
     const amountStr = parseFloat(data.amount).toFixed(2);
