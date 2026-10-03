@@ -276,7 +276,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (user) {
             if (!isDashboardLoaded) {
-                isDashboardLoaded = true;
+                isShopLoaded = true;
                 try {
                     const userCartRef = db.collection('carts').doc(user.uid);
                     const docSnap = await userCartRef.get();
@@ -288,7 +288,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                     cart = mergedCart;
                 } catch (error) {
-                    console.error("Error fetching user cart", error);
+                    logManagerError("Error fetching user cart", error);
                     cart = localCart;
                 }
             }

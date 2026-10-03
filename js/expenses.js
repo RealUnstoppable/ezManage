@@ -39,7 +39,7 @@ onAuthStateChanged(auth, async (user) => {
                 if (currentOrgId) {
                     loadExpenses();
                 } else {
-                    console.error("User does not belong to an organization.");
+                    logManagerError("User does not belong to an organization.");
                 }
             }
         } catch (error) {
@@ -62,6 +62,7 @@ function loadExpenses() {
 
     const q = query(collection(db, "expenses"), where("orgId", "==", currentOrgId), orderBy("timestamp", "desc"));
 
+    let isInitialRender = true;
     unsubscribeExpenses = onSnapshot(q, (snapshot) => {
         loadingSpinner.classList.add('hidden');
 
@@ -124,7 +125,7 @@ function loadExpenses() {
 
         if (window.lucide) window.lucide.createIcons();
     }, (error) => {
-        console.error("Error fetching expenses:", error);
+        logManagerError("Error fetching expenses", error);
         loadingSpinner.classList.add('hidden');
         alert("Failed to load expenses. Please try again.");
     });
@@ -135,6 +136,7 @@ function renderExpenseRow(id, data) {
     const row = document.createElement('tr');
     row.id = `expense-row-${id}`;
     row.className = `border-b border-slate-800/50 transition-colors hover:bg-slate-800/20`;
+    row.dataset.id = id;
 
     const dateStr = data.timestamp ? new Date(data.timestamp.toDate()).toLocaleDateString() : 'Just now';
     const amountStr = parseFloat(data.amount).toFixed(2);
