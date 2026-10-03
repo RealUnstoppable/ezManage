@@ -68,8 +68,12 @@ function adaptGen2Params(data, context) {
  * @param {string} actionMessage - The action message
  * @param {Error} error - The error object
  */
-function logManagerError(actionMessage, error) {
-  console.error("Manager Troubleshooting: " + actionMessage, error);
+function logManagerError(actionMessage, arg1, arg2) {
+  if (arg2) {
+    console.error("Manager Troubleshooting: " + actionMessage, arg1, arg2);
+  } else {
+    console.error("Manager Troubleshooting: " + actionMessage, arg1);
+  }
 }
 
 

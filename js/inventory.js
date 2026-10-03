@@ -57,26 +57,42 @@ function loadInventory() {
 
     unsubscribeInventory = onSnapshot(q, (snapshot) => {
         loadingSpinner.classList.add('hidden');
-        inventoryTableBody.innerHTML = '';
 
         if (snapshot.empty) {
             emptyState.classList.remove('hidden');
+            inventoryTableBody.innerHTML = '';
             return;
         }
 
         emptyState.classList.add('hidden');
 
-        const fragment = document.createDocumentFragment();
-        snapshot.forEach((docSnap) => {
+        snapshot.docChanges().forEach((change) => {
+            const docSnap = change.doc;
             const data = docSnap.data();
             const id = docSnap.id;
-            const row = renderItemRow(id, data);
-            fragment.appendChild(row);
+
+            if (change.type === 'added') {
+                const row = renderItemRow(id, data);
+                row.id = `inventory-row-${id}`;
+                inventoryTableBody.appendChild(row);
+            } else if (change.type === 'modified') {
+                const existingRow = document.getElementById(`inventory-row-${id}`);
+                if (existingRow) {
+                    const newRow = renderItemRow(id, data);
+                    newRow.id = `inventory-row-${id}`;
+                    inventoryTableBody.replaceChild(newRow, existingRow);
+                }
+            } else if (change.type === 'removed') {
+                const existingRow = document.getElementById(`inventory-row-${id}`);
+                if (existingRow) {
+                    existingRow.remove();
+                }
+            }
         });
-        inventoryTableBody.appendChild(fragment);
+
         if (window.lucide) window.lucide.createIcons();
     }, (error) => {
-        console.error("Error fetching inventory:", error);
+        logManagerError("Error fetching inventory:", error);
         loadingSpinner.classList.add('hidden');
         alert("Failed to load inventory. Please try again.");
     });

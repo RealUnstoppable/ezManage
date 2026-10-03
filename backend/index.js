@@ -275,17 +275,8 @@ exports.cancelSubscription = onRequest({invoker: "public"}, (req, res) => {
  * Handles creation, status updating, and deletion of shift tasks.
  */
 exports.manageTasks = functions.https.onCall(async (data, context) => {
-  const adapted = adaptGen2Params(data, context);
-  data = adapted.data;
-  context = adapted.context;
-
-  if (!context || !context.auth) {
-    throw new HttpsError("unauthenticated", "User must be logged in.");
-  }
-
-  const {action, payload} = data;
+  const {uid, userOrgId, isAdmin, userName, action, payload} = await getAuthAndPayload(data, context, admin);
   checkRequiredFields({action, payload}, ["action", "payload"]);
-  const uid = context.auth.uid;
 
   try {
     const userOrgId = await getActualOrgId(admin, uid);
@@ -359,18 +350,8 @@ exports.manageTasks = functions.https.onCall(async (data, context) => {
  * Handles creation, updating, and resolution of shift notes.
  */
 exports.manageShiftNotes = functions.https.onCall(async (data, context) => {
-  const adapted = adaptGen2Params(data, context);
-  data = adapted.data;
-  context = adapted.context;
-
-  if (!context || !context.auth) {
-    throw new HttpsError(
-        "unauthenticated", "User must be logged in.");
-  }
-
-  const {action, payload} = data;
+  const {uid, userOrgId, isAdmin, userName, action, payload} = await getAuthAndPayload(data, context, admin);
   checkRequiredFields({action, payload}, ["action", "payload"]);
-  const uid = context.auth.uid;
 
   try {
     // 🛡️ Securely fetch the user's actual orgId from the database
@@ -444,17 +425,8 @@ exports.manageShiftNotes = functions.https.onCall(async (data, context) => {
  * Handles creation, updating, and deletion of employees.
  */
 exports.manageEmployees = functions.https.onCall(async (data, context) => {
-  const adapted = adaptGen2Params(data, context);
-  data = adapted.data;
-  context = adapted.context;
-
-  if (!context || !context.auth) {
-    throw new HttpsError("unauthenticated", "User must be logged in.");
-  }
-
-  const {action, payload} = data;
+  const {uid, userOrgId, isAdmin, userName, action, payload} = await getAuthAndPayload(data, context, admin);
   checkRequiredFields({action, payload}, ["action", "payload"]);
-  const uid = context.auth.uid;
 
   try {
     const actualOrgId = await getActualOrgId(admin, uid);
@@ -548,31 +520,22 @@ async function handleCreateShiftGroup(payload, uid) {
 
   checkRequiredFields(payload, ['groupName', 'password']);
 
-  const newGroup = {
+  const salt = crypto.randomBytes(16).toString("hex");
+  const hash = crypto.scryptSync(password, salt, 64).toString("hex");
+  const hashedPassword = `$scrypt$${hash}:${salt}`;
+
+  const newGroupParams = {
     ownerId: authorId || uid,
     orgId: orgId || uid,
     ownerName: ownerName || "Anonymous",
     groupName,
-    password, // Basic password for joining (in a real app, hash this)
+    password: hashedPassword,
     createdAt: admin.firestore.FieldValue.serverTimestamp(),
   };
 
   const docRef = await admin.firestore()
       .collection("shift_groups")
-      .add(newGroup);
-
-      const salt = crypto.randomBytes(16).toString("hex");
-      const hash = crypto.scryptSync(password, salt, 64).toString("hex");
-      const hashedPassword = `$scrypt$${hash}:${salt}`;
-
-      const newGroup = {
-        ownerId: authorId || uid,
-        orgId: orgId || uid,
-        ownerName: ownerName || "Anonymous",
-        groupName,
-        password: hashedPassword,
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
-      };
+      .add(newGroupParams);
 
   return {success: true, groupId: docRef.id};
 }
@@ -629,6 +592,8 @@ async function handleRequestJoinShiftGroup(payload, uid) {
         throw new HttpsError(
             "permission-denied", "Invalid password");
       }
+      return {success: true};
+}
 
 async function handleRetractJoinShiftGroup(payload, uid) {
   const {requestId} = payload;
@@ -713,18 +678,8 @@ async function handleRemoveManagerShiftGroup(payload, uid) {
  * Handles creating groups, joining groups, and approving joins.
  */
 exports.manageShiftGroups = functions.https.onCall(async (data, context) => {
-  const adapted = adaptGen2Params(data, context);
-  data = adapted.data;
-  context = adapted.context;
-
-  if (!context || !context.auth) {
-    throw new HttpsError(
-        "unauthenticated", "User must be logged in.");
-  }
-
-  const {action, payload} = data;
+  const {uid, userOrgId, isAdmin, userName, action, payload} = await getAuthAndPayload(data, context, admin);
   checkRequiredFields({action, payload}, ["action", "payload"]);
-  const uid = context.auth.uid;
 
   try {
     if (action === "create") return await handleCreateShiftGroup(payload, uid);
@@ -829,17 +784,8 @@ async function handleDeleteIncident(payload, actualOrgId) {
  * Handles creation, reading, status updates, and deletion of incidents.
  */
 exports.manageIncidents = functions.https.onCall(async (data, context) => {
-  const adapted = adaptGen2Params(data, context);
-  data = adapted.data;
-  context = adapted.context;
-
-  if (!context || !context.auth) {
-    throw new HttpsError("unauthenticated", "User must be logged in.");
-  }
-
-  const {action, payload} = data;
+  const {uid, userOrgId, isAdmin, userName, action, payload} = await getAuthAndPayload(data, context, admin);
   checkRequiredFields({action, payload}, ["action", "payload"]);
-  const uid = context.auth.uid;
 
   try {
     const actualOrgId = await getActualOrgId(admin, uid);
@@ -879,18 +825,8 @@ exports.manageIncidents = functions.https.onCall(async (data, context) => {
  * Handles clock in, clock out, and retrieving time logs.
  */
 exports.manageTimeLogs = functions.https.onCall(async (data, context) => {
-  if (data && typeof data === "object" && "rawRequest" in data && "auth" in data) {
-    context = data;
-    data = data.data;
-  }
-
-  if (!context || !context.auth) {
-    throw new HttpsError("unauthenticated", "User must be logged in.");
-  }
-
-  const {action, payload} = data;
+  const {uid, userOrgId, isAdmin, userName, action, payload} = await getAuthAndPayload(data, context, admin);
   checkRequiredFields({action, payload}, ["action", "payload"]);
-  const uid = context.auth.uid;
 
   try {
     const userDoc = await admin.firestore().collection("users").doc(uid).get();
@@ -983,17 +919,8 @@ exports.manageTimeLogs = functions.https.onCall(async (data, context) => {
  * Handles creation, reading, and deletion of waste logs.
  */
 exports.manageWaste = functions.https.onCall(async (data, context) => {
-  const adapted = adaptGen2Params(data, context);
-  data = adapted.data;
-  context = adapted.context;
-
-  if (!context || !context.auth) {
-    throw new HttpsError("unauthenticated", "User must be logged in.");
-  }
-
-  const {action, payload} = data;
+  const {uid, userOrgId, isAdmin, userName, action, payload} = await getAuthAndPayload(data, context, admin);
   checkRequiredFields({action, payload}, ["action", "payload"]);
-  const uid = context.auth.uid;
 
   try {
     const actualOrgId = await getActualOrgId(admin, uid);
@@ -1075,17 +1002,8 @@ exports.manageWaste = functions.https.onCall(async (data, context) => {
  * Handles creation, reading, and deletion of recognitions (Kudos / Private Feedback).
  */
 exports.manageRecognitions = functions.https.onCall(async (data, context) => {
-  const adapted = adaptGen2Params(data, context);
-  data = adapted.data;
-  context = adapted.context;
-
-  if (!context || !context.auth) {
-    throw new HttpsError("unauthenticated", "User must be logged in.");
-  }
-
-  const {action, payload} = data;
+  const {uid, userOrgId, isAdmin, userName, action, payload} = await getAuthAndPayload(data, context, admin);
   checkRequiredFields({action, payload}, ["action", "payload"]);
-  const uid = context.auth.uid;
 
   try {
     const userDoc = await admin.firestore().collection("users").doc(uid).get();
@@ -1187,18 +1105,8 @@ exports.manageRecognitions = functions.https.onCall(async (data, context) => {
  * Handles creation, reading, and deletion of employee feedbacks.
  */
 exports.manageFeedbacks = functions.https.onCall(async (data, context) => {
-  if (data && typeof data === "object" && "rawRequest" in data && "auth" in data) {
-    context = data;
-    data = data.data;
-  }
-
-  if (!context || !context.auth) {
-    throw new HttpsError("unauthenticated", "User must be logged in.");
-  }
-
-  const {action, payload} = data;
+  const {uid, userOrgId, isAdmin, userName, action, payload} = await getAuthAndPayload(data, context, admin);
   checkRequiredFields({action, payload}, ["action", "payload"]);
-  const uid = context.auth.uid;
 
   try {
     const userDoc = await admin.firestore().collection("users").doc(uid).get();
@@ -1427,12 +1335,7 @@ exports.manageVendorDeliveries = functions.https.onCall(async (data, context) =>
 
 
 exports.manageShiftMarketplace = functions.https.onCall(async (data, context) => {
-    if (!context.auth) {
-        throw new functions.https.HttpsError('unauthenticated', 'The function must be called while authenticated.');
-    }
-
-    const { action, payload } = data;
-    const uid = context.auth.uid;
+    const {uid, userOrgId, isAdmin, userName, action, payload} = await getAuthAndPayload(data, context, admin);
 
     try {
         const userDoc = await admin.firestore().collection('users').doc(uid).get();
