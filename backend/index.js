@@ -586,7 +586,7 @@ exports.manageEmployees = functions.https.onCall(async (data, context) => {
 
 
 async function handleCreateShiftGroup(payload, uid) {
-  const {authorId, orgId, ownerName, groupName, password} = payload;
+  const {groupName, password, ownerName, authorId, orgId} = payload;
 
   checkRequiredFields(payload, ["groupName", "password"]);
 
