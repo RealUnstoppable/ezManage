@@ -1,5 +1,5 @@
 import { auth, db } from '../firebase.js';
-import { collection, onSnapshot, query, where } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
+import { collection, onSnapshot, query, where, orderBy } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
 import { escapeHTML, logManagerError } from './utils.js';
 
@@ -60,7 +60,7 @@ function loadExpenses() {
     emptyState.classList.add('hidden');
     expenseTableBody.innerHTML = '';
 
-    const q = query(collection(db, "expenses"), where("orgId", "==", currentOrgId));
+    const q = query(collection(db, "expenses"), where("orgId", "==", currentOrgId), orderBy("timestamp", "desc"));
 
     let isInitialRender = true;
     unsubscribeExpenses = onSnapshot(q, (snapshot) => {
@@ -74,32 +74,51 @@ function loadExpenses() {
 
         emptyState.classList.add('hidden');
 
-        if (isInitialRender) {
-             expenseTableBody.innerHTML = '';
-             isInitialRender = false;
-        }
-
+        // ⚡ Bolt Optimization: Use docChanges() to incrementally update the DOM instead of recreating it all.
+        // Impact: Eliminates O(N) DOM node destruction and recreation on every update, drastically reducing layout thrashing.
         snapshot.docChanges().forEach((change) => {
             const data = change.doc.data();
             const id = change.doc.id;
 
             if (change.type === 'added') {
                 const row = renderExpenseRow(id, data);
-                if (expenseTableBody.children.length === 0 || change.newIndex >= expenseTableBody.children.length) {
-                    expenseTableBody.appendChild(row);
+                // Respect index to maintain sort order
+                const existingNodes = expenseTableBody.children;
+                if (existingNodes.length > change.newIndex) {
+                    expenseTableBody.insertBefore(row, existingNodes[change.newIndex]);
                 } else {
-                    expenseTableBody.insertBefore(row, expenseTableBody.children[change.newIndex]);
+                    expenseTableBody.appendChild(row);
                 }
-            } else if (change.type === 'modified') {
-                const row = renderExpenseRow(id, data);
-                const oldRow = document.querySelector(`tr[data-id="${id}"]`);
+            }
+            if (change.type === 'modified') {
+                const oldRow = document.getElementById(`expense-row-${id}`);
+                const newRow = renderExpenseRow(id, data);
+
                 if (oldRow) {
-                    expenseTableBody.replaceChild(row, oldRow);
+                    if (change.oldIndex === change.newIndex) {
+                        expenseTableBody.replaceChild(newRow, oldRow);
+                    } else {
+                        oldRow.remove();
+                        const existingNodes = expenseTableBody.children;
+                        if (existingNodes.length > change.newIndex) {
+                            expenseTableBody.insertBefore(newRow, existingNodes[change.newIndex]);
+                        } else {
+                            expenseTableBody.appendChild(newRow);
+                        }
+                    }
+                } else {
+                    const existingNodes = expenseTableBody.children;
+                    if (existingNodes.length > change.newIndex) {
+                        expenseTableBody.insertBefore(newRow, existingNodes[change.newIndex]);
+                    } else {
+                        expenseTableBody.appendChild(newRow); // Fallback
+                    }
                 }
-            } else if (change.type === 'removed') {
-                const row = document.querySelector(`tr[data-id="${id}"]`);
-                if (row) {
-                    row.remove();
+            }
+            if (change.type === 'removed') {
+                const oldRow = document.getElementById(`expense-row-${id}`);
+                if (oldRow) {
+                    oldRow.remove();
                 }
             }
         });
@@ -115,6 +134,7 @@ function loadExpenses() {
 // Render Table Row
 function renderExpenseRow(id, data) {
     const row = document.createElement('tr');
+    row.id = `expense-row-${id}`;
     row.className = `border-b border-slate-800/50 transition-colors hover:bg-slate-800/20`;
     row.dataset.id = id;
 

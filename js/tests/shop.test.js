@@ -21,12 +21,7 @@ global.window.location = {
     replace: jest.fn(),
     reload: jest.fn(),
     toString: () => 'http://localhost/'
-};
-
-afterAll(() => {
-  // Restore it after tests complete
-  window.location = originalLocation;
-});
+  };
 
 
 
