@@ -33,3 +33,9 @@ The deep scan primarily highlighted critical XSS vulnerabilities related to stri
 ## 6. Duplicate IDs and Syntax Errors
 - Cleaned up duplicated HTML `<input>` IDs in `index.html` Modals for 'Join Group', 'Create Group', and 'Maintenance' using Node.js replacements with exact match.
 - Fixed a `SyntaxError: Identifier 'lastGreeting' has already been declared` in `js/script.js` by replacing duplicate global definitions with a single properly scoped `let lastGreeting = "";` variable in the updateGreeting closure state tracker.
+
+## 7. Additional Remediation (Phase 4)
+- **Firebase Listeners**: Updated remaining basic `console.error` calls inside Firebase callbacks (`js/inventory.js`, `js/shop.js`) to use the global `logManagerError` utility for robust reporting.
+- **XSS Mitigations**: Removed lingering inline `onclick` execution strings inside `detailing.html` and `js/footer.js`. Added event delegation utilizing dataset variables for strict separation of concerns.
+- **JSDOM Tests**: Remedied a `Cannot redefine property: location` failure in `js/tests/shop.test.js` using the standard `delete global.window.location` and property reassignment method, ensuring test runs complete securely.
+- **Environment Run Config**: Resolved a Node ES Module `require()` conflict in the development setup by directing `npm run dev` to parse `server.js` using `--input-type=commonjs` through process redirection in both `package.json` and the Electron `main.js` bootstrapper.

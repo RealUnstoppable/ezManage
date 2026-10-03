@@ -1,15 +1,21 @@
 import { db, auth, fetchUserDoc } from './auth.js';
 import { logManagerError } from './utils.js';
 
-export async function createHandoff(notes, urgentAlerts, shiftType) {
+async function getCurrentUserOrgAndProfile() {
     const user = auth.currentUser;
-    if (!user) throw new Error("Must be logged in to create a handoff.");
+    if (!user) throw new Error("Must be logged in to access handoffs.");
 
-    const userDoc = await fetchUserDoc(user.uid);
-    if (!userDoc.exists) throw new Error("User profile not found.");
+        const userDoc = await fetchUserDoc(user.uid);
+        if (!userDoc.exists) throw new Error("User profile not found.");
 
-    const orgId = userDoc.data().orgId;
-    if (!orgId) throw new Error("User is not associated with an organization.");
+        const orgId = userDoc.data().orgId;
+        if (!orgId) throw new Error("User is not associated with an organization.");
+
+    return { user, userDoc, orgId };
+}
+
+export async function createHandoff(notes, urgentAlerts, shiftType) {
+    const { user, userDoc, orgId } = await getCurrentUserOrgAndProfile();
 
     const handoffData = {
         orgId,
@@ -22,7 +28,6 @@ export async function createHandoff(notes, urgentAlerts, shiftType) {
         acknowledgedBy: []
     };
 
-    try {
         const docRef = await db.collection('shift_handoffs').add(handoffData);
         return docRef.id;
     } catch (e) {
@@ -32,16 +37,8 @@ export async function createHandoff(notes, urgentAlerts, shiftType) {
 }
 
 export async function fetchRecentHandoffs(limitCount = 10) {
-    const user = auth.currentUser;
-    if (!user) throw new Error("Must be logged in to view handoffs.");
+    const { orgId } = await getCurrentUserOrgAndProfile();
 
-    const userDoc = await fetchUserDoc(user.uid);
-    if (!userDoc.exists) throw new Error("User profile not found.");
-
-    const orgId = userDoc.data().orgId;
-    if (!orgId) throw new Error("User is not associated with an organization.");
-
-    try {
         const snapshot = await db.collection('shift_handoffs')
             .where('orgId', '==', orgId)
             .orderBy('createdAt', 'desc')
@@ -59,10 +56,10 @@ export async function fetchRecentHandoffs(limitCount = 10) {
 }
 
 export async function acknowledgeHandoff(handoffId) {
-    const user = auth.currentUser;
-    if (!user) throw new Error("Must be logged in to acknowledge.");
-
     try {
+        const user = auth.currentUser;
+        if (!user) throw new Error("Must be logged in to acknowledge.");
+
         await db.collection('shift_handoffs').doc(handoffId).update({
             acknowledgedBy: window.firebase.firestore.FieldValue.arrayUnion(user.uid)
         });

@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <!-- 🛡️ Sentinel: Added Content Security Policy for defense-in-depth -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com https://unpkg.com https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.firebase.com;">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://unpkg.com https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.firebase.com;">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>ezManage | My Account</title>
@@ -118,7 +118,7 @@
                 </div>
                 <span class="text-xl font-black tracking-tighter uppercase">ezManage</span>
             </div>
-            <button onclick="window.location.href='index.html'" class="btn btn-outline py-1.5 px-4 text-sm"><i data-lucide="arrow-left" class="w-4 h-4"></i> Return to App</button>
+            <button onclick="window.location.href='index.html'" class="btn btn-outline py-1.5 px-4 text-sm" aria-label="Return to App"><i data-lucide="arrow-left" class="w-4 h-4"></i> Return to App</button>
         </div>
     </nav>
 
@@ -259,6 +259,14 @@
         window.linkGoogle = async function() {
             if (!auth.currentUser) return;
             const provider = new firebase.auth.GoogleAuthProvider();
+            const btnEl = document.getElementById('googleLinkBtn');
+            let originalText = "";
+            if (btnEl) {
+                originalText = btnEl.innerHTML;
+                btnEl.disabled = true;
+                btnEl.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 mr-2 animate-spin"></i> Linking...`;
+                if (window.lucide) window.lucide.createIcons();
+            }
             try {
                 await auth.currentUser.linkWithPopup(provider);
                 alert("Successfully linked Google account!");
@@ -266,6 +274,12 @@
             } catch (error) {
                 window.logManagerError(error);
                 alert("Error linking: " + error.message);
+            } finally {
+                if (btnEl) {
+                    btnEl.innerHTML = originalText;
+                    btnEl.disabled = false;
+                    if (window.lucide) window.lucide.createIcons();
+                }
             }
         }
 
