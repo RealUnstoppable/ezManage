@@ -60,12 +60,11 @@ async function verifyDocAndAuth(collection, docId, expectedOrgId, notFoundMessag
 
 admin.initializeApp();
 
-// Fallback "placeholder" string to stop Firebase Analyzer from crashing
-// during deployment
-const stripeKey = process.env.STRIPE_SECRET || "sk_test_placeholder";
-const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET ||
-  "whsec_placeholder";
-const stripe = require("stripe")(stripeKey);
+// Remove hardcoded secrets. Use environment variables.
+// Use conditional initialization to prevent Firebase analyzer from crashing during deployment
+const stripeKey = process.env.STRIPE_SECRET;
+const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
+const stripe = stripeKey ? require("stripe")(stripeKey) : null;
 
 // 🔹 Create Checkout Session
 
@@ -609,7 +608,7 @@ async function handleCreateShiftGroup(payload, uid) {
 
   const salt = crypto.randomBytes(16).toString("hex");
   const hash = crypto.scryptSync(password, salt, 64).toString("hex");
-  const hashedPassword = `$scrypt${hash}:${salt}`;
+  const hashedPassword = `$scrypt$${hash}:${salt}`;
 
 
   const newGroup = {
@@ -1678,3 +1677,5 @@ exports.manageLostAndFound = functions.https.onCall(async (data, context) => {
 });
 
 exports.handleCreateShiftGroup = handleCreateShiftGroup;
+
+exports.getActualOrgId = getActualOrgId;
