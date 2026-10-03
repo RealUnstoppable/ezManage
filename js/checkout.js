@@ -154,7 +154,10 @@ async function handlePlaceOrder(e) {
   }
 }
 
+let currentUid = null;
 auth.onAuthStateChanged(async (user) => {
+  if (user && user.uid === currentUid && isCheckoutLoaded) return;
+  currentUid = user ? user.uid : null;
   if (user) {
     currentUser = user;
     if (!isCheckoutLoaded) {

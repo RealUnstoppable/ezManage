@@ -21,7 +21,12 @@ const emptyState = document.getElementById('emptyState');
 const submitExpenseBtn = document.getElementById('submitExpenseBtn');
 
 // Auth State Change
+let currentUid = null;
+let isDashboardLoaded = false;
 onAuthStateChanged(auth, async (user) => {
+    if (user && user.uid === currentUid && isDashboardLoaded) return;
+    currentUid = user ? user.uid : null;
+    isDashboardLoaded = true;
     if (user) {
         try {
             // Because window.firebase.functions isn't initialized if firebase-compat isn't used
