@@ -298,5 +298,17 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 });
-export function initShop() {}
+export function initShop() {
+    productGrid = document.getElementById('product-grid');
+    cartButton = document.getElementById('cart-btn');
+    cartModal = document.getElementById('cart-modal');
+    closeCartBtn = document.getElementById('close-cart-btn');
+    cartItemsContainer = document.getElementById('cart-items');
+    cartItemCountEl = document.getElementById('cart-item-count');
+    cartTotalPriceEl = document.getElementById('cart-total-price');
+    checkoutBtn = document.getElementById('checkout-btn');
+    navCtaContainer = document.querySelector('.nav-cta-container');
+    hamburger = document.querySelector('.hamburger');
+    navLinks = document.querySelector('.nav-links');
+}
 document.addEventListener('DOMContentLoaded', initShop);
