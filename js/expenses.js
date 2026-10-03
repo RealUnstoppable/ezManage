@@ -1,5 +1,5 @@
 import { auth, db } from '../firebase.js';
-import { collection, onSnapshot, query, where } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
+import { collection, onSnapshot, query, where, orderBy } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
 import { escapeHTML, logManagerError } from './utils.js';
 
@@ -60,37 +60,68 @@ function loadExpenses() {
     emptyState.classList.add('hidden');
     expenseTableBody.innerHTML = '';
 
-    const q = query(collection(db, "expenses"), where("orgId", "==", currentOrgId));
+    const q = query(collection(db, "expenses"), where("orgId", "==", currentOrgId), orderBy("timestamp", "desc"));
 
     unsubscribeExpenses = onSnapshot(q, (snapshot) => {
         loadingSpinner.classList.add('hidden');
-        expenseTableBody.innerHTML = '';
 
         if (snapshot.empty) {
             emptyState.classList.remove('hidden');
+            expenseTableBody.innerHTML = '';
             return;
         }
 
         emptyState.classList.add('hidden');
 
-        // We sort client side since onSnapshot doesn't guarantee order without compound indexes sometimes.
-        const expensesData = [];
-        snapshot.forEach((docSnap) => {
-             expensesData.push({ id: docSnap.id, ...docSnap.data() });
+        // ⚡ Bolt Optimization: Use docChanges() to incrementally update the DOM instead of recreating it all.
+        // Impact: Eliminates O(N) DOM node destruction and recreation on every update, drastically reducing layout thrashing.
+        snapshot.docChanges().forEach((change) => {
+            const data = change.doc.data();
+            const id = change.doc.id;
+
+            if (change.type === 'added') {
+                const row = renderExpenseRow(id, data);
+                // Respect index to maintain sort order
+                const existingNodes = expenseTableBody.children;
+                if (existingNodes.length > change.newIndex) {
+                    expenseTableBody.insertBefore(row, existingNodes[change.newIndex]);
+                } else {
+                    expenseTableBody.appendChild(row);
+                }
+            }
+            if (change.type === 'modified') {
+                const oldRow = document.getElementById(`expense-row-${id}`);
+                const newRow = renderExpenseRow(id, data);
+
+                if (oldRow) {
+                    if (change.oldIndex === change.newIndex) {
+                        expenseTableBody.replaceChild(newRow, oldRow);
+                    } else {
+                        oldRow.remove();
+                        const existingNodes = expenseTableBody.children;
+                        if (existingNodes.length > change.newIndex) {
+                            expenseTableBody.insertBefore(newRow, existingNodes[change.newIndex]);
+                        } else {
+                            expenseTableBody.appendChild(newRow);
+                        }
+                    }
+                } else {
+                    const existingNodes = expenseTableBody.children;
+                    if (existingNodes.length > change.newIndex) {
+                        expenseTableBody.insertBefore(newRow, existingNodes[change.newIndex]);
+                    } else {
+                        expenseTableBody.appendChild(newRow); // Fallback
+                    }
+                }
+            }
+            if (change.type === 'removed') {
+                const oldRow = document.getElementById(`expense-row-${id}`);
+                if (oldRow) {
+                    oldRow.remove();
+                }
+            }
         });
 
-        expensesData.sort((a, b) => {
-            const timeA = a.timestamp ? a.timestamp.toMillis() : Date.now();
-            const timeB = b.timestamp ? b.timestamp.toMillis() : Date.now();
-            return timeB - timeA;
-        });
-
-        const fragment = document.createDocumentFragment();
-        expensesData.forEach((data) => {
-            const row = renderExpenseRow(data.id, data);
-            fragment.appendChild(row);
-        });
-        expenseTableBody.appendChild(fragment);
         if (window.lucide) window.lucide.createIcons();
     }, (error) => {
         console.error("Error fetching expenses:", error);
@@ -102,6 +133,7 @@ function loadExpenses() {
 // Render Table Row
 function renderExpenseRow(id, data) {
     const row = document.createElement('tr');
+    row.id = `expense-row-${id}`;
     row.className = `border-b border-slate-800/50 transition-colors hover:bg-slate-800/20`;
 
     const dateStr = data.timestamp ? new Date(data.timestamp.toDate()).toLocaleDateString() : 'Just now';
