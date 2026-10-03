@@ -511,35 +511,27 @@ exports.manageEmployees = functions.https.onCall(async (data, context) => {
 
 
 async function handleCreateShiftGroup(payload, uid) {
-  const {authorId, orgId, ownerName, groupName, password} = payload;
+  const {groupName, password, ownerName, authorId, orgId} = payload;
 
   checkRequiredFields(payload, ['groupName', 'password']);
+
+  const crypto = require('crypto');
+  const salt = crypto.randomBytes(16).toString("hex");
+  const hash = crypto.scryptSync(password, salt, 64).toString("hex");
+  const hashedPassword = `$scrypt${hash}:${salt}`;
 
   const newGroup = {
     ownerId: authorId || uid,
     orgId: orgId || uid,
     ownerName: ownerName || "Anonymous",
     groupName,
-    password, // Basic password for joining (in a real app, hash this)
+    password: hashedPassword,
     createdAt: admin.firestore.FieldValue.serverTimestamp(),
   };
 
   const docRef = await admin.firestore()
       .collection("shift_groups")
       .add(newGroup);
-
-      const salt = crypto.randomBytes(16).toString("hex");
-      const hash = crypto.scryptSync(password, salt, 64).toString("hex");
-      const hashedPassword = `$scrypt$${hash}:${salt}`;
-
-      const newGroup = {
-        ownerId: authorId || uid,
-        orgId: orgId || uid,
-        ownerName: ownerName || "Anonymous",
-        groupName,
-        password: hashedPassword,
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
-      };
 
   return {success: true, groupId: docRef.id};
 }
@@ -556,7 +548,30 @@ async function handleRequestJoinShiftGroup(payload, uid) {
     throw new HttpsError("not-found", "Group not found");
   }
 
-  if (groupDoc.data().password !== password) {
+  const storedPassword = groupDoc.data().password;
+  const crypto = require('crypto');
+  let isValid = false;
+
+  // Check if it's a salted hash
+  if (storedPassword && storedPassword.startsWith("$scrypt$")) {
+    const [hash, salt] = storedPassword.substring(8).split(":");
+    const derivedHash = crypto.scryptSync(password, salt, 64).toString("hex");
+    isValid = (hash === derivedHash);
+  } else {
+    // Legacy plaintext comparison
+    isValid = (storedPassword === password);
+
+    // Upgrade to salted hash if correct
+    if (isValid) {
+      const salt = crypto.randomBytes(16).toString("hex");
+      const hash = crypto.scryptSync(password, salt, 64).toString("hex");
+      await admin.firestore().collection("shift_groups").doc(groupId).update({
+        password: `$scrypt${hash}:${salt}`,
+      });
+    }
+  }
+
+  if (!isValid) {
     throw new HttpsError(
         "permission-denied", "Invalid password");
   }
@@ -570,32 +585,8 @@ async function handleRequestJoinShiftGroup(payload, uid) {
     timestamp: admin.firestore.FieldValue.serverTimestamp(),
   });
 
-      const storedPassword = groupDoc.data().password;
-      let isValid = false;
-
-      // Check if it's a salted hash
-      if (storedPassword && storedPassword.startsWith("$scrypt$")) {
-        const [hash, salt] = storedPassword.substring(8).split(":");
-        const derivedHash = crypto.scryptSync(password, salt, 64).toString("hex");
-        isValid = (hash === derivedHash);
-      } else {
-        // Legacy plaintext comparison
-        isValid = (storedPassword === password);
-
-        // Upgrade to salted hash if correct
-        if (isValid) {
-          const salt = crypto.randomBytes(16).toString("hex");
-          const hash = crypto.scryptSync(password, salt, 64).toString("hex");
-          await admin.firestore().collection("shift_groups").doc(groupId).update({
-            password: `$scrypt$${hash}:${salt}`,
-          });
-        }
-      }
-
-      if (!isValid) {
-        throw new HttpsError(
-            "permission-denied", "Invalid password");
-      }
+  return {success: true};
+}
 
 async function handleRetractJoinShiftGroup(payload, uid) {
   const {requestId} = payload;
@@ -1430,4 +1421,73 @@ exports.manageShiftMarketplace = functions.https.onCall(async (data, context) =>
         if (error instanceof functions.https.HttpsError) throw error;
         throw new functions.https.HttpsError('internal', 'Internal server error', error.message);
     }
+});
+
+
+exports.manageMaintenance = functions.https.onCall(async (data, context) => {
+  const {uid, userOrgId, isAdmin, userName, action, payload} = await getAuthAndPayload(data, context, admin);
+
+  try {
+    if (action === "create") {
+      checkRequiredFields(payload, ["title", "description", "priority"]);
+      const activeOrgId = userOrgId || uid;
+
+      const newLogRef = await admin.firestore().collection("maintenance_logs").add({
+        title: payload.title,
+        description: payload.description,
+        priority: payload.priority,
+        status: "Open",
+        reportedByUid: uid,
+        reportedByName: userName,
+        orgId: activeOrgId,
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+      return {success: true, message: "Maintenance log created.", id: newLogRef.id};
+    }
+
+    if (action === "get") {
+      const activeOrgId = userOrgId || uid;
+      let snapshot;
+      if (isAdmin) {
+        snapshot = await admin.firestore().collection("maintenance_logs").orderBy("createdAt", "desc").limit(100).get();
+      } else {
+        snapshot = await admin.firestore().collection("maintenance_logs")
+            .where("orgId", "==", activeOrgId)
+            .limit(100)
+            .get();
+      }
+
+      const logs = [];
+      snapshot.forEach((doc) => {
+        logs.push({id: doc.id, ...doc.data()});
+      });
+      return {success: true, logs};
+    }
+
+    if (action === "updateStatus") {
+      checkRequiredFields(payload, ["ticketId", "status"]);
+      const {docRef, docSnap} = await verifyDocAndAuth("maintenance_logs", payload.ticketId, userOrgId || uid, "Maintenance log not found.", "Unauthorized access to this log.");
+
+      await docRef.update({
+        status: payload.status,
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+      return {success: true};
+    }
+
+    if (action === "delete") {
+      checkRequiredFields(payload, ["ticketId"]);
+      const {docRef, docSnap} = await verifyDocAndAuth("maintenance_logs", payload.ticketId, userOrgId || uid, "Maintenance log not found.", "Unauthorized access to this log.");
+
+      await docRef.delete();
+      return {success: true};
+    }
+
+    throw new HttpsError("invalid-argument", "Invalid action.");
+  } catch (error) {
+    logManagerError("Error in manageMaintenance: ", error);
+    if (error instanceof HttpsError) throw error;
+    throw new HttpsError("internal", error.message);
+  }
 });
