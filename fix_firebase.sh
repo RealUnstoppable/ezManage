@@ -1,3 +1,4 @@
+cat << 'INNER_EOF' > firebase.js
 const getEnv = (key, fallback) => typeof process !== 'undefined' && process.env && process.env[key] ? process.env[key] : fallback;
 
 const firebaseConfig = typeof window !== 'undefined' && window.ezManageFirebaseConfig ? window.ezManageFirebaseConfig : {
@@ -33,5 +34,7 @@ if (!window.firebase.apps.length) {
 const db = typeof window !== "undefined" && window.firebase ? window.firebase.firestore() : null;
 const functions = typeof window !== "undefined" && window.firebase ? window.firebase.functions() : null;
 
+const app = typeof window !== "undefined" && window.firebase ? window.firebase.app() : null;
 const auth = typeof window !== "undefined" && window.firebase ? window.firebase.auth() : null;
 export { app, auth, db, functions, firebaseConfig };
+INNER_EOF

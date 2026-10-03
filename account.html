@@ -259,6 +259,14 @@
         window.linkGoogle = async function() {
             if (!auth.currentUser) return;
             const provider = new firebase.auth.GoogleAuthProvider();
+            const btnEl = document.getElementById('googleLinkBtn');
+            let originalText = "";
+            if (btnEl) {
+                originalText = btnEl.innerHTML;
+                btnEl.disabled = true;
+                btnEl.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 mr-2 animate-spin"></i> Linking...`;
+                if (window.lucide) window.lucide.createIcons();
+            }
             try {
                 await auth.currentUser.linkWithPopup(provider);
                 alert("Successfully linked Google account!");
@@ -266,6 +274,12 @@
             } catch (error) {
                 window.logManagerError(error);
                 alert("Error linking: " + error.message);
+            } finally {
+                if (btnEl) {
+                    btnEl.innerHTML = originalText;
+                    btnEl.disabled = false;
+                    if (window.lucide) window.lucide.createIcons();
+                }
             }
         }
 

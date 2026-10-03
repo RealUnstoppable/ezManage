@@ -21,7 +21,12 @@ const emptyState = document.getElementById('emptyState');
 const submitExpenseBtn = document.getElementById('submitExpenseBtn');
 
 // Auth State Change
+let currentUid = null;
+let isDashboardLoaded = false;
 onAuthStateChanged(auth, async (user) => {
+    if (user && user.uid === currentUid && isDashboardLoaded) return;
+    currentUid = user ? user.uid : null;
+    isDashboardLoaded = true;
     if (user) {
         try {
             // Because window.firebase.functions isn't initialized if firebase-compat isn't used
@@ -57,9 +62,6 @@ function loadExpenses() {
 
     const q = query(collection(db, "expenses"), where("orgId", "==", currentOrgId), orderBy("timestamp", "desc"));
 
-    // Flag to handle initial load vs incremental updates to avoid duplicates on re-subscription
-    let isInitialRender = true;
-
     unsubscribeExpenses = onSnapshot(q, (snapshot) => {
         loadingSpinner.classList.add('hidden');
 
@@ -70,11 +72,6 @@ function loadExpenses() {
         }
 
         emptyState.classList.add('hidden');
-
-        if (isInitialRender) {
-             expenseTableBody.innerHTML = '';
-             isInitialRender = false;
-        }
 
         // ⚡ Bolt Optimization: Use docChanges() to incrementally update the DOM instead of recreating it all.
         // Impact: Eliminates O(N) DOM node destruction and recreation on every update, drastically reducing layout thrashing.
@@ -136,7 +133,7 @@ function loadExpenses() {
 // Render Table Row
 function renderExpenseRow(id, data) {
     const row = document.createElement('tr');
-    row.id = `expense-row-${id}`; // Needed for targeted DOM updates
+    row.id = `expense-row-${id}`;
     row.className = `border-b border-slate-800/50 transition-colors hover:bg-slate-800/20`;
 
     const dateStr = data.timestamp ? new Date(data.timestamp.toDate()).toLocaleDateString() : 'Just now';

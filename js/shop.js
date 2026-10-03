@@ -1,4 +1,4 @@
-import { escapeHTML, logManagerError } from './utils.js';
+import { logManagerError, escapeHTML } from './utils.js';
 
 import { auth, db } from './auth.js';
 
@@ -66,7 +66,8 @@ let navLinks;
 let updateQuantityTimeouts = new Map();
 
 function renderProducts() {
-    productGrid.innerHTML = products.map(product => `
+    productGrid.replaceChildren();
+    productGrid.insertAdjacentHTML('beforeend', products.map(product => `
         <div class="product-card">
             <img src="${escapeHTML(product.imageUrl)}" alt="${escapeHTML(product.name)}" class="product-image" loading="lazy">
             <div class="product-info">
@@ -78,12 +79,13 @@ function renderProducts() {
                 </div>
             </div>
         </div>
-    `).join('');
+    `).join(''));
 }
 
 function renderCart() {
     if (Object.keys(cart).length === 0) {
-        cartItemsContainer.innerHTML = '<p class="empty-cart-message">Your cart is empty.</p>';
+        cartItemsContainer.textContent = 'Your cart is empty.';
+        cartItemsContainer.className = 'empty-cart-message';
         checkoutBtn.disabled = true;
     } else {
         const fragment = document.createDocumentFragment();
@@ -107,11 +109,11 @@ function renderCart() {
             `;
 
             const tempDiv = document.createElement('div');
-            tempDiv.innerHTML = htmlString;
+            tempDiv.insertAdjacentHTML('beforeend', htmlString);
             fragment.appendChild(tempDiv.firstElementChild);
         });
 
-        cartItemsContainer.innerHTML = '';
+        cartItemsContainer.replaceChildren();
         cartItemsContainer.appendChild(fragment);
         checkoutBtn.disabled = false;
     }
@@ -191,9 +193,11 @@ async function saveCart() {
 
 function updateUserNav(user) {
     if (user) {
-        navCtaContainer.innerHTML = `<a href="account.html" class="cta-button nav-cta">My Account</a>`;
+        navCtaContainer.replaceChildren();
+        navCtaContainer.insertAdjacentHTML('beforeend', `<a href="account.html" class="cta-button nav-cta">My Account</a>`);
     } else {
-        navCtaContainer.innerHTML = `<a href="sign in beta.html" class="cta-button nav-cta">Sign In</a>`;
+        navCtaContainer.replaceChildren();
+        navCtaContainer.insertAdjacentHTML('beforeend', `<a href="sign in beta.html" class="cta-button nav-cta">Sign In</a>`);
     }
 }
 
@@ -233,21 +237,20 @@ function setupEventListeners() {
         });
         // ⚡ Bolt Optimization: Debounce quantity inputs to prevent rapid multiple Firestore updates and re-renders
         // Impact: Reduces overlapping rapid inputs, DOM updates, and Firestore writes when using spinners or typing quickly.
+        const quantityTimeouts = new Map();
         cartItemsContainer.addEventListener('input', (e) => {
             if (e.target.classList.contains('item-quantity-input')) {
                 const productId = e.target.dataset.id;
                 const quantity = parseInt(e.target.value, 10);
 
-                if (updateQuantityTimeouts.has(productId)) {
-                    clearTimeout(updateQuantityTimeouts.get(productId));
+                if (quantityTimeouts.has(productId)) {
+                    clearTimeout(quantityTimeouts.get(productId));
                 }
 
-                const timeoutId = setTimeout(() => {
+                quantityTimeouts.set(productId, setTimeout(() => {
                     handleUpdateQuantity(productId, quantity);
                     quantityTimeouts.delete(productId);
-                }, 300);
-
-                quantityTimeouts.set(productId, timeoutId);
+                }, 300));
             }
         });
     }
@@ -263,7 +266,10 @@ document.addEventListener('DOMContentLoaded', () => {
     renderProducts();
     setupEventListeners();
 
+    let currentUid = null;
     auth.onAuthStateChanged(async (user) => {
+        if (user && user.uid === currentUid && isDashboardLoaded) return;
+        currentUid = user ? user.uid : null;
         currentUser = user;
         const localCartData = localStorage.getItem('localCart');
         const localCart = localCartData ? JSON.parse(localCartData) : {};
@@ -282,7 +288,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                     cart = mergedCart;
                 } catch (error) {
-                    logManagerError("Error fetching user cart", error);
+                    console.error("Error fetching user cart", error);
                     cart = localCart;
                 }
             }
