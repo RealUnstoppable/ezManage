@@ -11,13 +11,19 @@ global.window.firebase = {
 };
 
 // Mock window location
+
+const originalLocation = window.location;
 delete global.window.location;
 global.window.location = {
-    search: '?group=test_group',
-    href: 'http://localhost/shop.html',
+    search: "?group=test_group",
+    href: "http://localhost/shop.html",
     assign: jest.fn(),
-    replace: jest.fn()
-};
+    replace: jest.fn(),
+    reload: jest.fn(),
+    toString: () => 'http://localhost/'
+  };
+
+
 
 describe('calculateCartTotal', () => {
     let calculateCartTotal;

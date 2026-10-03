@@ -68,12 +68,14 @@ function adaptGen2Params(data, context) {
  * @param {string} actionMessage - The action message
  * @param {Error} error - The error object
  */
-function logManagerError(actionMessage, arg1, arg2) {
-  if (arg2) {
-    console.error("Manager Troubleshooting: " + actionMessage, arg1, arg2);
-  } else {
-    console.error("Manager Troubleshooting: " + actionMessage, arg1);
-  }
+function handleInternalError(actionMessage, error) {
+  logManagerError(actionMessage, error);
+  if (error instanceof HttpsError) throw error;
+  throw new HttpsError("internal", "An internal error occurred.");
+}
+
+function logManagerError(actionMessage, error) {
+  console.error("Manager Troubleshooting: " + actionMessage, error);
 }
 
 
@@ -98,6 +100,7 @@ function checkRequiredFields(payload, requiredKeys, errorMessage = "Missing requ
 module.exports = {
   checkRequiredFields,
   logManagerError,
+  handleInternalError,
   parseNum,
   getDayOfWeek,
   escapeHTML,
