@@ -75,3 +75,7 @@
 ## 2024-05-24 - ARIA labels for dynamic toggle buttons
 **Learning:** Buttons that dynamically toggle sections, like the "X Variations" button that toggles open the canonical item variations in `easy-ai.html`, need `aria-label`s to inform screen readers of their action and target, especially when they only contain minimal text and a toggle icon.
 **Action:** Add explicit `aria-label`s to dynamic toggle buttons (e.g., 'Toggle variations for [Item Name]') to ensure screen reader users understand what section will be expanded or collapsed.
+
+## 2026-10-04 - ARIA labels for dynamic loading buttons
+**Learning:** Buttons that dynamically lose their text to show a spinning icon (e.g., clockInOutBtn showing a loader) become inaccessible.
+**Action:** Ensure these buttons retain a persistent, descriptive aria-label (e.g., 'Toggle Time Clock') so their purpose remains readable to screen readers in all states.
