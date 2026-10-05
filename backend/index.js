@@ -585,8 +585,8 @@ exports.manageEmployees = functions.https.onCall(async (data, context) => {
 });
 
 
-async function handleCreateShiftGroup(payload, uid) {
-  const {groupName, password, ownerName, authorId, orgId} = payload;
+async function handleCreateShiftGroup(payload, uid, userOrgId) {
+  const {groupName, password, ownerName} = payload;
 
   checkRequiredFields(payload, ["groupName", "password"]);
 
@@ -594,14 +594,9 @@ async function handleCreateShiftGroup(payload, uid) {
   const hash = crypto.scryptSync(password, salt, 64).toString("hex");
   const hashedPassword = `$scrypt$${hash}:${salt}`;
 
-
-  const salt = crypto.randomBytes(16).toString("hex");
-  const hash = crypto.scryptSync(password, salt, 64).toString("hex");
-  const hashedPassword = `$scrypt$${hash}:${salt}`;
-
-  const newGroupParams = {
-    ownerId: authorId || uid,
-    orgId: orgId || uid,
+  const newGroup = {
+    ownerId: uid,
+    orgId: userOrgId || uid,
     ownerName: ownerName || "Anonymous",
     groupName,
     password: hashedPassword,
@@ -611,9 +606,6 @@ async function handleCreateShiftGroup(payload, uid) {
   const docRef = await admin.firestore()
       .collection("shift_groups")
       .add(newGroup);
-
-
-
 
   return {success: true, groupId: docRef.id};
 }
@@ -750,7 +742,7 @@ async function handleRequestJoinShiftGroup(payload, uid) {
     const {uid, userOrgId, isAdmin, userName, action, payload} = await getAuthAndPayload(data, context, admin);
 
     try {
-      if (action === "create") return await handleCreateShiftGroup(payload, uid);
+      if (action === "create") return await handleCreateShiftGroup(payload, uid, userOrgId);
       if (action === "request_join") return await handleRequestJoinShiftGroup(payload, uid);
       if (action === "retract_join") return await handleRetractJoinShiftGroup(payload, uid);
       if (action === "approve_join") return await handleApproveJoinShiftGroup(payload, uid);
