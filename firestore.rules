@@ -35,26 +35,17 @@ service cloud.firestore {
     }
 
 
-    // GROUPS (Added as requested by user, or handling shift_groups to act as groups)
+    // GROUPS
     match /groups/{groupId} {
       allow read: if request.auth != null && (
           resource == null ||
-          resource.data.get('authorId', null) == request.auth.uid ||
-          (resource.data.get('orgId', null) != null && resource.data.get('orgId', null) == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('orgId', null)) ||
+          resource.data.get('ownerId', null) == request.auth.uid ||
+          groupId == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('orgId', null) ||
           isAdmin()
       );
-      allow create: if request.auth != null
-                    && request.resource.data.get('authorId', null) == request.auth.uid
-                    && request.resource.data.get('orgId', null) == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('orgId', null);
-      allow update: if request.auth != null && (
-          resource.data.get('authorId', null) == request.auth.uid ||
-          (resource.data.get('orgId', null) != null && resource.data.get('orgId', null) == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('orgId', null)) ||
-          isAdmin()
-      ) && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['orgId']);
-      allow delete: if request.auth != null && (
-          resource.data.get('authorId', null) == request.auth.uid ||
-          isAdmin()
-      );
+      allow create: if request.auth != null && request.resource.data.get('ownerId', null) == request.auth.uid;
+      allow update: if request.auth != null && resource.data.get('ownerId', null) == request.auth.uid && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['orgId']);
+      allow delete: if request.auth != null && (resource.data.get('ownerId', null) == request.auth.uid || isAdmin());
     }
 
 
@@ -208,7 +199,7 @@ service cloud.firestore {
     }
 
         // MAINTENANCE LOGS
-    match /maintenance/{logId} {
+    match /maintenance_logs/{logId} {
       allow read: if request.auth != null && (
           resource == null ||
           resource.data.get('reportedByUid', null) == request.auth.uid ||

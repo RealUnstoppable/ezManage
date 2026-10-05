@@ -66,3 +66,11 @@ export function logManagerError(actionMessage, ...args) {
 export function isNetworkError(error) {
     return error.code === 'auth/network-request-failed' || error.code === 'unavailable' || error.code === 'firestore/unavailable';
 }
+
+export async function callCloudFunction(functionName, payload) {
+    if (!window.firebase || !window.firebase.functions) {
+        throw new Error("Firebase functions not initialized");
+    }
+    const func = window.firebase.functions().httpsCallable(functionName);
+    return await func(payload);
+}
