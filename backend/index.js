@@ -372,7 +372,7 @@ exports.manageShiftNotes = functions.https.onCall(async (data, context) => {
   try {
     // 🛡️ Securely fetch the user's actual orgId from the database
     // instead of trusting the client payload to prevent IDOR
-    const actualOrgId = payload.orgId || userOrgId || null;
+    const actualOrgId = userOrgId || null;
 
     if (action === "create") {
       const {authorId, orgId, authorName, content, priority} = payload;
@@ -387,12 +387,12 @@ exports.manageShiftNotes = functions.https.onCall(async (data, context) => {
         priority : "Normal";
 
       const newNote = {
-        authorId: authorId || uid,
+        authorId: uid,
         authorName: authorName || "Anonymous",
         content,
         priority: notePriority,
         status: "Active",
-        orgId: orgId || actualOrgId,
+        orgId: actualOrgId,
         timestamp: admin.firestore.FieldValue.serverTimestamp(),
       };
 
@@ -592,12 +592,7 @@ async function handleCreateShiftGroup(payload, uid) {
 
   const salt = crypto.randomBytes(16).toString("hex");
   const hash = crypto.scryptSync(password, salt, 64).toString("hex");
-  const hashedPassword = `$scrypt$${hash}:${salt}`;
-
-
-  const salt = crypto.randomBytes(16).toString("hex");
-  const hash = crypto.scryptSync(password, salt, 64).toString("hex");
-  const hashedPassword = `$scrypt$${hash}:${salt}`;
+  const hashedPassword = `$scrypt${hash}:${salt}`;
 
   const newGroupParams = {
     ownerId: authorId || uid,
@@ -610,7 +605,7 @@ async function handleCreateShiftGroup(payload, uid) {
 
   const docRef = await admin.firestore()
       .collection("shift_groups")
-      .add(newGroup);
+      .add(newGroupParams);
 
 
 

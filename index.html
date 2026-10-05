@@ -21,10 +21,11 @@
       const db = window.firebase.firestore();
     </script>
   <script type="module">
-    import { escapeHTML, logManagerError } from './js/utils.js';
+    import { escapeHTML, logManagerError, isNetworkError } from './js/utils.js';
     import { loadNavbar } from './js/navbar.js';
     import { loadFooter } from './js/footer.js';
     import { fetchUserDoc } from './js/auth.js';
+    import { callCloudFunction } from './js/utils.js';
 
     document.addEventListener('DOMContentLoaded', () => {
         loadNavbar();
@@ -33,6 +34,11 @@
 
     window.escapeHTML = escapeHTML;
     window.logManagerError = logManagerError;
+    window.callCloudFunction = callCloudFunction;
+
+    // Auth globals needed by navbar
+    window.isNetworkError = isNetworkError;
+    window.fetchUserDoc = fetchUserDoc;
   </script>
 
     <link rel="manifest" href="manifest.json">
@@ -2770,6 +2776,14 @@
                     });
             } else {
                 auth.signInWithEmailAndPassword(email, pass)
+                    .then((userCredential) => {
+                        // currentUser might not be synchronously available yet
+                        // so we can rely on the onAuthStateChanged listener to handle redirection
+                        // but if we want to force it we can check the userCredential
+                        if (userCredential.user) {
+                            navTo('tracker');
+                        }
+                    })
                     .catch(err => {
                         if (err.code === 'auth/network-request-failed' || err.code === 'firestore/unavailable') {
                             alert("Network error: Could not connect to the server. Please check your connection.");
@@ -4958,7 +4972,7 @@
                 await scheduleRef.set({
                     uid: currentUser.uid,
                     authorId: currentUser.uid,
-                    orgId: currentUserData?.orgId || null,
+                    orgId: currentUserData?.orgId || currentUser.uid,
                     date: date,
                     shifts: shifts,
                     updatedAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -5298,15 +5312,15 @@ function checkAndRenderOrgControls() {
 
             try {
                 // Ensure write fully completes before allowing further actions or redirects to avoid race conditions.
-                await db.collection('shift_notes').add({
-                    authorId: currentUser.uid,
-                    authorName: currentUser.email.split('@')[0],
-                    content: content,
-                    priority: priority,
-                    status: 'Active',
-                    orgId: currentUserData.orgId,
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                await callCloudFunction('manageShiftNotes', {
+                    action: "create",
+                    payload: {
+                        authorId: currentUser.uid,
+                        authorName: currentUserData.name || currentUser.email.split('@')[0],
+                        content: content,
+                        priority: priority,
+                        orgId: currentUserData.orgId
+                    }
                 });
 
                 document.getElementById('shiftNoteContent').value = "";
