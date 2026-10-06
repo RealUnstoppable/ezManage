@@ -7,7 +7,11 @@ app.use(cors());
 app.use(express.json());
 
 require("dotenv").config();
-const stripe = Stripe(process.env.STRIPE_SECRET || "sk_test_placeholder");
+if (!process.env.STRIPE_SECRET) {
+  console.error("CRITICAL ERROR: STRIPE_SECRET is not defined.");
+  process.exit(1);
+}
+const stripe = Stripe(process.env.STRIPE_SECRET);
 
 app.post("/create-checkout-session", async (req, res) => {
   const { plan } = req.body;
