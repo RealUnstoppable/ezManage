@@ -2422,13 +2422,7 @@
 
         // Initialization is handled by firebase.js, we just get references
 
-// Wait, since this script is not a module, we need to make sure firebase.js runs before it.
-        // Let's just make the inline script check for singleton.
-        const firebaseConfig = window.ezManageFirebaseConfig;
-        const app = !window.firebase.apps.length ? window.firebase.initializeApp(firebaseConfig) : window.firebase.app();
-        const auth = window.firebase.auth();
-
-        const db = window.firebase.firestore();
+        // Note: app, auth, db, are already initialized globally in the <head> scripts.
         const cloudFunctions = window.firebase.functions();
 
         db.enablePersistence().catch(err => console.error("Offline sync error:", err));
