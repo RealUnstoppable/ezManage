@@ -41,6 +41,48 @@
           "order": "DESCENDING"
         }
       ]
+    },
+    {
+      "collectionGroup": "shift_handoffs",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "orgId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "shift_marketplace",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "orgId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "expenses",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "orgId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "timestamp",
+          "order": "DESCENDING"
+        }
+      ]
     }
   ],
   "fieldOverrides": []

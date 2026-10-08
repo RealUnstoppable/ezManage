@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <!-- 🛡️ Sentinel: Added Content Security Policy for defense-in-depth -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://unpkg.com https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.firebase.com;">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>HarmonyTunes | Music Player & Streaming</title>
@@ -104,6 +106,80 @@
                     </a>
                 </div>
             </section>
+
+        <div id="view-playlist" style="display: none;">
+            <button id="back-to-home" class="back-btn"><i data-lucide="arrow-left" class="inline w-4 h-4 mr-1"></i> Back</button>
+            <div class="playlist-header">
+                <img id="playlist-album-art" src="/images/harmony-tunes-card.jpg" alt="Playlist Art" class="album-art rounded-2xl">
+                <div class="playlist-details">
+                    <p class="text-sm font-bold text-sky-400 uppercase tracking-wider mb-1">Playlist</p>
+                    <h1 id="playlist-title">All Tracks</h1>
+                    <p id="playlist-desc" class="text-slate-400 mb-4">Complete Library</p>
+                    <div class="flex items-center gap-3">
+                        <button id="playlist-play-btn" aria-label="Play Playlist" class="action-btn-play flex items-center justify-center">▶</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="song-table">
+                    <thead>
+                        <tr>
+                            <th class="w-12">#</th>
+                            <th>Title</th>
+                            <th>Artist</th>
+                            <th class="text-right"><i data-lucide="clock" class="w-4 h-4 inline"></i></th>
+                        </tr>
+                    </thead>
+                    <tbody id="song-list-body">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="music-player-bar">
+            <audio id="audio-player"></audio>
+
+            <div class="current-song-details">
+                <img id="player-album-art" src="/images/harmony-tunes-card.jpg" alt="Album Art">
+                <div class="song-info-text">
+                    <p id="player-song-title">Select a track</p>
+                    <p id="player-song-artist">HarmonyTunes</p>
+                </div>
+                <button id="player-like-btn" aria-label="Like Track" class="like-btn-player">♡</button>
+            </div>
+
+            <div class="player-controls">
+                <div class="controls">
+                    <button id="shuffle-btn" aria-label="Shuffle" class="control-button"><i data-lucide="shuffle" class="w-4 h-4"></i></button>
+                    <button id="prev-btn" aria-label="Previous Track" class="control-button"><i data-lucide="skip-back" class="w-5 h-5"></i></button>
+                    <button id="play-pause-btn" aria-label="Play or Pause" class="play-pause-btn">
+                        <i data-lucide="play" class="w-5 h-5 play-icon"></i>
+                        <i data-lucide="pause" class="w-5 h-5 pause-icon" style="display: none;"></i>
+                    </button>
+                    <button id="next-btn" aria-label="Next Track" class="control-button"><i data-lucide="skip-forward" class="w-5 h-5"></i></button>
+                    <button id="repeat-btn" aria-label="Repeat" class="control-button relative">
+                        <i data-lucide="repeat" class="w-4 h-4"></i>
+                        <span class="repeat-indicator absolute -bottom-2 text-[10px] font-bold text-accent-green"></span>
+                    </button>
+                </div>
+
+                <div class="progress-bar-container">
+                    <span class="current-time">0:00</span>
+                    <div class="progress-bar" aria-label="Seek progress">
+                        <div class="progress"></div>
+                    </div>
+                    <span class="total-time">0:00</span>
+                </div>
+            </div>
+
+            <div class="volume-container">
+                <i data-lucide="volume-2" class="w-4 h-4 text-slate-400"></i>
+                <div class="volume-slider-wrapper">
+                    <input type="range" min="0" max="1" step="0.01" value="1" class="volume-slider" aria-label="Volume">
+                </div>
+            </div>
+        </div>
         </div>
     </main>
 

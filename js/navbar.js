@@ -3,6 +3,7 @@ import { auth, db, getUserRedirectPath, fetchUserDoc } from './auth.js';
 
 
 export function loadNavbar() {
+    updateAuthLink();
     // ezManage has its own native fixed navbar (nav.glass-nav).
     // Leave main-header empty to prevent duplicate navbar elements from realunstoppable.store.
     const header = document.querySelector('.main-header');
@@ -23,7 +24,7 @@ function attachNavEvents() {
 }
 
 export function updateAuthLink() {
-    const authLink = document.getElementById('auth-link');
+    const authLink = document.getElementById('navUserStatus');
     if (!authLink) return;
 
     authLink.addEventListener('click', (e) => {
@@ -34,7 +35,12 @@ export function updateAuthLink() {
     });
 
     if (auth && auth.onAuthStateChanged) {
+        let currentUid = null;
+        let isDashboardLoaded = false;
         auth.onAuthStateChanged(async (user) => {
+            if (user && user.uid === currentUid && isDashboardLoaded) return;
+            currentUid = user ? user.uid : null;
+            isDashboardLoaded = true;
             if (user) {
                 try {
                     const userDoc = await fetchUserDoc(user.uid);

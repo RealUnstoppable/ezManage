@@ -22,7 +22,7 @@ self.addEventListener('install', (event) => {
                 console.log('Opened cache');
 
                 return Promise.allSettled(
-                    ASSETS_TO_CACHE.map(url => cache.add(url).catch(err => console.log('Failed to cache:', url, err)))
+                    ASSETS_TO_CACHE.map(url => cache.add(url).catch(err => console.error('Manager Troubleshooting: Failed to cache:', url, err)))
                 );
             })
     );
@@ -57,8 +57,8 @@ self.addEventListener('fetch', (event) => {
                         });
                     }
                     return networkResponse;
-                }).catch(() => {
-
+                }).catch((error) => {
+                    console.error("Manager Troubleshooting: Service Worker fetch failed:", error);
                 });
 
                 return cachedResponse || fetchPromise;

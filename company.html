@@ -2,6 +2,8 @@
 <html lang="en">
 
 <head>
+    <!-- 🛡️ Sentinel: Added Content Security Policy for defense-in-depth -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://unpkg.com https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.firebase.com;">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>ezManage | Corporate Portal</title>
@@ -12,8 +14,14 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
     </script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="js/firebase-config.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-messaging-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-functions-compat.js"></script>
     <script type="module">
-        import { escapeHTML } from './js/utils.js';
+        import { escapeHTML, logManagerError } from './js/utils.js';
         import { loadNavbar } from './js/navbar.js';
         import { loadFooter } from './js/footer.js';
         document.addEventListener('DOMContentLoaded', () => {
@@ -21,6 +29,7 @@
             loadFooter();
         });
         window.escapeHTML = escapeHTML;
+    window.logManagerError = logManagerError;
     </script>
     <script>
         tailwind.config = { darkMode: ['class', '.dark-mode'], }
@@ -34,11 +43,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@400;500;600;700;800;900&display=swap"
         rel="stylesheet">
 
-    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-functions-compat.js"></script>
-    <script src="js/firebase-config.js"></script>
 
     <style>
         :root {
@@ -242,7 +246,7 @@
                         <input type="password" id="loginPass" required placeholder="Password"
                             class="w-full bg-slate-50 dark:bg-slate-800 p-4 rounded-xl border-none focus:ring-2 focus:ring-indigo-500">
                     </div>
-                    <button type="submit" class="btn btn-primary w-full py-4 text-lg mt-2">Sign In</button>
+                    <button type="submit" class="btn btn-primary w-full py-4 text-lg mt-2 disabled:opacity-70 disabled:cursor-not-allowed">Sign In</button>
                     <div class="text-center pt-4">
                         <button onclick="navTo('register')"
                             class="text-sm font-bold text-indigo-500 hover:text-indigo-600">Need a corporate account?
@@ -295,7 +299,7 @@
                             class="w-full bg-white dark:bg-slate-900 text-center text-3xl font-black p-6 rounded-2xl border-4 border-slate-100 dark:border-slate-800 focus:border-indigo-500 focus:ring-0 transition-colors shadow-sm mb-8 placeholder:text-slate-300 dark:placeholder:text-slate-700"
                             onkeydown="handleEnterKey(event, 3)">
                         <button type="button" onclick="nextOnboardingStep(3)"
-                            class="btn btn-primary w-full py-5 text-xl rounded-2xl shadow-lg border-b-4 border-indigo-700 active:border-b-0 active:mt-1">Continue</button>
+                            class="btn btn-primary w-full py-5 text-xl rounded-2xl shadow-lg border-b-4 border-indigo-700 active:border-b-0 active:mt-1 disabled:opacity-70 disabled:cursor-not-allowed">Continue</button>
                     </div>
 
                     <!-- Step 3: Admin Email -->
@@ -306,7 +310,7 @@
                             class="w-full bg-white dark:bg-slate-900 text-center text-3xl font-black p-6 rounded-2xl border-4 border-slate-100 dark:border-slate-800 focus:border-indigo-500 focus:ring-0 transition-colors shadow-sm mb-8 placeholder:text-slate-300 dark:placeholder:text-slate-700"
                             onkeydown="handleEnterKey(event, 4)">
                         <button type="button" onclick="nextOnboardingStep(4)"
-                            class="btn btn-primary w-full py-5 text-xl rounded-2xl shadow-lg border-b-4 border-indigo-700 active:border-b-0 active:mt-1">Continue</button>
+                            class="btn btn-primary w-full py-5 text-xl rounded-2xl shadow-lg border-b-4 border-indigo-700 active:border-b-0 active:mt-1 disabled:opacity-70 disabled:cursor-not-allowed">Continue</button>
                     </div>
 
                     <!-- Step 4: Password -->
@@ -317,7 +321,7 @@
                             class="w-full bg-white dark:bg-slate-900 text-center text-3xl font-black p-6 rounded-2xl border-4 border-slate-100 dark:border-slate-800 focus:border-indigo-500 focus:ring-0 transition-colors shadow-sm mb-8 placeholder:text-slate-300 dark:placeholder:text-slate-700"
                             onkeydown="handleEnterKey(event, 5)">
                         <button type="button" onclick="nextOnboardingStep(5)"
-                            class="btn btn-primary w-full py-5 text-xl rounded-2xl shadow-lg border-b-4 border-indigo-700 active:border-b-0 active:mt-1"
+                            class="btn btn-primary w-full py-5 text-xl rounded-2xl shadow-lg border-b-4 border-indigo-700 active:border-b-0 active:mt-1 disabled:opacity-70 disabled:cursor-not-allowed"
                             id="btnFinishOnboarding">Create Workspace</button>
                     </div>
 
@@ -357,7 +361,7 @@
                             <option value="200+">200+ Employees</option>
                         </select>
                         <button type="button" onclick="advanceOnboarding()"
-                            class="btn btn-primary w-full py-5 text-xl rounded-2xl shadow-lg border-b-4 border-indigo-700 active:border-b-0 active:mt-1">Continue</button>
+                            class="btn btn-primary w-full py-5 text-xl rounded-2xl shadow-lg border-b-4 border-indigo-700 active:border-b-0 active:mt-1 disabled:opacity-70 disabled:cursor-not-allowed">Continue</button>
                     </div>
 
                     <!-- NEW: Step Plan -->
@@ -395,7 +399,7 @@
                             </div>
                         </div>
                         <button type="button" onclick="advanceOnboarding()"
-                            class="btn btn-primary w-full py-5 text-xl rounded-2xl shadow-lg border-b-4 border-indigo-700 active:border-b-0 active:mt-1">Continue</button>
+                            class="btn btn-primary w-full py-5 text-xl rounded-2xl shadow-lg border-b-4 border-indigo-700 active:border-b-0 active:mt-1 disabled:opacity-70 disabled:cursor-not-allowed">Continue</button>
                     </div>
 
                     <!-- NEW: Step Roles -->
@@ -426,7 +430,7 @@
                         </div>
 
                         <button type="button" onclick="advanceOnboarding()"
-                            class="btn btn-primary w-full py-5 text-xl rounded-2xl shadow-lg border-b-4 border-indigo-700 active:border-b-0 active:mt-1">Continue</button>
+                            class="btn btn-primary w-full py-5 text-xl rounded-2xl shadow-lg border-b-4 border-indigo-700 active:border-b-0 active:mt-1 disabled:opacity-70 disabled:cursor-not-allowed">Continue</button>
                     </div>
 
                     <!-- NEW: Step Config -->
@@ -438,7 +442,7 @@
                             <label
                                 class="flex items-center gap-4 bg-slate-50 dark:bg-slate-800 p-4 rounded-xl cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
                                 <input type="checkbox" id="configAi" checked
-                                    class="w-6 h-6 text-indigo-500 rounded focus:ring-0">
+                                    class="w-6 h-6 text-indigo-500 rounded focus:ring-0" aria-label="Enable AI Training">
                                 <div>
                                     <div class="font-black text-lg">Enable AI Features</div>
                                     <div class="text-sm text-slate-500">Use ezManage AI to summarize shift notes and
@@ -449,7 +453,7 @@
                             <label
                                 class="flex items-center gap-4 bg-slate-50 dark:bg-slate-800 p-4 rounded-xl cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
                                 <input type="checkbox" id="configSync" checked
-                                    class="w-6 h-6 text-indigo-500 rounded focus:ring-0">
+                                    class="w-6 h-6 text-indigo-500 rounded focus:ring-0" aria-label="Enable Cloud Sync">
                                 <div>
                                     <div class="font-black text-lg">Cloud Sync</div>
                                     <div class="text-sm text-slate-500">Automatically sync changes across all your
@@ -460,7 +464,7 @@
                             <label
                                 class="flex items-center gap-4 bg-slate-50 dark:bg-slate-800 p-4 rounded-xl cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors border-2 border-transparent">
                                 <input type="checkbox" id="termsCheck"
-                                    class="w-6 h-6 text-indigo-500 rounded focus:ring-0">
+                                    class="w-6 h-6 text-indigo-500 rounded focus:ring-0" aria-label="Accept Terms">
                                 <div>
                                     <div class="font-black text-lg">Accept Terms</div>
                                     <div class="text-sm text-slate-500">I agree to the Terms of Service and Privacy
@@ -470,7 +474,7 @@
                         </div>
 
                         <button type="button" onclick="advanceOnboarding()"
-                            class="btn btn-primary w-full py-5 text-xl rounded-2xl shadow-lg border-b-4 border-indigo-700 active:border-b-0 active:mt-1">Complete
+                            class="btn btn-primary w-full py-5 text-xl rounded-2xl shadow-lg border-b-4 border-indigo-700 active:border-b-0 active:mt-1 disabled:opacity-70 disabled:cursor-not-allowed">Complete
                             Setup</button>
                     </div>
 
@@ -515,7 +519,7 @@
                                 Everything you need to manage your business is now accessible in one beautiful, unified
                                 view.</p>
                             <button type="button" onclick="finishTutorial()"
-                                class="btn btn-primary w-full py-5 text-xl rounded-2xl shadow-[0_8px_30px_rgba(99,102,241,0.3)] hover:scale-[1.02] transition-transform">Enter
+                                class="btn btn-primary w-full py-5 text-xl rounded-2xl shadow-[0_8px_30px_rgba(99,102,241,0.3)] hover:scale-[1.02] transition-transform disabled:opacity-70 disabled:cursor-not-allowed">Enter
                                 Dashboard</button>
                         </div>
                     </div>
@@ -601,7 +605,7 @@
                         <h2 class="text-xl font-bold mb-4"><i data-lucide="users" class="inline w-5 h-5 mr-2 text-sky-500"></i> Manager Administration</h2>
                         <form id="createManagerForm" class="flex flex-col md:flex-row gap-4 mb-6">
                             <input type="email" id="newManagerEmail" placeholder="Manager Email" aria-label="Manager Email" class="input input-bordered w-full md:flex-1" required>
-                            <button type="submit" class="btn btn-primary whitespace-nowrap"><i data-lucide="user-plus" class="w-4 h-4 mr-2"></i> Add Manager</button>
+                            <button type="submit" class="btn btn-primary whitespace-nowrap disabled:opacity-70 disabled:cursor-not-allowed"><i data-lucide="user-plus" class="w-4 h-4 mr-2"></i> Add Manager</button>
                         </form>
                         <div class="overflow-x-auto">
                             <table class="w-full text-left text-sm text-slate-600 dark:text-slate-400">
@@ -630,7 +634,7 @@
                         <i data-lucide="calendar" class="w-4 h-4 text-indigo-500 mr-2"></i>
                         <input type="date" id="dashboardDatePicker"
                             class="bg-transparent font-bold focus:ring-0 focus:outline-none text-slate-700 dark:text-slate-300 border-none p-0"
-                            onchange="fetchDashboardData()">
+                            onchange="fetchDashboardData()" aria-label="Dashboard Date Picker">
                     </div>
                     <button onclick="firebase.auth().signOut()"
                         aria-label="Sign out" class="btn btn-outline text-red-500 border-red-200 hover:bg-red-50 dark:border-red-900/30 dark:hover:bg-red-900/20"><i
@@ -724,7 +728,7 @@
                                     Requests <span id="pendingRequestsBadge"
                                         class="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] w-5 h-5 rounded-full flex items-center justify-center hidden shadow-sm">0</span>
                                 </button>
-                                <button onclick="showInviteModal()" class="btn btn-primary btn-sm"><i
+                                <button aria-label="Invite Manager" onclick="showInviteModal()" class="btn btn-primary btn-sm disabled:opacity-70 disabled:cursor-not-allowed"><i
                                         data-lucide="user-plus" class="w-4 h-4"></i> Invite</button>
                             </div>
                         </div>
@@ -770,7 +774,7 @@
     <script>
         // --- Firebase Configuration ---
         const firebaseConfig = window.ezManageFirebaseConfig;
-        const app = !window.firebase.apps.length ? window.firebase.initializeApp(firebaseConfig) : window.firebase.app();
+        const app = window.firebase.apps.length === 0 ? window.firebase.initializeApp(firebaseConfig) : window.firebase.app();
         const auth = firebase.auth();
         firebase.firestore().settings({ experimentalForceLongPolling: true });
         const db = firebase.firestore();
@@ -1203,13 +1207,36 @@
             const bar = document.getElementById('tutorialProgressBar');
             const status = document.getElementById('loadingStatusText');
             let progress = 0;
-            const sim = setInterval(() => {
-                progress += 2;
-                if (progress <= 95) bar.style.width = `${progress}%`;
-                if (progress === 30) status.innerText = "Creating shift groups...";
-                if (progress === 60) status.innerText = "Provisioning AI features...";
-                if (progress === 90) status.innerText = "Finalizing workspace...";
-            }, 100);
+            let lastStatus = status.innerText;
+
+            // ⚡ Bolt Optimization: Replaced setInterval with requestAnimationFrame and state caching
+            // to prevent layout thrashing and high CPU usage on the main thread during animations.
+            let animationFrameId;
+            let lastTime = performance.now();
+
+            function animateProgress(currentTime) {
+                if (currentTime - lastTime >= 100) {
+                    progress += 2;
+                    lastTime = currentTime;
+
+                    if (progress <= 95) bar.style.width = `${progress}%`;
+
+                    let newStatus = lastStatus;
+                    if (progress === 30) newStatus = "Creating shift groups...";
+                    else if (progress === 60) newStatus = "Provisioning AI features...";
+                    else if (progress === 90) newStatus = "Finalizing workspace...";
+
+                    if (newStatus !== lastStatus) {
+                        status.innerText = newStatus;
+                        lastStatus = newStatus;
+                    }
+                }
+
+                if (progress <= 95) {
+                    animationFrameId = requestAnimationFrame(animateProgress);
+                }
+            }
+            animationFrameId = requestAnimationFrame(animateProgress);
 
             try {
                 // Always pull from auth.currentUser (never the potentially-stale module var)
@@ -1283,7 +1310,7 @@
                 // Reset state so the user can retry
                 isRegistering = false;
                 clearInterval(sim);
-                console.error("Workspace creation error:", e);
+                window.logManagerError("Workspace creation error:", e);
                 alert("Failed to create workspace: " + e.message);
                 transitionSteps('step-loading', 'step-config');
                 currentStepIndex = onboardingFlow.indexOf('step-config');
@@ -1345,7 +1372,7 @@
                 document.getElementById('dashboard-shell').classList.remove('hidden');
                 navTo('overview');
             } catch (e) {
-                console.error(e);
+                window.logManagerError(e);
                 alert("Error loading workspace data.");
             }
         }
@@ -1457,13 +1484,14 @@
                             </select>
                         </td>
                         <td class="px-6 py-3 text-right">
-                            ${!isOwner ? `<button onclick="removeManager('${escapeHTML(doc.id)}')" aria-label="Remove manager" class="text-slate-400 hover:text-red-500 transition-colors"><i data-lucide="trash-2" class="w-4 h-4"></i></button>` : `<span class="text-slate-300">-</span>`}
+                            ${!isOwner ? `<button data-action="removeManager" data-id="${escapeHTML(doc.id)}" aria-label="Remove manager" class="text-slate-400 hover:text-red-500 transition-colors"><i data-lucide="trash-2" class="w-4 h-4"></i></button>` : `<span class="text-slate-300">-</span>`}
                         </td>
                     </tr>`;
 
                     // Aggregate shifts for charts
                     const h = d.shiftHistory || [];
-                    allShifts = allShifts.concat(h);
+                    // ⚡ Bolt Optimization: Replace O(n²) array recreation with fast, in-place push
+                    allShifts.push(...h);
 
                     // 2. Individual Performance for Selected Date
                     const todayShift = h.find(s => s.dateSaved === selectedDate);
@@ -1568,7 +1596,7 @@
                                         <div class="font-black text-slate-900 dark:text-white text-sm">${escapeHTML(doc.data().userName)}</div>
                                         <div class="text-[10px] font-bold uppercase tracking-widest text-amber-500">Requested Access</div>
                                     </div>
-                                    <button onclick="approveRequest('${escapeHTML(doc.id)}')" class="btn btn-accent btn-sm py-1 px-4 text-xs">Approve</button>
+                                    <button data-action="approveRequest" data-id="${escapeHTML(doc.id)}" class="btn btn-accent btn-sm py-1 px-4 text-xs">Approve</button>
                                 </div>
                             `).join('');
                         }
@@ -1596,7 +1624,7 @@
                 await callFunction('manageShiftGroups', { action: "remove_manager", payload: { userId, groupId: activeOrgId } });
                 alert("Manager removed successfully.");
             } catch (e) {
-                console.error(e);
+                window.logManagerError(e);
                 alert("Failed to remove manager: " + e.message);
             }
         }

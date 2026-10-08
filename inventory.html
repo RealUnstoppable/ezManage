@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventory | ezManage</title>
+    <link rel="icon" type="image/jpeg" href="ManagerPro.jpg">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/themes.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <script type="module">
+        import { loadNavbar } from './js/navbar.js';
+        import { loadFooter } from './js/footer.js';
+        document.addEventListener('DOMContentLoaded', () => {
+            loadNavbar();
+            loadFooter();
+            if (window.lucide) window.lucide.createIcons();
+        });
+    </script>
+</head>
+<body class="bg-slate-950 text-slate-100 font-sans min-h-screen flex flex-col pt-20">
+    <!-- Navbar Container -->
+    <header class="main-header"></header>
+
+    <main class="flex-grow max-w-7xl mx-auto px-6 py-12 w-full">
+        <!-- Header Section -->
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+            <div>
+                <h1 class="text-3xl font-bold tracking-tight text-white mb-2 flex items-center gap-3">
+                    <i data-lucide="package" class="text-sky-400 h-8 w-8"></i>
+                    Inventory Management
+                </h1>
+                <p class="text-slate-400">Track and manage your store's stock and assets.</p>
+            </div>
+            <button id="addItemBtn" class="flex items-center gap-2 bg-sky-500 hover:bg-sky-400 text-white px-5 py-2.5 rounded-lg font-medium transition-colors shadow-lg shadow-sky-500/20">
+                <i data-lucide="plus" class="w-5 h-5"></i>
+                Add New Item
+            </button>
+        </div>
+
+        <!-- Inventory Table Container -->
+        <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow-xl">
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-slate-800/50">
+                    <thead class="bg-slate-800/50">
+                        <tr>
+                            <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">Item Name</th>
+                            <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">Quantity</th>
+                            <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">Low Stock Threshold</th>
+                            <th scope="col" class="px-6 py-4 text-right text-xs font-semibold text-slate-300 uppercase tracking-wider">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="inventoryTableBody" class="divide-y divide-slate-800/50 bg-slate-900">
+                        <!-- Rows rendered via JS -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Loading State -->
+            <div id="loadingSpinner" class="flex justify-center items-center py-12">
+                <i data-lucide="loader-2" class="w-8 h-8 text-sky-400 animate-spin"></i>
+            </div>
+
+            <!-- Empty State -->
+            <div id="emptyState" class="hidden flex flex-col items-center justify-center py-16 text-center">
+                <div class="bg-slate-800/50 p-4 rounded-full mb-4">
+                    <i data-lucide="package-open" class="w-12 h-12 text-slate-400"></i>
+                </div>
+                <h3 class="text-lg font-medium text-slate-200 mb-1">No items found</h3>
+                <p class="text-slate-400 max-w-sm">Your inventory is currently empty. Add your first item to start tracking stock.</p>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer Container -->
+    <footer class="main-footer mt-auto"></footer>
+
+    <!-- Add/Edit Item Modal -->
+    <div id="itemModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 md:p-8 w-full max-w-md shadow-2xl relative transform transition-all">
+            <button id="closeItemModal" class="absolute top-4 right-4 text-slate-400 hover:text-white bg-slate-800/50 hover:bg-slate-700 p-2 rounded-full transition-colors" aria-label="Close modal">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+            <h2 id="modalTitle" class="text-2xl font-bold mb-6 text-white">Add New Item</h2>
+            <form id="itemForm" class="space-y-5">
+                <input type="hidden" id="itemId">
+
+                <div>
+                    <label class="block text-sm font-medium text-slate-300 mb-1.5" for="itemName">Item Name</label>
+                    <input type="text" id="itemName" required
+                        class="w-full bg-slate-950 border border-slate-700 rounded-lg px-4 py-2.5 text-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-500/50 focus:border-sky-500 transition-colors placeholder-slate-600"
+                        placeholder="e.g., Cash Register Paper">
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-300 mb-1.5" for="itemQuantity">Current Quantity</label>
+                        <input type="number" id="itemQuantity" required min="0"
+                            class="w-full bg-slate-950 border border-slate-700 rounded-lg px-4 py-2.5 text-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-500/50 focus:border-sky-500 transition-colors"
+                            placeholder="0">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-300 mb-1.5" for="itemThreshold">Low Stock Threshold</label>
+                        <input type="number" id="itemThreshold" required min="0"
+                            class="w-full bg-slate-950 border border-slate-700 rounded-lg px-4 py-2.5 text-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-500/50 focus:border-sky-500 transition-colors"
+                            placeholder="10">
+                    </div>
+                </div>
+
+                <div class="flex gap-3 pt-4">
+                    <button type="button" id="cancelItemBtn" class="flex-1 bg-slate-800 hover:bg-slate-700 text-white px-4 py-2.5 rounded-lg font-medium transition-colors">
+                        Cancel
+                    </button>
+                    <button type="submit" class="flex-1 bg-sky-500 hover:bg-sky-400 text-white px-4 py-2.5 rounded-lg font-medium transition-colors shadow-lg shadow-sky-500/20">
+                        Save Item
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Feature Logic -->
+    <script type="module" src="./js/inventory.js"></script>
+</body>
+</html>

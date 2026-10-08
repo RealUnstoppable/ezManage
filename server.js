@@ -33,7 +33,8 @@ app.post("/create-checkout-session", async (req, res) => {
 
     res.json({ url: session.url });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error("Stripe Checkout Error:", err);
+    res.status(500).json({ error: "An internal server error occurred. Please try again later." });
   }
 });
 

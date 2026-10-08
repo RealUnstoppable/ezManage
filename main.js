@@ -2,12 +2,27 @@
 import { app, BrowserWindow } from 'electron';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { spawn } from 'child_process';
+import fs from 'fs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Import and start your existing Express server
-import './server.cjs';
+try {
+  const serverProcess = spawn('node', ['--input-type=commonjs'], {
+    stdio: ['pipe', 'inherit', 'inherit']
+  });
+  const serverCode = fs.readFileSync(path.join(__dirname, 'server.js'), 'utf8');
+  serverProcess.stdin.write(serverCode);
+  serverProcess.stdin.end();
+
+  app.on('before-quit', () => {
+    serverProcess.kill();
+  });
+} catch (err) {
+  console.error('Failed to load server.js:', err);
+}
 
 let mainWindow;
 
@@ -22,7 +37,7 @@ function createWindow() {
 
   // Assuming your Express server (server.cjs) runs on port 3000
   // Change this port if your server uses a different one!
-  mainWindow.loadURL('http://localhost:3000');
+  mainWindow.loadURL('http://localhost:3000').catch(err => console.error('Manager Troubleshooting: Failed to load URL:', err));
 
   mainWindow.on('closed', function () {
     mainWindow = null;
@@ -35,8 +50,14 @@ app.whenReady().then(() => {
   app.on('activate', function () {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });
+}).catch(err => {
+  console.error("Manager Troubleshooting: Electron app initialization failed:", err);
 });
 
 app.on('window-all-closed', function () {
   if (process.platform !== 'darwin') app.quit();
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
 });

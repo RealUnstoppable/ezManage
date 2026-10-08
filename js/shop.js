@@ -48,21 +48,26 @@ export function calculateCartTotal(cartData, prodMap) {
 
 let cart = {};
 let currentUser = null;
+let isDashboardLoaded = false;
 
-const productGrid = document.getElementById('product-grid');
-const cartButton = document.getElementById('cart-button');
-const cartModal = document.getElementById('cart-modal');
-const closeCartBtn = document.getElementById('close-cart-btn');
-const cartItemsContainer = document.getElementById('cart-items-container');
-const cartItemCountEl = document.getElementById('cart-item-count');
-const cartTotalPriceEl = document.getElementById('cart-total-price');
-const checkoutBtn = document.getElementById('checkout-btn');
-const navCtaContainer = document.getElementById('nav-cta-container');
-const hamburger = document.querySelector('.hamburger');
-const navLinks = document.querySelector('.nav-links');
+let productGrid;
+let cartButton;
+let cartModal;
+let closeCartBtn;
+let cartItemsContainer;
+let cartItemCountEl;
+let cartTotalPriceEl;
+let checkoutBtn;
+let navCtaContainer;
+let hamburger;
+let navLinks;
+
+
+let updateQuantityTimeouts = new Map();
 
 function renderProducts() {
-    productGrid.innerHTML = products.map(product => `
+    productGrid.replaceChildren();
+    productGrid.insertAdjacentHTML('beforeend', products.map(product => `
         <div class="product-card">
             <img src="${escapeHTML(product.imageUrl)}" alt="${escapeHTML(product.name)}" class="product-image" loading="lazy">
             <div class="product-info">
@@ -74,24 +79,27 @@ function renderProducts() {
                 </div>
             </div>
         </div>
-    `).join('');
+    `).join(''));
 }
 
 function renderCart() {
     if (Object.keys(cart).length === 0) {
-        cartItemsContainer.innerHTML = '<p class="empty-cart-message">Your cart is empty.</p>';
+        cartItemsContainer.textContent = 'Your cart is empty.';
+        cartItemsContainer.className = 'empty-cart-message';
         checkoutBtn.disabled = true;
     } else {
-        cartItemsContainer.innerHTML = Object.entries(cart).map(([productId, quantity]) => {
+        const fragment = document.createDocumentFragment();
 
+        Object.entries(cart).forEach(([productId, quantity]) => {
             const product = productMap[productId];
-            if (!product) return '';
-            return `
+            if (!product) return;
+
+            const htmlString = `
                 <div class="cart-item">
                     <img src="${escapeHTML(product.imageUrl)}" alt="${escapeHTML(product.name)}" class="cart-item-img" loading="lazy">
                     <div class="cart-item-info">
                         <h4>${escapeHTML(product.name)}</h4>
-                        <p>$${product.price.toFixed(2)}</p>
+                        <p>${product.price.toFixed(2)}</p>
                     </div>
                     <div class="cart-item-actions">
                         <input type="number" aria-label="Item Quantity" value="${escapeHTML(quantity)}" min="1" data-id="${escapeHTML(productId)}" class="item-quantity-input">
@@ -99,7 +107,14 @@ function renderCart() {
                     </div>
                 </div>
             `;
-        }).join('');
+
+            const tempDiv = document.createElement('div');
+            tempDiv.insertAdjacentHTML('beforeend', htmlString);
+            fragment.appendChild(tempDiv.firstElementChild);
+        });
+
+        cartItemsContainer.replaceChildren();
+        cartItemsContainer.appendChild(fragment);
         checkoutBtn.disabled = false;
     }
     updateCartSummary();
@@ -178,88 +193,122 @@ async function saveCart() {
 
 function updateUserNav(user) {
     if (user) {
-        navCtaContainer.innerHTML = `<a href="account.html" class="cta-button nav-cta">My Account</a>`;
+        navCtaContainer.replaceChildren();
+        navCtaContainer.insertAdjacentHTML('beforeend', `<a href="account.html" class="cta-button nav-cta">My Account</a>`);
     } else {
-        navCtaContainer.innerHTML = `<a href="sign in beta.html" class="cta-button nav-cta">Sign In</a>`;
+        navCtaContainer.replaceChildren();
+        navCtaContainer.insertAdjacentHTML('beforeend', `<a href="sign in beta.html" class="cta-button nav-cta">Sign In</a>`);
     }
 }
 
 function setupEventListeners() {
+    if (hamburger && navLinks) {
+        hamburger.addEventListener('click', () => {
+            hamburger.classList.toggle('active');
+            navLinks.classList.toggle('active');
+        });
+    }
 
-    hamburger.addEventListener('click', () => {
-        hamburger.classList.toggle('active');
-        navLinks.classList.toggle('active');
-    });
+    if (productGrid) {
+        productGrid.addEventListener('click', (e) => {
+            if (e.target.classList.contains('add-to-cart-btn')) {
+                const productId = e.target.dataset.id;
+                handleAddToCart(productId);
+            }
+        });
+    }
 
-    productGrid.addEventListener('click', (e) => {
-        if (e.target.classList.contains('add-to-cart-btn')) {
-            const productId = e.target.dataset.id;
-            handleAddToCart(productId);
-        }
-    });
+    if (cartButton && cartModal && closeCartBtn) {
+        cartButton.addEventListener('click', () => cartModal.style.display = 'block');
+        closeCartBtn.addEventListener('click', () => cartModal.style.display = 'none');
+        window.addEventListener('click', (e) => {
+            if (e.target === cartModal) {
+                cartModal.style.display = 'none';
+            }
+        });
+    }
 
-    cartButton.addEventListener('click', () => cartModal.style.display = 'block');
-    closeCartBtn.addEventListener('click', () => cartModal.style.display = 'none');
-    window.addEventListener('click', (e) => {
-        if (e.target === cartModal) {
-            cartModal.style.display = 'none';
-        }
-    });
+    if (cartItemsContainer) {
+        cartItemsContainer.addEventListener('click', (e) => {
+            if (e.target.classList.contains('remove-item-btn')) {
+                const productId = e.target.dataset.id;
+                handleRemoveFromCart(productId);
+            }
+        });
+        // ⚡ Bolt Optimization: Debounce quantity inputs to prevent rapid multiple Firestore updates and re-renders
+        // Impact: Reduces overlapping rapid inputs, DOM updates, and Firestore writes when using spinners or typing quickly.
+        const quantityTimeouts = new Map();
+        cartItemsContainer.addEventListener('input', (e) => {
+            if (e.target.classList.contains('item-quantity-input')) {
+                const productId = e.target.dataset.id;
+                const quantity = parseInt(e.target.value, 10);
 
-    cartItemsContainer.addEventListener('click', (e) => {
-        if (e.target.classList.contains('remove-item-btn')) {
-            const productId = e.target.dataset.id;
-            handleRemoveFromCart(productId);
-        }
-    });
-    cartItemsContainer.addEventListener('change', (e) => {
-        if (e.target.classList.contains('item-quantity-input')) {
-            const productId = e.target.dataset.id;
-            const quantity = parseInt(e.target.value, 10);
-            handleUpdateQuantity(productId, quantity);
-        }
-    });
+                if (quantityTimeouts.has(productId)) {
+                    clearTimeout(quantityTimeouts.get(productId));
+                }
 
-    checkoutBtn.addEventListener('click', () => {
+                quantityTimeouts.set(productId, setTimeout(() => {
+                    handleUpdateQuantity(productId, quantity);
+                    quantityTimeouts.delete(productId);
+                }, 300));
+            }
+        });
+    }
 
-        window.location.href = 'checkout.html';
-    });
+    if (checkoutBtn) {
+        checkoutBtn.addEventListener('click', () => {
+            window.location.href = 'checkout.html';
+        });
+    }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
     renderProducts();
     setupEventListeners();
 
+    let currentUid = null;
     auth.onAuthStateChanged(async (user) => {
+        if (user && user.uid === currentUid && isDashboardLoaded) return;
+        currentUid = user ? user.uid : null;
         currentUser = user;
         const localCartData = localStorage.getItem('localCart');
         const localCart = localCartData ? JSON.parse(localCartData) : {};
 
         if (user) {
-            try {
-                const userCartRef = db.collection('carts').doc(user.uid);
-                const docSnap = await userCartRef.get();
-                const firestoreCart = docSnap.exists ? docSnap.data().items : {};
+            if (!isDashboardLoaded) {
+                isShopLoaded = true;
+                try {
+                    const userCartRef = db.collection('carts').doc(user.uid);
+                    const docSnap = await userCartRef.get();
+                    const firestoreCart = docSnap.exists ? docSnap.data().items : {};
 
-                const mergedCart = { ...firestoreCart };
-                for (const [productId, quantity] of Object.entries(localCart)) {
-                    mergedCart[productId] = (mergedCart[productId] || 0) + quantity;
+                    const mergedCart = { ...firestoreCart };
+                    for (const [productId, quantity] of Object.entries(localCart)) {
+                        mergedCart[productId] = (mergedCart[productId] || 0) + quantity;
+                    }
+                    cart = mergedCart;
+                } catch (error) {
+                    logManagerError("Error fetching user cart", error);
+                    cart = localCart;
                 }
-
-                cart = mergedCart;
-                await saveCart();
-                localStorage.removeItem('localCart');
-            } catch (error) {
-                logManagerError("Error loading cart during auth state change:", error);
-
-                cart = localCart;
             }
         } else {
-
+            isDashboardLoaded = false;
             cart = localCart;
         }
-
-        updateUserNav(user);
-        renderCart();
     });
 });
+export function initShop() {
+    productGrid = document.getElementById('product-grid');
+    cartButton = document.getElementById('cart-btn');
+    cartModal = document.getElementById('cart-modal');
+    closeCartBtn = document.getElementById('close-cart-btn');
+    cartItemsContainer = document.getElementById('cart-items');
+    cartItemCountEl = document.getElementById('cart-item-count');
+    cartTotalPriceEl = document.getElementById('cart-total-price');
+    checkoutBtn = document.getElementById('checkout-btn');
+    navCtaContainer = document.querySelector('.nav-cta-container');
+    hamburger = document.querySelector('.hamburger');
+    navLinks = document.querySelector('.nav-links');
+}
+document.addEventListener('DOMContentLoaded', initShop);
