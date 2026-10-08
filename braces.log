@@ -1,0 +1,783 @@
+1: 0 | const functions = require("firebase-functions");
+2: 0 | const {onRequest} = require("firebase-functions/v2/https");
+3: 0 | const HttpsError = functions.https.HttpsError;
+4: 0 | const admin = require("firebase-admin");
+5: 0 | const cors = require("cors")({origin: true});
+6: 0 | const {adaptGen2Params, logManagerError, handleInternalError, checkRequiredFields} = require("./utils"); // Added comment for patch visibility
+7: 0 | const crypto = require("crypto");
+8: 0 | 
+9: 0 | /**
+10: 0 |  * Helper to authenticate user, fetch user doc, and extract payload.
+11: 0 |  */
+12: 1 | async function getAuthAndPayload(data, context, adminInstance) {
+13: 1 |   const {adaptGen2Params} = require("./utils");
+14: 1 |   const adapted = adaptGen2Params(data, context);
+15: 1 |   data = adapted.data;
+16: 1 |   context = adapted.context;
+17: 1 | 
+18: 2 |   if (!context || !context.auth) {
+19: 2 |     throw new HttpsError("unauthenticated", "You must be logged in.");
+20: 1 |   }
+21: 1 | 
+22: 1 |   const uid = context.auth.uid;
+23: 1 |   const userDoc = await adminInstance.firestore().collection("users").doc(uid).get();
+24: 1 |   const userOrgId = userDoc.exists ? userDoc.data().orgId : null;
+25: 1 |   const isAdmin = userDoc.exists ? userDoc.data().isAdmin : false;
+26: 1 |   const userName = userDoc.exists ? (userDoc.data().name || context.auth.token.email.split("@")[0]) : context.auth.token.email.split("@")[0];
+27: 1 | 
+28: 1 |   const action = data.action;
+29: 1 |   const payload = data.payload || {};
+30: 1 | 
+31: 1 |   return {uid, userDoc, userOrgId, isAdmin, userName, action, payload};
+32: 0 | }
+33: 0 | 
+34: 0 | 
+35: 0 | /**
+36: 0 |  * Helper to get a document, verify its existence, and verify its orgId.
+37: 0 |  * @param {string} collection - The collection name
+38: 0 |  * @param {string} docId - The document ID
+39: 0 |  * @param {string} expectedOrgId - The expected organization ID
+40: 0 |  * @param {string} notFoundMessage - Message if not found
+41: 0 |  * @param {string} unauthorizedMessage - Message if unauthorized
+42: 0 |  * @return {Promise<Object>} The document reference and snapshot
+43: 0 |  */
+44: 1 | async function verifyDocAndAuth(collection, docId, expectedOrgId, notFoundMessage, unauthorizedMessage) {
+45: 2 |   try {
+46: 2 |     const docRef = admin.firestore().collection(collection).doc(docId);
+47: 2 |     const docSnap = await docRef.get();
+48: 2 | 
+49: 3 |     if (!docSnap.exists) {
+50: 3 |       throw new HttpsError("not-found", notFoundMessage);
+51: 2 |     }
+52: 2 | 
+53: 3 |     if (docSnap.data().orgId !== expectedOrgId) {
+54: 3 |       throw new HttpsError("permission-denied", unauthorizedMessage);
+55: 2 |     }
+56: 2 | 
+57: 2 |     return {docRef, docSnap};
+58: 1 |   } catch (error) { handleInternalError(`Error verifying document auth for ${collection}/${docId}:`, error); }
+59: 0 | }
+60: 0 | 
+61: 0 | admin.initializeApp();
+62: 0 | 
+63: 0 | // Fallback "placeholder" string to stop Firebase Analyzer from crashing
+64: 0 | // during deployment
+65: 0 | const stripeKey = process.env.STRIPE_SECRET || "sk_test_placeholder";
+66: 0 | const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET ||
+67: 0 |   "whsec_placeholder";
+68: 0 | const stripe = require("stripe")(stripeKey);
+69: 0 | 
+70: 0 | // 🔹 Create Checkout Session
+71: 0 | 
+72: 0 | /**
+73: 0 |  * Helper to get the actual organization ID for a user.
+74: 0 |  * @param {Object} admin - The firebase admin instance
+75: 0 |  * @param {string} uid - The user ID
+76: 0 |  * @return {Promise<string>} The actual organization ID
+77: 0 |  */
+78: 1 | async function getActualOrgId(admin, uid) {
+79: 2 |   try {
+80: 2 |     const userDoc = await admin.firestore().collection("users").doc(uid).get();
+81: 3 |     if (!userDoc.exists) {
+82: 3 |       throw new HttpsError("not-found", "User not found");
+83: 2 |     }
+84: 2 |     return userDoc.data().orgId || null;
+85: 1 |   } catch (error) { handleInternalError("Error fetching user organization data for uid: " + uid, error); }
+86: 0 | }
+87: 0 | 
+88: 1 | exports.createCheckoutSession = onRequest({invoker: "public"}, (req, res) => {
+89: 2 |   cors(req, res, async () => {
+90: 3 |     if (req.method !== "POST") {
+91: 3 |       return res.status(405).send("Method Not Allowed");
+92: 2 |     }
+93: 2 | 
+94: 2 |     const {uid, email, plan, successUrl, cancelUrl} = req.body;
+95: 2 | 
+96: 2 |     let lineItems;
+97: 2 | 
+98: 2 |     // Calculate final prices and discounts strictly server-side
+99: 2 |     let finalPrice = plan === "Business Pro" ? 207 : 61;
+100: 2 |     let userData = {};
+101: 2 | 
+102: 3 |     if (uid) {
+103: 4 |       try {
+104: 4 |         const userDoc = await admin.firestore().collection("users").doc(uid).get();
+105: 4 |         if (userDoc.exists) userData = userDoc.data();
+106: 4 |       } catch (err) {
+107: 4 |         logManagerError("Error fetching user data for checkout", err);
+108: 3 |       }
+109: 2 |     }
+110: 2 | 
+111: 3 |     if (userData.hasPromoCode) {
+112: 3 |       finalPrice *= 0.9;
+113: 2 |     }
+114: 2 |     finalPrice = Math.floor(finalPrice);
+115: 2 | 
+116: 2 |     // If a discount was applied, we must build price_data dynamically
+117: 3 |     if (finalPrice !== (plan === "Business Pro" ? 207 : 61)) {
+118: 3 |       const productId = plan === "Business Pro" ?
+119: 3 |         "prod_UFnBrTwFCgb54A" :
+120: 3 |         "prod_UFn8zqZ0mwyy5r";
+121: 4 |       lineItems = [{
+122: 5 |         price_data: {
+123: 5 |           currency: "usd",
+124: 5 |           product: productId,
+125: 5 |           recurring: {interval: "year"},
+126: 5 |           // Stripe requires amounts in cents
+127: 5 |           unit_amount: Math.round(finalPrice * 100),
+128: 4 |         },
+129: 4 |         quantity: 1,
+130: 3 |       }];
+131: 3 |     } else {
+132: 3 |       // 🔴 Fallback to Actual Price IDs if no custom amount was provided
+133: 3 |       const priceId = plan === "Business Pro" ?
+134: 3 |         "price_1THHbVBp2C5GdKaKvCVoMf1X" :
+135: 3 |         "price_1THHYPBp2C5GdKaKxNpqndNE";
+136: 3 |       lineItems = [{price: priceId, quantity: 1}];
+137: 2 |     }
+138: 2 | 
+139: 3 |     try {
+140: 4 |       const session = await stripe.checkout.sessions.create({
+141: 4 |         mode: "subscription",
+142: 4 |         client_reference_id: uid,
+143: 4 |         payment_method_types: ["card"],
+144: 4 |         customer_email: email,
+145: 4 |         line_items: lineItems,
+146: 5 |         subscription_data: {
+147: 5 |           trial_period_days: 7,
+148: 6 |           metadata: {
+149: 6 |             uid: uid || "unknown",
+150: 6 |             planName: plan || "Pro",
+151: 5 |           },
+152: 4 |         },
+153: 4 | 
+154: 4 |         // Use URLs from frontend, fallback to hardcoded if missing
+155: 4 |         success_url: successUrl ||
+156: 4 |           "https://dreamstimeskip-beta.pages.dev/tracker?success=true",
+157: 4 |         cancel_url: cancelUrl ||
+158: 4 |           "https://dreamstimeskip-beta.pages.dev/tracker?canceled=true",
+159: 5 |         metadata: {
+160: 5 |           uid: uid || "unknown",
+161: 5 |           planName: plan || "Pro",
+162: 4 |         },
+163: 3 |       });
+164: 3 | 
+165: 3 |       res.status(200).json({url: session.url});
+166: 3 |     } catch (err) {
+167: 3 |       logManagerError("Checkout Error for uid:", uid, err);
+168: 3 |       res.status(500).json({error: "An internal server error occurred. Please try again later."});
+169: 2 |     }
+170: 1 |   });
+171: 0 | });
+172: 0 | 
+173: 0 | // 🔐 STRIPE WEBHOOK (SECURE)
+174: 1 | exports.stripeWebhook = onRequest({invoker: "public"}, async (req, res) => {
+175: 1 |   const sig = req.headers["stripe-signature"];
+176: 1 |   let event;
+177: 1 | 
+178: 2 |   try {
+179: 2 |     event = stripe.webhooks.constructEvent(req.rawBody, sig, endpointSecret);
+180: 2 |   } catch (err) {
+181: 2 |     logManagerError("Webhook Error:", err);
+182: 2 |     return res.status(400).send("Webhook Error: Invalid payload or signature");
+183: 1 |   }
+184: 1 | 
+185: 1 |   // 🎯 Handle Events
+186: 2 |   if (event.type === "checkout.session.completed") {
+187: 2 |     const session = event.data.object;
+188: 2 |     const uid = session.metadata.uid;
+189: 2 |     const planName = session.metadata.planName || "Pro";
+190: 2 | 
+191: 3 |     if (uid && uid !== "unknown") {
+192: 3 |       // Updates the frontend to unlock pro features immediately
+193: 4 |       try {
+194: 5 |         await admin.firestore().collection("users").doc(uid).set({
+195: 5 |           plan: planName,
+196: 6 |           subscription: {
+197: 6 |             status: "active",
+198: 6 |             customerId: session.customer,
+199: 6 |             subscriptionId: session.subscription,
+200: 5 |           },
+201: 5 |           updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+202: 4 |         }, {merge: true});
+203: 4 |         console.log(`✅ Successfully upgraded user ${uid} to ${planName}`);
+204: 4 |       } catch (error) {
+205: 4 |         logManagerError("Error updating user subscription status:", error);
+206: 3 |       }
+207: 2 |     }
+208: 1 |   }
+209: 1 | 
+210: 1 |   if (event.type === "customer.subscription.deleted" ||
+211: 2 |     event.type === "customer.subscription.canceled") {
+212: 2 |     const sub = event.data.object;
+213: 2 | 
+214: 3 |     try {
+215: 3 |       const snapshot = await admin.firestore()
+216: 3 |           .collection("users")
+217: 3 |           .where("subscription.customerId", "==", sub.customer)
+218: 3 |           .get();
+219: 3 | 
+220: 3 |       const batch = admin.firestore().batch();
+221: 4 |       snapshot.docs.forEach((doc) => {
+222: 5 |         batch.update(doc.ref, {
+223: 5 |           "plan": "Free",
+224: 5 |           "subscription.status": "canceled",
+225: 5 |           "updatedAt": admin.firestore.FieldValue.serverTimestamp(),
+226: 4 |         });
+227: 4 |         console.log(`❌ Reverted user ${doc.id} back to Free plan (batched).`);
+228: 3 |       });
+229: 3 | 
+230: 4 |       try {
+231: 5 |         if (snapshot.docs.length > 0) {
+232: 5 |           await batch.commit();
+233: 4 |         }
+234: 4 |       } catch (err) {
+235: 4 |         logManagerError("Error committing batch to revert users to Free plan:", err);
+236: 3 |       }
+237: 3 |     } catch (webhookError) {
+238: 3 |       logManagerError("Error processing Stripe webhook subscription cancellation:", webhookError);
+239: 2 |     }
+240: 1 |   }
+241: 1 | 
+242: 1 |   res.json({received: true});
+243: 0 | });
+244: 0 | 
+245: 0 | // 🔻 Cancel Subscription Manually
+246: 1 | exports.cancelSubscription = functions.https.onCall(async (data, context) => {
+247: 2 |   if (!context || !context.auth) {
+248: 2 |     throw new HttpsError("unauthenticated", "You must be logged in.");
+249: 1 |   }
+250: 1 | 
+251: 1 |   const uid = context.auth.uid;
+252: 1 | 
+253: 2 |   try {
+254: 2 |     const userDoc = await admin.firestore().collection("users").doc(uid).get();
+255: 3 |     if (!userDoc.exists) {
+256: 3 |       throw new HttpsError("not-found", "User not found");
+257: 2 |     }
+258: 2 | 
+259: 2 |     const customerId = userDoc.data().subscription && userDoc.data().subscription.customerId;
+260: 3 |     if (!customerId) {
+261: 3 |       throw new HttpsError("failed-precondition", "No active subscription found.");
+262: 2 |     }
+263: 2 | 
+264: 2 |     const subs = await stripe.subscriptions.list({customer: customerId});
+265: 2 |     await Promise.all(
+266: 2 |         subs.data.map((sub) => stripe.subscriptions.cancel(sub.id)),
+267: 2 |     );
+268: 2 |     return {success: true};
+269: 2 |   } catch (err) {
+270: 2 |     logManagerError(`Cancel Error for uid: ${uid}`, err);
+271: 2 |     if (err instanceof HttpsError) throw err;
+272: 2 |     throw new HttpsError("internal", "An internal server error occurred. Please try again later.");
+273: 1 |   }
+274: 0 | });
+275: 0 | 
+276: 0 | /**
+277: 0 |  * Manage Tasks API
+278: 0 |  * Handles creation, status updating, and deletion of shift tasks.
+279: 0 |  */
+280: 1 | exports.manageTasks = functions.https.onCall(async (data, context) => {
+281: 1 |   const {uid, userOrgId, isAdmin, userName, action, payload} = await getAuthAndPayload(data, context, admin);
+282: 1 | 
+283: 2 |   try {
+284: 2 |     const isManager = userOrgId === uid;
+285: 2 |     const actualOrgId = userOrgId || uid;
+286: 2 | 
+287: 3 |     if (action === "create") {
+288: 4 |       if (!isManager) {
+289: 4 |         throw new HttpsError("permission-denied", "Only managers can create tasks");
+290: 3 |       }
+291: 3 |       const {title, description, assignee, dueDate, priority} = payload;
+292: 3 |       checkRequiredFields(payload, ["title", "assignee"]);
+293: 3 | 
+294: 4 |       const newTask = {
+295: 4 |         title,
+296: 4 |         description: description || "",
+297: 4 |         assigneeName: assignee, // The frontend sends employee names here
+298: 4 |         assigneeId: assignee, // In case frontend just passes the name, let's store it as assignee too
+299: 4 |         orgId: actualOrgId,
+300: 4 |         authorId: uid,
+301: 4 |         assignedByName: userName || "Manager",
+302: 4 |         priority: priority || "Low",
+303: 4 |         dueDate: dueDate || null,
+304: 4 |         status: "Pending",
+305: 4 |         createdAt: admin.firestore.FieldValue.serverTimestamp(),
+306: 4 |         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+307: 3 |       };
+308: 3 | 
+309: 3 |       const docRef = await admin.firestore().collection("tasks").add(newTask);
+310: 3 |       return {success: true, id: docRef.id};
+311: 2 |     }
+312: 2 | 
+313: 3 |     if (action === "get") {
+314: 3 |       let query = admin.firestore().collection("tasks").where("orgId", "==", actualOrgId);
+315: 3 | 
+316: 3 |       const snapshot = await query.get();
+317: 3 |       const tasks = [];
+318: 3 |       snapshot.forEach(doc => tasks.push({ id: doc.id, ...doc.data() }));
+319: 3 |       return {success: true, tasks};
+320: 2 |     }
+321: 2 | 
+322: 3 |     if (action === "updateStatus") {
+323: 3 |       const {taskId, status} = payload;
+324: 3 |       const taskRef = admin.firestore().collection("tasks").doc(taskId);
+325: 3 |       const taskDoc = await taskRef.get();
+326: 4 |       if (!taskDoc.exists) {
+327: 4 |         throw new HttpsError("not-found", "Task not found");
+328: 3 |       }
+329: 3 | 
+330: 3 |       // We check if the user is a manager or the assignee
+331: 3 |       const taskData = taskDoc.data();
+332: 3 |       const isAssignee = taskData.assigneeName === userName || taskData.assigneeId === uid || taskData.assigneeId === userName;
+333: 3 | 
+334: 4 |       if (!isManager && !isAssignee) {
+335: 4 |         throw new HttpsError("permission-denied", "Not authorized to update this task");
+336: 3 |       }
+337: 3 | 
+338: 4 |       await taskRef.update({
+339: 4 |           status,
+340: 4 |           updatedAt: admin.firestore.FieldValue.serverTimestamp()
+341: 3 |       });
+342: 3 |       return {success: true};
+343: 2 |     }
+344: 2 | 
+345: 3 |     if (action === "delete") {
+346: 4 |       if (!isManager) {
+347: 4 |         throw new HttpsError("permission-denied", "Only managers can delete tasks");
+348: 3 |       }
+349: 3 |       const {taskId} = payload;
+350: 3 |       const taskRef = admin.firestore().collection("tasks").doc(taskId);
+351: 3 |       const taskDoc = await taskRef.get();
+352: 4 |       if (!taskDoc.exists) {
+353: 4 |         throw new HttpsError("not-found", "Task not found");
+354: 3 |       }
+355: 4 |       if (taskDoc.data().orgId !== actualOrgId) {
+356: 4 |         throw new HttpsError("permission-denied", "Not authorized to delete this task");
+357: 3 |       }
+358: 3 |       await taskRef.delete();
+359: 3 |       return {success: true};
+360: 2 |     }
+361: 2 | 
+362: 2 |     throw new HttpsError("invalid-argument", "Invalid action");
+363: 2 |   } catch (error) {
+364: 2 |     logManagerError("Manage Tasks Error for uid:", uid, error);
+365: 3 |     if (error instanceof HttpsError) {
+366: 3 |       throw error;
+367: 2 |     }
+368: 2 |     throw new HttpsError("internal", "An internal error occurred.");
+369: 1 |   }
+370: 0 | });
+371: 0 | 
+372: 0 | /**
+373: 0 |  * Manage Shift Notes API
+374: 0 |  * Handles creation, updating, and resolution of shift notes.
+375: 0 |  */
+376: 1 | exports.manageShiftNotes = functions.https.onCall(async (data, context) => {
+377: 1 |   const {uid, userOrgId, isAdmin, userName, action, payload} = await getAuthAndPayload(data, context, admin);
+378: 1 | 
+379: 2 |   try {
+380: 2 |     // 🛡️ Securely fetch the user's actual orgId from the database
+381: 2 |     // instead of trusting the client payload to prevent IDOR
+382: 2 |     const actualOrgId = payload.orgId || userOrgId || null;
+383: 2 | 
+384: 3 |     if (action === "create") {
+385: 3 |       const {authorId, orgId, authorName, content, priority} = payload;
+386: 3 | 
+387: 4 |       if (!content) {
+388: 4 |         throw new HttpsError(
+389: 4 |             "invalid-argument", "Missing note content");
+390: 3 |       }
+391: 3 | 
+392: 3 |       const validPriorities = ["Normal", "Urgent"];
+393: 3 |       const notePriority = validPriorities.includes(priority) ?
+394: 3 |         priority : "Normal";
+395: 3 | 
+396: 4 |       const newNote = {
+397: 4 |         authorId: authorId || uid,
+398: 4 |         authorName: authorName || "Anonymous",
+399: 4 |         content,
+400: 4 |         priority: notePriority,
+401: 4 |         status: "Active",
+402: 4 |         orgId: orgId || actualOrgId,
+403: 4 |         timestamp: admin.firestore.FieldValue.serverTimestamp(),
+404: 3 |       };
+405: 3 | 
+406: 3 |       const docRef = await admin.firestore()
+407: 3 |           .collection("shift_notes")
+408: 3 |           .add(newNote);
+409: 3 | 
+410: 3 |       return {success: true, id: docRef.id};
+411: 2 |     }
+412: 2 | 
+413: 3 |     if (action === "resolve") {
+414: 3 |       const {noteId, resolvedBy} = payload;
+415: 3 | 
+416: 3 |       checkRequiredFields(payload, ["noteId", "resolvedBy"]);
+417: 3 | 
+418: 3 |       // 🛡️ Verify the user resolving the note is in the same organization
+419: 3 |       const {docRef: noteRef} = await verifyDocAndAuth(
+420: 3 |           "shift_notes",
+421: 3 |           noteId,
+422: 3 |           actualOrgId,
+423: 3 |           "Note not found",
+424: 3 |           "Unauthorized to resolve this note",
+425: 3 |       );
+426: 3 | 
+427: 4 |       await noteRef.update({
+428: 4 |         status: "Resolved",
+429: 4 |         resolvedBy,
+430: 4 |         resolvedAt: admin.firestore.FieldValue.serverTimestamp(),
+431: 3 |       });
+432: 3 | 
+433: 3 |       return {success: true};
+434: 2 |     }
+435: 2 | 
+436: 2 |     throw new HttpsError(
+437: 2 |         "invalid-argument", "Invalid action");
+438: 2 |   } catch (error) {
+439: 2 |     logManagerError("Shift Note Error for uid:", uid, error);
+440: 2 | 
+441: 2 |     throw new HttpsError("internal", "An internal error occurred.");
+442: 1 |   }
+443: 0 | });
+444: 0 | 
+445: 0 | /**
+446: 0 |  * Manage Employees API
+447: 0 |  * Handles creation, updating, and deletion of employees.
+448: 0 |  */
+449: 1 | exports.manageCertifications = functions.https.onCall(async (data, context) => {
+450: 2 |   try {
+451: 2 |     const {uid, userOrgId, isAdmin, userName, action, payload} = await getAuthAndPayload(data, context, admin);
+452: 2 | 
+453: 3 |     if (!userOrgId) {
+454: 3 |       throw new HttpsError("permission-denied", "User must be part of an organization to manage certifications.");
+455: 2 |     }
+456: 2 | 
+457: 3 |     if (action === "create") {
+458: 3 |       checkRequiredFields(payload, ["empId", "empName", "certName", "expiryDate"]);
+459: 3 | 
+460: 4 |       const certRef = await admin.firestore().collection("certifications").add({
+461: 4 |         empId: payload.empId,
+462: 4 |         empName: payload.empName,
+463: 4 |         certName: payload.certName,
+464: 4 |         issueDate: payload.issueDate || null,
+465: 4 |         expiryDate: payload.expiryDate,
+466: 4 |         status: "Valid", // Frontend logic can update this if needed, or backend can verify
+467: 4 |         orgId: userOrgId,
+468: 4 |         loggedByUid: uid,
+469: 4 |         loggedByName: userName,
+470: 4 |         createdAt: admin.firestore.FieldValue.serverTimestamp(),
+471: 3 |       });
+472: 3 | 
+473: 3 |       return {success: true, message: "Certification created", id: certRef.id};
+474: 3 |     } else if (action === "get") {
+475: 3 |       const certsQuery = await admin.firestore().collection("certifications")
+476: 3 |           .where("orgId", "==", userOrgId)
+477: 3 |           .orderBy("createdAt", "desc")
+478: 3 |           .get();
+479: 3 | 
+480: 3 |       const certs = [];
+481: 4 |       certsQuery.forEach((doc) => {
+482: 4 |         certs.push({id: doc.id, ...doc.data()});
+483: 3 |       });
+484: 3 |       return {success: true, certifications: certs};
+485: 3 |     } else if (action === "delete") {
+486: 3 |       checkRequiredFields(payload, ["certId"]);
+487: 3 | 
+488: 3 |       const certRef = admin.firestore().collection("certifications").doc(payload.certId);
+489: 3 |       const doc = await certRef.get();
+490: 3 |       if (!doc.exists) throw new HttpsError("not-found", "Certification not found.");
+491: 4 |       if (doc.data().orgId !== userOrgId && !isAdmin) {
+492: 4 |         throw new HttpsError("permission-denied", "Cannot delete a certification outside your organization.");
+493: 3 |       }
+494: 3 | 
+495: 3 |       await certRef.delete();
+496: 3 |       return {success: true, message: "Certification deleted"};
+497: 3 |     } else if (action === "updateStatus") {
+498: 3 |       checkRequiredFields(payload, ["certId", "status"]);
+499: 3 | 
+500: 3 |       const certRef = admin.firestore().collection("certifications").doc(payload.certId);
+501: 3 |       const doc = await certRef.get();
+502: 3 |       if (!doc.exists) throw new HttpsError("not-found", "Certification not found.");
+503: 4 |       if (doc.data().orgId !== userOrgId && !isAdmin) {
+504: 4 |         throw new HttpsError("permission-denied", "Cannot update a certification outside your organization.");
+505: 3 |       }
+506: 3 | 
+507: 3 |       await certRef.update({status: payload.status});
+508: 3 |       return {success: true, message: "Certification updated"};
+509: 3 |     } else {
+510: 3 |       throw new HttpsError("invalid-argument", "Unknown action");
+511: 2 |     }
+512: 1 |   } catch (error) { handleInternalError("Error in manageCertifications: ", error); }
+513: 0 | });
+514: 0 | 
+515: 1 | exports.manageEmployees = functions.https.onCall(async (data, context) => {
+516: 1 |   const {uid, userOrgId, isAdmin, userName, action, payload} = await getAuthAndPayload(data, context, admin);
+517: 1 | 
+518: 2 |   try {
+519: 2 |     const actualOrgId = userOrgId;
+520: 2 | 
+521: 3 |     if (!actualOrgId) {
+522: 3 |       throw new HttpsError("permission-denied", "User must be part of an organization.");
+523: 2 |     }
+524: 2 | 
+525: 3 |     if (action === "create") {
+526: 3 |       const {name, role, phone} = payload;
+527: 3 | 
+528: 3 |       checkRequiredFields(payload, ["name", "role"], "Missing required employee details");
+529: 3 | 
+530: 4 |       const newEmployee = {
+531: 4 |         name,
+532: 4 |         role,
+533: 4 |         phone: phone || "",
+534: 4 |         status: "Active",
+535: 4 |         orgId: actualOrgId,
+536: 4 |         createdAt: admin.firestore.FieldValue.serverTimestamp(),
+537: 3 |       };
+538: 3 | 
+539: 3 |       const docRef = await admin.firestore().collection("employees").add(newEmployee);
+540: 3 |       return {success: true, id: docRef.id};
+541: 2 |     }
+542: 2 | 
+543: 3 |     if (action === "get") {
+544: 3 |       const snapshot = await admin.firestore().collection("employees")
+545: 3 |           .where("orgId", "==", actualOrgId)
+546: 3 |           .where("status", "==", "Active")
+547: 3 |           .get();
+548: 3 | 
+549: 3 |       const employees = [];
+550: 3 |       snapshot.forEach((doc) => employees.push({id: doc.id, ...doc.data()}));
+551: 3 |       return {success: true, employees};
+552: 2 |     }
+553: 2 | 
+554: 3 |     if (action === "update") {
+555: 3 |       const {empId, name, role, phone, status} = payload;
+556: 4 |       if (!empId) {
+557: 4 |         throw new HttpsError("invalid-argument", "Missing employee ID");
+558: 3 |       }
+559: 3 | 
+560: 3 |       const {docRef: empRef} = await verifyDocAndAuth(
+561: 3 |           "employees",
+562: 3 |           empId,
+563: 3 |           actualOrgId,
+564: 3 |           "Employee not found",
+565: 3 |           "Unauthorized to update this employee",
+566: 3 |       );
+567: 3 | 
+568: 3 |       const updates = {};
+569: 3 |       if (name !== undefined) updates.name = name;
+570: 3 |       if (role !== undefined) updates.role = role;
+571: 3 |       if (phone !== undefined) updates.phone = phone;
+572: 3 |       if (status !== undefined) updates.status = status;
+573: 2 |     }
+574: 2 | 
+575: 3 |     if (action === "delete") {
+576: 3 |       const {empId} = payload;
+577: 4 |       if (!empId) {
+578: 4 |         throw new HttpsError("invalid-argument", "Missing employee ID");
+579: 3 |       }
+580: 3 | 
+581: 3 |       const {docRef: empRef} = await verifyDocAndAuth(
+582: 3 |           "employees",
+583: 3 |           empId,
+584: 3 |           actualOrgId,
+585: 3 |           "Employee not found",
+586: 3 |           "Unauthorized to delete this employee",
+587: 3 |       );
+588: 3 | 
+589: 3 |       // Soft delete
+590: 3 |       await empRef.update({status: "Inactive"});
+591: 3 |       return {success: true};
+592: 2 |     }
+593: 2 | 
+594: 2 |     throw new HttpsError("invalid-argument", "Invalid action");
+595: 2 |   } catch (error) {
+596: 2 |     logManagerError("Manage Employees Error for uid:", uid, error);
+597: 3 |     if (error instanceof HttpsError) {
+598: 3 |       throw error;
+599: 2 |     }
+600: 2 |     throw new HttpsError("internal", "An internal error occurred.");
+601: 1 |   }
+602: 0 | });
+603: 0 | 
+604: 0 | 
+605: 1 | async function handleCreateShiftGroup(payload, uid) {
+606: 1 |   const {authorId, orgId, ownerName, groupName, password} = payload;
+607: 1 | 
+608: 1 |   checkRequiredFields(payload, ["groupName", "password"]);
+609: 1 | 
+610: 1 |   const salt = crypto.randomBytes(16).toString("hex");
+611: 1 |   const hash = crypto.scryptSync(password, salt, 64).toString("hex");
+612: 1 |   const hashedPassword = `$scrypt$${hash}:${salt}`;
+613: 1 | 
+614: 2 |   const newGroup = {
+615: 2 |     ownerId: authorId || uid,
+616: 2 |     orgId: orgId || uid,
+617: 2 |     ownerName: ownerName || "Anonymous",
+618: 2 |     groupName,
+619: 2 |     password: hashedPassword,
+620: 2 |     createdAt: admin.firestore.FieldValue.serverTimestamp(),
+621: 1 |   };
+622: 1 | 
+623: 1 |   const docRef = await admin.firestore()
+624: 1 |       .collection("shift_groups")
+625: 1 |       .add(newGroup);
+626: 1 | 
+627: 1 | 
+628: 1 | 
+629: 1 | 
+630: 1 |   return {success: true, groupId: docRef.id};
+631: 0 | }
+632: 0 | 
+633: 1 | async function handleRequestJoinShiftGroup(payload, uid) {
+634: 1 |   const {userName, groupId, password} = payload;
+635: 1 | 
+636: 1 |   checkRequiredFields(payload, ["groupId", "password"]);
+637: 1 | 
+638: 1 |   const groupDoc = await admin.firestore()
+639: 1 |       .collection("shift_groups").doc(groupId).get();
+640: 1 | 
+641: 2 |   if (!groupDoc.exists) {
+642: 2 |     throw new HttpsError("not-found", "Group not found");
+643: 1 |   }
+644: 1 | 
+645: 1 |   const storedPassword = groupDoc.data().password;
+646: 1 |   let isValid = false;
+647: 1 | 
+648: 1 |   // Check if it's a salted hash
+649: 2 |   if (storedPassword && storedPassword.startsWith("$scrypt$")) {
+650: 2 |     const [hash, salt] = storedPassword.substring(8).split(":");
+651: 2 |     const derivedHash = crypto.scryptSync(password, salt, 64).toString("hex");
+652: 2 |     isValid = (hash === derivedHash);
+653: 2 |   } else {
+654: 2 |     // Legacy plaintext comparison
+655: 2 |     isValid = (storedPassword === password);
+656: 2 | 
+657: 2 |     // Upgrade to salted hash if correct
+658: 3 |     if (isValid) {
+659: 3 |       const salt = crypto.randomBytes(16).toString("hex");
+660: 3 |       const hash = crypto.scryptSync(password, salt, 64).toString("hex");
+661: 4 |       await admin.firestore().collection("shift_groups").doc(groupId).update({
+662: 4 |         password: `$scrypt$${hash}:${salt}`,
+663: 3 |       });
+664: 2 |     }
+665: 1 |   }
+666: 1 | 
+667: 2 |   if (!isValid) {
+668: 2 |     throw new HttpsError(
+669: 2 |         "permission-denied", "Invalid password");
+670: 1 |   }
+671: 1 | 
+672: 1 | 
+673: 2 |   await admin.firestore().collection("shift_group_requests").add({
+674: 2 |     groupId,
+675: 2 |     userId: uid,
+676: 2 |     userName: userName || "Anonymous",
+677: 2 |     status: "Pending",
+678: 2 |     timestamp: admin.firestore.FieldValue.serverTimestamp(),
+679: 1 |   });
+680: 1 | 
+681: 1 |   return {success: true};
+682: 0 | }
+683: 0 | 
+684: 1 |   async function handleRetractJoinShiftGroup(payload, uid) {
+685: 1 |     const {requestId} = payload;
+686: 2 |     if (!requestId) {
+687: 2 |       throw new HttpsError("invalid-argument", "Missing requestId");
+688: 1 |     }
+689: 1 |     const requestDocRef = admin.firestore().collection("shift_group_requests").doc(requestId);
+690: 1 |     const requestDoc = await requestDocRef.get();
+691: 1 | 
+692: 1 |   checkRequiredFields(payload, ["requestId"]);
+693: 1 | 
+694: 2 |     if (requestDoc.data().userId !== uid) {
+695: 2 |       throw new HttpsError("permission-denied", "You can only retract your own requests.");
+696: 1 |     }
+697: 1 | 
+698: 1 |     await requestDocRef.delete();
+699: 1 |     return {success: true};
+700: 0 |   }
+701: 0 | 
+702: 1 |   async function handleApproveJoinShiftGroup(payload, uid) {
+703: 1 |     const {requestId} = payload;
+704: 1 | 
+705: 1 |     checkRequiredFields(payload, ["requestId"]);
+706: 1 | 
+707: 1 |     const requestDocRef = admin.firestore()
+708: 1 |         .collection("shift_group_requests").doc(requestId);
+709: 1 |     const requestDoc = await requestDocRef.get();
+710: 1 | 
+711: 2 |     if (!requestDoc.exists) {
+712: 2 |       throw new HttpsError("not-found", "Request not found");
+713: 1 |     }
+714: 1 | 
+715: 1 |     const {groupId, userId} = requestDoc.data();
+716: 1 | 
+717: 1 |     // Verify the user approving is the owner
+718: 1 |     const groupDoc = await admin.firestore()
+719: 1 |         .collection("shift_groups").doc(groupId).get();
+720: 1 | 
+721: 2 |     if (!groupDoc.exists || groupDoc.data().ownerId !== uid) {
+722: 2 |       throw new HttpsError(
+723: 2 |           "permission-denied", "Unauthorized");
+724: 1 |     }
+725: 1 | 
+726: 1 |   checkRequiredFields(payload, ["userId", "groupId"]);
+727: 1 | 
+728: 1 |     // Update request status
+729: 2 |     await requestDocRef.update({
+730: 2 |       status: "Approved",
+731: 2 |       approvedAt: admin.firestore.FieldValue.serverTimestamp(),
+732: 1 |     });
+733: 1 | 
+734: 1 |     return {success: true};
+735: 0 |   }
+736: 0 | 
+737: 1 |   async function handleRemoveManagerShiftGroup(payload, uid) {
+738: 1 |     const {userId, groupId} = payload;
+739: 1 | 
+740: 1 |     checkRequiredFields(payload, ["userId", "groupId"]);
+741: 1 | 
+742: 1 |     const groupDoc = await admin.firestore()
+743: 1 |         .collection("shift_groups").doc(groupId).get();
+744: 1 | 
+745: 2 |     if (!groupDoc.exists || groupDoc.data().ownerId !== uid) {
+746: 2 |       throw new HttpsError(
+747: 2 |           "permission-denied", "Unauthorized");
+748: 1 |     }
+749: 1 | 
+750: 2 |     await admin.firestore().collection("users").doc(userId).update({
+751: 2 |       orgId: null,
+752: 1 |     });
+753: 1 | 
+754: 1 |     return {success: true};
+755: 0 |   }
+756: 0 | 
+757: 0 |   /**
+758: 0 |  * Manage Shift Groups API
+759: 0 |  * Handles creating groups, joining groups, and approving joins.
+760: 0 |  */
+761: 1 |   exports.manageShiftGroups = functions.https.onCall(async (data, context) => {
+762: 1 |     const {uid, userOrgId, isAdmin, userName, action, payload} = await getAuthAndPayload(data, context, admin);
+763: 1 | 
+764: 2 |     try {
+765: 2 |       if (action === "create") return await handleCreateShiftGroup(payload, uid);
+766: 2 |       if (action === "request_join") return await handleRequestJoinShiftGroup(payload, uid);
+767: 2 |       if (action === "retract_join") return await handleRetractJoinShiftGroup(payload, uid);
+768: 2 |       if (action === "approve_join") return await handleApproveJoinShiftGroup(payload, uid);
+769: 2 |       if (action === "remove_manager") return await handleRemoveManagerShiftGroup(payload, uid);
+770: 2 | 
+771: 2 |       throw new HttpsError("invalid-argument", "Invalid action");
+772: 2 |     } catch (error) {
+773: 2 |       logManagerError("Shift Groups Error for uid:", uid, error);
+774: 2 | 
+775: 3 |       if (error instanceof HttpsError) {
+776: 3 |         throw error;
+777: 2 |       }
+778: 2 |       throw new HttpsError("internal", error.message);
+779: 1 |     }
+780: 1 |     throw new HttpsError("internal", "An internal error occurred.");
+781: 0 |   }
+782: -1 | });
+Unmatched } at line 782
