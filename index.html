@@ -2555,15 +2555,15 @@
                             localStorage.removeItem('navTo');
                             navTo(pendingNavTo);
                         } else {
-                            let activeView = document.querySelector('.view-section.active');
-                            if (activeView && activeView.id === 'view-auth') navTo('tracker');
+                            const activeView1 = document.querySelector('.view-section.active');
+                            if (activeView1 && activeView1.id === 'view-auth') navTo('tracker');
                         }
                         runAIPatternLogic();
                     } else {
                         if (!doc.exists) {
                             isInitializingAuth = false;
-                            activeView = document.querySelector('.view-section.active');
-                            if (activeView && activeView.id !== 'view-setup') {
+                            const activeView2b = document.querySelector('.view-section.active');
+                            if (activeView2b && activeView2b.id !== 'view-setup') {
                                 try {
                                     const emailDoc = await fetchUserDoc(user.email);
                                     if (emailDoc.exists) {
@@ -2583,7 +2583,6 @@
                             navTo('tracker');
                         }
 
-                        activeView = document.querySelector('.view-section.active');
                         const activeView2 = document.querySelector('.view-section.active');
                         if (!navigator.onLine) {
                             if (activeView2 && activeView2.id !== 'view-tracker') navTo('tracker');
@@ -2603,8 +2602,8 @@
                     localStorage.removeItem('navTo');
                     navTo(pendingNavTo);
                 } else {
-                    activeView = document.querySelector('.view-section.active');
-                    if (activeView && activeView.id !== 'view-auth' && activeView.id !== 'view-tracker') navTo('auth');
+                    const activeView3 = document.querySelector('.view-section.active');
+                    if (activeView3 && activeView3.id !== 'view-auth' && activeView3.id !== 'view-tracker') navTo('auth');
                 }
                 isInitializingAuth = false;
             }
@@ -4955,6 +4954,7 @@
                 }
                 shifts.push(newShift);
 
+                // Await write to resolve race conditions
                 await scheduleRef.set({
                     uid: currentUser.uid,
                     authorId: currentUser.uid,
