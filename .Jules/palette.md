@@ -72,3 +72,7 @@
 ## 2024-05-24 - ARIA labels for dynamic toggle buttons
 **Learning:** Buttons that dynamically toggle sections, like the "X Variations" button that toggles open the canonical item variations in `easy-ai.html`, need `aria-label`s to inform screen readers of their action and target, especially when they only contain minimal text and a toggle icon.
 **Action:** Add explicit `aria-label`s to dynamic toggle buttons (e.g., 'Toggle variations for [Item Name]') to ensure screen reader users understand what section will be expanded or collapsed.
+
+## 2025-02-12 - ARIA label for persistent icon-only buttons with dynamic content
+**Learning:** Buttons that display an action initially as a loader icon (`data-lucide="loader-2"`) without any text lack an accessible name, making them unreadable by screen readers during initialization or loading states.
+**Action:** Always provide a persistent, descriptive `aria-label` (e.g., "Toggle Time Clock") on buttons that dynamically change content or initially lack descriptive text.
