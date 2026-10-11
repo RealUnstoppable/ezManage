@@ -2743,7 +2743,13 @@
             toggleAuthModeUI();
         }
 
-        async function handleAuth(e) {
+                window.handleAuth = handleAuth;
+        window.signInWithGoogle = signInWithGoogle;
+        window.signOut = signOut;
+        window.completeSetup = completeSetup;
+        window.toggleAuthModeUI = toggleAuthModeUI;
+        window.toggleAuthMode = toggleAuthMode;
+async function handleAuth(e) {
             e.preventDefault();
             const email = document.getElementById('authEmail').value;
             const pass = document.getElementById('authPass').value;
