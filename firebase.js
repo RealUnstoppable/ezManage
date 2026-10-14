@@ -13,8 +13,13 @@ const firebaseConfig = typeof window !== 'undefined' && window.ezManageFirebaseC
 // Ensure Firebase is initialized strictly as a global singleton using the compat SDK
 // to prevent token mismatches and duplicate initialization errors.
 // Use experimentalForceLongPolling for fallback on CORS/network issues
-if (!window.firebase.apps.length) {
-    const app = window.firebase.initializeApp(firebaseConfig);
+let app = null;
+if (typeof window !== "undefined" && window.firebase) {
+    if (!window.firebase.apps.length) {
+        app = window.firebase.initializeApp(firebaseConfig);
+    } else {
+        app = window.firebase.app();
+    }
     try {
         window.firebase.firestore().settings({
             experimentalForceLongPolling: true

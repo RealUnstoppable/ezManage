@@ -11,14 +11,16 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-messaging-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-functions-compat.js"></script>
     <script>
-      const app = !window.firebase.apps.length ? window.firebase.initializeApp(window.ezManageFirebaseConfig) : window.firebase.app();
+      if (window.firebase && !window.firebase.apps.length && window.ezManageFirebaseConfig) {
+          window.firebase.initializeApp(window.ezManageFirebaseConfig);
+      }
       try {
-          window.firebase.firestore().settings({ experimentalForceLongPolling: true });
+          if (window.firebase && window.firebase.firestore) {
+              window.firebase.firestore().settings({ experimentalForceLongPolling: true });
+          }
       } catch (e) {
           console.warn("Firestore settings already configured or errored: ", e);
       }
-      const auth = window.firebase.auth();
-      const db = window.firebase.firestore();
     </script>
   <script type="module">
     import { escapeHTML, logManagerError } from './js/utils.js';
@@ -123,7 +125,7 @@
         }
 
         .view-section.active {
-            display: block;
+            display: block !important;
             animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
@@ -421,14 +423,14 @@
             </div>
 
             <div class="hidden md:flex space-x-10 text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">
-                <a href="#" onclick="navTo('welcome')" class="hover:text-sky-600 transition-colors">Home</a>
-                <a href="#" onclick="navTo('tracker')" class="hover:text-sky-600 transition-colors">App</a>
-                <a href="#" onclick="navTo('schedule')" class="hover:text-sky-600 transition-colors">Schedule</a>
-                            <a href="#" onclick="navTo('announcements')" class="hover:text-sky-600 transition-colors">Notices</a>
-                <a href="#" onclick="navTo('tasks')" class="hover:text-sky-600 transition-colors">Tasks</a>
+                <a href="#" onclick="navTo('welcome', event)" class="hover:text-sky-600 transition-colors">Home</a>
+                <a href="#" onclick="navTo('tracker', event)" class="hover:text-sky-600 transition-colors">App</a>
+                <a href="#" onclick="navTo('schedule', event)" class="hover:text-sky-600 transition-colors">Schedule</a>
+                <a href="#" onclick="navTo('announcements', event)" class="hover:text-sky-600 transition-colors">Notices</a>
+                <a href="#" onclick="navTo('tasks', event)" class="hover:text-sky-600 transition-colors">Tasks</a>
                 <a href="easy-ai.html" class="hover:text-sky-600 transition-colors text-sky-500">AI Predictor</a>
                 <a href="inventory.html" class="hover:text-sky-600 transition-colors text-sky-500">Inventory</a>
-                <a href="#" onclick="navTo('pricing')" class="hover:text-sky-600 transition-colors">Pricing</a>
+                <a href="#" onclick="navTo('pricing', event)" class="hover:text-sky-600 transition-colors">Pricing</a>
             </div>
 
             <div class="flex items-center space-x-4">
@@ -1168,7 +1170,7 @@
             </div>
         </div>
 
-        <div id="view-team" class="view-section px-6 py-12 hidden">
+        <div id="view-team" class="view-section px-6 py-12">
             <div class="max-w-4xl mx-auto">
                 <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
                     <h1 class="text-4xl font-black">Team Directory</h1>
@@ -1224,7 +1226,7 @@
 
         <!-- View: Tasks -->
 
-        <div id="view-announcements" class="view-section px-6 py-12 hidden">
+        <div id="view-announcements" class="view-section px-6 py-12">
             <div class="max-w-4xl mx-auto">
                 <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
                     <h1 class="text-4xl font-black flex items-center gap-3"><i data-lucide="megaphone" class="w-8 h-8 text-sky-500"></i> Announcements</h1>
@@ -1277,7 +1279,7 @@
             </div>
         </div>
 
-        <div id="view-timeclock" class="view-section px-6 py-12 hidden">
+        <div id="view-timeclock" class="view-section px-6 py-12">
             <div class="max-w-4xl mx-auto">
                 <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
                     <h1 class="text-4xl font-black">Time Clock</h1>
@@ -1475,7 +1477,7 @@
             </div>
         </div>
 
-        <div id="view-tasks" class="view-section px-6 py-12 hidden">
+        <div id="view-tasks" class="view-section px-6 py-12">
             <div class="max-w-4xl mx-auto">
                 <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
                     <h1 class="text-4xl font-black">Task Manager</h1>
@@ -1546,7 +1548,7 @@
         </div>
 
 
-        <div id="view-lostandfound" class="view-section px-6 py-12 hidden">
+        <div id="view-lostandfound" class="view-section px-6 py-12">
             <div class="max-w-4xl mx-auto">
                 <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
                     <h1 class="text-4xl font-black">Lost & Found</h1>
@@ -1596,7 +1598,7 @@
             </div>
         </div>
 
-        <div id="view-incidents" class="view-section px-6 py-12 hidden">
+        <div id="view-incidents" class="view-section px-6 py-12">
             <div class="max-w-4xl mx-auto">
                 <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
                     <h1 class="text-4xl font-black">Incident Reports</h1>
@@ -1655,7 +1657,7 @@
             </div>
         </div>
 
-        <div id="view-maintenance" class="view-section px-6 py-12 hidden">
+        <div id="view-maintenance" class="view-section px-6 py-12">
             <div class="max-w-4xl mx-auto">
                 <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
                     <h1 class="text-4xl font-black">Maintenance Tracker</h1>
@@ -1693,8 +1695,21 @@
                     </div>
                 </div>
 
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-black">Active Tickets</h2>
+                    <button onclick="fetchMaintenanceTickets()"
+                        class="text-sm font-bold text-sky-500 hover:text-sky-600 flex items-center gap-2">
+                        <i data-lucide="refresh-cw" class="w-4 h-4"></i> Refresh
+                    </button>
+                </div>
 
-        <div id="view-deliveries" class="view-section px-6 py-12 hidden">
+                <div id="maintenanceContainer" class="space-y-4">
+                    <!-- Tickets populated via JS -->
+                </div>
+            </div>
+        </div>
+
+        <div id="view-deliveries" class="view-section px-6 py-12">
             <div class="max-w-4xl mx-auto">
                 <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
                     <h1 class="text-4xl font-black">Vendor Deliveries</h1>
@@ -1741,7 +1756,7 @@
             </div>
         </div>
 
-        <div id="view-temperatures" class="view-section px-6 py-12 hidden">
+        <div id="view-temperatures" class="view-section px-6 py-12">
             <div class="max-w-4xl mx-auto">
                 <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
                     <h1 class="text-4xl font-black">Equipment Temperatures</h1>
@@ -1790,7 +1805,7 @@
             </div>
         </div>
 
-<div id="view-waste" class="view-section px-6 py-12 hidden">
+        <div id="view-waste" class="view-section px-6 py-12">
             <div class="max-w-4xl mx-auto">
                 <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
                     <h1 class="text-4xl font-black">Waste & Spoilage Tracker</h1>
@@ -1843,19 +1858,6 @@
         </div>
 
 
-                <div class="flex justify-between items-center mb-6">
-                    <h2 class="text-2xl font-black">Active Tickets</h2>
-                    <button onclick="fetchMaintenanceTickets()"
-                        class="text-sm font-bold text-sky-500 hover:text-sky-600 flex items-center gap-2">
-                        <i data-lucide="refresh-cw" class="w-4 h-4"></i> Refresh
-                    </button>
-                </div>
-
-                <div id="maintenanceContainer" class="space-y-4">
-                    <!-- Tickets populated via JS -->
-                </div>
-            </div>
-        </div>
 
         <div id="view-presets" class="view-section px-6 py-12">
             <div class="max-w-4xl mx-auto">
@@ -2213,7 +2215,7 @@
             </div>
         </div>
 
-        <div id="view-recognition" class="view-section px-6 py-12 hidden">
+        <div id="view-recognition" class="view-section px-6 py-12">
             <div class="max-w-4xl mx-auto">
                 <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
                     <h1 class="text-4xl font-black">Team Recognition</h1>
@@ -2260,7 +2262,7 @@
         </div>
 
 
-        <div id="view-marketplace" class="view-section px-6 py-12 hidden">
+        <div id="view-marketplace" class="view-section px-6 py-12">
             <div class="max-w-4xl mx-auto">
                 <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
                     <h1 class="text-4xl font-black">Shift Marketplace</h1>
@@ -2323,7 +2325,7 @@
 
             </div>
         </div>
-<div id="view-timeoff" class="view-section px-6 py-12 hidden">
+        <div id="view-timeoff" class="view-section px-6 py-12">
             <div class="max-w-4xl mx-auto">
                 <div class="card shadow-2xl mb-12">
                     <h1 class="text-3xl font-black mb-4">Request Time Off</h1>
@@ -2603,8 +2605,10 @@
                     localStorage.removeItem('navTo');
                     navTo(pendingNavTo);
                 } else {
-                    activeView = document.querySelector('.view-section.active');
-                    if (activeView && activeView.id !== 'view-auth' && activeView.id !== 'view-tracker') navTo('auth');
+                    const activeView = document.querySelector('.view-section.active');
+                    if (activeView && (activeView.id === 'view-profile' || activeView.id === 'view-setup')) {
+                        navTo('auth');
+                    }
                 }
                 isInitializingAuth = false;
             }
@@ -2965,27 +2969,92 @@
 
 
         window.navTo = navTo;
-        function navTo(viewId) {
-            if (isInitializingAuth) {
-                localStorage.setItem('navTo', viewId);
-                return;
+        function navTo(viewId, event) {
+            if (event && event.preventDefault) {
+                event.preventDefault();
             }
-            if (!currentUser && (['history', 'presets', 'performance', 'request', 'profile', 'shiftNotes', 'team', 'employees', 'timeoff', 'tasks', 'announcements', 'deliveries', 'marketplace', 'lostandfound'].includes(viewId))) {
+
+            // Only hard-redirect profile or setup to auth if user is not logged in
+            if (!currentUser && (viewId === 'profile' || viewId === 'setup')) {
                 viewId = 'auth';
             }
+
+            const targetEl = document.getElementById('view-' + viewId);
+            if (!targetEl) {
+                console.warn('View not found: view-' + viewId);
+                return;
+            }
+
+            // Remove active and hidden from all view sections
+            document.querySelectorAll('.view-section').forEach(el => {
+                el.classList.remove('active');
+                el.classList.remove('hidden');
+            });
+
+            // Activate target view
+            targetEl.classList.remove('hidden');
+            targetEl.classList.add('active');
+
+            // Close mobile sidebar if open
+            const sidebar = document.getElementById('sidebar');
+            if (sidebar) sidebar.classList.remove('open');
+            document.body.classList.remove('overflow-hidden');
+
+            // Scroll smoothly to top
+            if (typeof window.scrollTo === 'function') {
+                try {
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                } catch (e) {
+                    window.scrollTo(0, 0);
+                }
+            }
+
+            // Update URL hash for direct links and history
+            if (window.history && window.history.replaceState) {
+                try {
+                    window.history.replaceState(null, '', '#' + viewId);
+                } catch (e) {}
+            }
+
+            // Update active state in top navbar
+            document.querySelectorAll('nav a').forEach(link => {
+                const clickAttr = link.getAttribute('onclick') || '';
+                if (clickAttr.includes(`'${viewId}'`) || clickAttr.includes(`"${viewId}"`)) {
+                    link.classList.add('text-sky-600', 'dark:text-sky-400');
+                    link.classList.remove('text-slate-500');
+                } else if (!link.classList.contains('text-sky-500')) {
+                    link.classList.remove('text-sky-600', 'dark:text-sky-400');
+                    link.classList.add('text-slate-500');
+                }
+            });
+
+            // Trigger data fetches and setup for the activated view
+            if (viewId === 'schedule') {
+                const dateInput = document.getElementById('scheduleDate');
+                if (dateInput && !dateInput.value) {
+                    dateInput.value = new Date().toISOString().split('T')[0];
+                }
+                const selectedDate = dateInput && dateInput.value ? dateInput.value : new Date().toISOString().split('T')[0];
+                fetchSchedules(selectedDate);
+                populateScheduleDropdown();
+            }
+
+            if (viewId === 'announcements') {
+                fetchAnnouncements();
+            }
+
+            if (viewId === 'tasks') {
+                fetchTasks();
+            }
+
             if (viewId === 'maintenance' && currentUser) {
                 fetchMaintenanceTickets();
             }
 
-            if (viewId === 'announcements' && currentUser) {
-                fetchAnnouncements();
-            }
             if (viewId === 'marketplace' && currentUser) {
                 fetchMarketplaceShifts();
             }
-            if (viewId === 'tasks' && currentUser) {
-                fetchTasks();
-            }
+
             if (viewId === 'team' && currentUser) {
                 fetchTeamDirectory();
             }
@@ -3001,29 +3070,28 @@
             if (viewId === 'incidents' && currentUser) {
                 fetchIncidents();
             }
+
             if (viewId === 'recognition' && currentUser) {
                 fetchRecognitions();
                 populateRecognitionDropdown();
             }
 
-            document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
-            document.getElementById('view-' + viewId).classList.add('active');
-            document.getElementById('sidebar').classList.remove('open');
-            document.body.classList.remove('overflow-hidden');
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-            lucide.createIcons();
-
             if (viewId === 'shiftNotes') {
                 fetchShiftNotes();
             }
-            if (viewId === 'tasks') {
-                fetchTasks();
+
+            if (viewId === 'temperatures' && typeof fetchTemperatureLogs === 'function') {
+                fetchTemperatureLogs();
+            }
+
+            if (window.lucide && typeof window.lucide.createIcons === 'function') {
+                window.lucide.createIcons();
             }
         }
 
         window.handleNavAccountClick = handleNavAccountClick;
-        function handleNavAccountClick() {
-            if (isInitializingAuth) return;
+        function handleNavAccountClick(event) {
+            if (event && event.preventDefault) event.preventDefault();
             navTo(currentUser ? 'profile' : 'auth');
         }
 
@@ -3615,7 +3683,7 @@
         window.perfChartInstance = null;
         function renderPerformanceChart(history) {
             const ctx = document.getElementById('performanceChart');
-            if (!ctx) return;
+            if (!ctx || typeof Chart === 'undefined') return;
 
             const sorted = [...history].reverse();
             const labels = sorted.map(h => (h.dateSaved || 'Unknown').split('-').slice(-2).join('/'));
@@ -4715,13 +4783,13 @@
                           managerRequestsHtml.push(reqCard + `</div></div>`);
                      }
                  });
-                 myRequestsHtml = myRequestsArr.join('');
-                 managerRequestsHtml = managerRequestsArr.join('');
+                 const myContent = myRequestsHtml.join('');
+                 const managerContent = managerRequestsHtml.join('');
 
-                 if (employeeContainer) employeeContainer.innerHTML = myRequestsHtml.join('') || '<p class="text-slate-500">No time off requests found.</p>';
+                 if (employeeContainer) employeeContainer.innerHTML = myContent || '<p class="text-slate-500">No time off requests found.</p>';
                  if (managerContainer) {
                      if (isManager) {
-                         managerContainer.innerHTML = managerRequestsHtml.join('') || '<p class="text-slate-500">No requests to manage.</p>';
+                         managerContainer.innerHTML = managerContent || '<p class="text-slate-500">No requests to manage.</p>';
                          document.getElementById('managerTimeOffSection').style.display = 'block';
                      } else {
                          document.getElementById('managerTimeOffSection').style.display = 'none';
@@ -4980,10 +5048,23 @@
         let unsubscribeSchedule = null;
 
         function fetchSchedules(date) {
-            if (!currentUser) return;
+            const listContainer = document.getElementById('scheduleList');
+            if (!currentUser) {
+                if (listContainer) {
+                    listContainer.innerHTML = `
+                        <div class="text-center py-12 bg-slate-50 dark:bg-slate-900 rounded-2xl border border-dashed border-slate-200 dark:border-slate-800">
+                            <i data-lucide="calendar" class="w-10 h-10 text-slate-400 mx-auto mb-3 opacity-50"></i>
+                            <h4 class="text-lg font-bold mb-1">Roster & Shift Schedules</h4>
+                            <p class="text-slate-500 text-sm mb-4 max-w-sm mx-auto">Sign in to your account to view, assign, and manage employee shifts.</p>
+                            <button onclick="navTo('auth')" class="btn btn-accent btn-sm px-6">Sign In / Register</button>
+                        </div>
+                    `;
+                    if (window.lucide) window.lucide.createIcons();
+                }
+                return;
+            }
             if (unsubscribeSchedule) unsubscribeSchedule();
 
-            const listContainer = document.getElementById('scheduleList');
             if (listContainer) listContainer.innerHTML = '<p class="text-sm text-slate-500">Loading schedule...</p>';
 
             unsubscribeSchedule = db.collection('schedules')
@@ -6303,10 +6384,21 @@ async function submitWasteLog() {
         let unsubscribeAnnouncements = null;
 
         async function fetchAnnouncements() {
-            if (!currentUser || !currentUserData) return;
-
             const container = document.getElementById('announcementsContainer');
             if (!container) return;
+
+            if (!currentUser || !currentUserData) {
+                container.innerHTML = `
+                    <div class="text-center py-16 bg-slate-50 dark:bg-slate-900 rounded-3xl border-2 border-dashed border-slate-200 dark:border-slate-800">
+                        <i data-lucide="megaphone" class="w-12 h-12 text-slate-400 mx-auto mb-4 opacity-50"></i>
+                        <h3 class="text-xl font-bold mb-2">Team & Store Notices</h3>
+                        <p class="text-slate-500 mb-6 max-w-md mx-auto">Sign in to your manager or team account to view and post store notices, policy updates, and team announcements.</p>
+                        <button onclick="navTo('auth')" class="btn btn-primary px-8">Sign In / Register</button>
+                    </div>
+                `;
+                if (window.lucide) window.lucide.createIcons();
+                return;
+            }
 
             const isManager = currentUserData.orgId === currentUser.uid;
             const actualOrgId = currentUserData.orgId || currentUser.uid;
@@ -6655,7 +6747,23 @@ async function submitWasteLog() {
         let activeTasksList = [];
 
         async function fetchTasks() {
-            if (!currentUser || !currentUserData || !currentUserData.orgId) {
+            if (!currentUser) {
+                const container = document.getElementById('tasksContainer');
+                if (container) {
+                    container.innerHTML = `
+                        <div class="text-center py-16 bg-slate-50 dark:bg-slate-900 rounded-3xl border-2 border-dashed border-slate-200 dark:border-slate-800">
+                            <i data-lucide="check-square" class="w-12 h-12 text-slate-400 mx-auto mb-4"></i>
+                            <h3 class="text-xl font-bold mb-2">Shift Tasks</h3>
+                            <p class="text-slate-500 mb-6 max-w-md mx-auto">Sign in to your account to view, assign, and track shift tasks for your team.</p>
+                            <button onclick="navTo('auth')" class="btn btn-primary px-8">Sign In / Register</button>
+                        </div>
+                    `;
+                    if (window.lucide) window.lucide.createIcons();
+                }
+                return;
+            }
+
+            if (!currentUserData || !currentUserData.orgId) {
                 const container = document.getElementById('tasksContainer');
                 if (container) {
                     container.innerHTML = `
@@ -6680,7 +6788,7 @@ async function submitWasteLog() {
                 const manageTasks = cloudFunctions.httpsCallable('manageTasks');
                 const result = await manageTasks({ action: "get", payload: {} });
 
-                if (result.data.success) {
+                if (result && result.data && result.data.success) {
                     activeTasksList = result.data.tasks || [];
                     activeTasksList.sort((a, b) => {
                         const aTime = a.createdAt ? a.createdAt._seconds : 0;
@@ -8025,6 +8133,20 @@ window.onload = () => {
                 if (action === 'updateTaskStatus') updateTaskStatus(id, el.value);
             }
         });
+
+        // Listen to hash changes and initial hash for direct navigation
+        function handleHashNav() {
+            const hash = window.location.hash.replace('#', '');
+            if (hash && document.getElementById('view-' + hash)) {
+                navTo(hash);
+            }
+        }
+        window.addEventListener('hashchange', handleHashNav);
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', handleHashNav);
+        } else {
+            handleHashNav();
+        }
     </script>
     <footer class="main-footer"></footer>
 
