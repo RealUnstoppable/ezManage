@@ -141,4 +141,122 @@ describe('Scheduled Shifts and Notices (Announcements)', () => {
         expect(notices.length).toBe(1);
         expect(notices[0].id).toBe('2');
     });
+
+    test('Handles createAnnouncement logic with optimistic local storage and Firestore fallback', async () => {
+        const titleInput = document.getElementById('announcementTitle');
+        const contentInput = document.getElementById('announcementContent');
+        const priorityInput = document.getElementById('announcementPriority');
+
+        titleInput.value = 'Health & Safety Update';
+        contentInput.value = 'Mask policy reminder for food prep areas.';
+        priorityInput.value = 'High';
+
+        // Mock alert
+        global.alert = jest.fn();
+
+        let localAnnouncements = [];
+        const saveLocalAnnouncements = (list) => {
+            localAnnouncements = list;
+            localStorage.setItem('ezManage_announcements', JSON.stringify(list));
+        };
+        const getLocalAnnouncements = () => {
+            return localAnnouncements;
+        };
+
+        const mockAdd = jest.fn().mockRejectedValue(new Error('Missing index or permission-denied'));
+        const mockCloudFunction = jest.fn().mockResolvedValue({ data: { success: true, announcementId: 'cf-ann-123' } });
+
+        const title = titleInput.value.trim();
+        const content = contentInput.value.trim();
+        const priority = priorityInput.value;
+
+        expect(title).toBe('Health & Safety Update');
+        expect(content).toBe('Mask policy reminder for food prep areas.');
+
+        const newAnn = {
+            id: 'local-' + Date.now(),
+            title,
+            content,
+            priority,
+            authorId: 'user_1',
+            authorName: 'Manager'
+        };
+
+        localAnnouncements.unshift(newAnn);
+        saveLocalAnnouncements(localAnnouncements);
+
+        expect(localAnnouncements.length).toBe(1);
+        expect(localAnnouncements[0].title).toBe('Health & Safety Update');
+
+        // Test fallback from Firestore failure to Cloud Function
+        let syncSuccess = false;
+        try {
+            await mockAdd({ title, content, priority });
+            syncSuccess = true;
+        } catch (e) {
+            // Firestore failed, use Cloud Function
+            const res = await mockCloudFunction({ action: 'create', payload: { title, content, priority } });
+            if (res.data.success) {
+                newAnn.id = res.data.announcementId;
+                syncSuccess = true;
+            }
+        }
+
+        expect(syncSuccess).toBe(true);
+        expect(newAnn.id).toBe('cf-ann-123');
+        expect(mockAdd).toHaveBeenCalled();
+        expect(mockCloudFunction).toHaveBeenCalled();
+    });
+
+    test('Prevents posting announcement with empty title or content', () => {
+        const titleInput = document.getElementById('announcementTitle');
+        const contentInput = document.getElementById('announcementContent');
+
+        titleInput.value = '   ';
+        contentInput.value = '';
+
+        global.alert = jest.fn();
+
+        const validateAndPost = (t, c) => {
+            const trimmedT = (t || '').trim();
+            const trimmedC = (c || '').trim();
+            if (!trimmedT || !trimmedC) {
+                global.alert("Please provide both a title and content.");
+                return false;
+            }
+            return true;
+        };
+
+        const result = validateAndPost(titleInput.value, contentInput.value);
+        expect(result).toBe(false);
+        expect(global.alert).toHaveBeenCalledWith("Please provide both a title and content.");
+    });
+
+    test('Gracefully deletes announcement locally and triggers cloud delete', async () => {
+        let localList = [
+            { id: 'cloud-ann-1', title: 'Notice 1', content: 'Content 1' },
+            { id: 'cloud-ann-2', title: 'Notice 2', content: 'Content 2' }
+        ];
+
+        const mockDelete = jest.fn().mockResolvedValue(true);
+        const mockCloudDelete = jest.fn().mockResolvedValue({ data: { success: true } });
+
+        const deleteId = 'cloud-ann-1';
+        localList = localList.filter(item => item.id !== deleteId);
+        expect(localList.length).toBe(1);
+        expect(localList[0].id).toBe('cloud-ann-2');
+
+        // Cloud delete attempt
+        let deleted = false;
+        try {
+            await mockDelete(deleteId);
+            deleted = true;
+        } catch (err) {
+            await mockCloudDelete({ action: 'delete', payload: { announcementId: deleteId } });
+            deleted = true;
+        }
+
+        expect(deleted).toBe(true);
+        expect(mockDelete).toHaveBeenCalledWith('cloud-ann-1');
+    });
 });

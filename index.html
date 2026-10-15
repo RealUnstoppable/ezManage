@@ -1050,12 +1050,12 @@
                                         <input type="text" id="trackerAnnouncementTitle" placeholder="Enter announcement title" required class="w-full">
                                     </div>
                                     <div>
-                                        <label for="announcementContent" class="text-[10px] font-black uppercase tracking-widest text-slate-400">Message</label>
+                                        <label for="trackerAnnouncementContent" class="text-[10px] font-black uppercase tracking-widest text-slate-400">Message</label>
                                         <textarea id="trackerAnnouncementContent" placeholder="Enter the announcement message..." rows="3" required class="w-full"></textarea>
                                     </div>
                                     <div class="flex items-end gap-4">
                                         <div class="flex-1">
-                                            <label for="announcementPriority" class="text-[10px] font-black uppercase tracking-widest text-slate-400">Priority</label>
+                                            <label for="trackerAnnouncementPriority" class="text-[10px] font-black uppercase tracking-widest text-slate-400">Priority</label>
                                             <select id="trackerAnnouncementPriority" class="w-full">
                                                 <option value="normal">Normal</option>
                                                 <option value="high">High</option>
@@ -1359,7 +1359,7 @@
                                     placeholder="Enter details here..."></textarea>
                             </div>
                             <div>
-                                <label class="block text-sm font-bold mb-1 text-slate-700 dark:text-slate-300">Priority</label>
+                                <label for="announcementPriority" class="block text-sm font-bold mb-1 text-slate-700 dark:text-slate-300">Priority</label>
                                 <select id="announcementPriority" class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500 text-slate-900 dark:text-white">
                                     <option value="Normal">Normal</option>
                                     <option value="High">High</option>
@@ -3066,57 +3066,104 @@
 
             const localList = getLocalAnnouncements();
 
-            if (!currentUser || !currentUserData || !db) {
+            if (!currentUser) {
                 renderTrackerList(localList);
                 return;
             }
 
-            const queryOrgId = currentUserData.orgId || currentUser.uid;
+            const queryOrgId = (currentUserData && currentUserData.orgId) || (currentUser && currentUser.uid) || 'demo_org';
+            let fetchedList = [];
+            let fetchedFromFirestore = false;
 
+            // 1. Direct Firestore query
             try {
-                // Query without orderBy to eliminate composite index requirement
-                const snapshot = await db.collection('announcements')
-                    .where('orgId', '==', queryOrgId)
-                    .get();
+                if (window.db) {
+                    const snapshot = await db.collection('announcements')
+                        .where('orgId', '==', queryOrgId)
+                        .get();
 
-                if (snapshot.empty) {
-                    renderTrackerList(localList);
-                    return;
+                    if (!snapshot.empty) {
+                        snapshot.forEach(docSnap => {
+                            fetchedList.push({ id: docSnap.id, data: docSnap.data() });
+                        });
+                        fetchedFromFirestore = true;
+                    }
+                }
+            } catch (error) {
+                console.warn("Direct Firestore tracker announcements query notice:", error.message);
+            }
+
+            // 2. Fallback to Cloud Function if direct Firestore query returned nothing or failed
+            if (!fetchedFromFirestore && fetchedList.length === 0 && window.cloudFunctions && currentUser) {
+                try {
+                    const manageAnn = cloudFunctions.httpsCallable('manageAnnouncements');
+                    const res = await manageAnn({ action: 'get', payload: {} });
+                    if (res && res.data && res.data.success && Array.isArray(res.data.announcements) && res.data.announcements.length > 0) {
+                        fetchedList = res.data.announcements.map(a => ({ id: a.id, data: a }));
+                        fetchedFromFirestore = true;
+                    }
+                } catch (cfErr) {
+                    console.warn("Cloud function tracker announcements notice:", cfErr.message);
+                }
+            }
+
+            // 3. Fallback or merge with local announcements
+            if (fetchedList.length > 0) {
+                // Keep pending local items that haven't synced yet
+                const pendingLocal = localList.filter(item => {
+                    const id = String(item.id || (item.data && item.data.id) || '');
+                    return id.startsWith('local-');
+                });
+
+                const combined = [...pendingLocal, ...fetchedList];
+                const seen = new Set();
+                const unique = [];
+                for (const item of combined) {
+                    const id = item.id || (item.data && item.data.id);
+                    if (id && !seen.has(id)) {
+                        seen.add(id);
+                        unique.push(item);
+                    }
                 }
 
-                let list = [];
-                snapshot.forEach(doc => {
-                    list.push({ id: doc.id, data: doc.data() });
+                unique.sort((a, b) => {
+                    const getMs = (it) => {
+                        const c = it.data ? it.data.createdAt : it.createdAt;
+                        if (!c) return 0;
+                        if (c.toMillis) return c.toMillis();
+                        if (c.toDate) return c.toDate().getTime();
+                        if (c._seconds) return c._seconds * 1000;
+                        const p = new Date(c).getTime();
+                        return isNaN(p) ? 0 : p;
+                    };
+                    return getMs(b) - getMs(a);
                 });
 
-                list.sort((a, b) => {
-                    const timeA = a.data.createdAt ? (a.data.createdAt.toMillis ? a.data.createdAt.toMillis() : new Date(a.data.createdAt).getTime()) : 0;
-                    const timeB = b.data.createdAt ? (b.data.createdAt.toMillis ? b.data.createdAt.toMillis() : new Date(b.data.createdAt).getTime()) : 0;
-                    return timeB - timeA;
-                });
-
-                renderTrackerList(list);
-            } catch (error) {
-                console.warn("Error fetching tracker announcements (falling back to sample notices):", error);
+                saveLocalAnnouncements(unique);
+                renderTrackerList(unique);
+            } else {
                 renderTrackerList(localList);
             }
         }
 
         async function createTrackerAnnouncement(e) {
-            const titleInput = document.getElementById('trackerAnnouncementTitle');
-            const contentInput = document.getElementById('trackerAnnouncementContent');
-            const priorityInput = document.getElementById('trackerAnnouncementPriority');
+            if (e && e.preventDefault) e.preventDefault();
+
+            const titleInput = document.getElementById('trackerAnnouncementTitle') || document.getElementById('announcementTitle');
+            const contentInput = document.getElementById('trackerAnnouncementContent') || document.getElementById('announcementContent');
+            const priorityInput = document.getElementById('trackerAnnouncementPriority') || document.getElementById('announcementPriority');
 
             const title = titleInput ? titleInput.value.trim() : '';
             const content = contentInput ? contentInput.value.trim() : '';
-            const priority = priorityInput ? priorityInput.value : 'normal';
+            const rawPriority = priorityInput ? priorityInput.value : 'Normal';
+            const priority = (rawPriority && rawPriority.toLowerCase() === 'high') ? 'High' : 'Normal';
 
             if (!title || !content) {
                 alert("Please provide both a title and message.");
                 return;
             }
 
-            const submitBtn = e && e.target ? e.target : document.querySelector('#newAnnouncementForm button[type="button"]');
+            const submitBtn = (e && e.target && e.target.tagName === 'BUTTON') ? e.target : document.querySelector('#newAnnouncementForm button[type="button"]');
             const originalText = submitBtn ? submitBtn.innerText : "Post";
             if (submitBtn) {
                 submitBtn.innerText = "Posting...";
@@ -3134,7 +3181,7 @@
                 authorName: authorName,
                 title: title,
                 content: content,
-                priority: priority === 'high' ? 'High' : 'Normal',
+                priority: priority,
                 createdAt: new Date()
             };
 
@@ -3144,21 +3191,45 @@
 
             if (titleInput) titleInput.value = '';
             if (contentInput) contentInput.value = '';
-            if (priorityInput) priorityInput.value = 'normal';
+            if (priorityInput) priorityInput.value = priorityInput.querySelector('option[value="normal"]') ? 'normal' : 'Normal';
 
-            if (currentUser && db) {
+            let syncSuccess = false;
+
+            // 1. Try direct Firestore add
+            if (currentUser && window.db) {
                 try {
-                    await db.collection('announcements').add({
+                    const docRef = await db.collection('announcements').add({
                         orgId: actualOrgId,
                         authorId: authorId,
                         authorName: authorName,
                         title: title,
                         content: content,
-                        priority: priority === 'high' ? 'High' : 'Normal',
+                        priority: priority,
                         createdAt: firebase.firestore.FieldValue.serverTimestamp()
                     });
+                    if (docRef && docRef.id) {
+                        newAnn.id = docRef.id;
+                        syncSuccess = true;
+                    }
                 } catch (error) {
-                    console.warn("Error creating announcement in Firestore (saved locally):", error);
+                    console.warn("Direct Firestore announcement notice:", error.message);
+                }
+            }
+
+            // 2. Try Cloud Function fallback
+            if (!syncSuccess && currentUser && window.cloudFunctions) {
+                try {
+                    const manageAnn = cloudFunctions.httpsCallable('manageAnnouncements');
+                    const res = await manageAnn({
+                        action: 'create',
+                        payload: { title, content, priority }
+                    });
+                    if (res && res.data && res.data.success) {
+                        if (res.data.announcementId) newAnn.id = res.data.announcementId;
+                        syncSuccess = true;
+                    }
+                } catch (cfErr) {
+                    console.warn("Cloud function announcement creation notice:", cfErr.message);
                 }
             }
 
@@ -3175,14 +3246,29 @@
             if (!confirm("Are you sure you want to delete this announcement?")) return;
 
             let localList = getLocalAnnouncements();
-            localList = localList.filter(item => item.id !== id && (item.data ? item.data.id !== id : true));
+            localList = localList.filter(item => {
+                const itemId = item.id || (item.data && item.data.id);
+                return itemId !== id;
+            });
             saveLocalAnnouncements(localList);
 
-            if (currentUser && db && !id.startsWith('dummy-') && !id.startsWith('local-')) {
-                try {
-                    await db.collection('announcements').doc(id).delete();
-                } catch (error) {
-                    console.warn("Error deleting announcement from Firestore:", error);
+            if (currentUser && !id.startsWith('dummy-') && !id.startsWith('local-')) {
+                let deleted = false;
+                if (window.db) {
+                    try {
+                        await db.collection('announcements').doc(id).delete();
+                        deleted = true;
+                    } catch (error) {
+                        console.warn("Direct Firestore delete announcement notice:", error.message);
+                    }
+                }
+                if (!deleted && window.cloudFunctions) {
+                    try {
+                        const manageAnn = cloudFunctions.httpsCallable('manageAnnouncements');
+                        await manageAnn({ action: 'delete', payload: { announcementId: id } });
+                    } catch (cfErr) {
+                        console.warn("Cloud function delete announcement notice:", cfErr.message);
+                    }
                 }
             }
 
@@ -3190,6 +3276,8 @@
             if (typeof fetchAnnouncements === 'function') fetchAnnouncements();
         }
         window.deleteAnnouncement = deleteAnnouncement;
+        window.createTrackerAnnouncement = createTrackerAnnouncement;
+        window.fetchTrackerAnnouncements = fetchTrackerAnnouncements;
 
 
         window.navTo = navTo;
@@ -6970,9 +7058,14 @@ async function submitWasteLog() {
             const container = document.getElementById('announcementsContainer');
             if (!container) return;
 
+            const isManager = !currentUserData || !currentUserData.orgId || currentUserData.orgId === currentUser?.uid || currentUserData.role === 'Manager' || currentUserData.isAdmin;
             const btnCreate = document.getElementById('btnCreateAnnouncement');
             if (btnCreate) {
-                btnCreate.classList.remove('hidden');
+                if (isManager) {
+                    btnCreate.classList.remove('hidden');
+                } else {
+                    btnCreate.classList.add('hidden');
+                }
             }
 
             if (unsubscribeAnnouncements) {
@@ -6980,7 +7073,7 @@ async function submitWasteLog() {
                 unsubscribeAnnouncements = null;
             }
 
-            if (!currentUser || !currentUserData) {
+            if (!currentUser) {
                 const localList = getLocalAnnouncements();
                 renderNoticesAnnouncements(localList, container, "Sample notices loaded (preview mode). Post announcements or sign in to synchronize with your team.");
                 return;
@@ -6989,48 +7082,117 @@ async function submitWasteLog() {
             container.innerHTML = '<div class="text-center py-8"><i data-lucide="loader-2" class="w-8 h-8 animate-spin mx-auto text-sky-500 mb-4"></i><p class="text-slate-500">Loading announcements...</p></div>';
             if (window.lucide) window.lucide.createIcons();
 
-            const actualOrgId = currentUserData.orgId || currentUser.uid;
+            const actualOrgId = (currentUserData && currentUserData.orgId) || (currentUser && currentUser.uid) || 'demo_org';
 
-            try {
-                // Query without orderBy to eliminate composite index requirement
-                const query = db.collection('announcements').where('orgId', '==', actualOrgId);
+            const fallbackToLocal = (message = '') => {
+                const localList = getLocalAnnouncements();
+                renderNoticesAnnouncements(localList, container, message);
+            };
 
-                unsubscribeAnnouncements = query.onSnapshot((snapshot) => {
-                    if (snapshot.empty) {
-                        const localList = getLocalAnnouncements();
+            const processAndRenderList = (list) => {
+                // Merge pending local items that haven't synced yet
+                const localList = getLocalAnnouncements();
+                const pendingLocal = localList.filter(item => {
+                    const id = String(item.id || (item.data && item.data.id) || '');
+                    return id.startsWith('local-');
+                });
+
+                pendingLocal.forEach(pItem => {
+                    const pData = pItem.data || pItem;
+                    const alreadyExists = list.some(lItem => {
+                        const lData = lItem.data || lItem;
+                        return lData.title === pData.title && lData.content === pData.content;
+                    });
+                    if (!alreadyExists) {
+                        list.push(pItem);
+                    }
+                });
+
+                if (list.length === 0) {
+                    const hasCustom = localList.some(item => !String(item.id || '').startsWith('dummy-'));
+                    if (hasCustom) {
+                        renderNoticesAnnouncements(localList, container);
+                    } else {
                         renderNoticesAnnouncements(localList, container, "Sample notices loaded for your organization. Post a new announcement to publish live.");
+                    }
+                    return;
+                }
+
+                list.sort((a, b) => {
+                    const getMs = (it) => {
+                        const c = it.data ? it.data.createdAt : it.createdAt;
+                        if (!c) return 0;
+                        if (c.toMillis) return c.toMillis();
+                        if (c.toDate) return c.toDate().getTime();
+                        if (c._seconds) return c._seconds * 1000;
+                        const p = new Date(c).getTime();
+                        return isNaN(p) ? 0 : p;
+                    };
+                    return getMs(b) - getMs(a);
+                });
+
+                saveLocalAnnouncements(list);
+                renderNoticesAnnouncements(list, container);
+            };
+
+            // 1. Try real-time Firestore listener
+            if (window.db) {
+                try {
+                    const query = db.collection('announcements').where('orgId', '==', actualOrgId);
+
+                    unsubscribeAnnouncements = query.onSnapshot((snapshot) => {
+                        let list = [];
+                        snapshot.forEach(docSnap => {
+                            list.push({ id: docSnap.id, data: docSnap.data() });
+                        });
+                        processAndRenderList(list);
+                    }, (error) => {
+                        console.warn('Error listening to announcements, trying cloud function fallback:', error.message);
+                        if (window.cloudFunctions && currentUser) {
+                            const manageAnn = cloudFunctions.httpsCallable('manageAnnouncements');
+                            manageAnn({ action: 'get', payload: {} })
+                                .then(res => {
+                                    if (res && res.data && res.data.success && Array.isArray(res.data.announcements)) {
+                                        const cfList = res.data.announcements.map(a => ({ id: a.id, data: a }));
+                                        processAndRenderList(cfList);
+                                    } else {
+                                        fallbackToLocal("Sample notices loaded (offline / preview mode).");
+                                    }
+                                })
+                                .catch(() => fallbackToLocal("Sample notices loaded (offline / preview mode)."));
+                        } else {
+                            fallbackToLocal("Sample notices loaded (offline / preview mode).");
+                        }
+                    });
+                    return;
+                } catch (error) {
+                    console.warn('Error initiating announcements snapshot:', error.message);
+                }
+            }
+
+            // 2. If db is not present or failed, try Cloud Function
+            if (window.cloudFunctions && currentUser) {
+                try {
+                    const manageAnn = cloudFunctions.httpsCallable('manageAnnouncements');
+                    const res = await manageAnn({ action: 'get', payload: {} });
+                    if (res && res.data && res.data.success && Array.isArray(res.data.announcements)) {
+                        const cfList = res.data.announcements.map(a => ({ id: a.id, data: a }));
+                        processAndRenderList(cfList);
                         return;
                     }
-
-                    let list = [];
-                    snapshot.forEach(docSnap => {
-                        list.push({ id: docSnap.id, data: docSnap.data() });
-                    });
-
-                    // Sort client-side by createdAt descending
-                    list.sort((a, b) => {
-                        const timeA = a.data.createdAt ? (a.data.createdAt.toMillis ? a.data.createdAt.toMillis() : new Date(a.data.createdAt).getTime()) : 0;
-                        const timeB = b.data.createdAt ? (b.data.createdAt.toMillis ? b.data.createdAt.toMillis() : new Date(b.data.createdAt).getTime()) : 0;
-                        return timeB - timeA;
-                    });
-
-                    renderNoticesAnnouncements(list, container);
-                }, (error) => {
-                    console.warn('Error listening to announcements (falling back to sample notices):', error);
-                    const localList = getLocalAnnouncements();
-                    renderNoticesAnnouncements(localList, container, "Sample notices loaded (offline / preview mode).");
-                });
-            } catch (error) {
-                console.warn('Error fetching announcements (falling back to sample notices):', error);
-                const localList = getLocalAnnouncements();
-                renderNoticesAnnouncements(localList, container, "Sample notices loaded (offline / preview mode).");
+                } catch (cfErr) {
+                    console.warn("Cloud function announcements fetch notice:", cfErr.message);
+                }
             }
+
+            // 3. Fallback to local
+            fallbackToLocal("Sample notices loaded (offline / preview mode).");
         }
 
         async function createAnnouncement(event) {
-            event.preventDefault();
+            if (event && event.preventDefault) event.preventDefault();
 
-            const btn = event.target ? event.target.querySelector('button[type="submit"]') : null;
+            const btn = (event && event.target && event.target.querySelector) ? event.target.querySelector('button[type="submit"]') : (event && event.target && event.target.tagName === 'BUTTON' ? event.target : document.querySelector('#announcementForm button[type="submit"]'));
             const originalText = btn ? btn.innerHTML : 'Post Announcement';
             if (btn) {
                 btn.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin mx-auto"></i>';
@@ -7038,13 +7200,14 @@ async function submitWasteLog() {
                 if (window.lucide) window.lucide.createIcons();
             }
 
-            const titleInput = document.getElementById('announcementTitle');
-            const contentInput = document.getElementById('announcementContent');
-            const priorityInput = document.getElementById('announcementPriority');
+            const titleInput = document.getElementById('announcementTitle') || document.getElementById('trackerAnnouncementTitle');
+            const contentInput = document.getElementById('announcementContent') || document.getElementById('trackerAnnouncementContent');
+            const priorityInput = document.getElementById('announcementPriority') || document.getElementById('trackerAnnouncementPriority');
 
             const title = titleInput ? titleInput.value.trim() : '';
             const content = contentInput ? contentInput.value.trim() : '';
-            const priority = priorityInput ? priorityInput.value : 'Normal';
+            const rawPriority = priorityInput ? priorityInput.value : 'Normal';
+            const priority = (rawPriority && rawPriority.toLowerCase() === 'high') ? 'High' : 'Normal';
 
             if (!title || !content) {
                 alert("Please provide both a title and content.");
@@ -7072,9 +7235,12 @@ async function submitWasteLog() {
             localList.unshift(newAnn);
             saveLocalAnnouncements(localList);
 
-            if (currentUser && db) {
+            let syncSuccess = false;
+
+            // 1. Try direct Firestore add
+            if (currentUser && window.db) {
                 try {
-                    await db.collection('announcements').add({
+                    const docRef = await db.collection('announcements').add({
                         orgId: actualOrgId,
                         title: title,
                         content: content,
@@ -7083,14 +7249,37 @@ async function submitWasteLog() {
                         authorName: authorName,
                         createdAt: firebase.firestore.FieldValue.serverTimestamp()
                     });
+                    if (docRef && docRef.id) {
+                        newAnn.id = docRef.id;
+                        syncSuccess = true;
+                    }
                 } catch (error) {
-                    window.logManagerError("Error creating announcement in Firestore (saved locally):", error);
+                    window.logManagerError("Direct Firestore announcement creation notice:", error);
+                }
+            }
+
+            // 2. Try Cloud Function fallback
+            if (!syncSuccess && currentUser && window.cloudFunctions) {
+                try {
+                    const manageAnn = cloudFunctions.httpsCallable('manageAnnouncements');
+                    const res = await manageAnn({
+                        action: 'create',
+                        payload: { title, content, priority }
+                    });
+                    if (res && res.data && res.data.success) {
+                        if (res.data.announcementId) newAnn.id = res.data.announcementId;
+                        syncSuccess = true;
+                    }
+                } catch (cfErr) {
+                    console.warn("Cloud function announcement creation notice:", cfErr.message);
                 }
             }
 
             const modal = document.getElementById('addAnnouncementModal');
             if (modal) modal.classList.add('hidden');
-            if (event.target && event.target.reset) event.target.reset();
+            if (event && event.target && event.target.reset) event.target.reset();
+            const form = document.getElementById('announcementForm');
+            if (form && form.reset) form.reset();
 
             if (btn) {
                 btn.innerHTML = originalText;
@@ -7100,6 +7289,8 @@ async function submitWasteLog() {
             fetchAnnouncements();
             fetchTrackerAnnouncements();
         }
+        window.createAnnouncement = createAnnouncement;
+        window.fetchAnnouncements = fetchAnnouncements;
 
         async function fetchTeamDirectory() {
             if (!currentUser || !currentUserData || !currentUserData.orgId) {

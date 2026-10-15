@@ -1552,6 +1552,60 @@ exports.manageLostAndFound = functions.https.onCall(async (data, context) => {
   } catch (error) { handleInternalError("Error in manageLostAndFound: ", error); }
 });
 
+exports.manageAnnouncements = functions.https.onCall(async (data, context) => {
+  const {uid, userOrgId, isAdmin, userName, action, payload} = await getAuthAndPayload(data, context, admin);
+
+  try {
+    const actualOrgId = userOrgId || uid;
+
+    if (action === "get") {
+      const query = admin.firestore().collection("announcements")
+          .where("orgId", "==", actualOrgId);
+      const announcements = await safeGetOrderedDocs(query, "createdAt", "desc", 100);
+      return {success: true, announcements};
+    } else if (action === "create") {
+      const {title, content, priority} = payload;
+      checkRequiredFields(payload, ["title", "content"]);
+
+      const isHigh = priority === "high" || priority === "High";
+      const newAnn = {
+        orgId: actualOrgId,
+        title: title.trim(),
+        content: content.trim(),
+        priority: isHigh ? "High" : "Normal",
+        authorId: uid,
+        authorName: userName || "Manager",
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      };
+
+      const docRef = await admin.firestore().collection("announcements").add(newAnn);
+      return {success: true, announcementId: docRef.id};
+    } else if (action === "delete") {
+      const {announcementId} = payload;
+      checkRequiredFields(payload, ["announcementId"]);
+
+      const docRef = admin.firestore().collection("announcements").doc(announcementId);
+      const docSnap = await docRef.get();
+      if (!docSnap.exists) {
+        return {success: true};
+      }
+
+      const docData = docSnap.data();
+      const isManager = userOrgId === uid;
+      if (!isAdmin && !isManager && docData.authorId !== uid && docData.orgId !== actualOrgId) {
+        throw new HttpsError("permission-denied", "Unauthorized to delete this announcement.");
+      }
+
+      await docRef.delete();
+      return {success: true};
+    } else {
+      throw new HttpsError("invalid-argument", "Invalid action.");
+    }
+  } catch (error) {
+    handleInternalError("Error in manageAnnouncements: ", error);
+  }
+});
+
 exports.handleCreateShiftGroup = handleCreateShiftGroup;
 
 exports.getActualOrgId = getActualOrgId;
