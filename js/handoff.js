@@ -15,18 +15,19 @@ async function getCurrentUserOrgAndProfile() {
 }
 
 export async function createHandoff(notes, urgentAlerts, shiftType) {
-    const { user, userDoc, orgId } = await getCurrentUserOrgAndProfile();
+    try {
+        const { user, userDoc, orgId } = await getCurrentUserOrgAndProfile();
 
-    const handoffData = {
-        orgId,
-        authorId: user.uid,
-        authorName: userDoc.data().username || "Manager",
-        shiftType: shiftType || "General",
-        notes: notes || "",
-        urgentAlerts: urgentAlerts || "",
-        createdAt: window.firebase.firestore.FieldValue.serverTimestamp(),
-        acknowledgedBy: []
-    };
+        const handoffData = {
+            orgId,
+            authorId: user.uid,
+            authorName: userDoc.data().username || "Manager",
+            shiftType: shiftType || "General",
+            notes: notes || "",
+            urgentAlerts: urgentAlerts || "",
+            createdAt: window.firebase.firestore.FieldValue.serverTimestamp(),
+            acknowledgedBy: []
+        };
 
         const docRef = await db.collection('shift_handoffs').add(handoffData);
         return docRef.id;
@@ -37,7 +38,8 @@ export async function createHandoff(notes, urgentAlerts, shiftType) {
 }
 
 export async function fetchRecentHandoffs(limitCount = 10) {
-    const { orgId } = await getCurrentUserOrgAndProfile();
+    try {
+        const { orgId } = await getCurrentUserOrgAndProfile();
 
         const snapshot = await db.collection('shift_handoffs')
             .where('orgId', '==', orgId)

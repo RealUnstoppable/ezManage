@@ -114,18 +114,27 @@ function updateCartSummary() {
     cartButton.setAttribute('aria-label', `Open Cart, ${itemCount} items`);
 }
 
-async function updateCartState(mutationFn, errorMessage) {
+async function updateCartState(mutationFn, errorMessage, skipRender = false) {
     const originalCart = { ...cart };
     try {
         mutationFn();
         if (JSON.stringify(cart) === JSON.stringify(originalCart)) return;
-        renderCart();
+
+        if (!skipRender) {
+            renderCart();
+        } else {
+            updateCartSummary();
+        }
+
         await saveCart();
     } catch (error) {
-
         logManagerError(`${errorMessage}:`, error);
         cart = originalCart;
-        renderCart();
+        if (!skipRender) {
+            renderCart();
+        } else {
+            updateCartSummary();
+        }
     }
 }
 
@@ -146,7 +155,7 @@ async function handleUpdateQuantity(productId, quantity) {
         }
         await updateCartState(() => {
             cart[productId] = parseInt(quantity, 10);
-        }, "Error updating item quantity");
+        }, "Error updating item quantity", true);
     } catch (error) {
         logManagerError("Error in handleUpdateQuantity", error);
     }
