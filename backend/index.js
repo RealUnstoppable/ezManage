@@ -605,8 +605,23 @@ function generateUniqueWorkplaceKey() {
   return `WPK-${part1}-${part2}`;
 }
 
+/**
+ * Generates a deterministic, collision-checked human-readable Corporate ID (CORP-XXXXXXXX).
+ * Excludes ambiguous characters (0, O, 1, I).
+ * @return {string} Formatted corporate ID, e.g. CORP-ABC23456.
+ */
+function generateUniqueCorporateId() {
+  const chars = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ";
+  let id = "CORP-";
+  const bytes = crypto.randomBytes(8);
+  for (let i = 0; i < 8; i++) {
+    id += chars[bytes[i] % chars.length];
+  }
+  return id;
+}
+
 async function handleCreateShiftGroup(payload, uid) {
-  const {groupName, password, ownerName, authorId, orgId, workplaceCode, joinKey} = payload;
+  const {groupName, password, ownerName, authorId, orgId, workplaceCode, joinKey, plan, workersCount, aiEnabled, name, multiStoreEnabled, requireApproval} = payload;
 
   checkRequiredFields(payload, ["groupName"]);
 
@@ -617,30 +632,70 @@ async function handleCreateShiftGroup(payload, uid) {
   const hash = crypto.scryptSync(plainJoinKey, salt, 64).toString("hex");
   const hashedPassword = `$scrypt$${hash}:${salt}`;
 
+  // Generate unique collision-checked corporate ID (CORP-XXXXXXXX)
+  let uniqueGroupId;
+  const shiftGroupsCol = admin.firestore().collection("shift_groups");
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const candidateId = generateUniqueCorporateId();
+    if (typeof shiftGroupsCol.doc === "function") {
+      try {
+        const existingDoc = await shiftGroupsCol.doc(candidateId).get();
+        if (!existingDoc || !existingDoc.exists) {
+          uniqueGroupId = candidateId;
+          break;
+        }
+      } catch (e) {
+        uniqueGroupId = candidateId;
+        break;
+      }
+    } else {
+      uniqueGroupId = candidateId;
+      break;
+    }
+  }
+  if (!uniqueGroupId) {
+    uniqueGroupId = `CORP-${crypto.randomBytes(4).toString("hex").toUpperCase()}`;
+  }
+
   const newGroupParams = {
     ownerId: authorId || uid,
-    orgId: orgId || uid,
+    orgId: uniqueGroupId,
     ownerName: ownerName || "Anonymous",
     groupName,
     workplaceCode: finalWorkplaceCode,
     joinKey: plainJoinKey,
     password: hashedPassword,
+    multiStoreEnabled: multiStoreEnabled !== false,
+    aiEnabled: aiEnabled !== undefined ? Boolean(aiEnabled) : true,
+    workersCount: workersCount || "1-10",
+    requireApproval: requireApproval !== false,
     createdAt: admin.firestore.FieldValue.serverTimestamp(),
   };
 
-  const docRef = await admin.firestore()
-      .collection("shift_groups")
-      .add(newGroupParams);
+  let docId = uniqueGroupId;
+  if (typeof shiftGroupsCol.doc === "function") {
+    await shiftGroupsCol.doc(uniqueGroupId).set(newGroupParams);
+  } else {
+    const docRef = await shiftGroupsCol.add(newGroupParams);
+    docId = docRef.id;
+  }
 
-  // Link creating user to the new group
+  // Atomically update user document on the server via Admin SDK
   const targetUid = authorId || uid;
-  await admin.firestore().collection("users").doc(targetUid).set({
-    orgId: docRef.id,
-  }, {merge: true});
+  const userUpdate = {
+    orgId: docId,
+    role: "CorporateAdmin",
+  };
+  if (plan !== undefined) userUpdate.plan = plan;
+  if (workersCount !== undefined) userUpdate.workersCount = workersCount;
+  if (aiEnabled !== undefined) userUpdate.aiEnabled = Boolean(aiEnabled);
+  if (name || ownerName) userUpdate.name = name || ownerName;
+
+  await admin.firestore().collection("users").doc(targetUid).set(userUpdate, {merge: true});
 
   return {
     success: true,
-    groupId: docRef.id,
+    groupId: docId,
     workplaceCode: finalWorkplaceCode,
     joinKey: plainJoinKey,
   };
@@ -651,14 +706,20 @@ async function handleRequestJoinShiftGroup(payload, uid) {
 
   checkRequiredFields(payload, ["groupId", "password"]);
 
-  let targetGroupId = groupId;
+  let targetGroupId = (groupId || "").trim();
   let groupDoc = await admin.firestore()
-      .collection("shift_groups").doc(groupId).get();
+      .collection("shift_groups").doc(targetGroupId).get();
+
+  if (!groupDoc.exists && targetGroupId.toUpperCase() !== targetGroupId) {
+    targetGroupId = targetGroupId.toUpperCase();
+    groupDoc = await admin.firestore()
+        .collection("shift_groups").doc(targetGroupId).get();
+  }
 
   if (!groupDoc.exists) {
     const snap = await admin.firestore()
         .collection("shift_groups")
-        .where("workplaceCode", "==", groupId.trim().toUpperCase())
+        .where("workplaceCode", "==", targetGroupId.toUpperCase())
         .limit(1)
         .get();
     if (!snap.empty) {
@@ -825,6 +886,124 @@ async function handleRotateWorkplaceCredentials(payload, uid) {
     return {success: true};
   }
 
+  async function handleAddManagerShiftGroup(payload, uid) {
+    const {groupId, email} = payload;
+    checkRequiredFields(payload, ["groupId", "email"]);
+
+    const cleanEmail = String(email).trim().toLowerCase();
+    if (!cleanEmail || !cleanEmail.includes("@")) {
+      throw new HttpsError("invalid-argument", "Valid manager email is required");
+    }
+
+    const groupDoc = await admin.firestore().collection("shift_groups").doc(groupId).get();
+    if (!groupDoc.exists) {
+      throw new HttpsError("not-found", "Shift group not found");
+    }
+
+    if (groupDoc.data().ownerId !== uid) {
+      throw new HttpsError("permission-denied", "Unauthorized to add managers to this group");
+    }
+
+    const usersSnap = await admin.firestore().collection("users")
+        .where("email", "==", cleanEmail)
+        .limit(1)
+        .get();
+
+    let managerUid;
+    if (!usersSnap.empty) {
+      managerUid = usersSnap.docs[0].id;
+      await admin.firestore().collection("users").doc(managerUid).set({
+        orgId: groupId,
+        role: "Manager",
+        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      }, {merge: true});
+    } else {
+      const newDocRef = admin.firestore().collection("users").doc();
+      managerUid = newDocRef.id;
+      await newDocRef.set({
+        email: cleanEmail,
+        name: cleanEmail.split("@")[0],
+        role: "Manager",
+        orgId: groupId,
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
+    }
+
+    return {success: true, managerId: managerUid, email: cleanEmail};
+  }
+
+  async function handleUpdateProfile(payload, uid) {
+    const {name, jobTitle, defaultTab} = payload;
+    const updates = {
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    };
+    if (name !== undefined) updates.name = String(name).trim();
+    if (jobTitle !== undefined) updates.jobTitle = String(jobTitle).trim();
+    if (defaultTab !== undefined) updates.defaultTab = String(defaultTab).trim();
+
+    await admin.firestore().collection("users").doc(uid).set(updates, {merge: true});
+    return {success: true, ...updates};
+  }
+
+  async function handleUpdateCompanyShiftGroup(payload, uid) {
+    const {groupId, groupName, newPassword, multiStoreEnabled, aiEnabled, workersCount, requireApproval} = payload;
+    checkRequiredFields(payload, ["groupId"]);
+
+    const groupDocRef = admin.firestore().collection("shift_groups").doc(groupId);
+    const groupDoc = await groupDocRef.get();
+
+    if (!groupDoc.exists) {
+      throw new HttpsError("not-found", "Shift group not found");
+    }
+
+    if (groupDoc.data().ownerId !== uid) {
+      throw new HttpsError("permission-denied", "Unauthorized to update company settings");
+    }
+
+    const updateData = {
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    };
+
+    if (groupName !== undefined) {
+      const cleanName = String(groupName).trim();
+      if (!cleanName) {
+        throw new HttpsError("invalid-argument", "Company name cannot be empty");
+      }
+      updateData.groupName = cleanName;
+    }
+
+    if (newPassword !== undefined && String(newPassword).trim() !== "") {
+      const passStr = String(newPassword).trim();
+      if (passStr.length < 6) {
+        throw new HttpsError("invalid-argument", "Password must be at least 6 characters");
+      }
+      const salt = crypto.randomBytes(16).toString("hex");
+      const hash = crypto.scryptSync(passStr, salt, 64).toString("hex");
+      updateData.password = `$scrypt$${hash}:${salt}`;
+      updateData.joinKey = passStr;
+    }
+
+    if (multiStoreEnabled !== undefined) {
+      updateData.multiStoreEnabled = Boolean(multiStoreEnabled);
+    }
+
+    if (aiEnabled !== undefined) {
+      updateData.aiEnabled = Boolean(aiEnabled);
+    }
+
+    if (workersCount !== undefined) {
+      updateData.workersCount = String(workersCount);
+    }
+
+    if (requireApproval !== undefined) {
+      updateData.requireApproval = Boolean(requireApproval);
+    }
+
+    await groupDocRef.update(updateData);
+
+    return {success: true, updatedFields: updateData};
+  }
+
   /**
  * Manage Shift Groups API
  * Handles creating groups, joining groups, and approving joins.
@@ -839,6 +1018,9 @@ async function handleRotateWorkplaceCredentials(payload, uid) {
       if (action === "approve_join") return await handleApproveJoinShiftGroup(payload, uid);
       if (action === "remove_manager") return await handleRemoveManagerShiftGroup(payload, uid);
       if (action === "rotate_credentials") return await handleRotateWorkplaceCredentials(payload, uid);
+      if (action === "add_manager") return await handleAddManagerShiftGroup(payload, uid);
+      if (action === "update_profile") return await handleUpdateProfile(payload, uid);
+      if (action === "update_company") return await handleUpdateCompanyShiftGroup(payload, uid);
 
       throw new HttpsError("invalid-argument", "Invalid action");
     } catch (error) { handleInternalError(`Shift Groups Error for uid: ${uid}`, error); }
@@ -1696,6 +1878,10 @@ exports.manageAnnouncements = functions.https.onCall(async (data, context) => {
 exports.handleCreateShiftGroup = handleCreateShiftGroup;
 exports.handleRequestJoinShiftGroup = handleRequestJoinShiftGroup;
 exports.handleRotateWorkplaceCredentials = handleRotateWorkplaceCredentials;
+exports.handleAddManagerShiftGroup = handleAddManagerShiftGroup;
+exports.handleUpdateProfile = handleUpdateProfile;
+exports.handleUpdateCompanyShiftGroup = handleUpdateCompanyShiftGroup;
+exports.generateUniqueCorporateId = generateUniqueCorporateId;
 exports.generateUniqueWorkplaceCode = generateUniqueWorkplaceCode;
 exports.generateUniqueWorkplaceKey = generateUniqueWorkplaceKey;
 

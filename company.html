@@ -260,7 +260,7 @@
                 <button onclick="toggleTheme()" aria-label="Toggle Theme" class="p-2 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
                     <i data-lucide="moon" id="themeIcon" class="w-4 h-4"></i>
                 </button>
-                <div id="authContainer">
+                <div id="authContainer" class="relative">
                     <!-- Auth UI populated here -->
                 </div>
             </div>
@@ -548,13 +548,22 @@
                     <div class="flex flex-wrap items-center gap-2.5 text-xs text-slate-500 dark:text-slate-400 font-medium">
                         <span id="workplaceCodeDisplayBento" class="font-mono font-bold bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800/80 px-2.5 py-0.5 rounded cursor-pointer hover:bg-indigo-100 dark:hover:bg-indigo-900/60 transition-colors" onclick="copyToClipboard(this.getAttribute('data-code') || activeWorkplaceCode)" title="Click to copy Workplace Code">Code: Loading...</span>
                         <span>•</span>
-                        <span id="orgIdDisplayBento" class="font-mono bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">ID: Loading...</span>
+                        <span id="orgIdDisplayBento" class="font-mono bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors inline-flex items-center gap-1.5" onclick="copyToClipboard(activeOrgId)" title="Click to copy Company ID">ID: Loading...</span>
                         <span>•</span>
-                        <span class="flex items-center gap-1"><i data-lucide="shield-check" class="w-3.5 h-3.5 text-emerald-500"></i> Workplace Verified</span>
+                        <span id="multiStoreStatusBadge" class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+                            <span class="w-1.5 h-1.5 rounded-full bg-indigo-500"></span> Multi-Store Integrated
+                        </span>
+                        <span>•</span>
+                        <span id="shareGroupPassDisplay" onclick="openCompanySettingsModal('security')" class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 cursor-pointer hover:bg-emerald-100 dark:hover:bg-emerald-900/50 transition-colors" title="Click to rotate Join Password">
+                            <i data-lucide="shield-check" class="w-3.5 h-3.5 text-emerald-500"></i> Security: Encrypted
+                        </span>
                     </div>
                 </div>
 
                 <div class="flex flex-wrap items-center gap-2.5 w-full md:w-auto">
+                    <button id="openCompanySettingsBtn" onclick="openCompanySettingsModal()" class="btn btn-outline py-2 px-3.5 text-xs font-semibold flex items-center gap-2">
+                        <i data-lucide="settings" class="w-3.5 h-3.5 text-indigo-500"></i> Company Settings
+                    </button>
                     <button onclick="showInviteModal()" class="btn btn-outline py-2 px-3.5 text-xs font-semibold flex items-center gap-2">
                         <i data-lucide="key" class="w-3.5 h-3.5 text-indigo-500"></i> Workspace Credentials
                     </button>
@@ -861,6 +870,151 @@
         </div>
     </div>
 
+    <!-- Account & Profile Settings Modal -->
+    <div id="profileSettingsModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+        <div class="card max-w-md w-full p-6 space-y-4">
+            <div class="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-3">
+                <h3 class="font-bold text-base text-slate-900 dark:text-white flex items-center gap-2">
+                    <i data-lucide="user-cog" class="w-4 h-4 text-indigo-600"></i> Account & Profile Settings
+                </h3>
+                <button onclick="closeProfileSettingsModal()" aria-label="Close modal" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            </div>
+            
+            <form id="profileSettingsForm" onsubmit="saveProfileSettings(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Display Name</label>
+                    <input type="text" id="profileDisplayNameInput" placeholder="Your Full Name" class="w-full bg-slate-50 dark:bg-slate-800/80 p-2.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 dark:text-white font-medium" required>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Job Title / Executive Role</label>
+                    <input type="text" id="profileJobTitleInput" placeholder="e.g. Chief Operations Officer, Director" class="w-full bg-slate-50 dark:bg-slate-800/80 p-2.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 dark:text-white font-medium">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Email Address</label>
+                    <div class="flex items-center gap-2">
+                        <input type="email" id="profileEmailDisplay" readonly class="flex-1 bg-slate-100 dark:bg-slate-800/40 p-2.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs text-slate-500 dark:text-slate-400 cursor-not-allowed">
+                        <button type="button" onclick="sendProfilePasswordReset()" class="btn btn-outline py-2 px-3 text-xs whitespace-nowrap font-medium" title="Send Password Reset Email">
+                            Reset Password
+                        </button>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Default Dashboard View</label>
+                    <select id="profileDefaultTabSelect" class="w-full bg-slate-50 dark:bg-slate-800/80 p-2.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 dark:text-white font-medium">
+                        <option value="overview">Executive Overview</option>
+                        <option value="managers">Manager Directory</option>
+                        <option value="employees">Staff & Team Roster</option>
+                    </select>
+                </div>
+
+                <div class="flex justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                    <button type="button" onclick="closeProfileSettingsModal()" class="btn btn-outline py-2 px-4 text-xs font-semibold">Cancel</button>
+                    <button type="submit" id="saveProfileBtn" class="btn btn-primary py-2 px-5 text-xs font-semibold flex items-center gap-1.5">
+                        <i data-lucide="check" class="w-3.5 h-3.5"></i> Save Changes
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Company Settings Modal -->
+    <div id="companySettingsModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 overflow-y-auto">
+        <div class="card max-w-lg w-full p-6 space-y-5 my-8 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-3">
+                <h3 class="font-bold text-base text-slate-900 dark:text-white flex items-center gap-2">
+                    <i data-lucide="settings" class="w-4 h-4 text-indigo-600"></i> Corporate Workspace Settings
+                </h3>
+                <button onclick="closeCompanySettingsModal()" aria-label="Close modal" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            </div>
+
+            <form id="companySettingsForm" onsubmit="saveCompanySettings(event)" class="space-y-5">
+                <!-- Section 1: Organization Identity -->
+                <div class="space-y-3">
+                    <h4 class="text-xs font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 flex items-center gap-1.5">
+                        <i data-lucide="building-2" class="w-3.5 h-3.5"></i> Organization Identity
+                    </h4>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Company / Organization Name</label>
+                        <input type="text" id="companySettingsNameInput" placeholder="e.g. Apex Hospitality Group" class="w-full bg-slate-50 dark:bg-slate-800/80 p-2.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 dark:text-white font-medium" required>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Unique Corporate ID</label>
+                        <div class="flex items-center gap-2">
+                            <input type="text" id="companySettingsIdDisplay" readonly class="flex-1 font-mono font-bold bg-slate-100 dark:bg-slate-800/60 p-2.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs text-indigo-600 dark:text-indigo-400 cursor-text select-all">
+                            <button type="button" onclick="copyToClipboard(document.getElementById('companySettingsIdDisplay').value)" class="btn btn-outline py-2 px-3 text-xs font-medium flex items-center gap-1.5" title="Copy Corporate ID">
+                                <i data-lucide="copy" class="w-3.5 h-3.5"></i> Copy ID
+                            </button>
+                        </div>
+                        <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">Stores and managers link their shift logs to your corporate hierarchy using this unique ID.</p>
+                    </div>
+                </div>
+
+                <!-- Section 2: Multi-Store & Operations Configuration -->
+                <div class="space-y-3 pt-3 border-t border-slate-100 dark:border-slate-800">
+                    <h4 class="text-xs font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 flex items-center gap-1.5">
+                        <i data-lucide="sliders" class="w-3.5 h-3.5"></i> Multi-Store & Operations
+                    </h4>
+                    <label class="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 cursor-pointer">
+                        <div>
+                            <div class="text-xs font-semibold text-slate-900 dark:text-white">Multi-Store Integration</div>
+                            <div class="text-[11px] text-slate-500 dark:text-slate-400">Allow multiple retail and restaurant locations to synchronize rosters and shifts.</div>
+                        </div>
+                        <input type="checkbox" id="companySettingsMultiStoreToggle" class="w-4 h-4 text-indigo-600 rounded">
+                    </label>
+                    <label class="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 cursor-pointer">
+                        <div>
+                            <div class="text-xs font-semibold text-slate-900 dark:text-white">AI Shift Summary Insights</div>
+                            <div class="text-[11px] text-slate-500 dark:text-slate-400">Automatically analyze shift handoffs and routine bottlenecks across branches.</div>
+                        </div>
+                        <input type="checkbox" id="companySettingsAiToggle" class="w-4 h-4 text-indigo-600 rounded">
+                    </label>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Team Size Tier</label>
+                        <select id="companySettingsWorkersSelect" class="w-full bg-slate-50 dark:bg-slate-800/80 p-2.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 dark:text-white font-medium">
+                            <option value="1-10">1-10 Employees (Starter)</option>
+                            <option value="11-50">11-50 Employees (Growth)</option>
+                            <option value="51-200">51-200 Employees (Scale)</option>
+                            <option value="200+">200+ Employees (Enterprise)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Section 3: Security & Access Control -->
+                <div id="companySettingsSecuritySection" class="space-y-3 pt-3 border-t border-slate-100 dark:border-slate-800">
+                    <h4 class="text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5">
+                        <i data-lucide="shield-check" class="w-3.5 h-3.5"></i> Security & Access Control
+                    </h4>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Rotate Store Join Password</label>
+                        <input type="password" id="companySettingsNewPassInput" placeholder="Leave blank to keep current password" class="w-full bg-slate-50 dark:bg-slate-800/80 p-2.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 dark:text-white font-medium">
+                        <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">Minimum 6 characters. Passwords are automatically hashed using scrypt.</p>
+                    </div>
+                    <label class="flex items-center justify-between p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 cursor-pointer">
+                        <div>
+                            <div class="text-xs font-semibold text-slate-900 dark:text-white">Require Owner Approval for Store Joins</div>
+                            <div class="text-[11px] text-slate-500 dark:text-slate-400">Managers must be manually verified in the directory before seeing corporate data.</div>
+                        </div>
+                        <input type="checkbox" id="companySettingsRequireApprovalToggle" checked class="w-4 h-4 text-indigo-600 rounded">
+                    </label>
+                </div>
+
+                <div class="flex justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                    <button type="button" onclick="closeCompanySettingsModal()" class="btn btn-outline py-2 px-4 text-xs font-semibold">Cancel</button>
+                    <button type="submit" id="saveCompanySettingsBtn" class="btn btn-primary py-2 px-5 text-xs font-semibold flex items-center gap-1.5">
+                        <i data-lucide="check" class="w-3.5 h-3.5"></i> Save Settings
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Corporate Toast Notification Container -->
+    <div id="corporateToastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none"></div>
+
     <script>
         // --- Firebase Configuration ---
         const firebaseConfig = window.ezManageFirebaseConfig;
@@ -872,7 +1026,9 @@
         const db = firebase.firestore();
 
         let currentUser = null;
+        let currentUserData = null;
         let activeOrgId = null;
+        let activeOrgData = null;
         let activeOrgPass = null;
         let activeWorkplaceCode = null;
         let activeJoinKey = null;
@@ -974,33 +1130,403 @@
             if (window.lucide) lucide.createIcons();
         }
 
+        // --- Corporate Toast Notification Helper ---
+        function showCorporateToast(message, type = 'success') {
+            const container = document.getElementById('corporateToastContainer');
+            if (!container) return;
+
+            const toast = document.createElement('div');
+            const isError = type === 'error';
+
+            const bgClass = isError
+                ? 'bg-red-50 dark:bg-red-950/90 border-red-200 dark:border-red-800 text-red-800 dark:text-red-200'
+                : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 shadow-xl';
+
+            const iconMarkup = isError
+                ? `<i data-lucide="alert-circle" class="w-4 h-4 text-red-500 shrink-0"></i>`
+                : `<i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-500 shrink-0"></i>`;
+
+            toast.className = `pointer-events-auto p-3.5 rounded-xl border ${bgClass} text-xs font-semibold flex items-center justify-between gap-3 shadow-lg transition-all transform translate-y-2 opacity-0 duration-200`;
+            toast.innerHTML = `
+                <div class="flex items-center gap-2.5">
+                    ${iconMarkup}
+                    <span>${escapeHTML(message)}</span>
+                </div>
+                <button onclick="this.parentElement.remove()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+                    <i data-lucide="x" class="w-3.5 h-3.5"></i>
+                </button>
+            `;
+
+            container.appendChild(toast);
+            if (window.lucide) lucide.createIcons();
+
+            requestAnimationFrame(() => {
+                toast.classList.remove('translate-y-2', 'opacity-0');
+            });
+
+            setTimeout(() => {
+                toast.classList.add('translate-y-2', 'opacity-0');
+                setTimeout(() => toast.remove(), 250);
+            }, 3500);
+        }
+
+        // --- User Profile & Menu Dropdown Helpers ---
+        function renderAuthProfile(user, userData) {
+            const authContainer = document.getElementById('authContainer');
+            if (!authContainer) return;
+
+            if (!user) {
+                authContainer.innerHTML = `
+                    <button onclick="navTo('login')" class="btn btn-primary py-2 px-4 text-xs font-bold">Sign In</button>
+                `;
+                if (window.lucide) lucide.createIcons();
+                return;
+            }
+
+            const displayName = (userData && userData.name) || user.displayName || user.email.split('@')[0];
+            const role = (userData && userData.role) || 'Corporate Admin';
+            const initial = displayName.charAt(0).toUpperCase();
+
+            authContainer.innerHTML = `
+                <div class="relative">
+                    <button id="userProfileMenuBtn" onclick="toggleProfileDropdown(event)" aria-label="User Profile Menu" class="flex items-center gap-2 p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors border border-transparent hover:border-slate-200 dark:hover:border-slate-700">
+                        <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-600 to-indigo-500 text-white flex items-center justify-center font-bold text-xs shadow-sm ring-2 ring-indigo-100 dark:ring-indigo-900/40">
+                            ${escapeHTML(initial)}
+                        </div>
+                        <div class="text-left hidden sm:block max-w-[130px]">
+                            <div class="text-xs font-bold text-slate-800 dark:text-slate-100 truncate">${escapeHTML(displayName)}</div>
+                            <div class="text-[10px] font-medium text-indigo-600 dark:text-indigo-400 -mt-0.5">${escapeHTML(role)}</div>
+                        </div>
+                        <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-400"></i>
+                    </button>
+
+                    <!-- Profile Dropdown Menu -->
+                    <div id="userProfileDropdown" class="hidden absolute right-0 mt-2 w-64 card p-2 shadow-2xl border border-slate-200 dark:border-slate-700 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
+                        <div class="px-3 py-2 border-b border-slate-100 dark:border-slate-800">
+                            <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Signed in as</p>
+                            <p class="text-xs font-bold text-slate-900 dark:text-white truncate">${escapeHTML(user.email)}</p>
+                            <span class="inline-block mt-1 px-2 py-0.5 rounded text-[10px] font-semibold bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800/80">${escapeHTML(role)}</span>
+                        </div>
+                        <div class="py-1 space-y-0.5">
+                            <button onclick="openProfileSettingsModal()" class="w-full text-left flex items-center gap-2 px-3 py-2 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors">
+                                <i data-lucide="user-cog" class="w-4 h-4 text-indigo-500"></i> Account & Profile Settings
+                            </button>
+                            <button id="dropdownCompanySettingsBtn" onclick="openCompanySettingsModal()" class="w-full text-left flex items-center gap-2 px-3 py-2 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors ${activeOrgId ? '' : 'hidden'}">
+                                <i data-lucide="settings" class="w-4 h-4 text-indigo-500"></i> Company Settings
+                            </button>
+                            <button onclick="toggleTheme()" class="w-full text-left flex items-center gap-2 px-3 py-2 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors">
+                                <i data-lucide="sun-moon" class="w-4 h-4 text-amber-500"></i> Toggle Appearance
+                            </button>
+                        </div>
+                        <div class="border-t border-slate-100 dark:border-slate-800 pt-1">
+                            <button onclick="auth.signOut()" class="w-full text-left flex items-center gap-2 px-3 py-2 text-xs font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-lg transition-colors">
+                                <i data-lucide="log-out" class="w-4 h-4"></i> Sign Out
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            if (window.lucide) lucide.createIcons();
+        }
+
+        function toggleProfileDropdown(e) {
+            if (e) e.stopPropagation();
+            const dropdown = document.getElementById('userProfileDropdown');
+            if (dropdown) {
+                dropdown.classList.toggle('hidden');
+                if (window.lucide) lucide.createIcons();
+            }
+        }
+
+        function closeProfileDropdown() {
+            const dropdown = document.getElementById('userProfileDropdown');
+            if (dropdown) dropdown.classList.add('hidden');
+        }
+
+        document.addEventListener('click', (e) => {
+            const menuBtn = document.getElementById('userProfileMenuBtn');
+            const dropdown = document.getElementById('userProfileDropdown');
+            if (dropdown && !dropdown.classList.contains('hidden')) {
+                if (menuBtn && !menuBtn.contains(e.target) && !dropdown.contains(e.target)) {
+                    closeProfileDropdown();
+                }
+            }
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeProfileDropdown();
+                closeProfileSettingsModal();
+                closeCompanySettingsModal();
+            }
+        });
+
+        // --- Account & Profile Settings Modal ---
+        function openProfileSettingsModal() {
+            closeProfileDropdown();
+            const modal = document.getElementById('profileSettingsModal');
+            if (!modal) return;
+
+            const nameInput = document.getElementById('profileDisplayNameInput');
+            const jobTitleInput = document.getElementById('profileJobTitleInput');
+            const emailDisplay = document.getElementById('profileEmailDisplay');
+            const defaultTabSelect = document.getElementById('profileDefaultTabSelect');
+
+            const currentName = (currentUserData && currentUserData.name) || (currentUser && (currentUser.displayName || currentUser.email.split('@')[0])) || '';
+            const currentJob = (currentUserData && currentUserData.jobTitle) || '';
+            const currentEmail = (currentUser && currentUser.email) || '';
+            const currentTab = (currentUserData && currentUserData.defaultTab) || localStorage.getItem('defaultCorporateTab') || 'overview';
+
+            if (nameInput) nameInput.value = currentName;
+            if (jobTitleInput) jobTitleInput.value = currentJob;
+            if (emailDisplay) emailDisplay.value = currentEmail;
+            if (defaultTabSelect) defaultTabSelect.value = currentTab;
+
+            modal.classList.remove('hidden');
+            if (window.lucide) lucide.createIcons();
+        }
+
+        function closeProfileSettingsModal() {
+            const modal = document.getElementById('profileSettingsModal');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        async function sendProfilePasswordReset() {
+            if (!currentUser || !currentUser.email) return;
+            try {
+                await auth.sendPasswordResetEmail(currentUser.email);
+                showCorporateToast("Password reset email sent to " + currentUser.email);
+            } catch (err) {
+                showCorporateToast("Failed to send reset email: " + err.message, "error");
+            }
+        }
+
+        async function saveProfileSettings(event) {
+            if (event) event.preventDefault();
+            const nameInput = document.getElementById('profileDisplayNameInput');
+            const jobTitleInput = document.getElementById('profileJobTitleInput');
+            const defaultTabSelect = document.getElementById('profileDefaultTabSelect');
+            const saveBtn = document.getElementById('saveProfileBtn');
+
+            const name = nameInput ? nameInput.value.trim() : '';
+            const jobTitle = jobTitleInput ? jobTitleInput.value.trim() : '';
+            const defaultTab = defaultTabSelect ? defaultTabSelect.value : 'overview';
+
+            if (!name) {
+                showCorporateToast("Please enter a display name", "error");
+                return;
+            }
+
+            const originalBtnContent = saveBtn ? saveBtn.innerHTML : '';
+            if (saveBtn) {
+                saveBtn.innerHTML = `<i data-lucide="loader-2" class="w-3.5 h-3.5 animate-spin"></i> Saving...`;
+                saveBtn.disabled = true;
+                if (window.lucide) lucide.createIcons();
+            }
+
+            try {
+                try {
+                    await callFunction('manageShiftGroups', {
+                        action: 'update_profile',
+                        payload: { name, jobTitle, defaultTab }
+                    });
+                } catch (funcErr) {
+                    console.warn("Function update_profile failed, using client fallback:", funcErr);
+                    await db.collection('users').doc(currentUser.uid).set({
+                        name,
+                        jobTitle,
+                        defaultTab,
+                        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    }, { merge: true });
+                }
+
+                if (!currentUserData) currentUserData = {};
+                currentUserData.name = name;
+                currentUserData.jobTitle = jobTitle;
+                currentUserData.defaultTab = defaultTab;
+                localStorage.setItem('defaultCorporateTab', defaultTab);
+
+                renderAuthProfile(currentUser, currentUserData);
+                closeProfileSettingsModal();
+                showCorporateToast("Profile settings saved successfully.");
+            } catch (err) {
+                console.error("Save profile error:", err);
+                showCorporateToast("Failed to save profile: " + err.message, "error");
+            } finally {
+                if (saveBtn) {
+                    saveBtn.innerHTML = originalBtnContent;
+                    saveBtn.disabled = false;
+                    if (window.lucide) lucide.createIcons();
+                }
+            }
+        }
+
+        // --- Company Settings Modal ---
+        function openCompanySettingsModal(focusSection) {
+            closeProfileDropdown();
+            const modal = document.getElementById('companySettingsModal');
+            if (!modal) return;
+
+            const nameInput = document.getElementById('companySettingsNameInput');
+            const idDisplay = document.getElementById('companySettingsIdDisplay');
+            const multiStoreToggle = document.getElementById('companySettingsMultiStoreToggle');
+            const aiToggle = document.getElementById('companySettingsAiToggle');
+            const workersSelect = document.getElementById('companySettingsWorkersSelect');
+            const newPassInput = document.getElementById('companySettingsNewPassInput');
+            const requireApprovalToggle = document.getElementById('companySettingsRequireApprovalToggle');
+
+            const orgData = activeOrgData || {};
+            if (nameInput) nameInput.value = orgData.groupName || 'Corporate Workspace';
+            if (idDisplay) idDisplay.value = activeOrgId || '';
+            if (multiStoreToggle) multiStoreToggle.checked = orgData.multiStoreEnabled !== false;
+            if (aiToggle) aiToggle.checked = orgData.aiEnabled !== false;
+            if (workersSelect) workersSelect.value = orgData.workersCount || '1-10';
+            if (newPassInput) newPassInput.value = '';
+            if (requireApprovalToggle) requireApprovalToggle.checked = orgData.requireApproval !== false;
+
+            modal.classList.remove('hidden');
+            if (window.lucide) lucide.createIcons();
+
+            if (focusSection === 'security' && newPassInput) {
+                setTimeout(() => {
+                    const sec = document.getElementById('companySettingsSecuritySection');
+                    if (sec) sec.scrollIntoView({ behavior: 'smooth' });
+                    newPassInput.focus();
+                }, 150);
+            }
+        }
+
+        function closeCompanySettingsModal() {
+            const modal = document.getElementById('companySettingsModal');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        async function saveCompanySettings(event) {
+            if (event) event.preventDefault();
+            if (!activeOrgId) {
+                showCorporateToast("No active company found", "error");
+                return;
+            }
+
+            const nameInput = document.getElementById('companySettingsNameInput');
+            const multiStoreToggle = document.getElementById('companySettingsMultiStoreToggle');
+            const aiToggle = document.getElementById('companySettingsAiToggle');
+            const workersSelect = document.getElementById('companySettingsWorkersSelect');
+            const newPassInput = document.getElementById('companySettingsNewPassInput');
+            const requireApprovalToggle = document.getElementById('companySettingsRequireApprovalToggle');
+            const saveBtn = document.getElementById('saveCompanySettingsBtn');
+
+            const groupName = nameInput ? nameInput.value.trim() : '';
+            const multiStoreEnabled = multiStoreToggle ? multiStoreToggle.checked : true;
+            const aiEnabled = aiToggle ? aiToggle.checked : true;
+            const workersCount = workersSelect ? workersSelect.value : '1-10';
+            const newPassword = newPassInput ? newPassInput.value.trim() : '';
+            const requireApproval = requireApprovalToggle ? requireApprovalToggle.checked : true;
+
+            if (!groupName) {
+                showCorporateToast("Please enter a company name", "error");
+                return;
+            }
+
+            if (newPassword && newPassword.length < 6) {
+                showCorporateToast("New password must be at least 6 characters", "error");
+                return;
+            }
+
+            const originalBtnContent = saveBtn ? saveBtn.innerHTML : '';
+            if (saveBtn) {
+                saveBtn.innerHTML = `<i data-lucide="loader-2" class="w-3.5 h-3.5 animate-spin"></i> Saving...`;
+                saveBtn.disabled = true;
+                if (window.lucide) lucide.createIcons();
+            }
+
+            try {
+                const payload = {
+                    groupId: activeOrgId,
+                    groupName,
+                    multiStoreEnabled,
+                    aiEnabled,
+                    workersCount,
+                    requireApproval
+                };
+                if (newPassword) payload.newPassword = newPassword;
+
+                const res = await callFunction('manageShiftGroups', {
+                    action: 'update_company',
+                    payload
+                });
+
+                if (!activeOrgData) activeOrgData = {};
+                activeOrgData.groupName = groupName;
+                activeOrgData.multiStoreEnabled = multiStoreEnabled;
+                activeOrgData.aiEnabled = aiEnabled;
+                activeOrgData.workersCount = workersCount;
+                activeOrgData.requireApproval = requireApproval;
+                if (newPassword) {
+                    activeJoinKey = newPassword;
+                    activeOrgData.joinKey = newPassword;
+                    activeOrgData.password = (res && res.data && res.data.updatedFields && res.data.updatedFields.password) || '$scrypt$updated';
+                }
+
+                // Refresh Banner DOM immediately
+                const orgNameEl = document.getElementById('orgNameDisplayBento');
+                if (orgNameEl) orgNameEl.innerText = groupName;
+
+                const multiStoreBadge = document.getElementById('multiStoreStatusBadge');
+                if (multiStoreBadge) {
+                    multiStoreBadge.innerHTML = multiStoreEnabled
+                        ? `<span class="w-1.5 h-1.5 rounded-full bg-indigo-500"></span> Multi-Store Integrated`
+                        : `<span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span> Single-Store Mode`;
+                }
+
+                const shareGroupPassDisplay = document.getElementById('shareGroupPassDisplay');
+                if (shareGroupPassDisplay) {
+                    shareGroupPassDisplay.innerHTML = `<i data-lucide="shield-check" class="w-3.5 h-3.5 text-emerald-500"></i> Security: Encrypted`;
+                }
+
+                if (window.lucide) lucide.createIcons();
+
+                closeCompanySettingsModal();
+                showCorporateToast("Company settings updated successfully.");
+            } catch (err) {
+                console.error("Save company settings error:", err);
+                showCorporateToast("Failed to save company settings: " + err.message, "error");
+            } finally {
+                if (saveBtn) {
+                    saveBtn.innerHTML = originalBtnContent;
+                    saveBtn.disabled = false;
+                    if (window.lucide) lucide.createIcons();
+                }
+            }
+        }
+
         // --- Auth State ---
         auth.onAuthStateChanged(async (user) => {
             currentUser = user;
             if (user) {
                 const loginLink = document.getElementById('login-link-step-1');
                 if (loginLink) loginLink.classList.add('hidden');
-                document.getElementById('authContainer').innerHTML = `
-                    <div class="flex items-center gap-2">
-                        <div class="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center font-bold text-xs text-indigo-700 dark:text-indigo-400 border border-indigo-200">
-                            ${(user.email || 'A').charAt(0).toUpperCase()}
-                        </div>
-                        <span class="text-xs font-semibold text-slate-700 dark:text-slate-300 hidden sm:inline-block truncate max-w-[120px]">${escapeHTML(user.email.split('@')[0])}</span>
-                        <button onclick="auth.signOut()" class="btn btn-outline py-1.5 px-2.5 text-xs text-slate-500 hover:text-red-600" title="Sign Out">
-                            <i data-lucide="log-out" class="w-3.5 h-3.5"></i>
-                        </button>
-                    </div>
-                `;
-                if (window.lucide) lucide.createIcons();
+
+                try {
+                    const userSnap = await db.collection('users').doc(user.uid).get();
+                    if (userSnap.exists) {
+                        currentUserData = userSnap.data();
+                    }
+                } catch (e) {
+                    console.warn("Could not load user data:", e);
+                }
+
+                renderAuthProfile(user, currentUserData);
 
                 if (!isRegistering) {
                     document.getElementById('view-login').classList.remove('active');
                     await initializeCorporateWorkspace(user);
                 }
             } else {
-                document.getElementById('authContainer').innerHTML = `
-                    <button onclick="navTo('login')" class="btn btn-primary py-2 px-4 text-xs font-bold">Sign In</button>
-                `;
+                currentUserData = null;
+                activeOrgId = null;
+                activeOrgData = null;
+                renderAuthProfile(null, null);
                 document.getElementById('dashboard-shell').classList.add('hidden');
                 navTo('login');
                 if (window.lucide) lucide.createIcons();
@@ -1037,19 +1563,22 @@
         async function initializeCorporateWorkspace(user) {
             if (!user) return;
             try {
+                // Ensure user data is loaded
+                if (!currentUserData) {
+                    const userSnap = await db.collection('users').doc(user.uid).get();
+                    currentUserData = userSnap.exists ? userSnap.data() : {};
+                }
+
                 let orgDoc = null;
                 // 1. Check if user owns a shift group
                 const groupSnap = await db.collection('shift_groups').where('ownerId', '==', user.uid).limit(1).get();
                 if (!groupSnap.empty) {
                     orgDoc = groupSnap.docs[0];
-                } else {
+                } else if (currentUserData && currentUserData.orgId) {
                     // 2. Check if user document has orgId assigned
-                    const userSnap = await db.collection('users').doc(user.uid).get();
-                    if (userSnap.exists && userSnap.data().orgId) {
-                        const directOrgSnap = await db.collection('shift_groups').doc(userSnap.data().orgId).get();
-                        if (directOrgSnap.exists) {
-                            orgDoc = directOrgSnap;
-                        }
+                    const directOrgSnap = await db.collection('shift_groups').doc(currentUserData.orgId).get();
+                    if (directOrgSnap.exists) {
+                        orgDoc = directOrgSnap;
                     }
                 }
 
@@ -1059,7 +1588,8 @@
                 }
 
                 activeOrgId = orgDoc.id;
-                const orgData = orgDoc.data() || {};
+                activeOrgData = orgDoc.data() || {};
+                const orgData = activeOrgData;
                 activeWorkplaceCode = orgData.workplaceCode || ('EZM-' + activeOrgId.substring(0, 6).toUpperCase());
                 activeJoinKey = orgData.joinKey || '';
                 activeOrgPass = orgData.password || '';
@@ -1074,6 +1604,22 @@
                 if (codeBannerEl) {
                     codeBannerEl.innerText = `Code: ${activeWorkplaceCode}`;
                     codeBannerEl.setAttribute('data-code', activeWorkplaceCode);
+                }
+
+                const multiStoreBadge = document.getElementById('multiStoreStatusBadge');
+                if (multiStoreBadge) {
+                    const isMulti = orgData.multiStoreEnabled !== false;
+                    multiStoreBadge.innerHTML = isMulti
+                        ? `<span class="w-1.5 h-1.5 rounded-full bg-indigo-500"></span> Multi-Store Integrated`
+                        : `<span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span> Single-Store Mode`;
+                }
+
+                const shareGroupPassDisplay = document.getElementById('shareGroupPassDisplay');
+                if (shareGroupPassDisplay) {
+                    const isEncrypted = orgData.password && orgData.password.startsWith('$scrypt$');
+                    shareGroupPassDisplay.innerHTML = isEncrypted
+                        ? `<i data-lucide="shield-check" class="w-3.5 h-3.5 text-emerald-500"></i> Security: Encrypted`
+                        : `<i data-lucide="key" class="w-3.5 h-3.5 text-amber-500"></i> Security: Standard`;
                 }
 
                 const shareWorkplaceCodeEl = document.getElementById('shareWorkplaceCode');
@@ -1096,17 +1642,27 @@
                     }
                 }
 
+                renderAuthProfile(user, currentUserData);
+
                 document.getElementById('dashboard-shell').classList.remove('hidden');
                 document.getElementById('view-login').classList.remove('active');
                 document.getElementById('view-register').classList.remove('active');
+
+                // Restore preferred dashboard tab
+                const preferredTab = (currentUserData && currentUserData.defaultTab) || localStorage.getItem('defaultCorporateTab');
+                if (preferredTab && ['overview', 'managers', 'employees'].includes(preferredTab)) {
+                    switchCorporateTab(preferredTab);
+                }
+
+                if (window.lucide) lucide.createIcons();
 
                 fetchGlobalData();
                 fetchDashboardData();
                 fetchEmployeesData();
             } catch (e) {
                 console.error("Workspace initialization error:", e);
-                document.getElementById('dashboard-shell').classList.remove('hidden');
-                document.getElementById('view-login').classList.remove('active');
+                showCorporateToast("Failed to initialize workspace: " + e.message, "error");
+                navTo('register');
             }
         }
 
@@ -1373,9 +1929,10 @@
                 document.getElementById('companyNewEmpRole').value = '';
                 document.getElementById('companyNewEmpPhone').value = '';
                 document.getElementById('companyAddEmpModal').classList.add('hidden');
+                showCorporateToast("Staff member saved to workspace.");
                 fetchEmployeesData();
             } catch(e) {
-                alert("Error saving employee: " + e.message);
+                showCorporateToast("Error saving employee: " + e.message, "error");
             }
         }
 
@@ -1383,18 +1940,20 @@
         async function approveRequest(requestId) {
             try {
                 await callFunction('manageShiftGroups', { action: "approve_join", payload: { requestId } });
-                alert("Manager Approved!");
-            } catch (e) { alert("Failed: " + e.message); }
+                showCorporateToast("Manager approved and linked to workspace.");
+            } catch (e) {
+                showCorporateToast("Failed to approve: " + e.message, "error");
+            }
         }
 
         async function removeManager(userId) {
             if (!confirm("Remove this manager from the organization?")) return;
             try {
                 await callFunction('manageShiftGroups', { action: "remove_manager", payload: { userId, groupId: activeOrgId } });
-                alert("Manager removed successfully.");
+                showCorporateToast("Manager removed successfully.");
                 fetchDashboardData();
             } catch (e) {
-                alert("Failed to remove manager: " + e.message);
+                showCorporateToast("Failed to remove manager: " + e.message, "error");
             }
         }
 
@@ -1490,10 +2049,11 @@
         }
 
         function copyToClipboard(text) {
+            if (!text) return;
             navigator.clipboard.writeText(text).then(() => {
-                alert("Copied to clipboard: " + text);
+                showCorporateToast("Copied to clipboard: " + text);
             }).catch(() => {
-                alert("Failed to copy. Please copy manually: " + text);
+                showCorporateToast("Failed to copy: " + text, "error");
             });
         }
 
@@ -1760,6 +2320,7 @@
                 const cred = await auth.createUserWithEmailAndPassword(email, pass);
                 await cred.user.getIdToken(true);
 
+                // Initial profile document without restricted fields
                 await db.collection('users').doc(cred.user.uid).set({
                     email: email,
                     role: "CorporateAdmin",
@@ -1767,21 +2328,25 @@
                     name: orgName + " Admin"
                 });
 
+                // Server atomically sets orgId, role, plan, workersCount, aiEnabled via Admin SDK
+                const workersEl = document.getElementById('regWorkers');
+                const aiEl = document.getElementById('configAi');
                 const result = await callFunction('manageShiftGroups', {
                     action: "create",
                     payload: {
                         ownerName: email.split('@')[0],
-                        groupName: orgName
+                        name: orgName + " Admin",
+                        groupName: orgName,
+                        plan: selectedPlan || 'Free',
+                        workersCount: workersEl ? workersEl.value : '1-10',
+                        aiEnabled: aiEl ? aiEl.checked : true
                     }
                 });
 
                 if (result && result.data && result.data.groupId) {
-                    await db.collection('users').doc(cred.user.uid).set({
-                        orgId: result.data.groupId
-                    }, { merge: true });
-
+                    activeOrgId = result.data.groupId;
                     const codeEl = document.getElementById('onboardingWorkplaceCode');
-                    if (codeEl) codeEl.innerText = result.data.workplaceCode || 'EZM-CORP';
+                    if (codeEl) codeEl.innerText = result.data.workplaceCode || ('EZM-' + activeOrgId.substring(0, 6).toUpperCase());
                     const keyEl = document.getElementById('onboardingJoinKey');
                     if (keyEl) keyEl.innerText = result.data.joinKey || '...';
                 }
@@ -1797,7 +2362,7 @@
                         document.getElementById('view-register').classList.remove('active');
                         initializeCorporateWorkspace(cred.user);
                     }
-                }, 6000);
+                }, 3000);
             } catch (e) {
                 isRegistering = false;
                 alert("Registration failed: " + e.message);
@@ -1830,32 +2395,33 @@
                 const activeUser = auth.currentUser;
                 await activeUser.getIdToken(true);
 
+                // Initial profile document without restricted fields
                 await db.collection('users').doc(activeUser.uid).set({
                     email: activeUser.email,
                     role: 'CorporateAdmin',
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 }, { merge: true });
 
+                // Server atomically sets orgId, role, plan, workersCount, aiEnabled via Admin SDK
                 const result = await callFunction('manageShiftGroups', {
                     action: "create",
                     payload: {
                         ownerName: activeUser.displayName || activeUser.email.split('@')[0],
-                        groupName: orgName
+                        name: activeUser.displayName || (orgName + " Admin"),
+                        groupName: orgName,
+                        plan: selectedPlan || 'Free',
+                        workersCount: workers || '1-10',
+                        aiEnabled: aiEnabled
                     }
                 });
 
-                const groupId = result.data.groupId;
-                await db.collection('users').doc(activeUser.uid).set({
-                    orgId: groupId,
-                    plan: selectedPlan,
-                    workersCount: workers,
-                    aiEnabled: aiEnabled
-                }, { merge: true });
-
-                const codeEl = document.getElementById('tutorialWorkplaceCode');
-                if (codeEl) codeEl.innerText = result.data.workplaceCode || 'EZM-CORP';
-                const keyEl = document.getElementById('tutorialJoinKey');
-                if (keyEl) keyEl.innerText = result.data.joinKey || '...';
+                if (result && result.data && result.data.groupId) {
+                    activeOrgId = result.data.groupId;
+                    const codeEl = document.getElementById('tutorialWorkplaceCode');
+                    if (codeEl) codeEl.innerText = result.data.workplaceCode || ('EZM-' + activeOrgId.substring(0, 6).toUpperCase());
+                    const keyEl = document.getElementById('tutorialJoinKey');
+                    if (keyEl) keyEl.innerText = result.data.joinKey || '...';
+                }
 
                 clearInterval(sim);
                 if (bar) bar.style.width = '100%';
@@ -1890,24 +2456,30 @@
                     const email = document.getElementById('newManagerEmail').value.trim();
                     if (!email) return;
 
+                    if (!activeOrgId) {
+                        showCorporateToast("Active company workspace required to add managers", "error");
+                        return;
+                    }
+
                     const btn = form.querySelector('button[type="submit"]');
                     const originalBtnContent = btn.innerHTML;
                     btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 mr-1 animate-spin inline-block"></i> Adding...`;
                     btn.disabled = true;
+                    if (window.lucide) window.lucide.createIcons();
 
                     try {
-                        const newUid = db.collection('users').doc().id;
-                        await db.collection('users').doc(newUid).set({
-                            email: email,
-                            role: 'Manager',
-                            orgId: activeOrgId || currentUser.uid,
-                            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                        await callFunction('manageShiftGroups', {
+                            action: 'add_manager',
+                            payload: {
+                                groupId: activeOrgId,
+                                email: email
+                            }
                         });
                         document.getElementById('newManagerEmail').value = '';
-                        alert("Manager added to workspace!");
+                        showCorporateToast("Manager added and linked to workspace!");
                         fetchDashboardData();
                     } catch(err) {
-                        alert("Error adding manager: " + err.message);
+                        showCorporateToast("Error adding manager: " + err.message, "error");
                     } finally {
                         btn.innerHTML = originalBtnContent;
                         btn.disabled = false;

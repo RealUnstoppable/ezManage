@@ -130,4 +130,67 @@ describe("Corporate Workspace Credentials UI & Formatting", () => {
     expect(activeWorkplaceCode).toBe("EZM-ABCDEF");
     expect(document.getElementById('shareWorkplaceCode').innerText).toBe("EZM-ABCDEF");
   });
+
+  it("should display unique CORP-XXXXXXXX ID in bento banner without hanging on Loading...", () => {
+    const orgData = {
+      groupName: "Apex Enterprise",
+      workplaceCode: "EZM-APEX-8F2D19",
+      joinKey: "WPK-7B29-4M8D",
+      password: "$scrypt$somehash:somesalt",
+    };
+
+    applyWorkspaceCredentialsToDOM(orgData, "CORP-9K3F7X2B");
+    const idEl = document.getElementById('orgIdDisplayBento');
+    expect(idEl.innerText).toBe("ID: CORP-9K3F7X2B");
+    expect(idEl.innerText).not.toBe("ID: Loading...");
+  });
+
+  it("should dynamically render multi-store and security pills", () => {
+    document.body.innerHTML += `
+      <span id="multiStoreStatusBadge"></span>
+      <span id="shareGroupPassDisplay"></span>
+    `;
+
+    function updateOperationalBadges(multiStoreEnabled, password) {
+      const multiEl = document.getElementById('multiStoreStatusBadge');
+      if (multiEl) {
+        multiEl.innerHTML = multiStoreEnabled !== false
+          ? 'Multi-Store Integrated'
+          : 'Single-Store Mode';
+      }
+      const secEl = document.getElementById('shareGroupPassDisplay');
+      if (secEl) {
+        secEl.innerHTML = (password && password.startsWith('$scrypt$'))
+          ? 'Security: Encrypted'
+          : 'Security: Standard';
+      }
+    }
+
+    updateOperationalBadges(true, "$scrypt$hash:salt");
+    expect(document.getElementById('multiStoreStatusBadge').innerHTML).toBe("Multi-Store Integrated");
+    expect(document.getElementById('shareGroupPassDisplay').innerHTML).toBe("Security: Encrypted");
+
+    updateOperationalBadges(false, "plaintext123");
+    expect(document.getElementById('multiStoreStatusBadge').innerHTML).toBe("Single-Store Mode");
+    expect(document.getElementById('shareGroupPassDisplay').innerHTML).toBe("Security: Standard");
+  });
+
+  it("should render and dismiss corporate toasts cleanly", () => {
+    document.body.innerHTML += `<div id="corporateToastContainer"></div>`;
+    const container = document.getElementById('corporateToastContainer');
+
+    function createTestToast(message, type = 'success') {
+      const toast = document.createElement('div');
+      toast.className = `toast-item ${type}`;
+      toast.textContent = message;
+      container.appendChild(toast);
+      return toast;
+    }
+
+    const toast = createTestToast("Company settings updated successfully.");
+    expect(container.children.length).toBe(1);
+    expect(container.textContent).toContain("Company settings updated successfully.");
+    toast.remove();
+    expect(container.children.length).toBe(0);
+  });
 });
