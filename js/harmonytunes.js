@@ -255,13 +255,14 @@ document.addEventListener("DOMContentLoaded", () => {
     const fragment = document.createDocumentFragment();
     songs.forEach((song, index) => {
       const row = document.createElement("tr");
+      row.dataset.id = song.id;
 
       const isActive = currentQueue[currentSongIndex]?.id === song.id;
       if (isActive) row.classList.add("playing");
 
       const htmlStr = `
                 <td>
-                    <span class="song-index" style="${isActive ? "display:none" : ""}">${index + 1}</span>
+                    <span class="song-index" style="${isActive ? "display:none" : ""}"><span class="song-index-number">${index + 1}</span></span>
                     <span class="playing-icon" style="${isActive ? "display:inline" : "display:none"}">▶</span>
                 </td>
                 <td class="song-title">${escapeHTML(song.title)}</td>
@@ -317,9 +318,27 @@ document.addEventListener("DOMContentLoaded", () => {
     playerLikeBtn.classList.toggle("active", isFav);
 
     updateProgress();
+
+    // Update active song styling directly without re-rendering the whole table
     if (viewPlaylist.style.display !== "none") {
-      const showingFavs = playlistTitleEl.textContent === "Liked Songs";
-      renderSongTable(showingFavs ? userFavorites : librarySongs);
+        const rows = songListBody.querySelectorAll('tr');
+        rows.forEach(row => {
+            const isRowActive = row.dataset.id === song.id;
+
+            if (isRowActive) {
+                row.classList.add("playing");
+            } else {
+                row.classList.remove("playing");
+            }
+
+            const indexSpan = row.querySelector('.song-index');
+            const iconSpan = row.querySelector('.playing-icon');
+
+            if (indexSpan && iconSpan) {
+                indexSpan.style.display = isRowActive ? "none" : "";
+                iconSpan.style.display = isRowActive ? "inline" : "display:none";
+            }
+        });
     }
   }
 

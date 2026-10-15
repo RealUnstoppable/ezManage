@@ -1492,9 +1492,8 @@ exports.manageShiftMarketplace = functions.https.onCall(async (data, context) =>
 
         if (action === "create") {
             const { originalEmployeeId, originalEmployeeName, shiftDate, shiftStart, shiftEnd, role } = payload;
-            if (!originalEmployeeId || !shiftDate) {
-                throw new HttpsError('invalid-argument', 'Missing required shift data');
-            }
+            checkRequiredFields(payload, ["originalEmployeeId", "shiftDate"], "Missing required shift data");
+
             const docRef = await admin.firestore().collection('shift_marketplace').add({
                 orgId: orgId,
                 originalEmployeeId: originalEmployeeId,
@@ -1512,14 +1511,13 @@ exports.manageShiftMarketplace = functions.https.onCall(async (data, context) =>
         }
         else if (action === "offer_cover") {
             const { shiftId, coveringEmployeeId, coveringEmployeeName } = payload;
-            if (!shiftId || !coveringEmployeeId) throw new HttpsError('invalid-argument', 'Missing cover info');
+            checkRequiredFields(payload, ["shiftId", "coveringEmployeeId"], "Missing cover info");
 
-            const shiftRef = admin.firestore().collection('shift_marketplace').doc(shiftId);
-            const shiftDoc = await shiftRef.get();
-            if (!shiftDoc.exists || shiftDoc.data().orgId !== orgId) throw new HttpsError('not-found', 'Shift not found');
-            if (shiftDoc.data().status !== 'Open') throw new HttpsError('failed-precondition', 'Shift is not open for coverage');
+            const { docRef, docSnap } = await verifyDocAndAuth('shift_marketplace', shiftId, orgId, 'Shift not found', 'Shift not found');
 
-            await shiftRef.update({
+            if (docSnap.data().status !== 'Open') throw new HttpsError('failed-precondition', 'Shift is not open for coverage');
+
+            await docRef.update({
                 coveringEmployeeId: coveringEmployeeId,
                 coveringEmployeeName: coveringEmployeeName,
                 status: 'Pending Approval'
@@ -1529,29 +1527,26 @@ exports.manageShiftMarketplace = functions.https.onCall(async (data, context) =>
         else if (action === "approve") {
             if (!isManager) throw new HttpsError('permission-denied', 'Only managers can approve swaps');
             const { shiftId } = payload;
-            if (!shiftId) throw new HttpsError('invalid-argument', 'Missing shift ID');
+            checkRequiredFields(payload, ["shiftId"], "Missing shift ID");
 
-            const shiftRef = admin.firestore().collection('shift_marketplace').doc(shiftId);
-            const shiftDoc = await shiftRef.get();
-            if (!shiftDoc.exists || shiftDoc.data().orgId !== orgId) throw new HttpsError('not-found', 'Shift not found');
+            const { docRef } = await verifyDocAndAuth('shift_marketplace', shiftId, orgId, 'Shift not found', 'Shift not found');
 
-            await shiftRef.update({ status: 'Approved' });
+            await docRef.update({ status: 'Approved' });
             return { success: true };
         }
         else if (action === "deny") {
             if (!isManager) throw new HttpsError('permission-denied', 'Only managers can deny swaps');
             const { shiftId } = payload;
-            if (!shiftId) throw new HttpsError('invalid-argument', 'Missing shift ID');
+            checkRequiredFields(payload, ["shiftId"], "Missing shift ID");
 
-            const shiftRef = admin.firestore().collection('shift_marketplace').doc(shiftId);
-            const shiftDoc = await shiftRef.get();
-            if (!shiftDoc.exists || shiftDoc.data().orgId !== orgId) throw new HttpsError('not-found', 'Shift not found');
+            const { docRef } = await verifyDocAndAuth('shift_marketplace', shiftId, orgId, 'Shift not found', 'Shift not found');
 
-            await shiftRef.update({
+            await docRef.update({
                 coveringEmployeeId: null,
                 coveringEmployeeName: null,
                 status: 'Open'
             });
+            return { success: true };
         } else if (action === "get") {
             const query = admin.firestore().collection("shift_marketplace")
                 .where("orgId", "==", orgId);
@@ -1560,16 +1555,15 @@ exports.manageShiftMarketplace = functions.https.onCall(async (data, context) =>
         }
         else if (action === "delete") {
             const { shiftId } = payload;
-            if (!shiftId) throw new HttpsError('invalid-argument', 'Missing shift ID');
+            checkRequiredFields(payload, ["shiftId"], "Missing shift ID");
 
-            const shiftRef = admin.firestore().collection('shift_marketplace').doc(shiftId);
-            const shiftDoc = await shiftRef.get();
-            if (!shiftDoc.exists || shiftDoc.data().orgId !== orgId) throw new HttpsError('not-found', 'Shift not found');
-            if (!isManager && shiftDoc.data().originalEmployeeId !== uid) {
+            const { docRef, docSnap } = await verifyDocAndAuth('shift_marketplace', shiftId, orgId, 'Shift not found', 'Shift not found');
+
+            if (!isManager && docSnap.data().originalEmployeeId !== uid) {
                  throw new HttpsError('permission-denied', 'Cannot delete this shift');
             }
 
-            await shiftRef.delete();
+            await docRef.delete();
             return { success: true };
         }
         else {

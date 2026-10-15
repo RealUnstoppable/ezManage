@@ -98,7 +98,10 @@ async function handlePlaceOrder(e) {
             // and satisfy Firestore's strict read-before-write transaction constraints.
             const statDocs = await Promise.all(
                 Object.keys(userCart).map(productId =>
-                    transaction.get(db.collection("product_stats").doc(productId))
+                    transaction.get(db.collection("product_stats").doc(productId)).catch(error => {
+                        logManagerError("Error fetching product stat document in handlePlaceOrder transaction for productId:", productId, error);
+                        throw error;
+                    })
                 )
             );
 
