@@ -1525,11 +1525,11 @@
                 <div id="joinGroupModal"
                     class="hidden bg-white dark:bg-slate-900 rounded-3xl p-6 md:p-8 shadow-sm border border-slate-100 dark:border-slate-800 mb-12">
                     <h2 class="text-xl font-bold mb-4">Join a Management Group</h2>
-                    <p class="text-sm text-slate-500 mb-6">Ask your store owner/GM for the Group ID and Password.</p>
+                    <p class="text-sm text-slate-500 mb-6">Ask your corporate workspace owner or GM for the Workplace Code (e.g. EZM-APEX-8F2D) or Group ID, and Join Passcode.</p>
                     <div class="space-y-4">
-                        <input type="text" id="joinGroupId" placeholder="Group ID" aria-label="Join Group ID"
+                        <input type="text" id="joinGroupId" placeholder="Workplace Code or Group ID" aria-label="Join Workplace Code or Group ID"
                             class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
-                        <input type="password" id="joinGroupPassword" placeholder="Group Password" aria-label="Join Group Password"
+                        <input type="password" id="joinGroupPassword" placeholder="Workplace Join Passcode" aria-label="Workplace Join Passcode"
                             class="w-full bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border-none focus:ring-2 focus:ring-sky-500">
                         <div class="flex justify-end gap-3 pt-2">
                             <button onclick="document.getElementById('joinGroupModal').classList.add('hidden')"
@@ -2053,25 +2053,43 @@
                 </div>
 
                 <!-- Access Company Dashboard Section -->
-                <div class="card mb-8 bg-gradient-to-r from-sky-950/40 via-slate-900 to-slate-900 border-2 border-sky-500/40 shadow-2xl relative overflow-hidden">
-                    <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative z-10">
-                        <div class="space-y-2">
-                            <div class="flex items-center gap-3">
-                                <span class="p-2.5 rounded-2xl bg-sky-500/20 text-sky-400 border border-sky-500/30">
-                                    <i data-lucide="building-2" class="w-6 h-6"></i>
+                <div class="mb-8 rounded-2xl bg-slate-900 text-white border border-slate-800 p-6 sm:p-8 shadow-lg relative overflow-hidden transition-all">
+                    <div class="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6 relative z-10">
+                        <div class="space-y-3">
+                            <div class="flex flex-wrap items-center gap-2.5">
+                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-semibold tracking-wider uppercase bg-slate-800 text-indigo-300 border border-slate-700">
+                                    <i data-lucide="building-2" class="w-3.5 h-3.5 text-indigo-400"></i>
+                                    Multi-Store Corporate
                                 </span>
-                                <div>
-                                    <span class="text-[10px] font-black uppercase tracking-widest text-sky-400 bg-sky-950 px-2.5 py-0.5 rounded-full border border-sky-800/50">Multi-Store Corporate</span>
-                                    <h3 class="text-2xl font-black text-slate-900 dark:text-white mt-1">Company Dashboard</h3>
-                                </div>
+                                <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-medium bg-emerald-950/70 text-emerald-400 border border-emerald-800/60">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                                    Enterprise Suite
+                                </span>
                             </div>
-                            <p class="text-sm text-slate-600 dark:text-slate-300 font-medium max-w-xl">
-                                Access multi-store location analytics, manager leaderboards, corporate shift group permissions, and executive controls.
-                            </p>
+                            <div>
+                                <h3 class="text-xl sm:text-2xl font-bold tracking-tight text-white">Company Operations & Executive Portal</h3>
+                                <p class="text-sm text-slate-300 font-normal leading-relaxed max-w-2xl mt-1.5">
+                                    Consolidated multi-store location analytics, manager leaderboards, corporate shift group permissions, and executive controls.
+                                </p>
+                            </div>
+                            <div class="flex flex-wrap items-center gap-x-4 gap-y-1.5 pt-1 text-xs text-slate-400 font-medium">
+                                <span class="inline-flex items-center gap-1.5">
+                                    <i data-lucide="check" class="w-3.5 h-3.5 text-indigo-400"></i> Multi-Unit Store Sync
+                                </span>
+                                <span class="inline-flex items-center gap-1.5">
+                                    <i data-lucide="check" class="w-3.5 h-3.5 text-indigo-400"></i> Manager Leaderboards
+                                </span>
+                                <span class="inline-flex items-center gap-1.5">
+                                    <i data-lucide="check" class="w-3.5 h-3.5 text-indigo-400"></i> Corporate RBAC
+                                </span>
+                            </div>
                         </div>
-                        <a href="company.html" class="btn btn-accent px-6 py-3.5 font-extrabold text-sm inline-flex items-center gap-2 shrink-0 shadow-lg shadow-sky-500/20 transition-all hover:scale-105">
-                            <i data-lucide="external-link" class="w-4 h-4"></i> Access Company Dashboard
-                        </a>
+                        <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 shrink-0 w-full lg:w-auto">
+                            <a href="company.html" class="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm shadow-sm transition-colors whitespace-nowrap">
+                                <span>Access Company Dashboard</span>
+                                <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                            </a>
+                        </div>
                     </div>
                 </div>
 
@@ -2218,18 +2236,22 @@
 
         <div id="view-employees" class="view-section px-6 py-12">
             <div class="max-w-4xl mx-auto">
-                <div class="mb-8 p-4 rounded-2xl bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white border border-indigo-500/30 shadow-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-xl bg-indigo-500/20 border border-indigo-400/30 flex items-center justify-center text-indigo-300">
+                <div class="mb-8 p-5 rounded-2xl bg-slate-900 text-white border border-slate-800 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                    <div class="flex items-center gap-3.5">
+                        <div class="w-10 h-10 rounded-xl bg-indigo-500/20 border border-indigo-400/30 flex items-center justify-center text-indigo-400 shrink-0">
                             <i data-lucide="building-2" class="w-5 h-5"></i>
                         </div>
                         <div>
-                            <div class="text-[10px] font-black uppercase tracking-widest text-indigo-400">Company Multi-Store Portal</div>
-                            <div class="text-sm font-semibold text-slate-200">Staff synced across company stores & management portal</div>
+                            <div class="flex items-center gap-2">
+                                <span class="text-[10px] font-semibold uppercase tracking-wider text-indigo-300 bg-indigo-950 px-2 py-0.5 rounded border border-indigo-800/60">Corporate Suite</span>
+                                <span class="text-xs text-slate-400 font-medium">Multi-Store Hub</span>
+                            </div>
+                            <div class="text-sm font-semibold text-white mt-0.5">Staff synchronized across corporate stores & management portal</div>
                         </div>
                     </div>
-                    <a href="company.html" class="btn btn-accent text-xs font-bold py-2.5 px-4 whitespace-nowrap flex items-center gap-2 shadow-sm shrink-0">
-                        <i data-lucide="external-link" class="w-3.5 h-3.5"></i> Company Portal
+                    <a href="company.html" class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs shadow-sm transition-colors whitespace-nowrap shrink-0">
+                        <span>Company Portal</span>
+                        <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
                     </a>
                 </div>
 
@@ -5753,11 +5775,12 @@ function checkAndRenderOrgControls() {
             // If they are the owner, show the request panel logic
             db.collection('shift_groups').doc(currentUserData.orgId).get().then(doc => {
                 if (doc.exists && doc.data().ownerId === currentUser.uid) {
+                    const wpCode = doc.data().workplaceCode || currentUserData.orgId;
                     controls.innerHTML = `
                         <div class="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700">
-                            <span class="text-xs font-bold text-slate-500 uppercase">Group ID:</span>
-                            <span class="text-sm font-mono font-bold">${escapeHTML(currentUserData.orgId)}</span>
-                            <button aria-label="Copy Group ID" data-org-id="${escapeHTML(currentUserData.orgId)}" class="copy-group-id-btn text-sky-500 hover:text-sky-600"><i data-lucide="copy" class="w-3.5 h-3.5"></i></button>
+                            <span class="text-xs font-bold text-slate-500 uppercase">${doc.data().workplaceCode ? 'Workplace:' : 'Group ID:'}</span>
+                            <span class="text-sm font-mono font-bold text-sky-600 dark:text-sky-400">${escapeHTML(wpCode)}</span>
+                            <button aria-label="Copy Workplace Code" data-org-id="${escapeHTML(wpCode)}" class="copy-group-id-btn text-sky-500 hover:text-sky-600"><i data-lucide="copy" class="w-3.5 h-3.5"></i></button>
                         </div>
                     `;
                     fetchGroupRequests(currentUserData.orgId);

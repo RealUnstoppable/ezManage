@@ -581,13 +581,40 @@ exports.manageEmployees = functions.https.onCall(async (data, context) => {
 });
 
 
-async function handleCreateShiftGroup(payload, uid) {
-  const {groupName, password, ownerName, authorId, orgId} = payload;
+/**
+ * Generates a unique, readable workplace company code.
+ * @param {string} groupName - The company or group name.
+ * @return {string} Formatted workplace code, e.g. EZM-APEX-8F2D.
+ */
+function generateUniqueWorkplaceCode(groupName) {
+  const cleanName = (groupName || "")
+      .replace(/[^a-zA-Z0-9]/g, "")
+      .toUpperCase()
+      .slice(0, 4) || "CORP";
+  const randomSuffix = crypto.randomBytes(3).toString("hex").toUpperCase();
+  return `EZM-${cleanName}-${randomSuffix}`;
+}
 
-  checkRequiredFields(payload, ["groupName", "password"]);
+/**
+ * Generates a unique secure workplace join key.
+ * @return {string} Formatted workplace join key, e.g. WPK-8F2D-91A4.
+ */
+function generateUniqueWorkplaceKey() {
+  const part1 = crypto.randomBytes(2).toString("hex").toUpperCase();
+  const part2 = crypto.randomBytes(2).toString("hex").toUpperCase();
+  return `WPK-${part1}-${part2}`;
+}
+
+async function handleCreateShiftGroup(payload, uid) {
+  const {groupName, password, ownerName, authorId, orgId, workplaceCode, joinKey} = payload;
+
+  checkRequiredFields(payload, ["groupName"]);
+
+  const plainJoinKey = joinKey || password || generateUniqueWorkplaceKey();
+  const finalWorkplaceCode = workplaceCode || generateUniqueWorkplaceCode(groupName);
 
   const salt = crypto.randomBytes(16).toString("hex");
-  const hash = crypto.scryptSync(password, salt, 64).toString("hex");
+  const hash = crypto.scryptSync(plainJoinKey, salt, 64).toString("hex");
   const hashedPassword = `$scrypt$${hash}:${salt}`;
 
   const newGroupParams = {
@@ -595,6 +622,8 @@ async function handleCreateShiftGroup(payload, uid) {
     orgId: orgId || uid,
     ownerName: ownerName || "Anonymous",
     groupName,
+    workplaceCode: finalWorkplaceCode,
+    joinKey: plainJoinKey,
     password: hashedPassword,
     createdAt: admin.firestore.FieldValue.serverTimestamp(),
   };
@@ -609,7 +638,12 @@ async function handleCreateShiftGroup(payload, uid) {
     orgId: docRef.id,
   }, {merge: true});
 
-  return {success: true, groupId: docRef.id};
+  return {
+    success: true,
+    groupId: docRef.id,
+    workplaceCode: finalWorkplaceCode,
+    joinKey: plainJoinKey,
+  };
 }
 
 async function handleRequestJoinShiftGroup(payload, uid) {
@@ -617,8 +651,21 @@ async function handleRequestJoinShiftGroup(payload, uid) {
 
   checkRequiredFields(payload, ["groupId", "password"]);
 
-  const groupDoc = await admin.firestore()
+  let targetGroupId = groupId;
+  let groupDoc = await admin.firestore()
       .collection("shift_groups").doc(groupId).get();
+
+  if (!groupDoc.exists) {
+    const snap = await admin.firestore()
+        .collection("shift_groups")
+        .where("workplaceCode", "==", groupId.trim().toUpperCase())
+        .limit(1)
+        .get();
+    if (!snap.empty) {
+      groupDoc = snap.docs[0];
+      targetGroupId = groupDoc.id;
+    }
+  }
 
   if (!groupDoc.exists) {
     throw new HttpsError("not-found", "Group not found");
@@ -640,7 +687,7 @@ async function handleRequestJoinShiftGroup(payload, uid) {
     if (isValid) {
       const salt = crypto.randomBytes(16).toString("hex");
       const hash = crypto.scryptSync(password, salt, 64).toString("hex");
-      await admin.firestore().collection("shift_groups").doc(groupId).update({
+      await admin.firestore().collection("shift_groups").doc(targetGroupId).update({
         password: `$scrypt$${hash}:${salt}`,
       });
     }
@@ -651,16 +698,55 @@ async function handleRequestJoinShiftGroup(payload, uid) {
         "permission-denied", "Invalid password");
   }
 
-
   await admin.firestore().collection("shift_group_requests").add({
-    groupId,
+    groupId: targetGroupId,
     userId: uid,
     userName: userName || "Anonymous",
     status: "Pending",
     timestamp: admin.firestore.FieldValue.serverTimestamp(),
   });
 
-  return {success: true};
+  return {success: true, groupId: targetGroupId};
+}
+
+async function handleRotateWorkplaceCredentials(payload, uid) {
+  const {groupId, newJoinKey} = payload;
+  checkRequiredFields(payload, ["groupId"]);
+
+  const groupDocRef = admin.firestore().collection("shift_groups").doc(groupId);
+  const groupDoc = await groupDocRef.get();
+
+  if (!groupDoc.exists) {
+    throw new HttpsError("not-found", "Group not found");
+  }
+
+  if (groupDoc.data().ownerId !== uid) {
+    throw new HttpsError("permission-denied", "Unauthorized to modify workspace credentials");
+  }
+
+  const updatedJoinKey = newJoinKey || generateUniqueWorkplaceKey();
+  const salt = crypto.randomBytes(16).toString("hex");
+  const hash = crypto.scryptSync(updatedJoinKey, salt, 64).toString("hex");
+  const hashedPassword = `$scrypt$${hash}:${salt}`;
+
+  let workplaceCode = groupDoc.data().workplaceCode;
+  if (!workplaceCode) {
+    workplaceCode = generateUniqueWorkplaceCode(groupDoc.data().groupName);
+  }
+
+  await groupDocRef.update({
+    joinKey: updatedJoinKey,
+    password: hashedPassword,
+    workplaceCode: workplaceCode,
+    credentialsUpdatedAt: admin.firestore.FieldValue.serverTimestamp(),
+  });
+
+  return {
+    success: true,
+    groupId,
+    workplaceCode,
+    joinKey: updatedJoinKey,
+  };
 }
 
   async function handleRetractJoinShiftGroup(payload, uid) {
@@ -752,6 +838,7 @@ async function handleRequestJoinShiftGroup(payload, uid) {
       if (action === "retract_join") return await handleRetractJoinShiftGroup(payload, uid);
       if (action === "approve_join") return await handleApproveJoinShiftGroup(payload, uid);
       if (action === "remove_manager") return await handleRemoveManagerShiftGroup(payload, uid);
+      if (action === "rotate_credentials") return await handleRotateWorkplaceCredentials(payload, uid);
 
       throw new HttpsError("invalid-argument", "Invalid action");
     } catch (error) { handleInternalError(`Shift Groups Error for uid: ${uid}`, error); }
@@ -1607,5 +1694,9 @@ exports.manageAnnouncements = functions.https.onCall(async (data, context) => {
 });
 
 exports.handleCreateShiftGroup = handleCreateShiftGroup;
+exports.handleRequestJoinShiftGroup = handleRequestJoinShiftGroup;
+exports.handleRotateWorkplaceCredentials = handleRotateWorkplaceCredentials;
+exports.generateUniqueWorkplaceCode = generateUniqueWorkplaceCode;
+exports.generateUniqueWorkplaceKey = generateUniqueWorkplaceKey;
 
 exports.getActualOrgId = getActualOrgId;
