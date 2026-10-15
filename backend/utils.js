@@ -1,4 +1,4 @@
-const functions = require('firebase-functions');
+const functions = require("firebase-functions");
 const HttpsError = functions.https.HttpsError;
 
 /**
@@ -74,6 +74,60 @@ function handleInternalError(actionMessage, error) {
   throw new HttpsError("internal", "An internal error occurred.");
 }
 
+/**
+ * Safely executes a Firestore query with orderBy, falling back to in-memory sort if composite index is missing.
+ * @param {Object} query - The Firestore query object
+ * @param {string} [orderByField] - Field to order by
+ * @param {string} [orderDir="desc"] - "asc" or "desc"
+ * @param {number} [limitCount=50] - Number of documents to limit to
+ * @return {Promise<Array<Object>>} Array of document data objects with id
+ */
+async function safeGetOrderedDocs(query, orderByField, orderDir = "desc", limitCount = 50) {
+  try {
+    let q = query;
+    if (orderByField) {
+      q = q.orderBy(orderByField, orderDir);
+    }
+    if (limitCount) {
+      q = q.limit(limitCount);
+    }
+    const snap = await q.get();
+    const docs = [];
+    snap.forEach((doc) => docs.push({id: doc.id, ...doc.data()}));
+    return docs;
+  } catch (err) {
+    console.warn(`Query with orderBy failed, falling back to in-memory sort: ${err.message}`);
+    let fallbackQ = query;
+    if (limitCount) {
+      fallbackQ = fallbackQ.limit(Math.max(limitCount * 2, 100));
+    }
+    const snap = await fallbackQ.get();
+    const docs = [];
+    snap.forEach((doc) => docs.push({id: doc.id, ...doc.data()}));
+    if (orderByField) {
+      docs.sort((a, b) => {
+        const valA = a[orderByField];
+        const valB = b[orderByField];
+        const toMs = (v) => {
+          if (!v) return 0;
+          if (v.toMillis) return v.toMillis();
+          if (v._seconds) return v._seconds * 1000;
+          return new Date(v).getTime() || 0;
+        };
+        const numA = toMs(valA);
+        const numB = toMs(valB);
+        return orderDir === "desc" ? (numB - numA) : (numA - numB);
+      });
+    }
+    return limitCount ? docs.slice(0, limitCount) : docs;
+  }
+}
+
+/**
+ * Logs a manager error.
+ * @param {string} actionMessage - The action message
+ * @param {Error} error - The error object
+ */
 function logManagerError(actionMessage, error) {
   console.error("Manager Troubleshooting: " + actionMessage, error);
 }
@@ -101,6 +155,7 @@ module.exports = {
   checkRequiredFields,
   logManagerError,
   handleInternalError,
+  safeGetOrderedDocs,
   parseNum,
   getDayOfWeek,
   escapeHTML,

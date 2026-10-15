@@ -3,7 +3,7 @@ const {onRequest} = require("firebase-functions/v2/https");
 const HttpsError = functions.https.HttpsError;
 const admin = require("firebase-admin");
 const cors = require("cors")({origin: true});
-const {adaptGen2Params, logManagerError, handleInternalError, checkRequiredFields} = require("./utils"); // Added comment for patch visibility
+const {adaptGen2Params, logManagerError, handleInternalError, checkRequiredFields, safeGetOrderedDocs} = require("./utils");
 const crypto = require("crypto");
 
 /**
@@ -23,7 +23,9 @@ async function getAuthAndPayload(data, context, adminInstance) {
   const userDoc = await adminInstance.firestore().collection("users").doc(uid).get();
   const userOrgId = userDoc.exists ? userDoc.data().orgId : null;
   const isAdmin = userDoc.exists ? userDoc.data().isAdmin : false;
-  const userName = userDoc.exists ? (userDoc.data().name || context.auth.token.email.split("@")[0]) : context.auth.token.email.split("@")[0];
+  const userEmail = (context.auth && context.auth.token && context.auth.token.email) ? context.auth.token.email : "user@example.com";
+  const defaultName = userEmail.split("@")[0];
+  const userName = userDoc.exists ? (userDoc.data().name || defaultName) : defaultName;
 
   const action = data.action;
   const payload = data.payload || {};
@@ -62,7 +64,7 @@ admin.initializeApp();
 
 // Remove hardcoded secrets. Use environment variables.
 // Use conditional initialization to prevent Firebase analyzer from crashing during deployment
-const stripeKey = process.env.STRIPE_SECRET;
+const stripeKey = process.env.STRIPE_SECRET || (process.env.NODE_ENV === "test" ? "test_secret_key" : null);
 const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
 const stripe = stripeKey ? require("stripe")(stripeKey) : null;
 
@@ -280,7 +282,7 @@ exports.manageTasks = functions.https.onCall(async (data, context) => {
   const {uid, userOrgId, isAdmin, userName, action, payload} = await getAuthAndPayload(data, context, admin);
 
   try {
-    const isManager = userOrgId === uid;
+    const isManager = (!userOrgId || userOrgId === uid || isAdmin);
     const actualOrgId = userOrgId || uid;
 
     if (action === "create") {
@@ -461,15 +463,9 @@ exports.manageCertifications = functions.https.onCall(async (data, context) => {
 
       return {success: true, message: "Certification created", id: certRef.id};
     } else if (action === "get") {
-      const certsQuery = await admin.firestore().collection("certifications")
-          .where("orgId", "==", userOrgId)
-          .orderBy("createdAt", "desc")
-          .get();
-
-      const certs = [];
-      certsQuery.forEach((doc) => {
-        certs.push({id: doc.id, ...doc.data()});
-      });
+      const query = admin.firestore().collection("certifications")
+          .where("orgId", "==", userOrgId);
+      const certs = await safeGetOrderedDocs(query, "createdAt", "desc", 100);
       return {success: true, certifications: certs};
     } else if (action === "delete") {
       checkRequiredFields(payload, ["certId"]);
@@ -594,11 +590,6 @@ async function handleCreateShiftGroup(payload, uid) {
   const hash = crypto.scryptSync(password, salt, 64).toString("hex");
   const hashedPassword = `$scrypt$${hash}:${salt}`;
 
-
-  const salt = crypto.randomBytes(16).toString("hex");
-  const hash = crypto.scryptSync(password, salt, 64).toString("hex");
-  const hashedPassword = `$scrypt$${hash}:${salt}`;
-
   const newGroupParams = {
     ownerId: authorId || uid,
     orgId: orgId || uid,
@@ -610,10 +601,13 @@ async function handleCreateShiftGroup(payload, uid) {
 
   const docRef = await admin.firestore()
       .collection("shift_groups")
-      .add(newGroup);
+      .add(newGroupParams);
 
-
-
+  // Link creating user to the new group
+  const targetUid = authorId || uid;
+  await admin.firestore().collection("users").doc(targetUid).set({
+    orgId: docRef.id,
+  }, {merge: true});
 
   return {success: true, groupId: docRef.id};
 }
@@ -711,13 +705,16 @@ async function handleRequestJoinShiftGroup(payload, uid) {
           "permission-denied", "Unauthorized");
     }
 
-  checkRequiredFields(payload, ["userId", "groupId"]);
-
     // Update request status
     await requestDocRef.update({
       status: "Approved",
       approvedAt: admin.firestore.FieldValue.serverTimestamp(),
     });
+
+    // Update user's orgId in users collection
+    await admin.firestore().collection("users").doc(userId).set({
+      orgId: groupId,
+    }, {merge: true});
 
     return {success: true};
   }
@@ -786,14 +783,9 @@ async function handleRequestJoinShiftGroup(payload, uid) {
   }
 
   async function handleGetIncidents(actualOrgId) {
-    const snapshot = await admin.firestore().collection("incident_reports")
-        .where("orgId", "==", actualOrgId)
-        .orderBy("timestamp", "desc")
-        .limit(100)
-        .get();
-
-    const incidents = [];
-    snapshot.forEach((doc) => incidents.push({id: doc.id, ...doc.data()}));
+    const query = admin.firestore().collection("incident_reports")
+        .where("orgId", "==", actualOrgId);
+    const incidents = await safeGetOrderedDocs(query, "timestamp", "desc", 100);
     return {success: true, incidents};
   }
 
@@ -993,14 +985,9 @@ exports.manageMaintenanceLogs = functions.https.onCall(async (data, context) => 
     }
 
     if (action === "get") {
-      const snapshot = await admin.firestore().collection("maintenance_logs")
-          .where("orgId", "==", actualOrgId)
-          .orderBy("timestamp", "desc")
-          .limit(100)
-          .get();
-
-      const logs = [];
-      snapshot.forEach((doc) => logs.push({id: doc.id, ...doc.data()}));
+      const query = admin.firestore().collection("maintenance_logs")
+          .where("orgId", "==", actualOrgId);
+      const logs = await safeGetOrderedDocs(query, "timestamp", "desc", 100);
       return {success: true, logs};
     }
 
@@ -1085,14 +1072,9 @@ exports.manageMaintenanceLogs = functions.https.onCall(async (data, context) => 
       }
 
       if (action === "get") {
-        const snapshot = await admin.firestore().collection("waste_logs")
-            .where("orgId", "==", actualOrgId)
-            .orderBy("timestamp", "desc")
-            .limit(100)
-            .get();
-
-        const logs = [];
-        snapshot.forEach((doc) => logs.push({id: doc.id, ...doc.data()}));
+        const query = admin.firestore().collection("waste_logs")
+            .where("orgId", "==", actualOrgId);
+        const logs = await safeGetOrderedDocs(query, "timestamp", "desc", 100);
         return {success: true, logs};
       }
 
@@ -1164,17 +1146,14 @@ exports.manageMaintenanceLogs = functions.https.onCall(async (data, context) => 
       }
 
       if (action === "get") {
-        const snapshot = await admin.firestore().collection("recognitions")
-            .where("orgId", "==", actualOrgId)
-            .orderBy("createdAt", "desc")
-            .limit(100)
-            .get();
+        const query = admin.firestore().collection("recognitions")
+            .where("orgId", "==", actualOrgId);
+        const docs = await safeGetOrderedDocs(query, "createdAt", "desc", 100);
 
         const recognitions = [];
         const isManager = userOrgId === uid;
 
-        snapshot.forEach((doc) => {
-          const rec = {id: doc.id, ...doc.data()};
+        docs.forEach((rec) => {
 
           // Properly isolate Private Feedback on the server side
           if (rec.type === "Private Feedback") {
@@ -1260,15 +1239,10 @@ exports.manageMaintenanceLogs = functions.https.onCall(async (data, context) => 
           throw new HttpsError("invalid-argument", "Missing employee ID");
         }
 
-        const snapshot = await admin.firestore().collection("feedbacks")
+        const query = admin.firestore().collection("feedbacks")
             .where("orgId", "==", actualOrgId)
-            .where("empId", "==", empId)
-            .orderBy("createdAt", "desc")
-            .limit(100)
-            .get();
-
-        const feedbacks = [];
-        snapshot.forEach((doc) => feedbacks.push({id: doc.id, ...doc.data()}));
+            .where("empId", "==", empId);
+        const feedbacks = await safeGetOrderedDocs(query, "createdAt", "desc", 100);
         return {success: true, feedbacks};
       }
 
@@ -1340,9 +1314,7 @@ exports.manageMaintenanceLogs = functions.https.onCall(async (data, context) => 
           query = query.where("orgId", "==", payload.orgId);
         }
 
-        query = query.orderBy("timestamp", "desc").limit(50);
-        const snapshot = await query.get();
-        const logs = snapshot.docs.map((doc) => ({id: doc.id, ...doc.data()}));
+        const logs = await safeGetOrderedDocs(query, "timestamp", "desc", 50);
         return {success: true, logs};
       }
 
@@ -1392,21 +1364,11 @@ exports.manageVendorDeliveries = functions.https.onCall(async (data, context) =>
 
       if (action === "get") {
         const activeOrgId = userOrgId || uid;
-        let snapshot;
-        if (isAdmin) {
-          snapshot = await admin.firestore().collection("vendor_deliveries").orderBy("timestamp", "desc").limit(50).get();
-        } else {
-          snapshot = await admin.firestore().collection("vendor_deliveries")
-              .where("orgId", "==", activeOrgId)
-              .orderBy("timestamp", "desc")
-              .limit(50)
-              .get();
+        let query = admin.firestore().collection("vendor_deliveries");
+        if (!isAdmin) {
+          query = query.where("orgId", "==", activeOrgId);
         }
-
-        const deliveries = [];
-        snapshot.forEach((doc) => {
-          deliveries.push({id: doc.id, ...doc.data()});
-        });
+        const deliveries = await safeGetOrderedDocs(query, "timestamp", "desc", 50);
         return {success: true, deliveries};
       }
 
@@ -1503,19 +1465,11 @@ exports.manageShiftMarketplace = functions.https.onCall(async (data, context) =>
                 coveringEmployeeName: null,
                 status: 'Open'
             });
-            return { success: true };
-        }
-        else if (action === "get") {
-            const snapshot = await admin.firestore().collection('shift_marketplace')
-                .where('orgId', '==', orgId)
-                .orderBy('createdAt', 'desc')
-                .get();
-
-            let shifts = [];
-            snapshot.forEach(doc => {
-                shifts.push({ id: doc.id, ...doc.data() });
-            });
-            return { success: true, shifts: shifts };
+        } else if (action === "get") {
+            const query = admin.firestore().collection("shift_marketplace")
+                .where("orgId", "==", orgId);
+            const shifts = await safeGetOrderedDocs(query, "createdAt", "desc", 100);
+            return {success: true, shifts: shifts};
         }
         else if (action === "delete") {
             const { shiftId } = payload;
@@ -1565,17 +1519,9 @@ exports.manageLostAndFound = functions.https.onCall(async (data, context) => {
       const docRef = await admin.firestore().collection("lost_and_found").add(newItem);
       return {success: true, itemId: docRef.id};
     } else if (action === "get") {
-      const snapshot = await admin.firestore().collection("lost_and_found")
-          .where("orgId", "==", actualOrgId)
-          .orderBy("timestamp", "desc")
-          .limit(50)
-          .get();
-
-      const items = [];
-      snapshot.forEach((docSnap) => {
-        items.push({id: docSnap.id, ...docSnap.data()});
-      });
-
+      const query = admin.firestore().collection("lost_and_found")
+          .where("orgId", "==", actualOrgId);
+      const items = await safeGetOrderedDocs(query, "timestamp", "desc", 50);
       return {success: true, items};
     } else if (action === "updateStatus") {
       const {itemId, status} = payload;
