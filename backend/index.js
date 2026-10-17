@@ -374,7 +374,7 @@ exports.manageShiftNotes = functions.https.onCall(async (data, context) => {
   try {
     // 🛡️ Securely fetch the user's actual orgId from the database
     // instead of trusting the client payload to prevent IDOR
-    const actualOrgId = payload.orgId || userOrgId || null;
+    const actualOrgId = userOrgId || null;
 
     if (action === "create") {
       const {authorId, orgId, authorName, content, priority} = payload;
