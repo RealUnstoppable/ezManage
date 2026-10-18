@@ -705,7 +705,7 @@
                 let toggleBtnHtml = '';
                 if (item.originalNames.size > 0) {
                     toggleBtnHtml = `
-                        <button class="text-[10px] uppercase font-bold text-slate-400 hover:text-sky-500 flex items-center gap-1 mt-1 toggle-variants-btn">
+                        <button aria-label="Toggle variations for ${escapeHTML(canonical)}" class="text-[10px] uppercase font-bold text-slate-400 hover:text-sky-500 flex items-center gap-1 mt-1 toggle-variants-btn">
                             <i data-lucide="chevron-down" class="w-3 h-3 transition-transform duration-200"></i> ${item.originalNames.size} Variations
                         </button>
                     `;
