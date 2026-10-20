@@ -372,8 +372,8 @@
             <!-- Order Summary Card -->
             <div class="bg-slate-50 dark:bg-slate-800/60 rounded-2xl p-4 mb-6 border border-slate-200 dark:border-slate-700/60">
                 <div class="flex justify-between items-center mb-2">
-                    <span class="font-bold text-slate-700 dark:text-slate-300" id="paySummaryPlan">Individual Pro (Annual)</span>
-                    <span class="text-xl font-black text-sky-600 dark:text-sky-400" id="paySummaryPrice">$61/yr</span>
+                    <span class="font-bold text-slate-700 dark:text-slate-300" id="paySummaryPlan">Business Pro (Annual Subscription)</span>
+                    <span class="text-xl font-black text-sky-600 dark:text-sky-400" id="paySummaryPrice">$199/yr</span>
                 </div>
                 <div class="flex items-center gap-2 text-xs text-emerald-600 dark:text-emerald-400 font-medium">
                     <i data-lucide="check-circle-2" class="w-4 h-4"></i> Includes 7-day risk-free trial. Cancel anytime.
@@ -420,25 +420,25 @@
                 <!-- Alternative payment info -->
                 <div id="payFormApple" class="hidden text-center py-6 bg-slate-50 dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700">
                     <i data-lucide="smartphone" class="w-8 h-8 text-sky-500 mx-auto mb-2"></i>
-                    <p class="text-sm font-bold text-slate-800 dark:text-slate-200">Apple Pay Ready</p>
-                    <p class="text-xs text-slate-500">Click below to authorize with Touch ID or Face ID.</p>
+                    <p class="text-sm font-bold text-slate-800 dark:text-slate-200">Apple Pay Ready on Stripe</p>
+                    <p class="text-xs text-slate-500">Authorize securely using Touch ID, Face ID, or Apple Wallet on Stripe.</p>
                 </div>
 
                 <div id="payFormPaypal" class="hidden text-center py-6 bg-slate-50 dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700">
                     <i data-lucide="wallet" class="w-8 h-8 text-sky-500 mx-auto mb-2"></i>
-                    <p class="text-sm font-bold text-slate-800 dark:text-slate-200">PayPal Express Checkout</p>
-                    <p class="text-xs text-slate-500">Authorize seamlessly using your PayPal balance or linked bank.</p>
+                    <p class="text-sm font-bold text-slate-800 dark:text-slate-200">Stripe Express Checkout</p>
+                    <p class="text-xs text-slate-500">Authorize seamlessly with 256-bit encrypted Stripe checkout.</p>
                 </div>
             </div>
 
             <!-- Action Buttons -->
             <div class="space-y-3">
                 <button type="button" id="btnConfirmPayment" onclick="confirmPayment()" class="btn btn-primary w-full py-3.5 text-base font-bold shadow-lg shadow-sky-500/20 flex items-center justify-center gap-2">
-                    <i data-lucide="lock" class="w-4 h-4"></i> <span id="btnPayText">Complete Order & Activate</span>
+                    <i data-lucide="lock" class="w-4 h-4"></i> <span id="btnPayText">Pay on Stripe</span>
                 </button>
                 <div class="flex justify-between items-center text-xs text-slate-500 pt-1">
                     <button type="button" onclick="closePaymentModal()" class="hover:underline">Cancel</button>
-                    <a href="checkout-ultimate.html" id="linkFullCheckout" class="hover:underline text-sky-500">Open full checkout page &rarr;</a>
+                    <a href="https://buy.stripe.com/cNibJ0gGY2hxdZN4Xb9AA00" id="linkFullCheckout" target="_blank" rel="noopener noreferrer" class="hover:underline text-sky-500">Continue to Stripe checkout &rarr;</a>
                 </div>
             </div>
         </div>
@@ -2187,7 +2187,7 @@
                             Sale</div>
                         <h3 class="text-xs font-black text-sky-500 uppercase tracking-[0.3em] mb-4">Individual Pro</h3>
                         <div class="flex items-baseline mb-8">
-                            <span class="text-7xl font-black tracking-tighter text-slate-900 dark:text-white">$61</span>
+                            <span class="text-7xl font-black tracking-tighter text-slate-900 dark:text-white">$59</span>
                             <span class="text-slate-400 text-lg line-through ml-2">$73</span>
                             <span class="text-slate-500 text-xl font-bold ml-2">/year</span>
                         </div>
@@ -2214,7 +2214,7 @@
                         <h3 class="text-xs font-black text-sky-600 uppercase tracking-[0.3em] mb-4">Business Pro</h3>
                         <div class="flex items-baseline mb-8">
                             <span
-                                class="text-7xl font-black tracking-tighter text-slate-900 dark:text-white">$207</span>
+                                class="text-7xl font-black tracking-tighter text-slate-900 dark:text-white">$199</span>
                             <span class="text-slate-400 text-lg line-through ml-2">$248</span>
                             <span class="text-slate-500 dark:text-slate-400 text-xl font-bold ml-2">/year</span>
                         </div>
@@ -4435,8 +4435,39 @@
             }
         }
 
-        let currentCheckoutPlan = 'Individual Pro';
-        let currentCheckoutPrice = 61;
+        const STRIPE_CHECKOUT_LINKS = {
+            'Business Pro': 'https://buy.stripe.com/cNibJ0gGY2hxdZN4Xb9AA00',
+            'Individual Pro': 'https://buy.stripe.com/7sY5kCeyQ6xN8FtdtH9AA01'
+        };
+
+        function getStripeCheckoutUrl(planName) {
+            const baseUrl = STRIPE_CHECKOUT_LINKS[planName] || STRIPE_CHECKOUT_LINKS['Business Pro'];
+            const params = new URLSearchParams();
+            if (typeof currentUser !== 'undefined' && currentUser && currentUser.uid) {
+                params.append('client_reference_id', currentUser.uid);
+            }
+            if (typeof currentUser !== 'undefined' && currentUser && currentUser.email) {
+                params.append('prefilled_email', currentUser.email);
+            }
+            const query = params.toString();
+            return query ? `${baseUrl}?${query}` : baseUrl;
+        }
+
+        function openExternalOrNavigate(url) {
+            if (typeof window !== 'undefined' && window.require) {
+                try {
+                    const { shell } = window.require('electron');
+                    if (shell && shell.openExternal) {
+                        shell.openExternal(url);
+                        return;
+                    }
+                } catch (e) {}
+            }
+            window.location.href = url;
+        }
+
+        let currentCheckoutPlan = 'Business Pro';
+        let currentCheckoutPrice = 199;
         let selectedPaymentType = 'card';
 
         function selectPaymentMethod(type) {
@@ -4457,12 +4488,24 @@
                     else form.classList.add('hidden');
                 }
             });
+
+            const payText = document.getElementById('btnPayText');
+            if (payText) {
+                if (type === 'apple') {
+                    payText.textContent = `Pay with Apple Pay on Stripe ($${currentCheckoutPrice})`;
+                } else if (type === 'paypal') {
+                    payText.textContent = `Pay on Stripe ($${currentCheckoutPrice})`;
+                } else {
+                    payText.textContent = `Pay with Card on Stripe ($${currentCheckoutPrice})`;
+                }
+            }
+
             if (window.lucide) window.lucide.createIcons();
         }
 
         function openPaymentModal(planName, finalPrice) {
-            currentCheckoutPlan = planName;
-            currentCheckoutPrice = finalPrice;
+            currentCheckoutPlan = planName || 'Business Pro';
+            currentCheckoutPrice = finalPrice || (currentCheckoutPlan === 'Business Pro' ? 199 : 59);
 
             const modal = document.getElementById('paymentModal');
             const title = document.getElementById('payModalPlanTitle');
@@ -4471,11 +4514,16 @@
             const payText = document.getElementById('btnPayText');
             const fullLink = document.getElementById('linkFullCheckout');
 
-            if (title) title.textContent = `Upgrade to ${planName}`;
-            if (planSummary) planSummary.textContent = `${planName} (Annual Subscription)`;
-            if (priceSummary) priceSummary.textContent = `$${finalPrice}/year`;
-            if (payText) payText.textContent = `Confirm & Pay $${finalPrice}`;
-            if (fullLink) fullLink.href = `checkout-ultimate.html?plan=${encodeURIComponent(planName)}&price=${finalPrice}`;
+            if (title) title.textContent = `Upgrade to ${currentCheckoutPlan}`;
+            if (planSummary) planSummary.textContent = `${currentCheckoutPlan} (Annual Subscription)`;
+            if (priceSummary) priceSummary.textContent = `$${currentCheckoutPrice}/year`;
+            if (payText) payText.textContent = `Pay $${currentCheckoutPrice} on Stripe`;
+            if (fullLink) {
+                fullLink.href = getStripeCheckoutUrl(currentCheckoutPlan);
+                fullLink.target = '_blank';
+                fullLink.rel = 'noopener noreferrer';
+                fullLink.textContent = 'Continue to Stripe checkout \u2192';
+            }
 
             selectPaymentMethod('card');
 
@@ -4494,59 +4542,17 @@
             const btn = document.getElementById('btnConfirmPayment');
             const originalHtml = btn ? btn.innerHTML : '';
             if (btn) {
-                btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> Processing Payment...`;
+                btn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> Redirecting to Stripe...`;
                 btn.disabled = true;
                 if (window.lucide) window.lucide.createIcons();
             }
 
             try {
-                // Fast gateway simulation
-                await new Promise(r => setTimeout(r, 600));
-
-                const uid = currentUser ? currentUser.uid : 'test_uid';
-                const newPlan = currentCheckoutPlan;
-
-                if (window.currentUserData) {
-                    window.currentUserData.plan = newPlan;
-                    window.currentUserData.subscription = {
-                        status: 'active',
-                        plan: newPlan,
-                        startDate: new Date().toISOString()
-                    };
-                    window.currentUserData.cloudSyncEnabled = true;
-                }
-
-                try {
-                    localStorage.setItem(`ezManage_plan_${uid}`, newPlan);
-                    localStorage.setItem(`ezManage_subscription_${uid}`, JSON.stringify({
-                        status: 'active',
-                        plan: newPlan,
-                        updatedAt: Date.now()
-                    }));
-                } catch (e) {}
-
-                if (window.db && currentUser) {
-                    try {
-                        await db.collection('users').doc(currentUser.uid).set({
-                            plan: newPlan,
-                            cloudSyncEnabled: true,
-                            subscription: {
-                                status: 'active',
-                                plan: newPlan,
-                                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-                            }
-                        }, { merge: true });
-                    } catch (fsErr) {
-                        console.warn("Firestore user subscription update notice:", fsErr.message);
-                    }
-                }
-
+                const checkoutUrl = getStripeCheckoutUrl(currentCheckoutPlan);
                 closePaymentModal();
-                alert(`Payment successful! Your account has been upgraded to ${newPlan}. All premium features are now unlocked!`);
-                if (typeof updateCloudSyncUI === 'function') updateCloudSyncUI();
-                if (typeof updateSubscriptionUI === 'function') updateSubscriptionUI();
+                openExternalOrNavigate(checkoutUrl);
             } catch (err) {
-                alert("Payment processing error: " + err.message);
+                alert("Payment redirect error: " + err.message);
             } finally {
                 if (btn) {
                     btn.innerHTML = originalHtml;
@@ -4557,48 +4563,35 @@
         }
 
         async function processCheckout(planName) {
-            if (!currentUser) { alert("Please sign in or create an account to upgrade."); navTo('auth'); return; }
-
-            let basePrice = (planName === 'Business Pro') ? 207 : 61;
-            let finalPrice = basePrice;
-
-            if (typeof hasReferralDiscount !== 'undefined' && hasReferralDiscount) finalPrice *= 0.9;
-            if (currentUserData && currentUserData.hasPromoCode) finalPrice *= 0.9;
-
-            finalPrice = Math.floor(finalPrice);
-
-            // Attempt online gateway first; if unreachable, immediately open payment modal fallback
-            try {
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 3500);
-
-                const res = await fetch("https://createcheckoutsession-dsy7tdoigq-uc.a.run.app", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        uid: currentUser.uid,
-                        email: currentUser.email,
-                        plan: planName,
-                        amount: finalPrice,
-                        successUrl: window.location.origin + window.location.pathname + "?success=true",
-                        cancelUrl: window.location.href
-                    }),
-                    signal: controller.signal
-                });
-                clearTimeout(timeoutId);
-
-                const data = await res.json();
-                if (data.url) {
-                    window.location.href = data.url;
-                    return;
-                }
-            } catch (err) {
-                console.info("External payment gateway unreachable, opening accessible in-app checkout modal:", err.message);
+            if (!currentUser) {
+                alert("Please sign in or create an account to upgrade.");
+                navTo('auth');
+                return;
             }
 
-            // Fallback: Open in-app payment modal so payments are always reachable
-            openPaymentModal(planName, finalPrice);
+            // Direct checkout with genuine Stripe link so users can actually pay with Card, Apple Pay, etc.
+            const checkoutUrl = getStripeCheckoutUrl(planName);
+            openExternalOrNavigate(checkoutUrl);
         }
+
+        // Handle Return from Stripe Checkout
+        (function handleStripeReturn() {
+            try {
+                if (typeof window === 'undefined') return;
+                const params = new URLSearchParams(window.location.search);
+                if (params.get('success') === 'true') {
+                    setTimeout(() => {
+                        alert("Thank you! Your payment was received via Stripe. Your subscription is active.");
+                        if (typeof updateCloudSyncUI === 'function') updateCloudSyncUI();
+                        if (typeof updateSubscriptionUI === 'function') updateSubscriptionUI();
+                    }, 400);
+                    const cleanUrl = window.location.pathname;
+                    window.history.replaceState({}, document.title, cleanUrl);
+                }
+            } catch (e) {
+                console.error("Error handling return from Stripe:", e);
+            }
+        })();
 
 
 

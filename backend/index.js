@@ -97,7 +97,7 @@ exports.createCheckoutSession = onRequest({invoker: "public"}, (req, res) => {
     let lineItems;
 
     // Calculate final prices and discounts strictly server-side
-    let finalPrice = plan === "Business Pro" ? 207 : 61;
+    let finalPrice = plan === "Business Pro" ? 199 : 59;
     let userData = {};
 
     if (uid) {
@@ -115,7 +115,7 @@ exports.createCheckoutSession = onRequest({invoker: "public"}, (req, res) => {
     finalPrice = Math.floor(finalPrice);
 
     // If a discount was applied, we must build price_data dynamically
-    if (finalPrice !== (plan === "Business Pro" ? 207 : 61)) {
+    if (finalPrice !== (plan === "Business Pro" ? 199 : 59)) {
       const productId = plan === "Business Pro" ?
         "prod_UFnBrTwFCgb54A" :
         "prod_UFn8zqZ0mwyy5r";
@@ -132,8 +132,8 @@ exports.createCheckoutSession = onRequest({invoker: "public"}, (req, res) => {
     } else {
       // 🔴 Fallback to Actual Price IDs if no custom amount was provided
       const priceId = plan === "Business Pro" ?
-        "price_1THHbVBp2C5GdKaKvCVoMf1X" :
-        "price_1THHYPBp2C5GdKaKxNpqndNE";
+        "price_1UJifEBmfNp1AIykML2Y8VLE" :
+        "price_1UJifGBmfNp1AIykFdVlMS1x";
       lineItems = [{price: priceId, quantity: 1}];
     }
 
@@ -186,8 +186,8 @@ exports.stripeWebhook = onRequest({invoker: "public"}, async (req, res) => {
   // 🎯 Handle Events
   if (event.type === "checkout.session.completed") {
     const session = event.data.object;
-    const uid = session.metadata.uid;
-    const planName = session.metadata.planName || "Pro";
+    const uid = session.client_reference_id || (session.metadata && session.metadata.uid);
+    const planName = (session.metadata && session.metadata.planName) || "Business Pro";
 
     if (uid && uid !== "unknown") {
       // Updates the frontend to unlock pro features immediately

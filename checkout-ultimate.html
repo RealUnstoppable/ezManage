@@ -215,19 +215,31 @@
             <section class="checkout-payment-form">
                 <div class="checkout-payment-card">
                     <h2>Payment Details</h2>
-                    <p class="placeholder-note">Payment integration is a placeholder.</p>
+                    <p class="placeholder-note" id="redirectMsg" style="color: var(--accent-color); font-weight: 600; margin-bottom: 20px;">Redirecting you to secure Stripe Checkout...</p>
 
-                    <button class="payment-btn btn-stripe">Pay $10.69 with Card</button>
+                    <button class="payment-btn btn-stripe" onclick="window.location.href='https://buy.stripe.com/cNibJ0gGY2hxdZN4Xb9AA00'">Pay with Card on Stripe</button>
 
                     <div class="payment-separator">OR</div>
 
-                    <button class="payment-btn btn-apple-pay">Pay with Apple Pay</button>
-                    <button class="payment-btn btn-paypal">Pay with PayPal</button>
+                    <button class="payment-btn btn-apple-pay" onclick="window.location.href='https://buy.stripe.com/cNibJ0gGY2hxdZN4Xb9AA00'">Pay with Apple Pay on Stripe</button>
+                    <button class="payment-btn btn-paypal" onclick="window.location.href='https://buy.stripe.com/cNibJ0gGY2hxdZN4Xb9AA00'">Continue on Stripe</button>
 
                 </div>
             </section>
         </div>
     </main>
+
+    <script>
+        const STRIPE_LINKS = {
+            'Business Pro': 'https://buy.stripe.com/cNibJ0gGY2hxdZN4Xb9AA00',
+            'Individual Pro': 'https://buy.stripe.com/7sY5kCeyQ6xN8FtdtH9AA01'
+        };
+        const params = new URLSearchParams(window.location.search);
+        const plan = params.get('plan') || 'Business Pro';
+        const targetUrl = STRIPE_LINKS[plan] || STRIPE_LINKS['Business Pro'];
+        // Instantly forward to the authentic Stripe Checkout
+        window.location.replace(targetUrl);
+    </script>
 
 
     <script src="/js/script.js"></script> <script>

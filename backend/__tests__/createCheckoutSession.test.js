@@ -129,7 +129,7 @@ describe("createCheckoutSession", () => {
           currency: "usd",
           product: "prod_UFnBrTwFCgb54A",
           recurring: {interval: "year"},
-          unit_amount: 18600, // 207 * 0.9 = 186.3 -> floored to 186 -> * 100 = 18600
+          unit_amount: 17900, // 199 * 0.9 = 179.1 -> floored to 179 -> * 100 = 17900
         },
         quantity: 1,
       },
@@ -172,7 +172,7 @@ describe("createCheckoutSession", () => {
     const createArgs = mockCreateSession.mock.calls[0][0];
     // Regular price should apply
     expect(createArgs.line_items).toEqual([
-      {price: "price_1THHbVBp2C5GdKaKvCVoMf1X", quantity: 1},
+      {price: "price_1UJifEBmfNp1AIykML2Y8VLE", quantity: 1},
     ]);
   });
 });
