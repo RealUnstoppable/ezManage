@@ -47,10 +47,13 @@ function renderLocalInventory(items) {
         return;
     }
     emptyState.classList.add('hidden');
+    // ⚡ Bolt Optimization: Replace O(N) DOM manipulations in loop with a DocumentFragment
+    const fragment = document.createDocumentFragment();
     items.forEach(item => {
         const row = renderItemRow(item.id, item);
-        inventoryTableBody.appendChild(row);
+        fragment.appendChild(row);
     });
+    inventoryTableBody.appendChild(fragment);
     if (window.lucide) window.lucide.createIcons();
 }
 
