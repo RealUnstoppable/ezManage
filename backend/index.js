@@ -374,10 +374,10 @@ exports.manageShiftNotes = functions.https.onCall(async (data, context) => {
   try {
     // 🛡️ Securely fetch the user's actual orgId from the database
     // instead of trusting the client payload to prevent IDOR
-    const actualOrgId = payload.orgId || userOrgId || null;
+    const actualOrgId = userOrgId || null;
 
     if (action === "create") {
-      const {authorId, orgId, authorName, content, priority} = payload;
+      const {authorName, content, priority} = payload;
 
       if (!content) {
         throw new HttpsError(
@@ -389,12 +389,12 @@ exports.manageShiftNotes = functions.https.onCall(async (data, context) => {
         priority : "Normal";
 
       const newNote = {
-        authorId: authorId || uid,
+        authorId: uid,
         authorName: authorName || "Anonymous",
         content,
         priority: notePriority,
         status: "Active",
-        orgId: orgId || actualOrgId,
+        orgId: actualOrgId,
         timestamp: admin.firestore.FieldValue.serverTimestamp(),
       };
 
@@ -621,7 +621,7 @@ function generateUniqueCorporateId() {
 }
 
 async function handleCreateShiftGroup(payload, uid) {
-  const {groupName, password, ownerName, authorId, orgId, workplaceCode, joinKey, plan, workersCount, aiEnabled, name, multiStoreEnabled, requireApproval} = payload;
+  const {groupName, password, ownerName, orgId, workplaceCode, joinKey, plan, workersCount, aiEnabled, name, multiStoreEnabled, requireApproval} = payload;
 
   checkRequiredFields(payload, ["groupName"]);
 
@@ -658,7 +658,7 @@ async function handleCreateShiftGroup(payload, uid) {
   }
 
   const newGroupParams = {
-    ownerId: authorId || uid,
+    ownerId: uid,
     orgId: uniqueGroupId,
     ownerName: ownerName || "Anonymous",
     groupName,
@@ -681,7 +681,7 @@ async function handleCreateShiftGroup(payload, uid) {
   }
 
   // Atomically update user document on the server via Admin SDK
-  const targetUid = authorId || uid;
+  const targetUid = uid;
   const userUpdate = {
     orgId: docId,
     role: "CorporateAdmin",
