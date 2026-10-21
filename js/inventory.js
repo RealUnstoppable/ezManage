@@ -47,10 +47,14 @@ function renderLocalInventory(items) {
         return;
     }
     emptyState.classList.add('hidden');
+    // ⚡ Bolt Optimization: Use DocumentFragment to batch DOM insertions
+    // Impact: Prevents O(n^2) reflow bottlenecks and layout thrashing for data-heavy arrays.
+    const fragment = document.createDocumentFragment();
     items.forEach(item => {
         const row = renderItemRow(item.id, item);
-        inventoryTableBody.appendChild(row);
+        fragment.appendChild(row);
     });
+    inventoryTableBody.appendChild(fragment);
     if (window.lucide) window.lucide.createIcons();
 }
 
