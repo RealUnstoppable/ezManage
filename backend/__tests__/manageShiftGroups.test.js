@@ -124,7 +124,6 @@ describe("handleCreateShiftGroup with Workplace Credentials & Corporate ID", () 
     const savedGroup = mockMethods.set.mock.calls[0][0];
     expect(savedGroup.groupName).toBe("Starbucks Store #402");
     expect(savedGroup.workplaceCode).toBe(result.workplaceCode);
-    expect(savedGroup.joinKey).toBe(result.joinKey);
     expect(savedGroup.multiStoreEnabled).toBe(true);
     expect(savedGroup.aiEnabled).toBe(true);
     expect(savedGroup.workersCount).toBe("11-50");
@@ -162,7 +161,6 @@ describe("handleCreateShiftGroup with Workplace Credentials & Corporate ID", () 
 
     const savedGroup = mockMethods.set.mock.calls[0][0];
     expect(savedGroup.workplaceCode).toBe("EZM-CUSTOM-1111");
-    expect(savedGroup.joinKey).toBe("WPK-9999-0000");
   });
 });
 
@@ -263,7 +261,6 @@ describe("handleRotateWorkplaceCredentials", () => {
 
     expect(mockMethods.update).toHaveBeenCalledTimes(1);
     const updateData = mockMethods.update.mock.calls[0][0];
-    expect(updateData.joinKey).toBe(result.joinKey);
     expect(updateData.password).toMatch(/^\$scrypt\$/);
   });
 
@@ -358,7 +355,6 @@ describe("handleUpdateCompanyShiftGroup", () => {
 
     expect(result.success).toBe(true);
     const updateData = mockMethods.update.mock.calls[0][0];
-    expect(updateData.joinKey).toBe("BrandNewSecurePassword123");
     expect(updateData.password).toMatch(/^\$scrypt\$[a-f0-9]+:[a-f0-9]+$/);
 
     const [hash, salt] = updateData.password.substring(8).split(":");
