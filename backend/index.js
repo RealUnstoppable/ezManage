@@ -663,7 +663,6 @@ async function handleCreateShiftGroup(payload, uid) {
     ownerName: ownerName || "Anonymous",
     groupName,
     workplaceCode: finalWorkplaceCode,
-    joinKey: plainJoinKey,
     password: hashedPassword,
     multiStoreEnabled: multiStoreEnabled !== false,
     aiEnabled: aiEnabled !== undefined ? Boolean(aiEnabled) : true,
@@ -796,7 +795,6 @@ async function handleRotateWorkplaceCredentials(payload, uid) {
   }
 
   await groupDocRef.update({
-    joinKey: updatedJoinKey,
     password: hashedPassword,
     workplaceCode: workplaceCode,
     credentialsUpdatedAt: admin.firestore.FieldValue.serverTimestamp(),
@@ -980,7 +978,6 @@ async function handleRotateWorkplaceCredentials(payload, uid) {
       const salt = crypto.randomBytes(16).toString("hex");
       const hash = crypto.scryptSync(passStr, salt, 64).toString("hex");
       updateData.password = `$scrypt$${hash}:${salt}`;
-      updateData.joinKey = passStr;
     }
 
     if (multiStoreEnabled !== undefined) {
