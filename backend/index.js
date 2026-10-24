@@ -374,10 +374,10 @@ exports.manageShiftNotes = functions.https.onCall(async (data, context) => {
   try {
     // 🛡️ Securely fetch the user's actual orgId from the database
     // instead of trusting the client payload to prevent IDOR
-    const actualOrgId = payload.orgId || userOrgId || null;
+    const actualOrgId = userOrgId || null;
 
     if (action === "create") {
-      const {authorId, orgId, authorName, content, priority} = payload;
+      const {content, priority} = payload;
 
       if (!content) {
         throw new HttpsError(
@@ -389,12 +389,12 @@ exports.manageShiftNotes = functions.https.onCall(async (data, context) => {
         priority : "Normal";
 
       const newNote = {
-        authorId: authorId || uid,
-        authorName: authorName || "Anonymous",
+        authorId: uid,
+        authorName: userName || "Anonymous",
         content,
         priority: notePriority,
         status: "Active",
-        orgId: orgId || actualOrgId,
+        orgId: actualOrgId,
         timestamp: admin.firestore.FieldValue.serverTimestamp(),
       };
 
