@@ -10,3 +10,7 @@
 **Vulnerability:** When implementing a migration from plaintext passwords to scrypt hashes, the new hashes were stored with the incorrectly formatted prefix `$scrypthash:salt` instead of `$scrypt$hash:salt` (due to missing a `$` sign in the template literal `\`$scrypt\${hash}\``). Because the authentication flow checked for `startsWith("$scrypt$")`, these newly hashed passwords fell back to plaintext comparison, permanently breaking authentication for new users.
 **Learning:** Security validation logic (like prefix matching) must strictly align with the generator logic. A simple typo in a template literal entirely bypassed the intended hash verification, rendering the security control ineffective.
 **Prevention:** Always write dedicated unit tests specifically verifying that newly generated hashes can be successfully parsed and validated by the existing authentication logic, rather than just testing that a hash was generated.
+## 2024-10-24 - IDOR Vulnerability via Client Payload Override
+**Vulnerability:** IDOR vulnerability where client provided payload fields (`payload.orgId` and `payload.authorId`) could override secure backend context, allowing unauthorized cross-organization note creation.
+**Learning:** Even with secure backend contexts, checking fallback values by blindly trusting client-provided payloads introduces IDOR risks.
+**Prevention:** Never abstract fallback values by trusting client-provided payload data over secure backend context.
