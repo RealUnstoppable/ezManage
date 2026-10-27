@@ -10,3 +10,7 @@
 **Vulnerability:** When implementing a migration from plaintext passwords to scrypt hashes, the new hashes were stored with the incorrectly formatted prefix `$scrypthash:salt` instead of `$scrypt$hash:salt` (due to missing a `$` sign in the template literal `\`$scrypt\${hash}\``). Because the authentication flow checked for `startsWith("$scrypt$")`, these newly hashed passwords fell back to plaintext comparison, permanently breaking authentication for new users.
 **Learning:** Security validation logic (like prefix matching) must strictly align with the generator logic. A simple typo in a template literal entirely bypassed the intended hash verification, rendering the security control ineffective.
 **Prevention:** Always write dedicated unit tests specifically verifying that newly generated hashes can be successfully parsed and validated by the existing authentication logic, rather than just testing that a hash was generated.
+## 2024-10-27 - Ephemeral credentials persistence
+**Vulnerability:** The plaintext `joinKey` was being persisted to the `shift_groups` collection in Firestore during group creation and rotation, bypassing the security benefit of the hashed password approach.
+**Learning:** When generating ephemeral credentials for the client, do not save them directly to the database. Persist only their cryptographic hashes.
+**Prevention:** Explicitly assert `expect(payload.joinKey).toBeUndefined()` when mocking database sets and updates to catch unexpected plaintext exposures in tests.
