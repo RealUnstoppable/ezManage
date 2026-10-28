@@ -4731,9 +4731,14 @@
 
             unsubscribeTasks = db.collection('assigned_tasks')
                 .where('orgId', '==', currentUserData.orgId)
+                .orderBy('createdAt', 'desc')
                 .onSnapshot(snap => {
-                    container.innerHTML = '';
-                    if (snap.empty) {
+                    // Remove empty state message if it exists
+                    if (container.querySelector('.text-center')) {
+                        container.innerHTML = '';
+                    }
+
+                    if (snap.empty && container.children.length === 0) {
                         container.innerHTML = `
                             <div class="text-center py-16 bg-slate-50 dark:bg-slate-900 rounded-3xl border-2 border-dashed border-slate-200 dark:border-slate-800">
                                 <i data-lucide="check-circle-2" class="w-12 h-12 text-emerald-400 mx-auto mb-4"></i>
@@ -4744,37 +4749,62 @@
                         return;
                     }
 
-                    let tasks = [];
-                    snap.forEach(doc => tasks.push({ id: doc.id, ...doc.data() }));
+                    // ⚡ Bolt Optimization: Incremental DOM updates via docChanges() to prevent layout thrashing
+                    snap.docChanges().forEach(change => {
+                        const task = { id: change.doc.id, ...change.doc.data() };
+                        const existingEl = document.getElementById(`task-${task.id}`);
 
-                    tasks.sort((a, b) => {
-                        const aTime = a.createdAt ? a.createdAt.toMillis() : 0;
-                        const bTime = b.createdAt ? b.createdAt.toMillis() : 0;
-                        return bTime - aTime;
+                        if (change.type === 'removed') {
+                            if (existingEl) existingEl.remove();
+                        } else {
+                            const isCompleted = task.status === 'Completed';
+                            const statusColor = isCompleted ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400' : 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400';
+                            const dateStr = task.createdAt ? new Date(task.createdAt.toMillis()).toLocaleString() : 'Just now';
+
+                            const html = `
+                                <div class="card p-6 border-l-4 ${isCompleted ? 'border-l-emerald-500 opacity-70' : 'border-l-amber-500'}" id="task-${task.id}">
+                                    <div class="flex flex-col md:flex-row justify-between gap-4 mb-4">
+                                        <div>
+                                            <h3 class="text-lg font-bold ${isCompleted ? 'line-through text-slate-500' : ''}">${escapeHTML(task.title)}</h3>
+                                            <p class="text-sm text-slate-500">Assigned to <span class="font-bold">${escapeHTML(task.assigneeName)}</span> by ${escapeHTML(task.createdByName)} • ${dateStr}</p>
+                                        </div>
+                                        <div class="flex gap-2 items-start">
+                                            <span class="px-3 py-1 rounded-full text-xs font-bold ${statusColor}">${escapeHTML(task.status)}</span>
+                                            <button data-action="updateTaskStatus" data-id="${escapeHTML(task.id)}" data-status="${isCompleted ? 'Pending' : 'Completed'}" class="btn btn-sm btn-outline ${isCompleted ? '' : 'btn-success'}">${isCompleted ? 'Mark Pending' : 'Mark Complete'}</button>
+                                            <button aria-label="Delete Task" data-action="deleteTask" data-id="${escapeHTML(task.id)}" class="btn btn-sm btn-outline text-red-500 border-red-200 hover:bg-red-50"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                                        </div>
+                                    </div>
+                                    <p class="text-slate-700 dark:text-slate-300 whitespace-pre-wrap ${isCompleted ? 'line-through text-slate-500' : ''}">${escapeHTML(task.description)}</p>
+                                </div>
+                            `;
+
+                            const template = document.createElement('template');
+                            template.innerHTML = html.trim();
+                            const newEl = template.content.firstChild;
+
+                            if (change.type === 'modified' && existingEl) {
+                                existingEl.replaceWith(newEl);
+                            } else if (change.type === 'added') {
+                                const children = container.children;
+                                if (change.newIndex < children.length) {
+                                    container.insertBefore(newEl, children[change.newIndex]);
+                                } else {
+                                    container.appendChild(newEl);
+                                }
+                            }
+                        }
                     });
 
-                    container.innerHTML = tasks.map(task => {
-                        const isCompleted = task.status === 'Completed';
-                        const statusColor = isCompleted ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400' : 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400';
-                        const dateStr = task.createdAt ? new Date(task.createdAt.toMillis()).toLocaleString() : 'Just now';
+                    // If all tasks were removed
+                    if (container.children.length === 0) {
+                        container.innerHTML = `
+                            <div class="text-center py-16 bg-slate-50 dark:bg-slate-900 rounded-3xl border-2 border-dashed border-slate-200 dark:border-slate-800">
+                                <i data-lucide="check-circle-2" class="w-12 h-12 text-emerald-400 mx-auto mb-4"></i>
+                                <h3 class="text-xl font-bold mb-2">All Caught Up!</h3>
+                                <p class="text-slate-500">There are no active assigned tasks.</p>
+                            </div>`;
+                    }
 
-                        return `
-                            <div class="card p-6 border-l-4 ${isCompleted ? 'border-l-emerald-500 opacity-70' : 'border-l-amber-500'}">
-                                <div class="flex flex-col md:flex-row justify-between gap-4 mb-4">
-                                    <div>
-                                        <h3 class="text-lg font-bold ${isCompleted ? 'line-through text-slate-500' : ''}">${escapeHTML(task.title)}</h3>
-                                        <p class="text-sm text-slate-500">Assigned to <span class="font-bold">${escapeHTML(task.assigneeName)}</span> by ${escapeHTML(task.createdByName)} • ${dateStr}</p>
-                                    </div>
-                                    <div class="flex gap-2 items-start">
-                                        <span class="px-3 py-1 rounded-full text-xs font-bold ${statusColor}">${escapeHTML(task.status)}</span>
-                                        <button data-action="updateTaskStatus" data-id="${escapeHTML(task.id)}" data-status="${isCompleted ? 'Pending' : 'Completed'}" class="btn btn-sm btn-outline ${isCompleted ? '' : 'btn-success'}">${isCompleted ? 'Mark Pending' : 'Mark Complete'}</button>
-                                        <button aria-label="Delete Task" data-action="deleteTask" data-id="${escapeHTML(task.id)}" class="btn btn-sm btn-outline text-red-500 border-red-200 hover:bg-red-50"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
-                                    </div>
-                                </div>
-                                <p class="text-slate-700 dark:text-slate-300 whitespace-pre-wrap ${isCompleted ? 'line-through text-slate-500' : ''}">${escapeHTML(task.description)}</p>
-                            </div>
-                        `;
-                    }).join('');
                     lucide.createIcons();
                 }, err => {
                     console.error("Error fetching tasks:", err);
