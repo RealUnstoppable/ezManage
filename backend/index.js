@@ -66,7 +66,7 @@ admin.initializeApp();
 // Use conditional initialization to prevent Firebase analyzer from crashing during deployment
 const stripeKey = process.env.STRIPE_SECRET || (process.env.NODE_ENV === "test" ? "test_secret_key" : null);
 const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
-const stripe = stripeKey ? require("stripe")(stripeKey) : null;
+const stripe = stripeKey ? require("stripe")(stripeKey) : (process.env.NODE_ENV === "test" ? require("stripe")("test_secret_key") : null);
 
 // 🔹 Create Checkout Session
 
@@ -154,9 +154,9 @@ exports.createCheckoutSession = onRequest({invoker: "public"}, (req, res) => {
 
         // Use URLs from frontend, fallback to hardcoded if missing
         success_url: successUrl ||
-          "https://dreamstimeskip-beta.pages.dev/tracker?success=true",
+          "https://ezmanage.realunstoppable.store/index.html?success=true",
         cancel_url: cancelUrl ||
-          "https://dreamstimeskip-beta.pages.dev/tracker?canceled=true",
+          "https://ezmanage.realunstoppable.store/index.html?canceled=true",
         metadata: {
           uid: uid || "unknown",
           planName: plan || "Pro",
@@ -174,26 +174,59 @@ exports.createCheckoutSession = onRequest({invoker: "public"}, (req, res) => {
 // 🔐 STRIPE WEBHOOK (SECURE)
 exports.stripeWebhook = onRequest({invoker: "public"}, async (req, res) => {
   const sig = req.headers["stripe-signature"];
+  const currentSecret = process.env.STRIPE_WEBHOOK_SECRET || endpointSecret;
   let event;
 
+  if (!sig) {
+    return res.status(400).send("Webhook Error: Missing stripe-signature header");
+  }
+
+  if (!req.rawBody) {
+    return res.status(400).send("Webhook Error: Missing raw request body");
+  }
+
   try {
-    event = stripe.webhooks.constructEvent(req.rawBody, sig, endpointSecret);
+    const Stripe = require("stripe");
+    const activeStripe = stripe || (process.env.STRIPE_SECRET ? Stripe(process.env.STRIPE_SECRET) : Stripe);
+    if (activeStripe && activeStripe.webhooks) {
+      event = activeStripe.webhooks.constructEvent(req.rawBody, sig, currentSecret);
+    } else {
+      event = Stripe.webhooks.constructEvent(req.rawBody, sig, currentSecret);
+    }
   } catch (err) {
     logManagerError("Webhook Error:", err);
-    return res.status(400).send("Webhook Error: Invalid payload or signature");
+    return res.status(400).send(`Webhook Error: ${err.message}`);
   }
 
   // 🎯 Handle Events
   if (event.type === "checkout.session.completed") {
     const session = event.data.object;
-    const uid = session.client_reference_id || (session.metadata && session.metadata.uid);
+    let uid = session.client_reference_id || (session.metadata && session.metadata.uid);
     const planName = (session.metadata && session.metadata.planName) || "Business Pro";
+    const customerEmail = (session.customer_details && session.customer_details.email) || session.customer_email;
+
+    // Fallback: If UID not in client_reference_id or metadata, look up user by customer email in Firestore!
+    if ((!uid || uid === "unknown") && customerEmail) {
+      try {
+        const userQuery = await admin.firestore().collection("users")
+            .where("email", "==", customerEmail.toLowerCase().trim())
+            .limit(1)
+            .get();
+        if (!userQuery.empty) {
+          uid = userQuery.docs[0].id;
+          console.log(`🔍 Resolved user uid ${uid} from customer email: ${customerEmail}`);
+        }
+      } catch (lookupErr) {
+        logManagerError("Error looking up user by email in webhook:", lookupErr);
+      }
+    }
 
     if (uid && uid !== "unknown") {
       // Updates the frontend to unlock pro features immediately
       try {
         await admin.firestore().collection("users").doc(uid).set({
           plan: planName,
+          membershipLevel: planName,
           subscription: {
             status: "active",
             customerId: session.customer,
@@ -205,11 +238,13 @@ exports.stripeWebhook = onRequest({invoker: "public"}, async (req, res) => {
       } catch (error) {
         logManagerError("Error updating user subscription status:", error);
       }
+    } else {
+      console.warn(`⚠️ checkout.session.completed received but could not resolve UID for session ${session.id}`);
     }
   }
 
   if (event.type === "customer.subscription.deleted" ||
-    event.type === "customer.subscription.canceled") {
+    (event.type === "customer.subscription.updated" && (event.data.object.status === "canceled" || event.data.object.status === "unpaid"))) {
     const sub = event.data.object;
 
     try {
@@ -222,6 +257,7 @@ exports.stripeWebhook = onRequest({invoker: "public"}, async (req, res) => {
       snapshot.docs.forEach((doc) => {
         batch.update(doc.ref, {
           "plan": "Free",
+          "membershipLevel": "Free Tier",
           "subscription.status": "canceled",
           "updatedAt": admin.firestore.FieldValue.serverTimestamp(),
         });
@@ -237,6 +273,32 @@ exports.stripeWebhook = onRequest({invoker: "public"}, async (req, res) => {
       }
     } catch (webhookError) {
       logManagerError("Error processing Stripe webhook subscription cancellation:", webhookError);
+    }
+  }
+
+  if (event.type === "invoice.payment_succeeded") {
+    const invoice = event.data.object;
+    if (invoice.subscription && invoice.customer) {
+      try {
+        const snapshot = await admin.firestore()
+            .collection("users")
+            .where("subscription.customerId", "==", invoice.customer)
+            .get();
+
+        const batch = admin.firestore().batch();
+        snapshot.docs.forEach((doc) => {
+          batch.update(doc.ref, {
+            "subscription.status": "active",
+            "updatedAt": admin.firestore.FieldValue.serverTimestamp(),
+          });
+        });
+
+        if (snapshot.docs.length > 0) {
+          await batch.commit();
+        }
+      } catch (invoiceErr) {
+        logManagerError("Error processing invoice.payment_succeeded webhook:", invoiceErr);
+      }
     }
   }
 

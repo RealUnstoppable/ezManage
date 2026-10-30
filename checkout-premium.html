@@ -237,7 +237,18 @@
         };
         const params = new URLSearchParams(window.location.search);
         const plan = params.get('plan') || 'Individual Pro';
-        const targetUrl = STRIPE_LINKS[plan] || STRIPE_LINKS['Individual Pro'];
+        let targetUrl = STRIPE_LINKS[plan] || STRIPE_LINKS['Individual Pro'];
+        try {
+            const authKey = Object.keys(localStorage).find(k => k.startsWith('firebase:authUser:'));
+            if (authKey) {
+                const u = JSON.parse(localStorage.getItem(authKey));
+                const urlParams = new URLSearchParams();
+                if (u && u.uid) urlParams.append('client_reference_id', u.uid);
+                if (u && u.email) urlParams.append('prefilled_email', u.email);
+                const q = urlParams.toString();
+                if (q) targetUrl += (targetUrl.includes('?') ? '&' : '?') + q;
+            }
+        } catch (e) {}
         window.location.replace(targetUrl);
     </script>
 

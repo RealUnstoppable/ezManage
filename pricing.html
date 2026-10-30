@@ -45,7 +45,7 @@
                         <li class="flex gap-3"><i data-lucide="check" class="text-sky-500"></i> 10 Custom Presets</li>
                         <li class="flex gap-3"><i data-lucide="check" class="text-sky-500"></i> Performance History</li>
                     </ul>
-                    <button onclick="window.location.href='https://buy.stripe.com/7sY5kCeyQ6xN8FtdtH9AA01'" class="btn btn-outline hover:bg-sky-500 hover:text-white hover:border-sky-500">Choose Pro</button>
+                    <button onclick="startCheckout('Individual Pro')" class="btn btn-outline hover:bg-sky-500 hover:text-white hover:border-sky-500">Choose Pro</button>
                 </div>
 
                 <div class="card relative border-sky-200 shadow-2xl shadow-sky-100 scale-105 z-10">
@@ -61,7 +61,7 @@
                         <li class="flex gap-3"><i data-lucide="check" class="text-sky-600"></i> Unlimited Custom Presets</li>
                         <li class="flex gap-3"><i data-lucide="check" class="text-sky-600"></i> Priority Feature Requests</li>
                     </ul>
-                    <button onclick="window.location.href='https://buy.stripe.com/cNibJ0gGY2hxdZN4Xb9AA00'" class="btn btn-accent">Choose Business</button>
+                    <button onclick="startCheckout('Business Pro')" class="btn btn-accent">Choose Business</button>
                 </div>
 
                 <div class="card relative bg-slate-900 text-white border-slate-800">
@@ -81,6 +81,31 @@
             </div>
         </div>
     </section>
-    <script>lucide.createIcons();</script>
+    <script>
+        lucide.createIcons();
+
+        function startCheckout(plan) {
+            const urls = {
+                'Individual Pro': 'https://buy.stripe.com/7sY5kCeyQ6xN8FtdtH9AA01',
+                'Business Pro': 'https://buy.stripe.com/cNibJ0gGY2hxdZN4Xb9AA00'
+            };
+            let target = urls[plan] || urls['Business Pro'];
+            try {
+                // Attach authenticated Firebase user credentials if present
+                const authKey = Object.keys(localStorage).find(k => k.startsWith('firebase:authUser:'));
+                if (authKey) {
+                    const u = JSON.parse(localStorage.getItem(authKey));
+                    const params = new URLSearchParams();
+                    if (u && u.uid) params.append('client_reference_id', u.uid);
+                    if (u && u.email) params.append('prefilled_email', u.email);
+                    const q = params.toString();
+                    if (q) target += (target.includes('?') ? '&' : '?') + q;
+                }
+            } catch (err) {
+                console.warn('Could not read auth user for checkout link:', err);
+            }
+            window.location.href = target;
+        }
+    </script>
 </body>
 </html>

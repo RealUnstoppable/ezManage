@@ -1,0 +1,13 @@
+.gcloudignore
+.git
+.gitignore
+
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Ignore test directories and coverage
+test/
+tests/
+coverage/
+pnpm-lock.yaml
