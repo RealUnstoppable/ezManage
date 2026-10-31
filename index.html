@@ -4731,11 +4731,13 @@
 
             unsubscribeTasks = db.collection('assigned_tasks')
                 .where('orgId', '==', currentUserData.orgId)
+                .orderBy('createdAt', 'desc')
                 .onSnapshot(snap => {
-                    container.innerHTML = '';
+                    const emptyStateDiv = container.querySelector('.empty-state-tasks');
+
                     if (snap.empty) {
                         container.innerHTML = `
-                            <div class="text-center py-16 bg-slate-50 dark:bg-slate-900 rounded-3xl border-2 border-dashed border-slate-200 dark:border-slate-800">
+                            <div class="empty-state-tasks text-center py-16 bg-slate-50 dark:bg-slate-900 rounded-3xl border-2 border-dashed border-slate-200 dark:border-slate-800">
                                 <i data-lucide="check-circle-2" class="w-12 h-12 text-emerald-400 mx-auto mb-4"></i>
                                 <h3 class="text-xl font-bold mb-2">All Caught Up!</h3>
                                 <p class="text-slate-500">There are no active assigned tasks.</p>
@@ -4744,37 +4746,78 @@
                         return;
                     }
 
-                    let tasks = [];
-                    snap.forEach(doc => tasks.push({ id: doc.id, ...doc.data() }));
+                    if (emptyStateDiv) emptyStateDiv.remove();
 
-                    tasks.sort((a, b) => {
-                        const aTime = a.createdAt ? a.createdAt.toMillis() : 0;
-                        const bTime = b.createdAt ? b.createdAt.toMillis() : 0;
-                        return bTime - aTime;
-                    });
-
-                    container.innerHTML = tasks.map(task => {
+                    // ⚡ Bolt Optimization: Replace full DOM recreation via innerHTML with targeted docChanges() updates
+                    // Impact: Drastically reduces layout thrashing by incrementally updating only modified/added/removed task nodes.
+                    snap.docChanges().forEach(change => {
+                        const task = { id: change.doc.id, ...change.doc.data() };
                         const isCompleted = task.status === 'Completed';
                         const statusColor = isCompleted ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400' : 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400';
                         const dateStr = task.createdAt ? new Date(task.createdAt.toMillis()).toLocaleString() : 'Just now';
 
-                        return `
-                            <div class="card p-6 border-l-4 ${isCompleted ? 'border-l-emerald-500 opacity-70' : 'border-l-amber-500'}">
-                                <div class="flex flex-col md:flex-row justify-between gap-4 mb-4">
-                                    <div>
-                                        <h3 class="text-lg font-bold ${isCompleted ? 'line-through text-slate-500' : ''}">${escapeHTML(task.title)}</h3>
-                                        <p class="text-sm text-slate-500">Assigned to <span class="font-bold">${escapeHTML(task.assigneeName)}</span> by ${escapeHTML(task.createdByName)} • ${dateStr}</p>
-                                    </div>
-                                    <div class="flex gap-2 items-start">
-                                        <span class="px-3 py-1 rounded-full text-xs font-bold ${statusColor}">${escapeHTML(task.status)}</span>
-                                        <button data-action="updateTaskStatus" data-id="${escapeHTML(task.id)}" data-status="${isCompleted ? 'Pending' : 'Completed'}" class="btn btn-sm btn-outline ${isCompleted ? '' : 'btn-success'}">${isCompleted ? 'Mark Pending' : 'Mark Complete'}</button>
-                                        <button aria-label="Delete Task" data-action="deleteTask" data-id="${escapeHTML(task.id)}" class="btn btn-sm btn-outline text-red-500 border-red-200 hover:bg-red-50"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
-                                    </div>
+                        const cardHtml = `
+                            <div class="flex flex-col md:flex-row justify-between gap-4 mb-4">
+                                <div>
+                                    <h3 class="text-lg font-bold ${isCompleted ? 'line-through text-slate-500' : ''}">${escapeHTML(task.title)}</h3>
+                                    <p class="text-sm text-slate-500">Assigned to <span class="font-bold">${escapeHTML(task.assigneeName)}</span> by ${escapeHTML(task.createdByName)} • ${dateStr}</p>
                                 </div>
-                                <p class="text-slate-700 dark:text-slate-300 whitespace-pre-wrap ${isCompleted ? 'line-through text-slate-500' : ''}">${escapeHTML(task.description)}</p>
+                                <div class="flex gap-2 items-start">
+                                    <span class="px-3 py-1 rounded-full text-xs font-bold ${statusColor}">${escapeHTML(task.status)}</span>
+                                    <button data-action="updateTaskStatus" data-id="${escapeHTML(task.id)}" data-status="${isCompleted ? 'Pending' : 'Completed'}" class="btn btn-sm btn-outline ${isCompleted ? '' : 'btn-success'}">${isCompleted ? 'Mark Pending' : 'Mark Complete'}</button>
+                                    <button aria-label="Delete Task" data-action="deleteTask" data-id="${escapeHTML(task.id)}" class="btn btn-sm btn-outline text-red-500 border-red-200 hover:bg-red-50"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                                </div>
                             </div>
+                            <p class="text-slate-700 dark:text-slate-300 whitespace-pre-wrap ${isCompleted ? 'line-through text-slate-500' : ''}">${escapeHTML(task.description)}</p>
                         `;
-                    }).join('');
+
+                        if (change.type === 'added') {
+                            const wrapper = document.createElement('div');
+                            wrapper.id = `task-${task.id}`;
+                            wrapper.className = `card p-6 border-l-4 ${isCompleted ? 'border-l-emerald-500 opacity-70' : 'border-l-amber-500'}`;
+                            wrapper.innerHTML = cardHtml;
+
+                            const existingNodes = container.children;
+                            // Ensure loader is not counted if still there
+                            if (existingNodes.length > 0 && existingNodes[0].querySelector('.animate-spin') && change.newIndex === 0) {
+                                container.innerHTML = '';
+                            }
+                            if (container.children.length > change.newIndex) {
+                                container.insertBefore(wrapper, container.children[change.newIndex]);
+                            } else {
+                                container.appendChild(wrapper);
+                            }
+                        } else if (change.type === 'modified') {
+                            const oldNode = document.getElementById(`task-${task.id}`);
+                            const newNode = document.createElement('div');
+                            newNode.id = `task-${task.id}`;
+                            newNode.className = `card p-6 border-l-4 ${isCompleted ? 'border-l-emerald-500 opacity-70' : 'border-l-amber-500'}`;
+                            newNode.innerHTML = cardHtml;
+
+                            if (oldNode) {
+                                if (change.oldIndex === change.newIndex) {
+                                    container.replaceChild(newNode, oldNode);
+                                } else {
+                                    oldNode.remove();
+                                    if (container.children.length > change.newIndex) {
+                                        container.insertBefore(newNode, container.children[change.newIndex]);
+                                    } else {
+                                        container.appendChild(newNode);
+                                    }
+                                }
+                            } else {
+                                if (container.children.length > change.newIndex) {
+                                    container.insertBefore(newNode, container.children[change.newIndex]);
+                                } else {
+                                    container.appendChild(newNode);
+                                }
+                            }
+                        } else if (change.type === 'removed') {
+                            const oldNode = document.getElementById(`task-${task.id}`);
+                            if (oldNode) oldNode.remove();
+                        }
+                    });
+
                     lucide.createIcons();
                 }, err => {
                     console.error("Error fetching tasks:", err);
