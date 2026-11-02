@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vendors | ezManage</title>
+    <link rel="icon" type="image/jpeg" href="ManagerPro.jpg">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/themes.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <script type="module">
+        import { loadNavbar } from './js/navbar.js';
+        import { loadFooter } from './js/footer.js';
+        document.addEventListener('DOMContentLoaded', () => {
+            loadNavbar();
+            loadFooter();
+            if (window.lucide) window.lucide.createIcons();
+        });
+    </script>
+</head>
+<body class="bg-slate-950 text-slate-100 font-sans min-h-screen flex flex-col pt-20">
+    <!-- Navbar Container -->
+    <nav class="fixed top-0 left-0 right-0 z-50 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 transition-colors">
+        <div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+            <a href="index.html" class="flex items-center space-x-3 cursor-pointer">
+                <div class="relative group">
+                    <img src="ManagerPro.jpg" alt="ezManage Logo"
+                        class="w-10 h-10 rounded-xl shadow-sm border border-slate-700 transform transition-transform group-hover:rotate-6">
+                </div>
+                <span class="text-xl font-black tracking-tighter text-white uppercase">ezManage</span>
+            </a>
+
+            <div class="hidden md:flex space-x-8 text-[11px] font-black text-slate-400 uppercase tracking-[0.2em]">
+                <a href="index.html#welcome" class="hover:text-sky-400 transition-colors">Home</a>
+                <a href="index.html#tracker" class="hover:text-sky-400 transition-colors">App</a>
+                <a href="index.html#schedule" class="hover:text-sky-400 transition-colors">Schedule</a>
+                <a href="index.html#announcements" class="hover:text-sky-400 transition-colors">Notices</a>
+                <a href="inventory.html" class="hover:text-sky-400 transition-colors">Inventory</a>
+                <a href="vendors.html" class="text-sky-400 font-bold border-b-2 border-sky-400 pb-1">Vendors</a>
+            </div>
+
+            <div class="flex items-center space-x-4">
+                <a href="index.html" class="text-xs font-bold text-sky-400 hover:text-sky-300 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-sky-500/10 border border-sky-500/20 transition-all">
+                    <i data-lucide="arrow-left" class="w-4 h-4"></i> Back to Dashboard
+                </a>
+                <a href="account.html" id="navUserStatus"
+                    class="hidden sm:block text-[10px] font-black uppercase tracking-widest text-slate-300 hover:text-white cursor-pointer">
+                    My Account
+                </a>
+                <button id="mobileMenuBtn" onclick="document.getElementById('mobileMenu').classList.toggle('hidden')" class="md:hidden p-2 text-slate-300 hover:text-white" aria-label="Toggle Menu">
+                    <i data-lucide="menu"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Mobile Menu Dropdown -->
+        <div id="mobileMenu" class="hidden md:hidden bg-slate-900 border-b border-slate-800 px-6 py-4 space-y-3">
+            <a href="index.html#welcome" class="block font-bold text-sm text-slate-300 hover:text-sky-400">Home</a>
+            <a href="index.html#tracker" class="block font-bold text-sm text-slate-300 hover:text-sky-400">App (Tracker)</a>
+            <a href="index.html#schedule" class="block font-bold text-sm text-slate-300 hover:text-sky-400">Schedule</a>
+            <a href="index.html#announcements" class="block font-bold text-sm text-slate-300 hover:text-sky-400">Notices</a>
+            <a href="inventory.html" class="block font-bold text-sm text-slate-300 hover:text-sky-400">Inventory</a>
+            <a href="vendors.html" class="block font-bold text-sm text-sky-400 font-bold">Vendors</a>
+            <div class="pt-2 border-t border-slate-800 flex justify-between items-center">
+                <a href="index.html" class="text-xs font-bold text-sky-400 flex items-center gap-1">
+                    <i data-lucide="arrow-left" class="w-4 h-4"></i> Back to Dashboard
+                </a>
+                <a href="account.html" class="text-xs font-bold text-slate-300">My Account</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="flex-grow max-w-7xl mx-auto px-6 py-12 w-full">
+        <!-- Header Section -->
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+            <div>
+                <h1 class="text-3xl font-bold tracking-tight text-white mb-2 flex items-center gap-3">
+                    <i data-lucide="truck" class="text-sky-400 h-8 w-8"></i>
+                    Vendor Directory
+                </h1>
+                <p class="text-slate-400">Track and manage your store's vendors and service providers.</p>
+            </div>
+            <button id="addVendorBtn" class="flex items-center gap-2 bg-sky-500 hover:bg-sky-400 text-white px-5 py-2.5 rounded-lg font-medium transition-colors shadow-lg shadow-sky-500/20">
+                <i data-lucide="plus" class="w-5 h-5"></i>
+                Add New Vendor
+            </button>
+        </div>
+
+        <!-- Vendor Table Container -->
+        <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow-xl">
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-slate-800/50">
+                    <thead class="bg-slate-800/50">
+                        <tr>
+                            <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">Vendor Name</th>
+                            <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">Contact</th>
+                            <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">Phone / Email</th>
+                            <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">Category</th>
+                            <th scope="col" class="px-6 py-4 text-right text-xs font-semibold text-slate-300 uppercase tracking-wider">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="vendorTableBody" class="divide-y divide-slate-800/50 bg-slate-900">
+                        <!-- Rows rendered via JS -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Loading State -->
+            <div id="loadingSpinner" class="flex flex-col justify-center items-center py-16 text-center">
+                <div class="w-14 h-14 rounded-full border-4 border-slate-800 border-t-sky-400 animate-spin mb-4"></div>
+                <p class="text-slate-400 text-sm">Loading vendors...</p>
+            </div>
+
+            <!-- Empty State -->
+            <div id="emptyState" class="hidden flex flex-col items-center justify-center py-16 text-center">
+                <div class="w-24 h-24 rounded-full bg-slate-800/70 border-2 border-dashed border-slate-700 flex flex-col items-center justify-center mb-4 text-slate-400 shadow-inner">
+                    <i data-lucide="truck" class="w-10 h-10 text-sky-400 mb-1"></i>
+                    <span class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Empty</span>
+                </div>
+                <h3 class="text-xl font-bold text-white mb-1">Nothing yet</h3>
+                <p class="text-slate-400 max-w-sm mb-6 text-sm">Nothing yet, add a vendor to get started.</p>
+                <button onclick="document.getElementById('addVendorBtn').click()" class="flex items-center gap-2 bg-sky-500 hover:bg-sky-400 text-white px-5 py-2.5 rounded-xl font-medium transition-colors shadow-lg shadow-sky-500/20">
+                    <i data-lucide="plus" class="w-4 h-4"></i> Add to Vendors
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer Container -->
+    <footer class="main-footer mt-auto"></footer>
+
+    <!-- Add/Edit Vendor Modal -->
+    <div id="vendorModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 md:p-8 w-full max-w-md shadow-2xl relative transform transition-all">
+            <button id="closeVendorModal" class="absolute top-4 right-4 text-slate-400 hover:text-white bg-slate-800/50 hover:bg-slate-700 p-2 rounded-full transition-colors" aria-label="Close modal">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+            <h2 id="modalTitle" class="text-2xl font-bold mb-6 text-white">Add New Vendor</h2>
+            <form id="vendorForm" class="space-y-5">
+                <input type="hidden" id="vendorId">
+
+                <div>
+                    <label class="block text-sm font-medium text-slate-300 mb-1.5" for="vendorName">Company / Vendor Name</label>
+                    <input type="text" id="vendorName" required
+                        class="w-full bg-slate-950 border border-slate-700 rounded-lg px-4 py-2.5 text-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-500/50 focus:border-sky-500 transition-colors placeholder-slate-600"
+                        placeholder="e.g., Sysco Foods">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-slate-300 mb-1.5" for="vendorContact">Contact Person</label>
+                    <input type="text" id="vendorContact" required
+                        class="w-full bg-slate-950 border border-slate-700 rounded-lg px-4 py-2.5 text-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-500/50 focus:border-sky-500 transition-colors placeholder-slate-600"
+                        placeholder="e.g., John Doe">
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-300 mb-1.5" for="vendorPhone">Phone</label>
+                        <input type="tel" id="vendorPhone"
+                            class="w-full bg-slate-950 border border-slate-700 rounded-lg px-4 py-2.5 text-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-500/50 focus:border-sky-500 transition-colors"
+                            placeholder="555-123-4567">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-300 mb-1.5" for="vendorEmail">Email</label>
+                        <input type="email" id="vendorEmail"
+                            class="w-full bg-slate-950 border border-slate-700 rounded-lg px-4 py-2.5 text-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-500/50 focus:border-sky-500 transition-colors"
+                            placeholder="vendor@example.com">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-slate-300 mb-1.5" for="vendorCategory">Category</label>
+                    <select id="vendorCategory" required class="w-full bg-slate-950 border border-slate-700 rounded-lg px-4 py-2.5 text-slate-200 focus:outline-none focus:ring-2 focus:ring-sky-500/50 focus:border-sky-500 transition-colors">
+                        <option value="Supplies">Supplies</option>
+                        <option value="Maintenance">Maintenance</option>
+                        <option value="Services">Services</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+
+                <div class="flex gap-3 pt-4">
+                    <button type="button" id="cancelVendorBtn" class="flex-1 bg-slate-800 hover:bg-slate-700 text-white px-4 py-2.5 rounded-lg font-medium transition-colors">
+                        Cancel
+                    </button>
+                    <button type="submit" class="flex-1 bg-sky-500 hover:bg-sky-400 text-white px-4 py-2.5 rounded-lg font-medium transition-colors shadow-lg shadow-sky-500/20">
+                        Save Vendor
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Feature Logic -->
+    <script type="module" src="./js/vendors.js"></script>
+</body>
+</html>
