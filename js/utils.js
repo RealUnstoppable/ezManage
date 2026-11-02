@@ -31,6 +31,45 @@ export function escapeHTML(str) {
         .replace(/'/g, "&#039;");
 }
 
+/**
+ * Strips dangerous executable script tags and handlers from input to prevent XSS.
+ * @param {any} input - Value to sanitize
+ * @returns {any} Sanitized value
+ */
+export function sanitizeInput(input) {
+    if (typeof input !== 'string') return input;
+    return input
+        .replace(/<\s*script\b[^>]*>([\s\S]*?)<\s*\/\s*script\s*>/gi, '')
+        .replace(/<\s*iframe\b[^>]*>([\s\S]*?)<\s*\/\s*iframe\s*>/gi, '')
+        .replace(/javascript\s*:/gi, '')
+        .replace(/\bon[a-z]+\s*=\s*['"][^'"]*['"]/gi, '')
+        .replace(/\0/g, '')
+        .trim();
+}
+
+/**
+ * Recursively sanitizes an object or array, stripping prototype pollution keys.
+ * @param {any} obj - Object to sanitize
+ * @returns {any} Cleaned object
+ */
+export function sanitizeObject(obj) {
+    if (obj === null || typeof obj !== 'object') {
+        return typeof obj === 'string' ? sanitizeInput(obj) : obj;
+    }
+    if (Array.isArray(obj)) {
+        return obj.map(item => sanitizeObject(item));
+    }
+    const clean = {};
+    for (const [key, val] of Object.entries(obj)) {
+        if (key === '__proto__' || key === 'constructor' || key === 'prototype') {
+            continue;
+        }
+        clean[key] = sanitizeObject(val);
+    }
+    return clean;
+}
+
+
 export function showToast(message) {
     const toast = document.createElement('div');
     toast.className = 'toast-notification';

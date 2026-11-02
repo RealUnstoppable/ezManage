@@ -151,6 +151,83 @@ function checkRequiredFields(payload, requiredKeys, errorMessage = "Missing requ
   }
 }
 
+/**
+ * Strips dangerous executable tags and characters from user input strings to prevent XSS.
+ * @param {any} input - Value to sanitize
+ * @return {any} Sanitized value
+ */
+function sanitizeInput(input) {
+  if (typeof input !== "string") return input;
+  return input
+    .replace(/<\s*script\b[^>]*>([\s\S]*?)<\s*\/\s*script\s*>/gi, "")
+    .replace(/<\s*iframe\b[^>]*>([\s\S]*?)<\s*\/\s*iframe\s*>/gi, "")
+    .replace(/javascript\s*:/gi, "")
+    .replace(/\bon[a-z]+\s*=\s*['"][^'"]*['"]/gi, "")
+    .replace(/\0/g, "")
+    .trim();
+}
+
+/**
+ * Recursively sanitizes an object or array, stripping prototype pollution keys.
+ * @param {any} obj - Object to sanitize
+ * @return {any} Sanitized object
+ */
+function sanitizeObject(obj) {
+  if (obj === null || typeof obj !== "object") {
+    return typeof obj === "string" ? sanitizeInput(obj) : obj;
+  }
+  if (Array.isArray(obj)) {
+    return obj.map((item) => sanitizeObject(item));
+  }
+  const clean = {};
+  for (const [key, val] of Object.entries(obj)) {
+    // Strip prototype pollution keys
+    if (key === "__proto__" || key === "constructor" || key === "prototype") {
+      continue;
+    }
+    clean[key] = sanitizeObject(val);
+  }
+  return clean;
+}
+
+/**
+ * Rate Limiting Tracker for Cloud Functions
+ */
+const backendRateLimits = new Map();
+
+function verifyRateLimit(identifier, maxRequests = 60, windowMs = 60 * 1000) {
+  if (!identifier) return true;
+  const now = Date.now();
+  let record = backendRateLimits.get(identifier);
+
+  if (!record || now - record.startTime > windowMs) {
+    record = { startTime: now, count: 1 };
+    backendRateLimits.set(identifier, record);
+    return true;
+  }
+
+  record.count += 1;
+  if (record.count > maxRequests) {
+    throw new HttpsError(
+      "resource-exhausted",
+      `Rate limit exceeded. Maximum ${maxRequests} requests per ${Math.round(windowMs / 1000)}s.`
+    );
+  }
+  return true;
+}
+
+/**
+ * Verifies Firebase App Check token if enforcement is enabled.
+ * @param {Object} context - Firebase context
+ */
+function verifyAppCheck(context) {
+  if (process.env.ENFORCE_APP_CHECK === "true") {
+    if (!context || !context.app) {
+      throw new HttpsError("unauthenticated", "App Check verification failed. Request blocked.");
+    }
+  }
+}
+
 module.exports = {
   checkRequiredFields,
   logManagerError,
@@ -160,4 +237,10 @@ module.exports = {
   getDayOfWeek,
   escapeHTML,
   adaptGen2Params,
+  sanitizeInput,
+  sanitizeObject,
+  verifyRateLimit,
+  verifyAppCheck,
+  backendRateLimits,
 };
+

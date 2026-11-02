@@ -1,6 +1,4 @@
-import { getFirebaseErrorMessage, logManagerError, escapeHTML, isNetworkError } from './utils.js';
-
-
+import { getFirebaseErrorMessage, logManagerError, escapeHTML, isNetworkError, sanitizeInput } from './utils.js';
 
 import { auth, db } from '../firebase.js';
 
@@ -27,6 +25,89 @@ export async function fetchUserDoc(uid) {
     userDocCache.set(uid, fetchPromise);
     return fetchPromise;
 }
+
+// 🔒 Account Lockout Protection (Client Defense-in-Depth)
+export const MAX_AUTH_ATTEMPTS = 5;
+export const LOCKOUT_DURATION_MS = 15 * 60 * 1000; // 15 minutes
+
+export function checkAccountLockout(email) {
+    if (!email || typeof window === 'undefined' || !window.localStorage) {
+        return { isLocked: false, remainingSeconds: 0, attempts: 0 };
+    }
+    const cleanEmail = String(email).toLowerCase().trim();
+    const stored = window.localStorage.getItem(`ezManage_lockout_${cleanEmail}`);
+    if (!stored) return { isLocked: false, remainingSeconds: 0, attempts: 0 };
+
+    try {
+        const record = JSON.parse(stored);
+        const now = Date.now();
+        if (record.lockedUntil && record.lockedUntil > now) {
+            const remainingSeconds = Math.ceil((record.lockedUntil - now) / 1000);
+            return { isLocked: true, remainingSeconds, attempts: record.count };
+        }
+        return { isLocked: false, remainingSeconds: 0, attempts: record.count || 0 };
+    } catch (e) {
+        window.localStorage.removeItem(`ezManage_lockout_${cleanEmail}`);
+    }
+    return { isLocked: false, remainingSeconds: 0, attempts: 0 };
+}
+
+export function recordFailedAuth(email) {
+    if (!email || typeof window === 'undefined' || !window.localStorage) return;
+    const cleanEmail = String(email).toLowerCase().trim();
+    const key = `ezManage_lockout_${cleanEmail}`;
+    let record = { count: 0, lockedUntil: null, lastAttempt: Date.now() };
+
+    try {
+        const stored = window.localStorage.getItem(key);
+        if (stored) record = JSON.parse(stored);
+    } catch (e) {}
+
+    const now = Date.now();
+    if (record.lockedUntil && record.lockedUntil <= now) {
+        record.count = 0;
+        record.lockedUntil = null;
+    }
+
+    record.count = (record.count || 0) + 1;
+    record.lastAttempt = now;
+
+    if (record.count >= MAX_AUTH_ATTEMPTS) {
+        record.lockedUntil = now + LOCKOUT_DURATION_MS;
+    }
+
+    window.localStorage.setItem(key, JSON.stringify(record));
+
+    // Asynchronously inform backend watchdog if available
+    try {
+        if (typeof fetch !== 'undefined') {
+            fetch('/api/security/auth-attempt', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: cleanEmail, success: false })
+            }).catch(() => {});
+        }
+    } catch (e) {}
+
+    return record;
+}
+
+export function recordSuccessfulAuth(email) {
+    if (!email || typeof window === 'undefined' || !window.localStorage) return;
+    const cleanEmail = String(email).toLowerCase().trim();
+    window.localStorage.removeItem(`ezManage_lockout_${cleanEmail}`);
+
+    try {
+        if (typeof fetch !== 'undefined') {
+            fetch('/api/security/auth-attempt', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: cleanEmail, success: true })
+            }).catch(() => {});
+        }
+    } catch (e) {}
+}
+
 
 
 
@@ -100,9 +181,11 @@ if (document.getElementById('auth-form')) {
 
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
-        const email = document.getElementById('email').value.trim();
+        const rawEmail = document.getElementById('email').value.trim();
+        const email = sanitizeInput(rawEmail).toLowerCase();
         const password = document.getElementById('password').value;
-        const username = document.getElementById('username').value.trim();
+        const rawUsername = document.getElementById('username').value.trim();
+        const username = escapeHTML(sanitizeInput(rawUsername));
 
         messageEl.textContent = '';
         submitBtn.disabled = true;
@@ -120,6 +203,7 @@ if (document.getElementById('auth-form')) {
                     email,
                     signupDate: window.firebase.firestore.FieldValue.serverTimestamp()
                 });
+                recordSuccessfulAuth(email);
                 sessionStorage.setItem('newUser', 'true');
                 window.location.replace('index.html');
             } catch (error) {
@@ -132,11 +216,21 @@ if (document.getElementById('auth-form')) {
                 submitBtn.disabled = false;
             }
         } else {
+            // Check Account Lockout before attempting sign in
+            const lockout = checkAccountLockout(email);
+            if (lockout.isLocked) {
+                const mins = Math.ceil(lockout.remainingSeconds / 60);
+                showMessage(`Account temporarily locked due to repeated failed attempts. Please try again in ${mins} minute${mins === 1 ? '' : 's'}.`);
+                submitBtn.disabled = false;
+                return;
+            }
+
             try {
                 const userCredential = await auth.signInWithEmailAndPassword(email, password);
                 const userDoc = await fetchUserDoc(userCredential.user.uid);
 
                 if (userDoc.exists && userDoc.data().isBanned !== true) {
+                    recordSuccessfulAuth(email);
                     const destination = getUserRedirectPath(userDoc.data());
                     window.location.replace(destination);
                 } else {
@@ -146,7 +240,10 @@ if (document.getElementById('auth-form')) {
                 }
             } catch (error) {
                 logManagerError("Sign in error for email: " + email, error);
-                if (isNetworkError(error)) {
+                const rec = recordFailedAuth(email);
+                if (rec && rec.lockedUntil && rec.lockedUntil > Date.now()) {
+                    showMessage(`Too many failed sign in attempts. Account temporarily locked for 15 minutes.`);
+                } else if (isNetworkError(error)) {
                     showMessage("Network error: Please check your connection or whitelist our domain.");
                 } else {
                     showMessage(getFirebaseErrorMessage(error));

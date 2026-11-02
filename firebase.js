@@ -30,13 +30,32 @@ if (typeof window !== "undefined" && window.firebase) {
 }
 
 // INSTRUCTIONS FOR AUTHORIZED DOMAINS:
-// To whitelist \`ezmanage.realunstoppable.store\` in the Firebase Console:
+// To whitelist `ezmanage.realunstoppable.store` in the Firebase Console:
 // 1. Go to Authentication -> Settings -> Authorized domains
-// 2. Click "Add domain" and enter \`ezmanage.realunstoppable.store\`
+// 2. Click "Add domain" and enter `ezmanage.realunstoppable.store`
 // Note: Firestore rules are handled via firestore.rules file deployment.
 
-const db = typeof window !== "undefined" && window.firebase ? window.firebase.firestore() : null;
-const functions = typeof window !== "undefined" && window.firebase ? window.firebase.functions() : null;
+// 🛡️ Firebase App Check Configuration (Protection against abuse & unverified clients)
+let appCheck = null;
+if (typeof window !== "undefined" && window.firebase && window.firebase.appCheck) {
+    try {
+        if (location.hostname === "localhost" || location.hostname === "127.0.0.1") {
+            self.FIREBASE_APPCHECK_DEBUG_TOKEN = true;
+        }
+        appCheck = window.firebase.appCheck();
+        // Activate App Check with reCAPTCHA v3 or Debug provider
+        if (typeof appCheck.activate === 'function') {
+            appCheck.activate(
+                window.ezManageAppCheckSiteKey || '6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI',
+                true
+            );
+        }
+    } catch (e) {
+        console.warn("Firebase App Check initialization notice: ", e.message);
+    }
+}
 
-const auth = typeof window !== "undefined" && window.firebase ? window.firebase.auth() : null;
-export { app, auth, db, functions, firebaseConfig };
+const db = typeof window !== "undefined" && window.firebase && typeof window.firebase.firestore === "function" ? window.firebase.firestore() : null;
+const functions = typeof window !== "undefined" && window.firebase && typeof window.firebase.functions === "function" ? window.firebase.functions() : null;
+const auth = typeof window !== "undefined" && window.firebase && typeof window.firebase.auth === "function" ? window.firebase.auth() : null;
+export { app, auth, db, functions, appCheck, firebaseConfig };

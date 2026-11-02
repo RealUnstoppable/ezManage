@@ -185,6 +185,11 @@ exports.stripeWebhook = onRequest({invoker: "public"}, async (req, res) => {
     return res.status(400).send("Webhook Error: Missing raw request body");
   }
 
+  if (!currentSecret) {
+    logManagerError("Webhook Error: STRIPE_WEBHOOK_SECRET is not configured");
+    return res.status(500).send("Webhook configuration error: STRIPE_WEBHOOK_SECRET is missing");
+  }
+
   try {
     const Stripe = require("stripe");
     const activeStripe = stripe || (process.env.STRIPE_SECRET ? Stripe(process.env.STRIPE_SECRET) : Stripe);

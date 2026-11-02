@@ -22,7 +22,10 @@ functions/node_modules/
 # Firebase
 .firebase/
 firebase-debug.log
+# Test Artifacts
 coverage/
+test-results/
+playwright-report/
 
 # Electron Build Output (ADD THESE LINES)
 dist/
