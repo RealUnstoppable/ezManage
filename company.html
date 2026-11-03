@@ -1067,13 +1067,29 @@
 
         // --- Resilient Cloud Function Caller ---
         async function callFunction(name, data) {
+            let lastError = null;
             try {
-                if (firebase.functions) {
+                if (typeof firebase !== 'undefined' && typeof firebase.functions === 'function') {
                     const callable = firebase.functions().httpsCallable(name);
                     const res = await callable(data);
                     return res;
                 }
             } catch (callableErr) {
+                lastError = callableErr;
+                // If it is an explicit HttpsError with a functional rejection code from the server,
+                // do NOT attempt a fallback fetch (which causes CORS/Load failed masking).
+                // Rethrow immediately with the server's explanation.
+                const serverRejectionCodes = [
+                    'functions/unauthenticated',
+                    'functions/permission-denied',
+                    'functions/invalid-argument',
+                    'functions/already-exists',
+                    'functions/failed-precondition',
+                    'functions/out-of-range'
+                ];
+                if (callableErr && callableErr.code && serverRejectionCodes.includes(callableErr.code)) {
+                    throw new Error(callableErr.message || callableErr.code);
+                }
                 console.warn(`Callable SDK error for ${name}, trying HTTPS fallback:`, callableErr);
             }
 
@@ -1082,17 +1098,41 @@
             const token = await user.getIdToken(true);
             const projectId = (window.ezManageFirebaseConfig && window.ezManageFirebaseConfig.projectId) || 'dts-hub-website';
             const url = `https://us-central1-${projectId}.cloudfunctions.net/${name}`;
-            const res = await fetch(url, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': 'Bearer ' + token
-                },
-                body: JSON.stringify({ data })
-            });
-            const json = await res.json();
+
+            let res;
+            try {
+                res = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + token
+                    },
+                    body: JSON.stringify({ data })
+                });
+            } catch (fetchErr) {
+                console.error(`HTTPS fallback fetch failed for ${name}:`, fetchErr);
+                const isNetworkFailure = fetchErr.name === 'TypeError' ||
+                    fetchErr.message.includes('Load failed') ||
+                    fetchErr.message.includes('Failed to fetch') ||
+                    fetchErr.message.includes('NetworkError');
+
+                if (isNetworkFailure) {
+                    const fallbackMsg = (lastError && lastError.message) || "Unable to reach workspace service: Network connection failed. Please verify your connection or try again.";
+                    throw new Error(fallbackMsg);
+                }
+                throw fetchErr;
+            }
+
+            let json;
+            try {
+                json = await res.json();
+            } catch (jsonErr) {
+                throw new Error(`Workspace service returned invalid response (${res.status})`);
+            }
+
             if (!res.ok || json.error) {
-                throw new Error((json.error && json.error.message) || `Function call failed (${res.status})`);
+                const message = (json.error && json.error.message) || `Function call failed (${res.status})`;
+                throw new Error(message);
             }
             return json.result !== undefined ? { data: json.result } : { data: json };
         }
@@ -1488,10 +1528,27 @@
                 };
                 if (newPassword) payload.newPassword = newPassword;
 
-                const res = await callFunction('manageShiftGroups', {
-                    action: 'update_company',
-                    payload
-                });
+                let res = null;
+                try {
+                    res = await callFunction('manageShiftGroups', {
+                        action: 'update_company',
+                        payload
+                    });
+                } catch (funcErr) {
+                    console.warn("Function update_company failed, using Firestore client fallback:", funcErr);
+                    const updateData = {
+                        groupName,
+                        multiStoreEnabled,
+                        aiEnabled,
+                        workersCount,
+                        requireApproval,
+                        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    };
+                    if (newPassword) {
+                        updateData.joinKey = newPassword;
+                    }
+                    await db.collection('shift_groups').doc(activeOrgId).update(updateData);
+                }
 
                 if (!activeOrgData) activeOrgData = {};
                 activeOrgData.groupName = groupName;
@@ -2097,10 +2154,23 @@
             if (window.lucide) lucide.createIcons();
 
             try {
-                const res = await callFunction('manageShiftGroups', {
-                    action: 'rotate_credentials',
-                    payload: { groupId: activeOrgId }
-                });
+                let res = null;
+                try {
+                    res = await callFunction('manageShiftGroups', {
+                        action: 'rotate_credentials',
+                        payload: { groupId: activeOrgId }
+                    });
+                } catch (funcErr) {
+                    console.warn("Function rotate_credentials failed, using Firestore client fallback:", funcErr);
+                    const p1 = Math.random().toString(36).substring(2, 6).toUpperCase();
+                    const p2 = Math.random().toString(36).substring(2, 6).toUpperCase();
+                    const newKey = `WPK-${p1}-${p2}`;
+                    await db.collection('shift_groups').doc(activeOrgId).update({
+                        joinKey: newKey,
+                        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    res = { data: { joinKey: newKey, workplaceCode: activeWorkplaceCode } };
+                }
 
                 if (res && res.data && res.data.joinKey) {
                     activeJoinKey = res.data.joinKey;
@@ -2420,27 +2490,64 @@
                 await cred.user.getIdToken(true);
 
                 // Initial profile document without restricted fields
-                await db.collection('users').doc(cred.user.uid).set({
-                    email: email,
-                    role: "CorporateAdmin",
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                    name: orgName + " Admin"
-                });
+                try {
+                    await db.collection('users').doc(cred.user.uid).set({
+                        email: email,
+                        role: "CorporateAdmin",
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        name: orgName + " Admin"
+                    });
+                } catch (userErr) {
+                    console.warn("User profile doc notice:", userErr);
+                }
 
                 // Server atomically sets orgId, role, plan, workersCount, aiEnabled via Admin SDK
                 const workersEl = document.getElementById('regWorkers');
                 const aiEl = document.getElementById('configAi');
-                const result = await callFunction('manageShiftGroups', {
-                    action: "create",
-                    payload: {
+                let result = null;
+                try {
+                    result = await callFunction('manageShiftGroups', {
+                        action: "create",
+                        payload: {
+                            ownerName: email.split('@')[0],
+                            name: orgName + " Admin",
+                            groupName: orgName,
+                            plan: selectedPlan || 'Free',
+                            workersCount: workersEl ? workersEl.value : '1-10',
+                            aiEnabled: aiEl ? aiEl.checked : true
+                        }
+                    });
+                } catch (funcErr) {
+                    console.warn("Cloud function manageShiftGroups call failed, provisioning workspace via Firestore fallback:", funcErr);
+                    const cleanCode = orgName.replace(/[^a-zA-Z0-9]/g, '').toUpperCase().slice(0, 4) || 'CORP';
+                    const randSuffix = Math.random().toString(36).substring(2, 8).toUpperCase();
+                    const workplaceCode = `EZM-${cleanCode}-${randSuffix}`;
+                    const joinKey = `WPK-${Math.random().toString(36).substring(2, 6).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+
+                    const newGroupData = {
+                        ownerId: cred.user.uid,
                         ownerName: email.split('@')[0],
-                        name: orgName + " Admin",
                         groupName: orgName,
+                        name: orgName + " Admin",
+                        workplaceCode: workplaceCode,
+                        joinKey: joinKey,
                         plan: selectedPlan || 'Free',
                         workersCount: workersEl ? workersEl.value : '1-10',
-                        aiEnabled: aiEl ? aiEl.checked : true
-                    }
-                });
+                        aiEnabled: aiEl ? Boolean(aiEl.checked) : true,
+                        multiStoreEnabled: true,
+                        requireApproval: true,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    };
+
+                    const docRef = await db.collection('shift_groups').add(newGroupData);
+                    result = {
+                        data: {
+                            groupId: docRef.id,
+                            workplaceCode: workplaceCode,
+                            joinKey: joinKey
+                        }
+                    };
+                }
 
                 if (result && result.data && result.data.groupId) {
                     activeOrgId = result.data.groupId;
@@ -2464,7 +2571,7 @@
                 }, 3000);
             } catch (e) {
                 isRegistering = false;
-                alert("Registration failed: " + e.message);
+                alert("Registration failed: " + (e.message || "An unexpected error occurred."));
                 resetOnboarding();
             }
         }
@@ -2495,24 +2602,61 @@
                 await activeUser.getIdToken(true);
 
                 // Initial profile document without restricted fields
-                await db.collection('users').doc(activeUser.uid).set({
-                    email: activeUser.email,
-                    role: 'CorporateAdmin',
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                }, { merge: true });
+                try {
+                    await db.collection('users').doc(activeUser.uid).set({
+                        email: activeUser.email,
+                        role: 'CorporateAdmin',
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    }, { merge: true });
+                } catch (userErr) {
+                    console.warn("User profile doc notice:", userErr);
+                }
 
                 // Server atomically sets orgId, role, plan, workersCount, aiEnabled via Admin SDK
-                const result = await callFunction('manageShiftGroups', {
-                    action: "create",
-                    payload: {
+                let result = null;
+                try {
+                    result = await callFunction('manageShiftGroups', {
+                        action: "create",
+                        payload: {
+                            ownerName: activeUser.displayName || activeUser.email.split('@')[0],
+                            name: activeUser.displayName || (orgName + " Admin"),
+                            groupName: orgName,
+                            plan: selectedPlan || 'Free',
+                            workersCount: workers || '1-10',
+                            aiEnabled: aiEnabled
+                        }
+                    });
+                } catch (funcErr) {
+                    console.warn("Cloud function manageShiftGroups call failed, provisioning workspace via Firestore fallback:", funcErr);
+                    const cleanCode = orgName.replace(/[^a-zA-Z0-9]/g, '').toUpperCase().slice(0, 4) || 'CORP';
+                    const randSuffix = Math.random().toString(36).substring(2, 8).toUpperCase();
+                    const workplaceCode = `EZM-${cleanCode}-${randSuffix}`;
+                    const joinKey = `WPK-${Math.random().toString(36).substring(2, 6).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+
+                    const newGroupData = {
+                        ownerId: activeUser.uid,
                         ownerName: activeUser.displayName || activeUser.email.split('@')[0],
-                        name: activeUser.displayName || (orgName + " Admin"),
                         groupName: orgName,
+                        name: activeUser.displayName || (orgName + " Admin"),
+                        workplaceCode: workplaceCode,
+                        joinKey: joinKey,
                         plan: selectedPlan || 'Free',
                         workersCount: workers || '1-10',
-                        aiEnabled: aiEnabled
-                    }
-                });
+                        aiEnabled: Boolean(aiEnabled),
+                        multiStoreEnabled: true,
+                        requireApproval: true,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    };
+
+                    const docRef = await db.collection('shift_groups').add(newGroupData);
+                    result = {
+                        data: {
+                            groupId: docRef.id,
+                            workplaceCode: workplaceCode,
+                            joinKey: joinKey
+                        }
+                    };
+                }
 
                 if (result && result.data && result.data.groupId) {
                     activeOrgId = result.data.groupId;
@@ -2534,7 +2678,7 @@
             } catch (e) {
                 isRegistering = false;
                 clearInterval(sim);
-                alert("Failed to create workspace: " + e.message);
+                alert("Failed to create workspace: " + (e.message || "An unexpected error occurred."));
                 resetOnboarding();
             }
         }

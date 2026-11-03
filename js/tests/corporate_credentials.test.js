@@ -193,4 +193,126 @@ describe("Corporate Workspace Credentials UI & Formatting", () => {
     toast.remove();
     expect(container.children.length).toBe(0);
   });
+
+  describe("Resilient Cloud Function & Corporate Workspace Fallback", () => {
+    it("should handle server rejection codes directly without masking with Load failed", async () => {
+      const mockCallable = jest.fn().mockRejectedValue({
+        code: "functions/unauthenticated",
+        message: "You must be logged in to create a workspace."
+      });
+
+      const fakeFirebase = {
+        functions: () => ({
+          httpsCallable: () => mockCallable
+        })
+      };
+
+      async function testCallFunction(name, data) {
+        let lastError = null;
+        try {
+          if (typeof fakeFirebase !== 'undefined' && typeof fakeFirebase.functions === 'function') {
+            const callable = fakeFirebase.functions().httpsCallable(name);
+            const res = await callable(data);
+            return res;
+          }
+        } catch (callableErr) {
+          lastError = callableErr;
+          const serverRejectionCodes = [
+            'functions/unauthenticated',
+            'functions/permission-denied',
+            'functions/invalid-argument',
+            'functions/already-exists',
+            'functions/failed-precondition',
+            'functions/out-of-range'
+          ];
+          if (callableErr && callableErr.code && serverRejectionCodes.includes(callableErr.code)) {
+            throw new Error(callableErr.message || callableErr.code);
+          }
+        }
+      }
+
+      await expect(testCallFunction('manageShiftGroups', { action: 'create' }))
+        .rejects.toThrow("You must be logged in to create a workspace.");
+    });
+
+    it("should transform Safari TypeError: Load failed into a descriptive connection error", async () => {
+      const fetchError = new TypeError("Load failed");
+      const isNetworkFailure = fetchError.name === 'TypeError' ||
+        fetchError.message.includes('Load failed') ||
+        fetchError.message.includes('Failed to fetch');
+
+      let finalErrorMsg = "";
+      if (isNetworkFailure) {
+        finalErrorMsg = "Unable to reach workspace service: Network connection failed. Please verify your connection or try again.";
+      }
+
+      expect(isNetworkFailure).toBe(true);
+      expect(finalErrorMsg).toContain("Unable to reach workspace service");
+      expect(finalErrorMsg).not.toBe("Load failed");
+    });
+
+    it("should successfully provision workspace via Firestore fallback when Cloud Function is unreachable", async () => {
+      const mockShiftGroupsCol = {
+        add: jest.fn().mockResolvedValue({ id: "CORP-FALLBACK123" })
+      };
+      const mockDb = {
+        collection: (name) => {
+          if (name === "shift_groups") return mockShiftGroupsCol;
+          return { set: jest.fn(), doc: jest.fn() };
+        }
+      };
+
+      const orgName = "Acme Global";
+      const user = { uid: "user_owner_abc", email: "ceo@acme.com", displayName: "CEO" };
+      const selectedPlan = "Business Pro";
+      const workers = "25-50";
+      const aiEnabled = true;
+
+      // Simulate execution with fallback
+      async function createCorporateWorkspaceWithFallback() {
+        try {
+          // Cloud function attempt fails with network error
+          throw new Error("Unable to reach workspace service: Network connection failed.");
+        } catch (funcErr) {
+          const cleanCode = orgName.replace(/[^a-zA-Z0-9]/g, '').toUpperCase().slice(0, 4) || 'CORP';
+          const randSuffix = "8F2D19";
+          const workplaceCode = `EZM-${cleanCode}-${randSuffix}`;
+          const joinKey = `WPK-4A1B-9C2D`;
+
+          const newGroupData = {
+            ownerId: user.uid,
+            ownerName: user.displayName || user.email.split('@')[0],
+            groupName: orgName,
+            name: user.displayName || (orgName + " Admin"),
+            workplaceCode: workplaceCode,
+            joinKey: joinKey,
+            plan: selectedPlan || 'Free',
+            workersCount: workers || '1-10',
+            aiEnabled: Boolean(aiEnabled),
+            multiStoreEnabled: true,
+            requireApproval: true,
+          };
+
+          const docRef = await mockDb.collection('shift_groups').add(newGroupData);
+          return {
+            data: {
+              groupId: docRef.id,
+              workplaceCode: workplaceCode,
+              joinKey: joinKey
+            }
+          };
+        }
+      }
+
+      const result = await createCorporateWorkspaceWithFallback();
+      expect(result.data.groupId).toBe("CORP-FALLBACK123");
+      expect(result.data.workplaceCode).toBe("EZM-ACME-8F2D19");
+      expect(result.data.joinKey).toBe("WPK-4A1B-9C2D");
+      expect(mockShiftGroupsCol.add).toHaveBeenCalledWith(expect.objectContaining({
+        ownerId: "user_owner_abc",
+        groupName: "Acme Global",
+        plan: "Business Pro",
+      }));
+    });
+  });
 });

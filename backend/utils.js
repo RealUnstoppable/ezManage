@@ -70,8 +70,8 @@ function adaptGen2Params(data, context) {
  */
 function handleInternalError(actionMessage, error) {
   logManagerError(actionMessage, error);
-  if (error instanceof HttpsError) throw error;
-  throw new HttpsError("internal", "An internal error occurred.");
+  if (error instanceof HttpsError || (error && error.code && error.httpErrorCode)) throw error;
+  throw new HttpsError("internal", error && error.message ? error.message : "An internal error occurred.");
 }
 
 /**

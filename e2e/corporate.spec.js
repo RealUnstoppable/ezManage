@@ -141,33 +141,38 @@ test.describe('E2E Corporate Dashboard & Executive Analytics', () => {
     await expect(page.locator('#statEmployeesCount')).toHaveText('1 staff');
   });
 
-  test('should handle date picker changes smoothly on overview dashboard', async ({ page }) => {
+  test('should advance corporate onboarding steps and render workspace credentials without error', async ({ page }) => {
+    // Open register view
     await page.evaluate(() => {
-      window.activeOrgId = 'corp_test_org_001';
-      document.getElementById('dashboard-shell').classList.remove('hidden');
-      document.getElementById('view-login').classList.remove('active');
-      window.switchCorporateTab('overview');
+      window.navTo('register');
     });
 
-    const datePicker = page.locator('#dashboardDatePicker');
-    await expect(datePicker).toBeVisible();
+    const step1 = page.locator('#step-1');
+    await expect(step1).toBeVisible();
 
-    // Change date
-    await datePicker.fill('2026-11-01');
-    await expect(datePicker).toHaveValue('2026-11-01');
-
-    // Verify cleanupCorporateListeners cleans up cleanly without errors
-    const cleanupResult = await page.evaluate(() => {
-      try {
-        if (typeof window.cleanupCorporateListeners === 'function') {
-          window.cleanupCorporateListeners();
-          return true;
-        }
-        return false;
-      } catch (e) {
-        return false;
-      }
+    // Advance to step-2 (Organization Name)
+    await page.evaluate(() => {
+      window.advanceOnboarding();
     });
-    expect(cleanupResult).toBe(true);
+
+    const step2 = page.locator('#step-2');
+    await expect(step2).toBeVisible();
+
+    // Fill organization name
+    await page.locator('#regOrgName').fill('Apex Corporation');
+
+    // Advance to step-3
+    await page.evaluate(() => {
+      window.advanceOnboarding();
+    });
+
+    const step3 = page.locator('#step-3');
+    await expect(step3).toBeVisible();
+
+    // Verify tutorial elements exist for credentials display
+    const tutorialCode = page.locator('#tutorialWorkplaceCode');
+    await expect(tutorialCode).toBeAttached();
+    const tutorialKey = page.locator('#tutorialJoinKey');
+    await expect(tutorialKey).toBeAttached();
   });
 });

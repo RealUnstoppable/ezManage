@@ -27,8 +27,9 @@ async function getAuthAndPayload(data, context, adminInstance) {
   const defaultName = userEmail.split("@")[0];
   const userName = userDoc.exists ? (userDoc.data().name || defaultName) : defaultName;
 
-  const action = data.action;
-  const payload = data.payload || {};
+  const safeData = data || {};
+  const action = safeData.action;
+  const payload = safeData.payload || {};
 
   return {uid, userDoc, userOrgId, isAdmin, userName, action, payload};
 }
