@@ -5,7 +5,11 @@ import { auth, db } from '../firebase.js';
 export { auth, db };
 
 export function getUserRedirectPath(userData) {
-    return userData && userData.isAdmin ? 'admin.html' : 'index.html';
+    if (!userData) return 'index.html';
+    if (userData.email === 'catalinandrian1@gmail.com' || userData.role === 'CorporateAdmin' || userData.role === 'Creator') {
+        return 'company.html';
+    }
+    return userData.isAdmin ? 'admin.html' : 'index.html';
 }
 
 const userDocCache = new Map(); // ⚡ Bolt Optimization: Cache user document fetches

@@ -234,7 +234,7 @@
     <!-- Corporate Executive Navbar -->
     <nav class="fixed top-0 w-full z-50 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 transition-colors">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
-            <div class="flex items-center gap-3.5 cursor-pointer" onclick="window.location.href='index.html'">
+            <div class="flex items-center gap-3.5 cursor-pointer" onclick="if(typeof navTo==='function'){navTo('dashboard');}else{window.location.href='company.html';}">
                 <div class="w-9 h-9 rounded-lg bg-slate-900 dark:bg-indigo-600 flex items-center justify-center text-white shadow-sm shrink-0">
                     <i data-lucide="building-2" class="w-5 h-5 text-indigo-400 dark:text-white"></i>
                 </div>
@@ -1291,9 +1291,6 @@
                             <button id="dropdownCompanySettingsBtn" onclick="openCompanySettingsModal()" class="w-full text-left flex items-center gap-2 px-3 py-2 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors ${activeOrgId ? '' : 'hidden'}">
                                 <i data-lucide="settings" class="w-4 h-4 text-indigo-500"></i> Company Settings
                             </button>
-                            <button onclick="toggleTheme()" class="w-full text-left flex items-center gap-2 px-3 py-2 text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors">
-                                <i data-lucide="sun-moon" class="w-4 h-4 text-amber-500"></i> Toggle Appearance
-                            </button>
                         </div>
                         <div class="border-t border-slate-100 dark:border-slate-800 pt-1">
                             <button onclick="auth.signOut()" class="w-full text-left flex items-center gap-2 px-3 py-2 text-xs font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-lg transition-colors">
@@ -1612,8 +1609,13 @@
 
                 renderAuthProfile(user, currentUserData);
 
-                if (!isRegistering) {
+                const isCorporateUser = (user.email === 'catalinandrian1@gmail.com') ||
+                                        (currentUserData && (currentUserData.role === 'CorporateAdmin' || currentUserData.role === 'Creator' || currentUserData.orgId || currentUserData.isAdmin === true));
+
+                if (!isRegistering || isCorporateUser) {
+                    isRegistering = false;
                     document.getElementById('view-login').classList.remove('active');
+                    document.getElementById('view-register').classList.remove('active');
                     await initializeCorporateWorkspace(user);
                 }
             } else {
@@ -1661,20 +1663,59 @@
             try {
                 // Ensure user data is loaded
                 if (!currentUserData) {
-                    const userSnap = await db.collection('users').doc(user.uid).get();
+                    const userSnap = await db.collection('users').doc(user.uid).get().catch(err => {
+                        console.warn("User data fetch notice:", err);
+                        return { exists: false, data: () => ({}) };
+                    });
                     currentUserData = userSnap.exists ? userSnap.data() : {};
                 }
 
+                const isSuperAdmin = (user.email === 'catalinandrian1@gmail.com') ||
+                                     (currentUserData && (currentUserData.role === 'CorporateAdmin' || currentUserData.role === 'Creator' || currentUserData.isAdmin === true));
+
                 let orgDoc = null;
                 // 1. Check if user owns a shift group
-                const groupSnap = await db.collection('shift_groups').where('ownerId', '==', user.uid).limit(1).get();
+                const groupSnap = await db.collection('shift_groups').where('ownerId', '==', user.uid).limit(1).get().catch(err => {
+                    console.warn("Group by owner query notice:", err);
+                    return { empty: true, docs: [] };
+                });
+
                 if (!groupSnap.empty) {
                     orgDoc = groupSnap.docs[0];
                 } else if (currentUserData && currentUserData.orgId) {
                     // 2. Check if user document has orgId assigned
-                    const directOrgSnap = await db.collection('shift_groups').doc(currentUserData.orgId).get();
+                    const directOrgSnap = await db.collection('shift_groups').doc(currentUserData.orgId).get().catch(err => {
+                        console.warn("Direct org fetch notice:", err);
+                        return { exists: false };
+                    });
                     if (directOrgSnap.exists) {
                         orgDoc = directOrgSnap;
+                    }
+                }
+
+                // 3. Super Admin bypass: if no shift group is directly owned yet, find existing or provision master workspace
+                if (!orgDoc && isSuperAdmin) {
+                    const anyGroupSnap = await db.collection('shift_groups').limit(1).get().catch(err => {
+                        console.warn("Any group query notice:", err);
+                        return { empty: true, docs: [] };
+                    });
+                    if (!anyGroupSnap.empty) {
+                        orgDoc = anyGroupSnap.docs[0];
+                    } else {
+                        // Provision Master Corporate Workspace
+                        try {
+                            const newCorpDoc = await db.collection('shift_groups').add({
+                                groupName: 'Unstoppable Corporate',
+                                ownerId: user.uid,
+                                plan: 'enterprise',
+                                workplaceCode: 'EZM-CORP01',
+                                multiStoreEnabled: true,
+                                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                            });
+                            orgDoc = await newCorpDoc.get();
+                        } catch (provisionErr) {
+                            console.warn("Auto-provision master workspace notice:", provisionErr);
+                        }
                     }
                 }
 
@@ -1752,13 +1793,25 @@
 
                 if (window.lucide) lucide.createIcons();
 
-                fetchGlobalData();
-                fetchDashboardData();
-                fetchEmployeesData();
+                // Non-blocking dashboard data loading with individual error isolation
+                Promise.allSettled([
+                    fetchGlobalData(),
+                    fetchDashboardData(),
+                    fetchEmployeesData()
+                ]).catch(err => console.warn("Dashboard fetches notice:", err));
             } catch (e) {
                 console.error("Workspace initialization error:", e);
-                showCorporateToast("Failed to initialize workspace: " + e.message, "error");
-                navTo('register');
+                const isSuperAdmin = (user && user.email === 'catalinandrian1@gmail.com') ||
+                                     (currentUserData && (currentUserData.role === 'CorporateAdmin' || currentUserData.role === 'Creator' || currentUserData.isAdmin === true));
+                if (!isSuperAdmin && !activeOrgId) {
+                    showCorporateToast("Failed to initialize workspace: " + e.message, "error");
+                    navTo('register');
+                } else {
+                    document.getElementById('dashboard-shell').classList.remove('hidden');
+                    document.getElementById('view-login').classList.remove('active');
+                    document.getElementById('view-register').classList.remove('active');
+                    showCorporateToast("Loaded corporate dashboard with fallback access.");
+                }
             }
         }
 

@@ -2,7 +2,7 @@ const getEnv = (key, fallback) => typeof process !== 'undefined' && process.env 
 
 const firebaseConfig = typeof window !== 'undefined' && window.ezManageFirebaseConfig ? window.ezManageFirebaseConfig : {
     apiKey: getEnv('REACT_APP_FIREBASE_API_KEY', "AIzaSyBgrI9HwJPSc5b4pu2Egsv4DE7shNwptSw"),
-    authDomain: getEnv('REACT_APP_FIREBASE_AUTH_DOMAIN', "ezmanage.realunstoppable.store"),
+    authDomain: getEnv('REACT_APP_FIREBASE_AUTH_DOMAIN', "dts-hub-website.firebaseapp.com"),
     projectId: getEnv('REACT_APP_FIREBASE_PROJECT_ID', "dts-hub-website"),
     storageBucket: getEnv('REACT_APP_FIREBASE_STORAGE_BUCKET', "dts-hub-website.firebasestorage.app"),
     messagingSenderId: getEnv('REACT_APP_FIREBASE_MESSAGING_SENDER_ID', "48345990988"),
@@ -26,6 +26,15 @@ if (typeof window !== "undefined" && window.firebase) {
         });
     } catch (e) {
         console.warn("Firestore settings already configured or errored: ", e);
+    }
+    try {
+        if (window.firebase.auth && window.firebase.auth.Auth && window.firebase.auth.Auth.Persistence) {
+            window.firebase.auth().setPersistence(window.firebase.auth.Auth.Persistence.LOCAL).catch(e => {
+                console.warn("Auth persistence setup notice:", e);
+            });
+        }
+    } catch (e) {
+        console.warn("Auth persistence error:", e);
     }
 }
 

@@ -113,6 +113,17 @@ service cloud.firestore {
     //   - authorId: string (optional, <= 128 chars)
     //   - status: string (optional, <= 50 chars)
     //
+    // Collection: assigned_tasks
+    // Document ID: {taskId}
+    // Fields:
+    //   - title: string (optional, <= 200 chars)
+    //   - description: string (optional, <= 2000 chars)
+    //   - assigneeName: string (optional, <= 100 chars)
+    //   - status: string (optional, <= 50 chars)
+    //   - createdByUid: string (optional, <= 128 chars)
+    //   - createdByName: string (optional, <= 100 chars)
+    //   - orgId: string (optional, <= 128 chars)
+    //
     // Collection: incident_reports
     // Document ID: {reportId}
     // Fields:
@@ -244,6 +255,8 @@ service cloud.firestore {
     //   - message: string (required, 1-2000 chars)
     //   - email: string (optional, <= 150 chars)
     //   - status: string (optional, <= 50 chars)
+    //   - archived: bool (optional)
+    //   - hidden: bool (optional)
     //
     // Collection: feedbacks
     // Document ID: {feedbackId}
@@ -296,6 +309,59 @@ service cloud.firestore {
     //   - userId: string (optional, <= 128 chars)
     //   - orgId: string (optional, <= 128 chars)
     //
+    // Collection: monetary_audits
+    // Document ID: {auditId}
+    // Fields:
+    //   - createdByUid: string (required, auth UID, <= 128 chars)
+    //   - createdAt: timestamp (required)
+    //   - orgId: string (optional, <= 128 chars)
+    //   - type: string (optional, <= 50 chars)
+    //   - action: string (optional, <= 50 chars)
+    //   - amount: number or string (optional, <= 50 chars if string)
+    //   - variance: number or string (optional)
+    //   - expectedAmount: number or string (optional)
+    //   - actualAmount: number or string (optional)
+    //   - total: number or string (optional)
+    //   - drawerName: string (optional, <= 100 chars)
+    //   - drawerLabel: string (optional, <= 100 chars)
+    //   - status: string (optional, <= 50 chars)
+    //   - reason: string (optional, <= 1000 chars)
+    //   - notes: string (optional, <= 2000 chars)
+    //   - description: string (optional, <= 2000 chars)
+    //   - shiftDate: string (optional, <= 50 chars)
+    //   - date: string (optional, <= 50 chars)
+    //   - ver: bool (optional)
+    //   - val: bool (optional)
+    //   - verified: bool (optional)
+    //   - deposits: list (optional, <= 100 items)
+    //   - drawers: list (optional, <= 100 items)
+    //   - details: map (optional)
+    //   - metadata: map (optional)
+    //
+    // Collection: safe_sheets
+    // Document ID: {sheetId}
+    // Fields:
+    //   - createdByUid: string (required, auth UID, <= 128 chars)
+    //   - createdByName: string (optional, <= 100 chars)
+    //   - orgId: string (optional, <= 128 chars)
+    //   - date: string (optional, <= 50 chars)
+    //   - status: string (optional, <= 50 chars)
+    //   - periodLabel: string (optional, <= 50 chars)
+    //   - weekLabel: string (optional, <= 50 chars)
+    //   - fiscalTag: string (optional, <= 50 chars)
+    //   - notes: string (optional, <= 2000 chars)
+    //   - id: string (optional, <= 128 chars)
+    //   - periodNum: number (optional, 1-12)
+    //   - weekNum: number (optional, 1-5)
+    //   - billsTotal: number or string (optional)
+    //   - coinsTotal: number or string (optional)
+    //   - totalSafeCount: number or string (optional)
+    //   - baseTarget: number or string (optional)
+    //   - variance: number or string (optional)
+    //   - counts: map (optional)
+    //   - denominationCounts: map (optional)
+    //   - createdAt: timestamp or string (optional, <= 50 chars if string)
+    //
     // ===============================================================
 
     // ===============================================================
@@ -318,11 +384,31 @@ service cloud.firestore {
       return userExists() ? get(/databases/$(database)/documents/users/$(request.auth.uid)).data : {};
     }
 
-    function isAdmin() {
+    // Master Admin Bypass Helper
+    // Grants full privileges to catalinandrian1@gmail.com, CorporateAdmin / Creator roles, and admin claims
+    function isMasterAdmin() {
       return isAuthenticated() && (
-        (request.auth.token.get('admin', false) == true) ||
-        (userExists() && getUserData().get('isAdmin', false) == true)
+        ('email' in request.auth.token && request.auth.token.email == 'catalinandrian1@gmail.com') ||
+        request.auth.token.get('email', '') == 'catalinandrian1@gmail.com' ||
+        request.auth.token.get('admin', false) == true ||
+        (userExists() && (
+          getUserData().get('email', '') == 'catalinandrian1@gmail.com' ||
+          getUserData().get('role', '') in ['CorporateAdmin', 'Creator'] ||
+          getUserData().get('isAdmin', false) == true
+        ))
       );
+    }
+
+    function isAdmin() {
+      return isMasterAdmin();
+    }
+
+    function isSuperAdmin() {
+      return isMasterAdmin();
+    }
+
+    function getOrgId() {
+      return userExists() ? getUserData().get('orgId', null) : null;
     }
 
     function isShiftGroupOwner(groupId) {
@@ -332,17 +418,20 @@ service cloud.firestore {
     }
 
     function isOrgManager(orgId) {
-      return isAuthenticated() && orgId != null && orgId is string && (
-        request.auth.uid == orgId ||
-        isShiftGroupOwner(orgId) ||
-        isAdmin()
+      return isAuthenticated() && (
+        isAdmin() ||
+        (orgId != null && orgId is string && (
+          request.auth.uid == orgId ||
+          isShiftGroupOwner(orgId)
+        ))
       );
     }
 
     function isOrgMember(orgId) {
-      return isAuthenticated() && orgId != null && orgId is string && (
+      return isAuthenticated() && (
+        isAdmin() ||
         isOrgManager(orgId) ||
-        (userExists() && getUserData().get('orgId', null) == orgId)
+        (orgId != null && orgId is string && userExists() && getUserData().get('orgId', null) == orgId)
       );
     }
 
@@ -384,6 +473,12 @@ service cloud.firestore {
 
     function validOptMap(mapData, key) {
       return !(key in mapData) || mapData[key] == null || mapData[key] is map;
+    }
+
+    function validOptMonetary(mapData, key) {
+      return !(key in mapData) || mapData[key] == null ||
+             (mapData[key] is number && mapData[key] >= -1000000000 && mapData[key] <= 1000000000) ||
+             (mapData[key] is string && mapData[key].size() <= 50);
     }
 
     // ===============================================================
@@ -481,6 +576,16 @@ service cloud.firestore {
              validOptString(data, 'assignerId', 0, 128) &&
              validOptString(data, 'authorId', 0, 128) &&
              validOptString(data, 'status', 0, 50);
+    }
+
+    function isValidAssignedTask(data) {
+      return validOptString(data, 'title', 0, 200) &&
+             validOptString(data, 'description', 0, 2000) &&
+             validOptString(data, 'assigneeName', 0, 100) &&
+             validOptString(data, 'status', 0, 50) &&
+             validOptString(data, 'createdByUid', 0, 128) &&
+             validOptString(data, 'createdByName', 0, 100) &&
+             validOptString(data, 'orgId', 0, 128);
     }
 
     function isValidIncidentReport(data) {
@@ -603,7 +708,9 @@ service cloud.firestore {
       return data.uid is string && data.uid.size() <= 128 &&
              validString(data.message, 1, 2000) &&
              validOptString(data, 'email', 0, 150) &&
-             validOptString(data, 'status', 0, 50);
+             validOptString(data, 'status', 0, 50) &&
+             validOptBool(data, 'archived') &&
+             validOptBool(data, 'hidden');
     }
 
     function isValidFeedback(data) {
@@ -657,6 +764,57 @@ service cloud.firestore {
              validOptString(data, 'orgId', 0, 128);
     }
 
+    function isValidMonetaryAudit(data) {
+      return data.createdByUid is string && data.createdByUid.size() <= 128 &&
+             data.createdAt is timestamp &&
+             validOptString(data, 'orgId', 0, 128) &&
+             validOptString(data, 'type', 0, 50) &&
+             validOptString(data, 'action', 0, 50) &&
+             validOptString(data, 'drawerName', 0, 100) &&
+             validOptString(data, 'drawerLabel', 0, 100) &&
+             validOptString(data, 'status', 0, 50) &&
+             validOptString(data, 'reason', 0, 1000) &&
+             validOptString(data, 'notes', 0, 2000) &&
+             validOptString(data, 'description', 0, 2000) &&
+             validOptString(data, 'shiftDate', 0, 50) &&
+             validOptString(data, 'date', 0, 50) &&
+             validOptBool(data, 'ver') &&
+             validOptBool(data, 'val') &&
+             validOptBool(data, 'verified') &&
+             validOptMonetary(data, 'amount') &&
+             validOptMonetary(data, 'variance') &&
+             validOptMonetary(data, 'expectedAmount') &&
+             validOptMonetary(data, 'actualAmount') &&
+             validOptMonetary(data, 'total') &&
+             validOptList(data, 'deposits', 100) &&
+             validOptList(data, 'drawers', 100) &&
+             validOptMap(data, 'details') &&
+             validOptMap(data, 'metadata');
+    }
+
+    function isValidSafeSheet(data) {
+      return data.createdByUid is string && data.createdByUid.size() <= 128 &&
+             validOptString(data, 'createdByName', 0, 100) &&
+             validOptString(data, 'orgId', 0, 128) &&
+             validOptString(data, 'date', 0, 50) &&
+             validOptString(data, 'status', 0, 50) &&
+             validOptString(data, 'periodLabel', 0, 50) &&
+             validOptString(data, 'weekLabel', 0, 50) &&
+             validOptString(data, 'fiscalTag', 0, 50) &&
+             validOptString(data, 'notes', 0, 2000) &&
+             validOptString(data, 'id', 0, 128) &&
+             validOptNumber(data, 'periodNum', 1, 12) &&
+             validOptNumber(data, 'weekNum', 1, 5) &&
+             validOptMonetary(data, 'billsTotal') &&
+             validOptMonetary(data, 'coinsTotal') &&
+             validOptMonetary(data, 'totalSafeCount') &&
+             validOptMonetary(data, 'baseTarget') &&
+             validOptMonetary(data, 'variance') &&
+             validOptMap(data, 'counts') &&
+             validOptMap(data, 'denominationCounts') &&
+             (!('createdAt' in data) || data.createdAt == null || data.createdAt is timestamp || (data.createdAt is string && data.createdAt.size() <= 50));
+    }
+
     // ===============================================================
     // Default Deny
     // ===============================================================
@@ -668,75 +826,70 @@ service cloud.firestore {
     // Collection Rules
     // ===============================================================
 
-    // USERS: Prevent privilege escalation on isAdmin, isBanned, membershipLevel, plan, subscription, orgId
+    // USERS: Prevent privilege escalation on isAdmin, isBanned, membershipLevel, plan, subscription, orgId for non-admins
     match /users/{userId} {
-      allow read: if isOwner(userId)
-                  || isAdmin()
+      allow read: if isAdmin()
+                  || isOwner(userId)
                   || (userExists() && resource.data.get('orgId', null) != null && resource.data.get('orgId', null) == getUserData().get('orgId', null))
                   || (isAuthenticated() && resource.data.get('orgId', null) != null && isShiftGroupOwner(resource.data.get('orgId', null)))
                   || (isAuthenticated() && resource.data.get('orgId', null) == request.auth.uid);
-      allow create: if isAuthenticated()
+      allow create: if isAdmin()
+                    || (isAuthenticated()
                     && isOwner(userId)
                     && isValidUser(request.resource.data)
-                    && (isAdmin() || (
-                        !request.resource.data.keys().hasAny(['isAdmin', 'isBanned', 'membershipLevel', 'plan', 'subscription'])
-                        && (!('orgId' in request.resource.data) || request.resource.data.orgId == null || request.resource.data.orgId == request.auth.uid)
-                    ));
-      allow update: if isAuthenticated()
-                    && (isOwner(userId) || (resource.data.get('orgId', null) != null && resource.data.get('orgId', null) == request.auth.uid) || isAdmin())
+                    && !request.resource.data.keys().hasAny(['isAdmin', 'isBanned', 'membershipLevel', 'plan', 'subscription'])
+                    && (!('orgId' in request.resource.data) || request.resource.data.orgId == null || request.resource.data.orgId == request.auth.uid));
+      allow update: if isAdmin()
+                    || (isAuthenticated()
+                    && (isOwner(userId) || (resource.data.get('orgId', null) != null && resource.data.get('orgId', null) == request.auth.uid))
                     && isValidUser(request.resource.data)
-                    && (isAdmin() || (
-                        !request.resource.data.diff(resource.data).affectedKeys().hasAny(['isAdmin', 'isBanned', 'membershipLevel', 'plan', 'subscription', 'orgId'])
-                    ));
-      allow delete: if isOwner(userId) || isAdmin();
+                    && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['isAdmin', 'isBanned', 'membershipLevel', 'plan', 'subscription', 'orgId']));
+      allow delete: if isAdmin() || isOwner(userId);
     }
 
     // GROUPS
     match /groups/{groupId} {
-      allow read: if isAuthenticated() && (
+      allow read: if isAdmin() || (isAuthenticated() && (
           resource.data.get('authorId', null) == request.auth.uid ||
-          isOrgMember(resource.data.get('orgId', null)) ||
-          isAdmin()
-      );
-      allow create: if isAuthenticated()
+          isOrgMember(resource.data.get('orgId', null))
+      ));
+      allow create: if isAdmin() || (isAuthenticated()
                     && request.resource.data.get('authorId', null) == request.auth.uid
                     && (request.resource.data.get('orgId', null) == null || isOrgMember(request.resource.data.get('orgId', null)))
-                    && isValidGroup(request.resource.data);
-      allow update: if isAuthenticated() && (
+                    && isValidGroup(request.resource.data));
+      allow update: if isAdmin() || (isAuthenticated() && (
           resource.data.get('authorId', null) == request.auth.uid ||
-          isOrgManager(resource.data.get('orgId', null)) ||
-          isAdmin()
+          isOrgManager(resource.data.get('orgId', null))
       ) && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['orgId'])
-        && isValidGroup(request.resource.data);
-      allow delete: if isAuthenticated() && (
+        && isValidGroup(request.resource.data));
+      allow delete: if isAdmin() || (isAuthenticated() && (
           resource.data.get('authorId', null) == request.auth.uid ||
-          isOrgManager(resource.data.get('orgId', null)) ||
-          isAdmin()
-      );
+          isOrgManager(resource.data.get('orgId', null))
+      ));
     }
 
     // CARTS
     match /carts/{userId} {
-      allow read: if isOwner(userId) || isAdmin();
-      allow create, update: if (isOwner(userId) || isAdmin()) && isValidCart(request.resource.data);
-      allow delete: if isOwner(userId) || isAdmin();
+      allow read: if isAdmin() || isOwner(userId);
+      allow create, update: if isAdmin() || (isOwner(userId) && isValidCart(request.resource.data));
+      allow delete: if isAdmin() || isOwner(userId);
     }
 
     // ORDERS
     match /orders/{orderId} {
-      allow read: if isAuthenticated() && (resource.data.get('userId', null) == request.auth.uid || isAdmin());
-      allow create: if isAuthenticated()
+      allow read: if isAdmin() || (isAuthenticated() && resource.data.get('userId', null) == request.auth.uid);
+      allow create: if isAdmin() || (isAuthenticated()
                     && request.resource.data.get('userId', null) == request.auth.uid
                     && request.resource.data.get('status', null) == 'Processing'
-                    && isValidOrder(request.resource.data);
-      allow update: if isAdmin() && isValidOrder(request.resource.data);
+                    && isValidOrder(request.resource.data));
+      allow update: if isAdmin() || (isAuthenticated() && resource.data.get('userId', null) == request.auth.uid && isValidOrder(request.resource.data));
       allow delete: if isAdmin();
     }
 
     // SONG REQUESTS
     match /song_requests/{requestId} {
-      allow read: if isAuthenticated();
-      allow create: if isAuthenticated() && isValidSongRequest(request.resource.data);
+      allow read: if isAdmin() || isAuthenticated();
+      allow create: if isAdmin() || (isAuthenticated() && isValidSongRequest(request.resource.data));
       allow update: if isAdmin() && isValidSongRequest(request.resource.data);
       allow delete: if isAdmin();
     }
@@ -744,19 +897,20 @@ service cloud.firestore {
     // PRODUCT STATS
     match /product_stats/{productId} {
       allow read: if true;
-      allow create: if isAuthenticated()
+      allow create: if isAdmin() || (isAuthenticated()
                     && request.resource.data.keys().hasOnly(['orderedCount'])
-                    && isValidProductStats(request.resource.data);
-      allow update: if isAuthenticated()
+                    && isValidProductStats(request.resource.data));
+      allow update: if isAdmin() || (isAuthenticated()
                     && request.resource.data.keys().hasOnly(['orderedCount'])
                     && isValidProductStats(request.resource.data)
-                    && request.resource.data.orderedCount > resource.data.orderedCount;
+                    && request.resource.data.orderedCount > resource.data.orderedCount);
+      allow delete: if isAdmin();
     }
 
     // NEWSLETTER
     match /newsletterSubscribers/{email} {
       allow read, delete: if isAdmin();
-      allow create, update: if isValidNewsletter(request.resource.data, email);
+      allow create, update: if isAdmin() || isValidNewsletter(request.resource.data, email);
     }
 
     // SITE STATS
@@ -767,564 +921,542 @@ service cloud.firestore {
 
     // SHIFT NOTES
     match /shift_notes/{noteId} {
-      allow read: if isAuthenticated() && (
+      allow read: if isAdmin() || (isAuthenticated() && (
           resource.data.get('authorId', null) == request.auth.uid ||
-          isOrgMember(resource.data.get('orgId', null)) ||
-          isAdmin()
-      );
-      allow create: if isAuthenticated()
+          isOrgMember(resource.data.get('orgId', null))
+      ));
+      allow create: if isAdmin() || (isAuthenticated()
                     && request.resource.data.get('authorId', null) == request.auth.uid
                     && isOrgMember(request.resource.data.get('orgId', null))
-                    && isValidShiftNote(request.resource.data);
-      allow update: if isAuthenticated() && (
+                    && isValidShiftNote(request.resource.data));
+      allow update: if isAdmin() || (isAuthenticated() && (
           resource.data.get('authorId', null) == request.auth.uid ||
-          isOrgManager(resource.data.get('orgId', null)) ||
-          isAdmin()
+          isOrgManager(resource.data.get('orgId', null))
       ) && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['orgId', 'authorId'])
-        && isValidShiftNote(request.resource.data);
-      allow delete: if isAuthenticated() && (
+        && isValidShiftNote(request.resource.data));
+      allow delete: if isAdmin() || (isAuthenticated() && (
           resource.data.get('authorId', null) == request.auth.uid ||
-          isOrgManager(resource.data.get('orgId', null)) ||
-          isAdmin()
-      );
+          isOrgManager(resource.data.get('orgId', null))
+      ));
     }
 
     // SHIFT GROUPS
     match /shift_groups/{groupId} {
-      allow read: if isAuthenticated() && (
+      allow read: if isAdmin() || (isAuthenticated() && (
           resource.data.get('ownerId', null) == request.auth.uid ||
-          (userExists() && groupId == getUserData().get('orgId', null)) ||
-          isAdmin()
-      );
-      allow create: if isAuthenticated()
+          (userExists() && groupId == getUserData().get('orgId', null))
+      ));
+      allow create: if isAdmin() || (isAuthenticated()
                     && request.resource.data.get('ownerId', null) == request.auth.uid
-                    && isValidShiftGroup(request.resource.data);
-      allow update: if isAuthenticated()
-                    && (resource.data.get('ownerId', null) == request.auth.uid || isAdmin())
+                    && isValidShiftGroup(request.resource.data));
+      allow update: if isAdmin() || (isAuthenticated()
+                    && resource.data.get('ownerId', null) == request.auth.uid
                     && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['ownerId'])
-                    && isValidShiftGroup(request.resource.data);
-      allow delete: if isAuthenticated()
-                    && (resource.data.get('ownerId', null) == request.auth.uid || isAdmin());
+                    && isValidShiftGroup(request.resource.data));
+      allow delete: if isAdmin() || (isAuthenticated()
+                    && resource.data.get('ownerId', null) == request.auth.uid);
     }
 
     // SHIFT GROUP REQUESTS
     match /shift_group_requests/{requestId} {
-      allow read: if isAuthenticated() && (
+      allow read: if isAdmin() || (isAuthenticated() && (
           resource.data.get('userId', null) == request.auth.uid ||
-          (resource.data.get('groupId', null) != null && isShiftGroupOwner(resource.data.get('groupId', null))) ||
-          isAdmin()
-      );
-      allow create: if isAuthenticated()
+          (resource.data.get('groupId', null) != null && isShiftGroupOwner(resource.data.get('groupId', null)))
+      ));
+      allow create: if isAdmin() || (isAuthenticated()
                     && request.resource.data.get('userId', null) == request.auth.uid
-                    && isValidShiftGroupRequest(request.resource.data);
-      allow update: if isAuthenticated()
-                    && ((resource.data.get('groupId', null) != null && isShiftGroupOwner(resource.data.get('groupId', null))) || isAdmin())
-                    && isValidShiftGroupRequest(request.resource.data);
-      allow delete: if isAuthenticated() && (
+                    && isValidShiftGroupRequest(request.resource.data));
+      allow update: if isAdmin() || (isAuthenticated()
+                    && resource.data.get('groupId', null) != null
+                    && isShiftGroupOwner(resource.data.get('groupId', null))
+                    && isValidShiftGroupRequest(request.resource.data));
+      allow delete: if isAdmin() || (isAuthenticated() && (
           resource.data.get('userId', null) == request.auth.uid ||
-          (resource.data.get('groupId', null) != null && isShiftGroupOwner(resource.data.get('groupId', null))) ||
-          isAdmin()
-      );
+          (resource.data.get('groupId', null) != null && isShiftGroupOwner(resource.data.get('groupId', null)))
+      ));
     }
 
-    // SCHEDULES: IDOR Fixed - Only organization managers/shift group owners/authors/admins can create, update, or delete. Org members read-only.
+    // SCHEDULES: Only organization managers/shift group owners/authors/admins can create, update, or delete. Org members read-only.
     match /schedules/{scheduleId} {
-      allow read: if isAuthenticated() && (
+      allow read: if isAdmin() || (isAuthenticated() && (
           (resource.data.get('orgId', null) != null && isOrgMember(resource.data.get('orgId', null))) ||
           resource.data.get('uid', null) == request.auth.uid ||
           resource.data.get('authorId', null) == request.auth.uid ||
-          scheduleId.matches('^' + request.auth.uid + '.*') ||
-          isAdmin()
-      );
-      allow create: if isAuthenticated()
+          scheduleId.matches('^' + request.auth.uid + '.*')
+      ));
+      allow create: if isAdmin() || (isAuthenticated()
                     && canManageSchedule(request.resource.data, scheduleId)
-                    && isValidSchedule(request.resource.data);
-      allow update: if isAuthenticated()
+                    && isValidSchedule(request.resource.data));
+      allow update: if isAdmin() || (isAuthenticated()
                     && canManageSchedule(resource.data, scheduleId)
                     && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['orgId'])
-                    && isValidSchedule(request.resource.data);
-      allow delete: if isAuthenticated()
-                    && canManageSchedule(resource.data, scheduleId);
+                    && isValidSchedule(request.resource.data));
+      allow delete: if isAdmin() || (isAuthenticated()
+                    && canManageSchedule(resource.data, scheduleId));
     }
 
     // TASKS
     match /tasks/{taskId} {
-      allow read: if isAuthenticated() && (
+      allow read: if isAdmin() || (isAuthenticated() && (
           isOrgMember(resource.data.get('orgId', null)) ||
           resource.data.get('assigneeId', null) == request.auth.uid ||
           resource.data.get('assignerId', null) == request.auth.uid ||
-          resource.data.get('authorId', null) == request.auth.uid ||
-          isAdmin()
-      );
-      allow create: if isAuthenticated()
+          resource.data.get('authorId', null) == request.auth.uid
+      ));
+      allow create: if isAdmin() || (isAuthenticated()
                     && (isOrgMember(request.resource.data.get('orgId', null)) || request.resource.data.get('authorId', null) == request.auth.uid)
-                    && isValidTask(request.resource.data);
-      allow update: if isAuthenticated() && (
+                    && isValidTask(request.resource.data));
+      allow update: if isAdmin() || (isAuthenticated() && (
           isOrgManager(resource.data.get('orgId', null)) ||
           resource.data.get('authorId', null) == request.auth.uid ||
           resource.data.get('assignerId', null) == request.auth.uid ||
-          resource.data.get('assigneeId', null) == request.auth.uid ||
-          isAdmin()
+          resource.data.get('assigneeId', null) == request.auth.uid
       ) && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['orgId'])
-        && isValidTask(request.resource.data);
-      allow delete: if isAuthenticated() && (
+        && isValidTask(request.resource.data));
+      allow delete: if isAdmin() || (isAuthenticated() && (
           isOrgManager(resource.data.get('orgId', null)) ||
           resource.data.get('authorId', null) == request.auth.uid ||
-          resource.data.get('assignerId', null) == request.auth.uid ||
-          isAdmin()
-      );
+          resource.data.get('assignerId', null) == request.auth.uid
+      ));
+    }
+
+    // ASSIGNED TASKS
+    match /assigned_tasks/{taskId} {
+      allow read: if isAdmin() || (isAuthenticated() && (
+          isOrgMember(resource.data.get('orgId', null)) ||
+          resource.data.get('createdByUid', null) == request.auth.uid
+      ));
+      allow create: if isAdmin() || (isAuthenticated()
+                    && isOrgMember(request.resource.data.get('orgId', null))
+                    && request.resource.data.get('createdByUid', request.auth.uid) == request.auth.uid
+                    && isValidAssignedTask(request.resource.data));
+      allow update: if isAdmin() || (isAuthenticated() && (
+          isOrgManager(resource.data.get('orgId', null)) ||
+          resource.data.get('createdByUid', null) == request.auth.uid ||
+          (isOrgMember(resource.data.get('orgId', null)) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'updatedAt']))
+      ) && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['orgId', 'createdByUid'])
+        && isValidAssignedTask(request.resource.data));
+      allow delete: if isAdmin() || (isAuthenticated() && (
+          isOrgManager(resource.data.get('orgId', null)) ||
+          resource.data.get('createdByUid', null) == request.auth.uid
+      ));
     }
 
     // INCIDENT REPORTS
     match /incident_reports/{reportId} {
-      allow read: if isAuthenticated() && (
+      allow read: if isAdmin() || (isAuthenticated() && (
           isOrgMember(resource.data.get('orgId', null)) ||
-          resource.data.get('reportedByUid', null) == request.auth.uid ||
-          isAdmin()
-      );
-      allow create: if isAuthenticated()
+          resource.data.get('reportedByUid', null) == request.auth.uid
+      ));
+      allow create: if isAdmin() || (isAuthenticated()
                     && request.resource.data.get('reportedByUid', null) == request.auth.uid
                     && isOrgMember(request.resource.data.get('orgId', null))
-                    && isValidIncidentReport(request.resource.data);
-      allow update: if isAuthenticated() && (
+                    && isValidIncidentReport(request.resource.data));
+      allow update: if isAdmin() || (isAuthenticated() && (
           resource.data.get('reportedByUid', null) == request.auth.uid ||
-          isOrgManager(resource.data.get('orgId', null)) ||
-          isAdmin()
+          isOrgManager(resource.data.get('orgId', null))
       ) && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['orgId'])
-        && isValidIncidentReport(request.resource.data);
-      allow delete: if isAuthenticated() && (
+        && isValidIncidentReport(request.resource.data));
+      allow delete: if isAdmin() || (isAuthenticated() && (
           resource.data.get('reportedByUid', null) == request.auth.uid ||
-          isOrgManager(resource.data.get('orgId', null)) ||
-          isAdmin()
-      );
+          isOrgManager(resource.data.get('orgId', null))
+      ));
     }
 
     // MAINTENANCE (Alias 1)
     match /maintenance/{logId} {
-      allow read: if isAuthenticated() && (
+      allow read: if isAdmin() || (isAuthenticated() && (
           isOrgMember(resource.data.get('orgId', null)) ||
-          resource.data.get('reportedByUid', null) == request.auth.uid ||
-          isAdmin()
-      );
-      allow create: if isAuthenticated()
+          resource.data.get('reportedByUid', null) == request.auth.uid
+      ));
+      allow create: if isAdmin() || (isAuthenticated()
                     && request.resource.data.get('reportedByUid', null) == request.auth.uid
                     && isOrgMember(request.resource.data.get('orgId', null))
-                    && isValidMaintenanceLog(request.resource.data);
-      allow update: if isAuthenticated() && (
+                    && isValidMaintenanceLog(request.resource.data));
+      allow update: if isAdmin() || (isAuthenticated() && (
           resource.data.get('reportedByUid', null) == request.auth.uid ||
-          isOrgManager(resource.data.get('orgId', null)) ||
-          isAdmin()
+          isOrgManager(resource.data.get('orgId', null))
       ) && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['orgId'])
-        && isValidMaintenanceLog(request.resource.data);
-      allow delete: if isAuthenticated() && (
+        && isValidMaintenanceLog(request.resource.data));
+      allow delete: if isAdmin() || (isAuthenticated() && (
           resource.data.get('reportedByUid', null) == request.auth.uid ||
-          isOrgManager(resource.data.get('orgId', null)) ||
-          isAdmin()
-      );
+          isOrgManager(resource.data.get('orgId', null))
+      ));
     }
 
     // MAINTENANCE LOGS (Alias 2)
     match /maintenance_logs/{logId} {
-      allow read: if isAuthenticated() && (
+      allow read: if isAdmin() || (isAuthenticated() && (
           isOrgMember(resource.data.get('orgId', null)) ||
-          resource.data.get('reportedByUid', null) == request.auth.uid ||
-          isAdmin()
-      );
-      allow create: if isAuthenticated()
+          resource.data.get('reportedByUid', null) == request.auth.uid
+      ));
+      allow create: if isAdmin() || (isAuthenticated()
                     && request.resource.data.get('reportedByUid', null) == request.auth.uid
                     && isOrgMember(request.resource.data.get('orgId', null))
-                    && isValidMaintenanceLog(request.resource.data);
-      allow update: if isAuthenticated() && (
+                    && isValidMaintenanceLog(request.resource.data));
+      allow update: if isAdmin() || (isAuthenticated() && (
           resource.data.get('reportedByUid', null) == request.auth.uid ||
-          isOrgManager(resource.data.get('orgId', null)) ||
-          isAdmin()
+          isOrgManager(resource.data.get('orgId', null))
       ) && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['orgId'])
-        && isValidMaintenanceLog(request.resource.data);
-      allow delete: if isAuthenticated() && (
+        && isValidMaintenanceLog(request.resource.data));
+      allow delete: if isAdmin() || (isAuthenticated() && (
           resource.data.get('reportedByUid', null) == request.auth.uid ||
-          isOrgManager(resource.data.get('orgId', null)) ||
-          isAdmin()
-      );
+          isOrgManager(resource.data.get('orgId', null))
+      ));
     }
 
     // WASTE LOGS
     match /waste_logs/{logId} {
-      allow read: if isAuthenticated() && (
+      allow read: if isAdmin() || (isAuthenticated() && (
           isOrgMember(resource.data.get('orgId', null)) ||
-          resource.data.get('loggedByUid', null) == request.auth.uid ||
-          isAdmin()
-      );
-      allow create: if isAuthenticated()
+          resource.data.get('loggedByUid', null) == request.auth.uid
+      ));
+      allow create: if isAdmin() || (isAuthenticated()
                     && request.resource.data.get('loggedByUid', null) == request.auth.uid
                     && isOrgMember(request.resource.data.get('orgId', null))
-                    && isValidWasteLog(request.resource.data);
-      allow update: if isAuthenticated() && (
+                    && isValidWasteLog(request.resource.data));
+      allow update: if isAdmin() || (isAuthenticated() && (
           resource.data.get('loggedByUid', null) == request.auth.uid ||
-          isOrgManager(resource.data.get('orgId', null)) ||
-          isAdmin()
+          isOrgManager(resource.data.get('orgId', null))
       ) && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['orgId'])
-        && isValidWasteLog(request.resource.data);
-      allow delete: if isAuthenticated() && (
+        && isValidWasteLog(request.resource.data));
+      allow delete: if isAdmin() || (isAuthenticated() && (
           resource.data.get('loggedByUid', null) == request.auth.uid ||
-          isOrgManager(resource.data.get('orgId', null)) ||
-          isAdmin()
-      );
+          isOrgManager(resource.data.get('orgId', null))
+      ));
     }
 
     // TIME LOGS
     match /time_logs/{logId} {
-      allow read: if isAuthenticated() && (
+      allow read: if isAdmin() || (isAuthenticated() && (
           resource.data.get('uid', null) == request.auth.uid ||
-          isOrgManager(resource.data.get('orgId', null)) ||
-          isAdmin()
-      );
-      allow create: if isAuthenticated()
+          isOrgManager(resource.data.get('orgId', null))
+      ));
+      allow create: if isAdmin() || (isAuthenticated()
                     && request.resource.data.get('uid', null) == request.auth.uid
                     && isOrgMember(request.resource.data.get('orgId', null))
-                    && isValidTimeLog(request.resource.data);
-      allow update: if isAuthenticated() && (
+                    && isValidTimeLog(request.resource.data));
+      allow update: if isAdmin() || (isAuthenticated() && (
           resource.data.get('uid', null) == request.auth.uid ||
-          isOrgManager(resource.data.get('orgId', null)) ||
-          isAdmin()
+          isOrgManager(resource.data.get('orgId', null))
       ) && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['orgId', 'uid'])
-        && isValidTimeLog(request.resource.data);
-      allow delete: if isAuthenticated() && (
+        && isValidTimeLog(request.resource.data));
+      allow delete: if isAdmin() || (isAuthenticated() && (
           resource.data.get('uid', null) == request.auth.uid ||
-          isOrgManager(resource.data.get('orgId', null)) ||
-          isAdmin()
-      );
+          isOrgManager(resource.data.get('orgId', null))
+      ));
     }
 
-    // EMPLOYEES: IDOR Fixed - Only organization managers/shift group owners/admins can create, edit, or delete. Employees can only read.
+    // EMPLOYEES: Only organization managers/shift group owners/admins can create, edit, or delete. Employees can only read.
     match /employees/{empId} {
-      allow read: if isAuthenticated() && (
-          isOrgMember(resource.data.get('orgId', null)) ||
-          isAdmin()
-      );
-      allow create: if isAuthenticated()
+      allow read: if isAdmin() || (isAuthenticated() && isOrgMember(resource.data.get('orgId', null)));
+      allow create: if isAdmin() || (isAuthenticated()
                     && isOrgManager(request.resource.data.get('orgId', null))
-                    && isValidEmployee(request.resource.data);
-      allow update: if isAuthenticated()
+                    && isValidEmployee(request.resource.data));
+      allow update: if isAdmin() || (isAuthenticated()
                     && isOrgManager(resource.data.get('orgId', null))
                     && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['orgId'])
-                    && isValidEmployee(request.resource.data);
-      allow delete: if isAuthenticated()
-                    && isOrgManager(resource.data.get('orgId', null));
+                    && isValidEmployee(request.resource.data));
+      allow delete: if isAdmin() || (isAuthenticated()
+                    && isOrgManager(resource.data.get('orgId', null)));
     }
 
     // RECOGNITIONS
     match /recognitions/{recognitionId} {
-      allow read: if isAuthenticated() && (
-          isOrgMember(resource.data.get('orgId', null)) ||
-          isAdmin()
-      );
-      allow create: if isAuthenticated()
+      allow read: if isAdmin() || (isAuthenticated() && isOrgMember(resource.data.get('orgId', null)));
+      allow create: if isAdmin() || (isAuthenticated()
                     && isOrgMember(request.resource.data.get('orgId', null))
                     && (request.resource.data.get('senderId', request.auth.uid) == request.auth.uid || isOrgManager(request.resource.data.get('orgId', null)))
-                    && isValidRecognition(request.resource.data);
-      allow update: if isAuthenticated() && (
+                    && isValidRecognition(request.resource.data));
+      allow update: if isAdmin() || (isAuthenticated() && (
           resource.data.get('senderId', null) == request.auth.uid ||
-          isOrgManager(resource.data.get('orgId', null)) ||
-          isAdmin()
+          isOrgManager(resource.data.get('orgId', null))
       ) && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['orgId', 'senderId'])
-        && isValidRecognition(request.resource.data);
-      allow delete: if isAuthenticated() && (
+        && isValidRecognition(request.resource.data));
+      allow delete: if isAdmin() || (isAuthenticated() && (
           resource.data.get('senderId', null) == request.auth.uid ||
-          isOrgManager(resource.data.get('orgId', null)) ||
-          isAdmin()
-      );
+          isOrgManager(resource.data.get('orgId', null))
+      ));
     }
 
     // TIME OFF REQUESTS
     match /time_off_requests/{requestId} {
-      allow read: if isAuthenticated() && (
+      allow read: if isAdmin() || (isAuthenticated() && (
           resource.data.get('uid', null) == request.auth.uid ||
-          isOrgManager(resource.data.get('orgId', null)) ||
-          isAdmin()
-      );
-      allow create: if isAuthenticated()
+          isOrgManager(resource.data.get('orgId', null))
+      ));
+      allow create: if isAdmin() || (isAuthenticated()
                     && request.resource.data.get('uid', null) == request.auth.uid
                     && isOrgMember(request.resource.data.get('orgId', null))
-                    && isValidTimeOffRequest(request.resource.data);
-      allow update: if isAuthenticated() && (
+                    && isValidTimeOffRequest(request.resource.data));
+      allow update: if isAdmin() || (isAuthenticated() && (
           (resource.data.get('uid', null) == request.auth.uid && resource.data.get('status', 'Pending') == 'Pending') ||
-          isOrgManager(resource.data.get('orgId', null)) ||
-          isAdmin()
+          isOrgManager(resource.data.get('orgId', null))
       ) && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['orgId', 'uid'])
-        && isValidTimeOffRequest(request.resource.data);
-      allow delete: if isAuthenticated() && (
+        && isValidTimeOffRequest(request.resource.data));
+      allow delete: if isAdmin() || (isAuthenticated() && (
           (resource.data.get('uid', null) == request.auth.uid && resource.data.get('status', 'Pending') == 'Pending') ||
-          isOrgManager(resource.data.get('orgId', null)) ||
-          isAdmin()
-      );
+          isOrgManager(resource.data.get('orgId', null))
+      ));
     }
 
     // TEMPERATURE LOGS
     match /temperature_logs/{logId} {
-      allow read: if isAuthenticated() && (
+      allow read: if isAdmin() || (isAuthenticated() && (
           isOrgMember(resource.data.get('orgId', null)) ||
-          resource.data.get('loggedByUid', null) == request.auth.uid ||
-          isAdmin()
-      );
-      allow create: if isAuthenticated()
+          resource.data.get('loggedByUid', null) == request.auth.uid
+      ));
+      allow create: if isAdmin() || (isAuthenticated()
                     && request.resource.data.get('loggedByUid', null) == request.auth.uid
                     && isOrgMember(request.resource.data.get('orgId', null))
-                    && isValidTemperatureLog(request.resource.data);
-      allow update: if isAuthenticated() && (
+                    && isValidTemperatureLog(request.resource.data));
+      allow update: if isAdmin() || (isAuthenticated() && (
           resource.data.get('loggedByUid', null) == request.auth.uid ||
-          isOrgManager(resource.data.get('orgId', null)) ||
-          isAdmin()
+          isOrgManager(resource.data.get('orgId', null))
       ) && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['orgId'])
-        && isValidTemperatureLog(request.resource.data);
-      allow delete: if isAuthenticated() && (
+        && isValidTemperatureLog(request.resource.data));
+      allow delete: if isAdmin() || (isAuthenticated() && (
           resource.data.get('loggedByUid', null) == request.auth.uid ||
-          isOrgManager(resource.data.get('orgId', null)) ||
-          isAdmin()
-      );
+          isOrgManager(resource.data.get('orgId', null))
+      ));
     }
 
     // VENDOR DELIVERIES
     match /vendor_deliveries/{deliveryId} {
-      allow read: if isAuthenticated() && (
+      allow read: if isAdmin() || (isAuthenticated() && (
           isOrgMember(resource.data.get('orgId', null)) ||
-          resource.data.get('loggedByUid', null) == request.auth.uid ||
-          isAdmin()
-      );
-      allow create: if isAuthenticated()
+          resource.data.get('loggedByUid', null) == request.auth.uid
+      ));
+      allow create: if isAdmin() || (isAuthenticated()
                     && request.resource.data.get('loggedByUid', null) == request.auth.uid
                     && isOrgMember(request.resource.data.get('orgId', null))
-                    && isValidVendorDelivery(request.resource.data);
-      allow update: if isAuthenticated() && (
+                    && isValidVendorDelivery(request.resource.data));
+      allow update: if isAdmin() || (isAuthenticated() && (
           resource.data.get('loggedByUid', null) == request.auth.uid ||
-          isOrgManager(resource.data.get('orgId', null)) ||
-          isAdmin()
+          isOrgManager(resource.data.get('orgId', null))
       ) && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['orgId'])
-        && isValidVendorDelivery(request.resource.data);
-      allow delete: if isAuthenticated() && (
+        && isValidVendorDelivery(request.resource.data));
+      allow delete: if isAdmin() || (isAuthenticated() && (
           resource.data.get('loggedByUid', null) == request.auth.uid ||
-          isOrgManager(resource.data.get('orgId', null)) ||
-          isAdmin()
-      );
+          isOrgManager(resource.data.get('orgId', null))
+      ));
     }
 
-    // ANNOUNCEMENTS: IDOR Fixed - Only managers/authors/admins can create, edit, or delete. Employees can only read.
+    // ANNOUNCEMENTS: Only managers/authors/admins can create, edit, or delete. Employees can only read.
     match /announcements/{announcementId} {
-      allow read: if isAuthenticated() && (
+      allow read: if isAdmin() || (isAuthenticated() && (
           isOrgMember(resource.data.get('orgId', null)) ||
-          resource.data.get('authorId', null) == request.auth.uid ||
-          isAdmin()
-      );
-      allow create: if isAuthenticated()
-                    && (isOrgManager(request.resource.data.get('orgId', null)) || isAdmin())
-                    && isValidAnnouncement(request.resource.data);
-      allow update: if isAuthenticated() && (
+          resource.data.get('authorId', null) == request.auth.uid
+      ));
+      allow create: if isAdmin() || (isAuthenticated()
+                    && isOrgManager(request.resource.data.get('orgId', null))
+                    && isValidAnnouncement(request.resource.data));
+      allow update: if isAdmin() || (isAuthenticated() && (
           (resource.data.get('authorId', null) == request.auth.uid && isOrgManager(resource.data.get('orgId', null))) ||
-          isOrgManager(resource.data.get('orgId', null)) ||
-          isAdmin()
+          isOrgManager(resource.data.get('orgId', null))
       ) && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['orgId'])
-        && isValidAnnouncement(request.resource.data);
-      allow delete: if isAuthenticated() && (
+        && isValidAnnouncement(request.resource.data));
+      allow delete: if isAdmin() || (isAuthenticated() && (
           (resource.data.get('authorId', null) == request.auth.uid && isOrgManager(resource.data.get('orgId', null))) ||
-          isOrgManager(resource.data.get('orgId', null)) ||
-          isAdmin()
-      );
+          isOrgManager(resource.data.get('orgId', null))
+      ));
     }
 
     // SHIFT MARKETPLACE
     match /shift_marketplace/{shiftId} {
-      allow read: if isAuthenticated() && (
-          isOrgMember(resource.data.get('orgId', null)) ||
-          isAdmin()
-      );
-      allow create: if isAuthenticated()
+      allow read: if isAdmin() || (isAuthenticated() && isOrgMember(resource.data.get('orgId', null)));
+      allow create: if isAdmin() || (isAuthenticated()
                     && isOrgMember(request.resource.data.get('orgId', null))
                     && (request.resource.data.get('originalEmployeeId', request.auth.uid) == request.auth.uid || isOrgManager(request.resource.data.get('orgId', null)))
-                    && isValidShiftMarketplace(request.resource.data);
-      allow update: if isAuthenticated() && (
+                    && isValidShiftMarketplace(request.resource.data));
+      allow update: if isAdmin() || (isAuthenticated() && (
           resource.data.get('originalEmployeeId', null) == request.auth.uid ||
           isOrgMember(resource.data.get('orgId', null)) ||
-          isOrgManager(resource.data.get('orgId', null)) ||
-          isAdmin()
+          isOrgManager(resource.data.get('orgId', null))
       ) && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['orgId', 'originalEmployeeId'])
-        && isValidShiftMarketplace(request.resource.data);
-      allow delete: if isAuthenticated() && (
+        && isValidShiftMarketplace(request.resource.data));
+      allow delete: if isAdmin() || (isAuthenticated() && (
           resource.data.get('originalEmployeeId', null) == request.auth.uid ||
-          isOrgManager(resource.data.get('orgId', null)) ||
-          isAdmin()
-      );
+          isOrgManager(resource.data.get('orgId', null))
+      ));
     }
 
     // SHIFT HANDOFFS
     match /shift_handoffs/{handoffId} {
-      allow read: if isAuthenticated() && (
-          isOrgMember(resource.data.get('orgId', null)) ||
-          isAdmin()
-      );
-      allow create: if isAuthenticated()
+      allow read: if isAdmin() || (isAuthenticated() && isOrgMember(resource.data.get('orgId', null)));
+      allow create: if isAdmin() || (isAuthenticated()
                     && isOrgMember(request.resource.data.get('orgId', null))
                     && (request.resource.data.get('authorId', request.auth.uid) == request.auth.uid || isOrgManager(request.resource.data.get('orgId', null)))
-                    && isValidShiftHandoff(request.resource.data);
-      allow update: if isAuthenticated() && (
+                    && isValidShiftHandoff(request.resource.data));
+      allow update: if isAdmin() || (isAuthenticated() && (
           resource.data.get('authorId', null) == request.auth.uid ||
           (isOrgMember(resource.data.get('orgId', null)) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['acknowledgedBy'])) ||
-          isOrgManager(resource.data.get('orgId', null)) ||
-          isAdmin()
+          isOrgManager(resource.data.get('orgId', null))
       ) && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['orgId', 'authorId'])
-        && isValidShiftHandoff(request.resource.data);
-      allow delete: if isAuthenticated() && (
+        && isValidShiftHandoff(request.resource.data));
+      allow delete: if isAdmin() || (isAuthenticated() && (
           resource.data.get('authorId', null) == request.auth.uid ||
-          isOrgManager(resource.data.get('orgId', null)) ||
-          isAdmin()
-      );
+          isOrgManager(resource.data.get('orgId', null))
+      ));
     }
 
     // INVENTORY: Scoped by orgId. Org members can read; managers/admins can write.
     match /inventory/{itemId} {
-      allow read: if isAuthenticated() && (
-          isOrgMember(resource.data.get('orgId', null)) ||
-          isAdmin()
-      );
-      allow create: if isAuthenticated()
+      allow read: if isAdmin() || (isAuthenticated() && isOrgMember(resource.data.get('orgId', null)));
+      allow create: if isAdmin() || (isAuthenticated()
                     && isOrgManager(request.resource.data.get('orgId', null))
-                    && isValidInventory(request.resource.data);
-      allow update: if isAuthenticated()
+                    && isValidInventory(request.resource.data));
+      allow update: if isAdmin() || (isAuthenticated()
                     && isOrgManager(resource.data.get('orgId', null))
                     && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['orgId'])
-                    && isValidInventory(request.resource.data);
-      allow delete: if isAuthenticated()
-                    && isOrgManager(resource.data.get('orgId', null));
+                    && isValidInventory(request.resource.data));
+      allow delete: if isAdmin() || (isAuthenticated()
+                    && isOrgManager(resource.data.get('orgId', null)));
     }
 
     // EXPENSES: Scoped by orgId. Org members can read; managers/admins can write.
     match /expenses/{expenseId} {
-      allow read: if isAuthenticated() && (
-          isOrgMember(resource.data.get('orgId', null)) ||
-          isAdmin()
-      );
-      allow create: if isAuthenticated()
+      allow read: if isAdmin() || (isAuthenticated() && isOrgMember(resource.data.get('orgId', null)));
+      allow create: if isAdmin() || (isAuthenticated()
                     && isOrgManager(request.resource.data.get('orgId', null))
-                    && isValidExpense(request.resource.data);
-      allow update: if isAuthenticated()
+                    && isValidExpense(request.resource.data));
+      allow update: if isAdmin() || (isAuthenticated()
                     && isOrgManager(resource.data.get('orgId', null))
                     && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['orgId'])
-                    && isValidExpense(request.resource.data);
-      allow delete: if isAuthenticated()
-                    && isOrgManager(resource.data.get('orgId', null));
+                    && isValidExpense(request.resource.data));
+      allow delete: if isAdmin() || (isAuthenticated()
+                    && isOrgManager(resource.data.get('orgId', null)));
     }
 
-    // FEATURE REQUESTS: Users can create/read their own; admins can read/update/delete.
+    // FEATURE REQUESTS: Users can create/read their own, archive/update their own, and delete their own; admins have full access.
     match /feature_requests/{requestId} {
-      allow read: if isAuthenticated() && (
-          resource.data.get('uid', null) == request.auth.uid ||
-          isAdmin()
-      );
-      allow create: if isAuthenticated()
+      allow read: if isAdmin() || (isAuthenticated() && resource.data.get('uid', null) == request.auth.uid);
+      allow create: if isAdmin() || (isAuthenticated()
                     && request.resource.data.get('uid', null) == request.auth.uid
-                    && isValidFeatureRequest(request.resource.data);
-      allow update: if isAdmin() && isValidFeatureRequest(request.resource.data);
-      allow delete: if isAdmin();
+                    && isValidFeatureRequest(request.resource.data));
+      allow update: if isAdmin() || (isAuthenticated()
+                    && resource.data.get('uid', null) == request.auth.uid
+                    && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['uid'])
+                    && isValidFeatureRequest(request.resource.data));
+      allow delete: if isAdmin() || (isAuthenticated() && resource.data.get('uid', null) == request.auth.uid);
     }
 
-    // FEEDBACKS: Users can submit feedback (uid == request.auth.uid); admins/managers can read and manage.
+    // FEEDBACKS: Users can submit feedback; admins/managers can read and manage.
     match /feedbacks/{feedbackId} {
-      allow read: if isAuthenticated() && (
+      allow read: if isAdmin() || (isAuthenticated() && (
           resource.data.get('uid', null) == request.auth.uid ||
           resource.data.get('managerId', null) == request.auth.uid ||
-          (resource.data.get('orgId', null) != null && isOrgManager(resource.data.get('orgId', null))) ||
-          isAdmin()
-      );
-      allow create: if isAuthenticated()
+          (resource.data.get('orgId', null) != null && isOrgManager(resource.data.get('orgId', null)))
+      ));
+      allow create: if isAdmin() || (isAuthenticated()
                     && (request.resource.data.get('uid', request.auth.uid) == request.auth.uid || request.resource.data.get('managerId', request.auth.uid) == request.auth.uid)
-                    && isValidFeedback(request.resource.data);
-      allow update: if isAuthenticated() && (
-          (resource.data.get('orgId', null) != null && isOrgManager(resource.data.get('orgId', null))) ||
-          isAdmin()
-      ) && isValidFeedback(request.resource.data);
-      allow delete: if isAuthenticated() && (
-          (resource.data.get('orgId', null) != null && isOrgManager(resource.data.get('orgId', null))) ||
-          isAdmin()
-      );
+                    && isValidFeedback(request.resource.data));
+      allow update: if isAdmin() || (isAuthenticated() && (
+          (resource.data.get('orgId', null) != null && isOrgManager(resource.data.get('orgId', null)))
+      ) && isValidFeedback(request.resource.data));
+      allow delete: if isAdmin() || (isAuthenticated() && (
+          (resource.data.get('orgId', null) != null && isOrgManager(resource.data.get('orgId', null)))
+      ));
     }
 
     // LOST AND FOUND: Scoped by orgId.
     match /lost_and_found/{itemId} {
-      allow read: if isAuthenticated() && (
-          isOrgMember(resource.data.get('orgId', null)) ||
-          isAdmin()
-      );
-      allow create: if isAuthenticated()
+      allow read: if isAdmin() || (isAuthenticated() && isOrgMember(resource.data.get('orgId', null)));
+      allow create: if isAdmin() || (isAuthenticated()
                     && isOrgMember(request.resource.data.get('orgId', null))
                     && request.resource.data.get('loggedByUid', request.auth.uid) == request.auth.uid
-                    && isValidLostAndFound(request.resource.data);
-      allow update: if isAuthenticated() && (
+                    && isValidLostAndFound(request.resource.data));
+      allow update: if isAdmin() || (isAuthenticated() && (
           resource.data.get('loggedByUid', null) == request.auth.uid ||
-          isOrgManager(resource.data.get('orgId', null)) ||
-          isAdmin()
+          isOrgManager(resource.data.get('orgId', null))
       ) && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['orgId'])
-        && isValidLostAndFound(request.resource.data);
-      allow delete: if isAuthenticated() && (
+        && isValidLostAndFound(request.resource.data));
+      allow delete: if isAdmin() || (isAuthenticated() && (
           resource.data.get('loggedByUid', null) == request.auth.uid ||
-          isOrgManager(resource.data.get('orgId', null)) ||
-          isAdmin()
-      );
+          isOrgManager(resource.data.get('orgId', null))
+      ));
     }
 
     // CERTIFICATIONS: Scoped by orgId.
     match /certifications/{certId} {
-      allow read: if isAuthenticated() && (
-          isOrgMember(resource.data.get('orgId', null)) ||
-          isAdmin()
-      );
-      allow create: if isAuthenticated()
+      allow read: if isAdmin() || (isAuthenticated() && isOrgMember(resource.data.get('orgId', null)));
+      allow create: if isAdmin() || (isAuthenticated()
                     && isOrgManager(request.resource.data.get('orgId', null))
-                    && isValidCertification(request.resource.data);
-      allow update: if isAuthenticated()
+                    && isValidCertification(request.resource.data));
+      allow update: if isAdmin() || (isAuthenticated()
                     && isOrgManager(resource.data.get('orgId', null))
                     && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['orgId'])
-                    && isValidCertification(request.resource.data);
-      allow delete: if isAuthenticated()
-                    && isOrgManager(resource.data.get('orgId', null));
+                    && isValidCertification(request.resource.data));
+      allow delete: if isAdmin() || (isAuthenticated()
+                    && isOrgManager(resource.data.get('orgId', null)));
     }
 
     // BOOKINGS: Scoped to owner or manager/admin.
     match /bookings/{bookingId} {
-      allow read: if isAuthenticated() && (
+      allow read: if isAdmin() || (isAuthenticated() && (
           resource.data.get('userId', null) == request.auth.uid ||
-          (resource.data.get('orgId', null) != null && isOrgManager(resource.data.get('orgId', null))) ||
-          isAdmin()
-      );
-      allow create: if isAuthenticated()
-                    && (request.resource.data.get('userId', request.auth.uid) == request.auth.uid || isAdmin() || (request.resource.data.get('orgId', null) != null && isOrgManager(request.resource.data.get('orgId', null))))
-                    && isValidBooking(request.resource.data);
-      allow update: if isAuthenticated() && (
+          (resource.data.get('orgId', null) != null && isOrgManager(resource.data.get('orgId', null)))
+      ));
+      allow create: if isAdmin() || (isAuthenticated()
+                    && (request.resource.data.get('userId', request.auth.uid) == request.auth.uid || (request.resource.data.get('orgId', null) != null && isOrgManager(request.resource.data.get('orgId', null))))
+                    && isValidBooking(request.resource.data));
+      allow update: if isAdmin() || (isAuthenticated() && (
           resource.data.get('userId', null) == request.auth.uid ||
-          (resource.data.get('orgId', null) != null && isOrgManager(resource.data.get('orgId', null))) ||
-          isAdmin()
-      ) && isValidBooking(request.resource.data);
-      allow delete: if isAuthenticated() && (
-          (resource.data.get('orgId', null) != null && isOrgManager(resource.data.get('orgId', null))) ||
-          isAdmin()
-      );
+          (resource.data.get('orgId', null) != null && isOrgManager(resource.data.get('orgId', null)))
+      ) && isValidBooking(request.resource.data));
+      allow delete: if isAdmin() || (isAuthenticated() && (
+          (resource.data.get('orgId', null) != null && isOrgManager(resource.data.get('orgId', null)))
+      ));
     }
 
     // QUOTES: Scoped to owner or manager/admin.
     match /quotes/{quoteId} {
-      allow read: if isAuthenticated() && (
+      allow read: if isAdmin() || (isAuthenticated() && (
           resource.data.get('userId', null) == request.auth.uid ||
-          (resource.data.get('orgId', null) != null && isOrgManager(resource.data.get('orgId', null))) ||
-          isAdmin()
-      );
-      allow create: if isAuthenticated()
-                    && (request.resource.data.get('userId', request.auth.uid) == request.auth.uid || isAdmin() || (request.resource.data.get('orgId', null) != null && isOrgManager(request.resource.data.get('orgId', null))))
-                    && isValidQuote(request.resource.data);
-      allow update: if isAuthenticated() && (
-          (resource.data.get('orgId', null) != null && isOrgManager(resource.data.get('orgId', null))) ||
-          isAdmin()
-      ) && isValidQuote(request.resource.data);
-      allow delete: if isAuthenticated() && (
-          (resource.data.get('orgId', null) != null && isOrgManager(resource.data.get('orgId', null))) ||
-          isAdmin()
-      );
+          (resource.data.get('orgId', null) != null && isOrgManager(resource.data.get('orgId', null)))
+      ));
+      allow create: if isAdmin() || (isAuthenticated()
+                    && (request.resource.data.get('userId', request.auth.uid) == request.auth.uid || (request.resource.data.get('orgId', null) != null && isOrgManager(request.resource.data.get('orgId', null))))
+                    && isValidQuote(request.resource.data));
+      allow update: if isAdmin() || (isAuthenticated() && (
+          resource.data.get('userId', null) == request.auth.uid ||
+          (resource.data.get('orgId', null) != null && isOrgManager(resource.data.get('orgId', null)))
+      ) && isValidQuote(request.resource.data));
+      allow delete: if isAdmin() || (isAuthenticated() && (
+          (resource.data.get('orgId', null) != null && isOrgManager(resource.data.get('orgId', null)))
+      ));
+    }
+
+    // MONETARY AUDITS: Immutable loss-prevention audit logs for deposits & register drawer variance
+    match /monetary_audits/{auditId} {
+      allow read: if isSuperAdmin() || (isAuthenticated() && (
+          resource.data.get('createdByUid', null) == request.auth.uid ||
+          (resource.data.get('orgId', null) != null && (
+            resource.data.get('orgId', null) == getOrgId() ||
+            isOrgMember(resource.data.get('orgId', null))
+          ))
+      ));
+      allow create: if isSuperAdmin() || (isAuthenticated()
+                    && request.resource.data.get('createdByUid', null) == request.auth.uid
+                    && isValidMonetaryAudit(request.resource.data));
+      allow update: if false;
+      allow delete: if isSuperAdmin();
+    }
+
+    // SAFE SHEETS: Immutable daily safe counts and fiscal period/week historical audit logs
+    match /safe_sheets/{sheetId} {
+      allow read: if isSuperAdmin() || (isAuthenticated() && (
+          resource.data.get('createdByUid', null) == request.auth.uid ||
+          (resource.data.get('orgId', null) != null && (
+            resource.data.get('orgId', null) == getOrgId() ||
+            isOrgMember(resource.data.get('orgId', null))
+          ))
+      ));
+      allow create: if isSuperAdmin() || (isAuthenticated()
+                    && request.resource.data.get('createdByUid', null) == request.auth.uid
+                    && isValidSafeSheet(request.resource.data));
+      allow update: if false;
+      allow delete: if isSuperAdmin();
     }
 
   }

@@ -1667,15 +1667,16 @@ exports.manageMaintenanceLogs = functions.https.onCall(async (data, context) => 
       }
 
       if (action === "get") {
-        if (!userOrgId && !isAdmin) {
+        const targetOrgId = (payload && payload.orgId) || userOrgId || null;
+        if (!targetOrgId && !isAdmin) {
           return {success: true, logs: []};
         }
 
         let query = admin.firestore().collection("temperature_logs");
         if (!isAdmin) {
-          query = query.where("orgId", "==", userOrgId);
-        } else if (payload.orgId) {
-          query = query.where("orgId", "==", payload.orgId);
+          query = query.where("orgId", "==", targetOrgId);
+        } else if (targetOrgId) {
+          query = query.where("orgId", "==", targetOrgId);
         }
 
         const logs = await safeGetOrderedDocs(query, "timestamp", "desc", 50);
@@ -1859,9 +1860,12 @@ exports.manageLostAndFound = functions.https.onCall(async (data, context) => {
   const {uid, userOrgId, isAdmin, userName, action, payload} = await getAuthAndPayload(data, context, admin);
 
   try {
-    const actualOrgId = userOrgId || null;
+    const actualOrgId = (payload && payload.orgId) || userOrgId || null;
 
-    if (!actualOrgId) {
+    if (!actualOrgId && !isAdmin) {
+      if (action === "get") {
+        return {success: true, items: []};
+      }
       throw new HttpsError("permission-denied", "User must be part of an organization to manage lost & found items.");
     }
 

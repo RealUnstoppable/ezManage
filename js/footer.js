@@ -27,13 +27,13 @@ export function loadFooter() {
                     <h5 class="text-xs font-black uppercase tracking-[0.2em] text-sky-400 mb-4 flex items-center gap-2">
                         <i data-lucide="layout-grid" class="w-4 h-4"></i> Navigate
                     </h5>
-                    <ul class="space-y-2.5 text-sm font-medium text-slate-300">
-                        <li><a href="index.html#welcome" data-navto="welcome">Overview & Home</a></li>
-                        <li><a href="index.html#tracker" data-navto="tracker">Active Shift Tracker</a></li>
-                        <li><a href="index.html#schedule" data-navto="schedule">Shift Schedule & Roster</a></li>
-                        <li><a href="index.html#announcements" data-navto="announcements">Team Notices</a></li>
-                        <li><a href="index.html#tasks" data-navto="tasks">Task Manager</a></li>
-                        <li><a href="index.html#presets" data-navto="presets">Routine Presets</a></li>
+                    <ul class="space-y-2.5 text-sm font-medium">
+                        <li><a href="index.html#welcome" data-navto="welcome" class="text-slate-400 hover:text-white dark:hover:text-white hover:underline transition-all block py-0.5">Overview & Home</a></li>
+                        <li><a href="index.html#tracker" data-navto="tracker" class="text-slate-400 hover:text-white dark:hover:text-white hover:underline transition-all block py-0.5">Active Shift Tracker</a></li>
+                        <li><a href="index.html#schedule" data-navto="schedule" class="text-slate-400 hover:text-white dark:hover:text-white hover:underline transition-all block py-0.5">Shift Schedule & Team Roster</a></li>
+                        <li><a href="index.html#announcements" data-navto="announcements" class="text-slate-400 hover:text-white dark:hover:text-white hover:underline transition-all block py-0.5">Announcements & Tasks Hub</a></li>
+                        <li><a href="index.html#incidents" data-navto="incidents" class="text-slate-400 hover:text-white dark:hover:text-white hover:underline transition-all block py-0.5">Incidents & Maintenance</a></li>
+                        <li><a href="index.html#presets" data-navto="presets" class="text-slate-400 hover:text-white dark:hover:text-white hover:underline transition-all block py-0.5">Routine Presets</a></li>
                     </ul>
                 </div>
 
@@ -41,13 +41,13 @@ export function loadFooter() {
                     <h5 class="text-xs font-black uppercase tracking-[0.2em] text-sky-400 mb-4 flex items-center gap-2">
                         <i data-lucide="cpu" class="w-4 h-4"></i> Connect
                     </h5>
-                    <ul class="space-y-2.5 text-sm font-medium text-slate-300">
-                        <li><a href="easy-ai.html">AI Demand Predictor</a></li>
-                        <li><a href="company.html">Corporate Multi-Store Portal</a></li>
-                        <li><a href="panel-ai-admin.html">Admin Intelligence Panel</a></li>
-                        <li><a href="admin.html">Shift Lead Dashboard</a></li>
-                        <li><a href="account.html">Account & Cloud Sync</a></li>
-                        <li><a href="index.html#pricing" data-navto="pricing">Pricing & Licenses</a></li>
+                    <ul class="space-y-2.5 text-sm font-medium">
+                        <li><a href="inventory.html" class="text-slate-400 hover:text-white dark:hover:text-white hover:underline transition-all block py-0.5">Inventory & AI Predictor</a></li>
+                        <li><a href="company.html" class="text-slate-400 hover:text-white dark:hover:text-white hover:underline transition-all block py-0.5">Corporate Multi-Store Portal</a></li>
+                        <li><a href="panel-ai-admin.html" class="text-slate-400 hover:text-white dark:hover:text-white hover:underline transition-all block py-0.5">Admin Intelligence Panel</a></li>
+                        <li><a href="admin.html" class="text-slate-400 hover:text-white dark:hover:text-white hover:underline transition-all block py-0.5">Shift Lead Dashboard</a></li>
+                        <li><a href="index.html#profile" data-navto="profile" class="text-slate-400 hover:text-white dark:hover:text-white hover:underline transition-all block py-0.5">Account & Profile Settings</a></li>
+                        <li><a href="index.html#pricing" data-navto="pricing" class="text-slate-400 hover:text-white dark:hover:text-white hover:underline transition-all block py-0.5">Pricing & Licenses</a></li>
                     </ul>
                 </div>
 
@@ -55,11 +55,11 @@ export function loadFooter() {
                     <h5 class="text-xs font-black uppercase tracking-[0.2em] text-sky-400 mb-4 flex items-center gap-2">
                         <i data-lucide="shield-check" class="w-4 h-4"></i> Company
                     </h5>
-                    <ul class="space-y-2.5 text-sm font-medium text-slate-300">
-                        <li><a href="index.html#incidents" data-navto="incidents">Incident & Audit Reports</a></li>
-                        <li><a href="#" data-modal="tosModal">Terms & Security Policy</a></li>
-                        <li><a href="#" data-modal="orgTutorialModal">Store Connection Guide</a></li>
-                        <li><a href="mailto:unstoppableplays2016@hotmail.com">Contact Support</a></li>
+                    <ul class="space-y-2.5 text-sm font-medium">
+                        <li><a href="index.html#incidents" data-navto="incidents" class="text-slate-400 hover:text-white dark:hover:text-white hover:underline transition-all block py-0.5">Incident & Audit Reports</a></li>
+                        <li><a href="javascript:void(0)" data-modal="tosModal" class="text-slate-400 hover:text-white dark:hover:text-white hover:underline transition-all block py-0.5">Terms & Security Policy</a></li>
+                        <li><a href="javascript:void(0)" data-modal="orgTutorialModal" class="text-slate-400 hover:text-white dark:hover:text-white hover:underline transition-all block py-0.5">Store Connection Guide</a></li>
+                        <li><a href="mailto:unstoppableplays2016@hotmail.com" class="text-slate-400 hover:text-white dark:hover:text-white hover:underline transition-all block py-0.5">Contact Support</a></li>
                     </ul>
                 </div>
 

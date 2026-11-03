@@ -449,18 +449,19 @@ p.section-subtitle {
 }
 
 .footer-column a {
-    color: var(--text-secondary);
+    color: #94a3b8;
     text-decoration: none;
     cursor: pointer;
     font-weight: 500;
-    transition: color 0.2s ease, transform 0.2s ease;
+    transition: color 0.2s ease, transform 0.2s ease, text-decoration 0.2s ease;
     display: inline-block;
 }
 
 .footer-column a:hover,
 .footer-column a:focus {
-    color: #38bdf8;
-    transform: translateX(3px);
+    color: #ffffff !important;
+    text-decoration: underline !important;
+    transform: translateX(4px);
 }
 
 .footer-newsletter p {

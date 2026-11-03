@@ -1,6 +1,6 @@
 window.ezManageFirebaseConfig = {
     apiKey: "AIzaSyBgrI9HwJPSc5b4pu2Egsv4DE7shNwptSw",
-    authDomain: "ezmanage.realunstoppable.store",
+    authDomain: "dts-hub-website.firebaseapp.com",
     projectId: "dts-hub-website",
     storageBucket: "dts-hub-website.firebasestorage.app",
     messagingSenderId: "48345990988",

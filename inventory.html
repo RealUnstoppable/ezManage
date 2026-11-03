@@ -84,19 +84,111 @@
     </nav>
 
     <main class="flex-grow max-w-7xl mx-auto px-6 py-12 w-full">
+        <!-- Unified Inventory & AI Hub Navigation -->
+        <div class="flex items-center gap-2 overflow-x-auto pb-4 mb-6 border-b border-slate-800 text-xs font-bold no-scrollbar">
+            <a href="inventory.html" class="px-4 py-2 rounded-xl transition-all flex items-center gap-2 bg-sky-500 text-white shadow-md shadow-sky-500/20">
+                <i data-lucide="package" class="w-3.5 h-3.5"></i> Stock & Assets
+            </a>
+            <a href="easy-ai.html" class="px-4 py-2 rounded-xl transition-all flex items-center gap-2 bg-slate-900 border border-slate-800 text-slate-400 hover:text-white hover:border-slate-700">
+                <i data-lucide="brain" class="w-3.5 h-3.5 text-sky-400"></i> AI Demand Predictor
+            </a>
+        </div>
+
         <!-- Header Section -->
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
             <div>
                 <h1 class="text-3xl font-bold tracking-tight text-white mb-2 flex items-center gap-3">
                     <i data-lucide="package" class="text-sky-400 h-8 w-8"></i>
-                    Inventory Management
+                    Inventory Management & AI
                 </h1>
-                <p class="text-slate-400">Track and manage your store's stock and assets.</p>
+                <p class="text-slate-400">Track stock, manage floor assets, and monitor AI demand forecasts.</p>
             </div>
-            <button id="addItemBtn" class="flex items-center gap-2 bg-sky-500 hover:bg-sky-400 text-white px-5 py-2.5 rounded-lg font-medium transition-colors shadow-lg shadow-sky-500/20">
-                <i data-lucide="plus" class="w-5 h-5"></i>
-                Add New Item
+            <div class="flex items-center gap-3">
+                <button id="addItemBtn" class="flex items-center gap-2 bg-sky-500 hover:bg-sky-400 text-white px-5 py-2.5 rounded-lg font-medium transition-colors shadow-lg shadow-sky-500/20">
+                    <i data-lucide="plus" class="w-5 h-5"></i>
+                    Add New Item
+                </button>
+            </div>
+        </div>
+
+        <!-- AI Tier Restriction Banner (Displayed when AI Training is disabled) -->
+        <div id="aiDisabledBanner" class="hidden p-5 mb-8 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-lg shadow-amber-500/5">
+            <div class="flex items-start sm:items-center gap-3.5">
+                <div class="p-2.5 rounded-xl bg-amber-500/20 text-amber-400 shrink-0">
+                    <i data-lucide="brain" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <h4 class="font-bold text-sm text-amber-300 flex items-center gap-2">
+                        AI Predictor Disabled (Manual Items View)
+                        <span class="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30">Tiered Access</span>
+                    </h4>
+                    <p class="text-xs text-slate-300 mt-0.5">Showing only manually added items. Opt in to AI Training to unlock live volume estimates, daily depletion burn rates, automated tracking, and community neural forecasting.</p>
+                </div>
+            </div>
+            <button id="btnEnableAIFromInventory" class="btn btn-sm bg-amber-500 hover:bg-amber-400 text-black font-extrabold whitespace-nowrap px-5 py-2.5 rounded-xl transition-all shadow-md shadow-amber-500/20 shrink-0">
+                <i data-lucide="sparkles" class="w-4 h-4 inline mr-1"></i> Enable AI Predictor
             </button>
+        </div>
+
+        <!-- Summary Metric Cards -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-sm">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Tracked Items</span>
+                    <i data-lucide="boxes" class="w-4 h-4 text-sky-400"></i>
+                </div>
+                <div class="text-2xl font-black text-white" id="statTotalItems">0</div>
+                <span class="text-[11px] text-slate-500">Live indexed assets</span>
+            </div>
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-sm">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">AI Forecast Status</span>
+                    <i data-lucide="cpu" class="w-4 h-4 text-emerald-400"></i>
+                </div>
+                <div class="text-sm font-bold text-emerald-400 flex items-center gap-1.5" id="statAIStatus">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                    <span>AI Enabled</span>
+                </div>
+                <span class="text-[11px] text-slate-500" id="statAISubtext">Neural predictions active</span>
+            </div>
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-sm">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Low Stock Alerts</span>
+                    <i data-lucide="alert-circle" class="w-4 h-4 text-rose-400"></i>
+                </div>
+                <div class="text-2xl font-black text-rose-400" id="statLowStock">0</div>
+                <span class="text-[11px] text-slate-500">Below threshold</span>
+            </div>
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-sm">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Velocity Sort</span>
+                    <i data-lucide="zap" class="w-4 h-4 text-amber-400"></i>
+                </div>
+                <div class="text-sm font-bold text-white truncate" id="statVelocitySort">Most-Used First</div>
+                <span class="text-[11px] text-slate-500">Auto-ranked by consumption</span>
+            </div>
+        </div>
+
+        <!-- Search & Filter Bar -->
+        <div class="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-4 mb-6">
+            <div class="relative flex-1 max-w-md">
+                <i data-lucide="search" class="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500"></i>
+                <input type="text" id="inventorySearchInput"
+                    placeholder="Search inventory items by name..."
+                    class="w-full bg-slate-900 border border-slate-800 rounded-xl pl-10 pr-10 py-2.5 text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-sky-500/50 focus:border-sky-500 transition-all">
+                <button id="clearSearchBtn" class="hidden absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            </div>
+
+            <div class="flex items-center gap-3">
+                <label for="inventorySortSelect" class="text-xs font-bold text-slate-400 uppercase tracking-wider shrink-0">Sort By:</label>
+                <select id="inventorySortSelect" class="bg-slate-900 border border-slate-800 text-slate-200 text-xs font-bold rounded-xl px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-sky-500/50 transition-all">
+                    <option value="velocity">🔥 Highest-Velocity (Most Used)</option>
+                    <option value="alpha">🔤 Alphabetical (A–Z)</option>
+                    <option value="stock">⚠️ Lowest Stock First</option>
+                </select>
+            </div>
         </div>
 
         <!-- Inventory Table Container -->
@@ -105,9 +197,13 @@
                 <table class="min-w-full divide-y divide-slate-800/50">
                     <thead class="bg-slate-800/50">
                         <tr>
+                            <th scope="col" class="w-12 px-4 py-4 text-center">
+                                <input type="checkbox" id="selectAllCheckbox" class="w-4 h-4 rounded text-sky-500 bg-slate-800 border-slate-700 focus:ring-sky-500 focus:ring-offset-slate-900 cursor-pointer" aria-label="Select All Items">
+                            </th>
                             <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">Item Name</th>
                             <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">Quantity</th>
                             <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">Low Stock Threshold</th>
+                            <th scope="col" class="px-6 py-4 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">Depletion & AI Forecast</th>
                             <th scope="col" class="px-6 py-4 text-right text-xs font-semibold text-slate-300 uppercase tracking-wider">Actions</th>
                         </tr>
                     </thead>
@@ -136,6 +232,14 @@
                 </button>
             </div>
         </div>
+
+        <!-- Sticky Floating Action Button: Import Selected to Shift Tracker -->
+        <button id="btnImportSelected"
+            class="fixed bottom-6 right-6 z-40 bg-sky-500 hover:bg-sky-400 text-white font-bold px-6 py-3.5 rounded-2xl shadow-2xl shadow-sky-500/40 flex items-center gap-2.5 transform transition-all hover:scale-105 hidden"
+            aria-label="Import selected items to Shift Tracker">
+            <i data-lucide="clipboard-check" class="w-5 h-5"></i>
+            <span id="btnImportSelectedText">Import Selected to Shift Tracker (0)</span>
+        </button>
     </main>
 
     <!-- Footer Container -->

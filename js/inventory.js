@@ -1,10 +1,21 @@
 import { auth, db } from '../firebase.js';
-import { collection, addDoc, updateDoc, deleteDoc, doc, getDoc, onSnapshot, query, where } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
-import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
 import { logManagerError, escapeHTML } from './utils.js';
+import * as InventoryAI from './inventory-ai.js';
 
 let currentOrgId = null;
+let currentUid = null;
+let isDashboardLoaded = false;
 let unsubscribeInventory = null;
+let unsubscribeUser = null;
+
+// Application State
+let rawInventoryItems = [];
+let userShiftHistory = [];
+let activeRecallMap = {};
+let selectedItemIds = new Set();
+let currentSearchQuery = '';
+let currentSortBy = 'velocity';
+let isAIEnabled = true;
 
 // DOM Elements
 const addItemBtn = document.getElementById('addItemBtn');
@@ -21,10 +32,24 @@ const cancelItemBtn = document.getElementById('cancelItemBtn');
 const loadingSpinner = document.getElementById('loadingSpinner');
 const emptyState = document.getElementById('emptyState');
 
-let currentUid = null;
-let isDashboardLoaded = false;
+// Search, Sort & Tier Controls
+const inventorySearchInput = document.getElementById('inventorySearchInput');
+const clearSearchBtn = document.getElementById('clearSearchBtn');
+const inventorySortSelect = document.getElementById('inventorySortSelect');
+const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+const btnImportSelected = document.getElementById('btnImportSelected');
+const btnImportSelectedText = document.getElementById('btnImportSelectedText');
+const aiDisabledBanner = document.getElementById('aiDisabledBanner');
+const btnEnableAIFromInventory = document.getElementById('btnEnableAIFromInventory');
 
-// Local Inventory helpers for instant UI and offline/demo support
+// Stat Cards
+const statTotalItems = document.getElementById('statTotalItems');
+const statAIStatus = document.getElementById('statAIStatus');
+const statAISubtext = document.getElementById('statAISubtext');
+const statLowStock = document.getElementById('statLowStock');
+const statVelocitySort = document.getElementById('statVelocitySort');
+
+// Local Storage helpers
 function getLocalInventory() {
     try {
         const stored = localStorage.getItem('ezManage_inventory_' + (currentOrgId || 'default'));
@@ -40,27 +65,14 @@ function saveLocalInventory(items) {
     } catch (e) {}
 }
 
-function renderLocalInventory(items) {
-    inventoryTableBody.replaceChildren();
-    if (!items || items.length === 0) {
-        emptyState.classList.remove('hidden');
-        return;
-    }
-    emptyState.classList.add('hidden');
-    const seenIds = new Set();
-    items.forEach(item => {
-        if (!item || !item.id || seenIds.has(item.id)) return;
-        seenIds.add(item.id);
-        const row = renderItemRow(item.id, item);
-        inventoryTableBody.appendChild(row);
-    });
-    if (window.lucide) window.lucide.createIcons();
-}
-
 export function cleanupInventory() {
     if (unsubscribeInventory) {
         unsubscribeInventory();
         unsubscribeInventory = null;
+    }
+    if (unsubscribeUser) {
+        unsubscribeUser();
+        unsubscribeUser = null;
     }
 }
 if (typeof window !== "undefined") {
@@ -68,356 +80,620 @@ if (typeof window !== "undefined") {
     window.addEventListener('unload', cleanupInventory);
 }
 
-// Auth State Change
-if (auth && typeof onAuthStateChanged === 'function') {
+// Evaluate AI permissions from user profile or local storage
+function evaluateAIPermissions(userData) {
+    const uid = currentUid || (auth && auth.currentUser ? auth.currentUser.uid : null) || localStorage.getItem('ezManage_lastUid');
+    const localAI = uid ? localStorage.getItem(`ezManage_aiEnabled_${uid}`) : null;
+    
+    // Default enabled unless explicitly toggled off
+    if (userData && userData.aiTrainingEnabled === false) {
+        isAIEnabled = false;
+    } else if (localAI === 'false') {
+        isAIEnabled = false;
+    } else {
+        isAIEnabled = true;
+    }
+
+    updateAIStatusUI();
+}
+
+function updateAIStatusUI() {
+    if (isAIEnabled) {
+        if (aiDisabledBanner) aiDisabledBanner.classList.add('hidden');
+        if (statAIStatus) {
+            statAIStatus.className = 'text-sm font-bold text-emerald-400 flex items-center gap-1.5';
+            statAIStatus.innerHTML = '<span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span><span>AI Enabled</span>';
+        }
+        if (statAISubtext) statAISubtext.textContent = 'Neural predictions active';
+    } else {
+        if (aiDisabledBanner) aiDisabledBanner.classList.remove('hidden');
+        if (statAIStatus) {
+            statAIStatus.className = 'text-sm font-bold text-amber-400 flex items-center gap-1.5';
+            statAIStatus.innerHTML = '<span class="w-2 h-2 rounded-full bg-amber-400"></span><span>AI Disabled</span>';
+        }
+        if (statAISubtext) statAISubtext.textContent = 'Manual items view';
+    }
+}
+
+// Fetch Announcements & Shift Notes to check for active recalls
+async function fetchRecallData() {
+    let announcements = [];
+    let shiftNotes = [];
+
     try {
-        onAuthStateChanged(auth, async (user) => {
+        const storedAnn = localStorage.getItem('ezManage_announcements');
+        if (storedAnn) announcements = JSON.parse(storedAnn);
+    } catch (e) {}
+
+    try {
+        const storedNotes = localStorage.getItem('ezManage_shift_notes');
+        if (storedNotes) shiftNotes = JSON.parse(storedNotes);
+    } catch (e) {}
+
+    if (db && currentOrgId && currentOrgId !== 'demo-org') {
+        try {
+            const annSnap = await db.collection('announcements')
+                .where('orgId', '==', currentOrgId)
+                .limit(10)
+                .get();
+            if (!annSnap.empty) {
+                announcements = annSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+            }
+        } catch (e) {
+            console.warn("Notice: could not fetch remote announcements for recall scan", e);
+        }
+    }
+
+    activeRecallMap = InventoryAI.scanAnnouncementsAndNotesForRecalls(announcements, shiftNotes, rawInventoryItems);
+}
+
+// Main Table Rendering Engine with Search, Sort, Recall Badges & AI Tiering
+function renderInventoryView() {
+    if (!inventoryTableBody) return;
+
+    // Filter and sort items using Unified Engine
+    const processedItems = InventoryAI.filterAndSortInventory(rawInventoryItems, {
+        searchTerm: currentSearchQuery,
+        sortBy: currentSortBy,
+        aiEnabled: isAIEnabled,
+        shiftHistory: userShiftHistory
+    });
+
+    inventoryTableBody.replaceChildren();
+
+    // Update Metric Cards
+    if (statTotalItems) statTotalItems.textContent = rawInventoryItems.length;
+    let lowStockCount = 0;
+    rawInventoryItems.forEach(i => {
+        if (Number(i.quantity) <= Number(i.threshold)) lowStockCount++;
+    });
+    if (statLowStock) statLowStock.textContent = lowStockCount;
+
+    if (statVelocitySort) {
+        if (currentSortBy === 'velocity') statVelocitySort.textContent = '🔥 Most-Used First';
+        else if (currentSortBy === 'alpha') statVelocitySort.textContent = '🔤 Alphabetical (A–Z)';
+        else if (currentSortBy === 'stock') statVelocitySort.textContent = '⚠️ Lowest Stock';
+    }
+
+    if (processedItems.length === 0) {
+        if (emptyState) emptyState.classList.remove('hidden');
+        updateSelectAllCheckbox(0, 0);
+        updateStickyImportBtn();
+        return;
+    }
+
+    if (emptyState) emptyState.classList.add('hidden');
+
+    const fragment = document.createDocumentFragment();
+    processedItems.forEach(item => {
+        const row = renderItemRow(item.id, item);
+        fragment.appendChild(row);
+    });
+
+    inventoryTableBody.appendChild(fragment);
+
+    updateSelectAllCheckbox(processedItems.length, countSelectedInList(processedItems));
+    updateStickyImportBtn();
+
+    if (window.lucide) window.lucide.createIcons();
+}
+
+function countSelectedInList(items) {
+    let count = 0;
+    items.forEach(i => {
+        if (selectedItemIds.has(i.id)) count++;
+    });
+    return count;
+}
+
+// Render Individual Item Row
+function renderItemRow(id, data) {
+    const row = document.createElement('tr');
+    const isLowStock = Number(data.quantity) <= Number(data.threshold);
+    row.id = `item-row-${id}`;
+    row.className = `border-b border-slate-800/50 transition-colors hover:bg-slate-800/20 ${isLowStock ? 'bg-rose-900/10' : ''}`;
+
+    const isSelected = selectedItemIds.has(id);
+    const recallBadgeHtml = InventoryAI.renderRecallBadgeHTML(data.itemName, activeRecallMap);
+
+    // AI Forecast & Depletion computation
+    const metrics = data.metrics || InventoryAI.calculateItemMetrics(data, userShiftHistory);
+    let aiColumnHtml = '';
+
+    if (!isAIEnabled) {
+        aiColumnHtml = `
+            <div class="flex items-center gap-1.5">
+                <span class="px-2.5 py-1 text-[10px] font-bold rounded-lg bg-slate-800 text-slate-400 border border-slate-700/60">AI Off (Manual)</span>
+            </div>
+        `;
+    } else {
+        const estBurn = metrics.dailyDepletionRate;
+        const daysLeft = metrics.estimatedDaysLeft;
+        const fc = metrics.aiForecast;
+        aiColumnHtml = `
+            <div class="flex flex-col gap-0.5">
+                <div class="text-xs font-bold text-slate-200 flex items-center gap-1.5 flex-wrap">
+                    <span>${estBurn}/day</span>
+                    <span class="text-[10px] font-normal text-slate-400">· ~${daysLeft}d stock</span>
+                    ${metrics.velocityTier === 'High' ? '<span class="text-[9px] font-black uppercase px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">🔥 High Velocity</span>' : ''}
+                </div>
+                <div class="text-[11px] font-mono text-sky-400">
+                    Next Shift: ${fc.bl} Back · ${fc.cl} Cool · ${fc.fr} Frz
+                </div>
+            </div>
+        `;
+    }
+
+    row.innerHTML = `
+        <td class="w-12 px-4 py-4 text-center whitespace-nowrap">
+            <input type="checkbox" class="item-select-checkbox w-4 h-4 rounded text-sky-500 bg-slate-800 border-slate-700 focus:ring-sky-500 cursor-pointer" data-id="${escapeHTML(id)}" ${isSelected ? 'checked' : ''} aria-label="Select ${escapeHTML(data.itemName)}">
+        </td>
+        <td class="px-6 py-4 whitespace-nowrap">
+            <div class="flex items-center">
+                <div class="h-10 w-10 rounded-full bg-slate-800 flex items-center justify-center mr-3 text-slate-300 shrink-0">
+                    <i data-lucide="package" class="w-5 h-5 text-sky-400"></i>
+                </div>
+                <div class="min-w-0">
+                    <div class="font-bold text-white flex items-center gap-2 flex-wrap">
+                        <span>${escapeHTML(data.itemName)}</span>
+                        ${recallBadgeHtml}
+                    </div>
+                    <div class="text-xs text-slate-400">Threshold: ${escapeHTML(data.threshold)}</div>
+                </div>
+            </div>
+        </td>
+        <td class="px-6 py-4 whitespace-nowrap">
+            <span class="text-lg font-bold font-mono ${isLowStock ? 'text-rose-400' : 'text-slate-200'}">
+                ${escapeHTML(data.quantity)}
+            </span>
+        </td>
+        <td class="px-6 py-4 whitespace-nowrap">
+            <span class="px-3 py-1 text-xs font-semibold rounded-full border ${
+                isLowStock 
+                ? 'bg-rose-950/40 text-rose-400 border-rose-800/50' 
+                : 'bg-emerald-950/40 text-emerald-400 border-emerald-800/50'
+            }">
+                ${isLowStock ? 'Low Stock' : 'In Stock'}
+            </span>
+        </td>
+        <td class="px-6 py-4 whitespace-nowrap">
+            ${aiColumnHtml}
+        </td>
+        <td class="px-6 py-4 whitespace-nowrap text-right text-sm">
+            <button data-action="edit" data-id="${escapeHTML(id)}" class="text-slate-400 hover:text-white mr-3 transition-colors" aria-label="Edit Item">
+                <i data-lucide="edit-2" class="w-4 h-4"></i>
+            </button>
+            <button data-action="delete" data-id="${escapeHTML(id)}" class="text-slate-400 hover:text-rose-400 transition-colors" aria-label="Delete Item">
+                <i data-lucide="trash-2" class="w-4 h-4"></i>
+            </button>
+        </td>
+    `;
+
+    const editBtn = row.querySelector('[data-action="edit"]');
+    if (editBtn) {
+        editBtn.dataset.name = data.itemName;
+        editBtn.dataset.quantity = data.quantity;
+        editBtn.dataset.threshold = data.threshold;
+    }
+
+    return row;
+}
+
+// Update Select All Checkbox state
+function updateSelectAllCheckbox(totalVisible, totalSelected) {
+    if (!selectAllCheckbox) return;
+    if (totalVisible === 0) {
+        selectAllCheckbox.checked = false;
+        selectAllCheckbox.indeterminate = false;
+    } else if (totalSelected === totalVisible) {
+        selectAllCheckbox.checked = true;
+        selectAllCheckbox.indeterminate = false;
+    } else if (totalSelected > 0) {
+        selectAllCheckbox.checked = false;
+        selectAllCheckbox.indeterminate = true;
+    } else {
+        selectAllCheckbox.checked = false;
+        selectAllCheckbox.indeterminate = false;
+    }
+}
+
+// Update Sticky Floating Action Button Visibility and Count
+function updateStickyImportBtn() {
+    if (!btnImportSelected) return;
+    const count = selectedItemIds.size;
+    if (count > 0) {
+        btnImportSelected.classList.remove('hidden');
+        if (btnImportSelectedText) {
+            btnImportSelectedText.textContent = `Import Selected to Shift Tracker (${count})`;
+        }
+    } else {
+        btnImportSelected.classList.add('hidden');
+    }
+}
+
+// Auth State Change - wait for auth resolution
+if (auth && typeof auth.onAuthStateChanged === 'function') {
+    try {
+        auth.onAuthStateChanged(async (user) => {
             if (user && user.uid === currentUid && isDashboardLoaded) return;
             currentUid = user ? user.uid : null;
             isDashboardLoaded = true;
+
+            if (user) {
+                localStorage.setItem('ezManage_lastUid', user.uid);
+            }
+
             if (user && db) {
                 try {
-                    // Fetch user's orgId
-                    const userDoc = await getDoc(doc(db, 'users', user.uid));
-                    if (userDoc && userDoc.exists()) {
-                        currentOrgId = userDoc.data().orgId || user.uid;
+                    const userDoc = await db.collection('users').doc(user.uid).get();
+                    if (userDoc && userDoc.exists) {
+                        const uData = userDoc.data();
+                        currentOrgId = uData.orgId || user.uid;
+                        userShiftHistory = uData.shiftHistory || [];
+                        evaluateAIPermissions(uData);
                     } else {
                         currentOrgId = user.uid;
+                        evaluateAIPermissions({});
                     }
+
+                    // Listen to user doc for real-time AI toggle changes
+                    if (unsubscribeUser) unsubscribeUser();
+                    unsubscribeUser = db.collection('users').doc(user.uid).onSnapshot(snap => {
+                        if (snap.exists) {
+                            const uData = snap.data();
+                            userShiftHistory = uData.shiftHistory || [];
+                            evaluateAIPermissions(uData);
+                            renderInventoryView();
+                        }
+                    });
                 } catch (error) {
                     logManagerError("Error fetching user profile", error);
                     currentOrgId = user.uid;
+                    evaluateAIPermissions({});
                 }
+            } else if (user) {
+                currentOrgId = user.uid;
+                evaluateAIPermissions({});
             } else {
                 currentOrgId = 'demo-org';
+                evaluateAIPermissions({});
             }
+
             loadInventory();
         });
     } catch (e) {
         currentOrgId = 'demo-org';
+        evaluateAIPermissions({});
         loadInventory();
     }
 } else {
     currentOrgId = 'demo-org';
+    evaluateAIPermissions({});
     loadInventory();
 }
 
 // Load Inventory Items Real-time
-function loadInventory() {
+async function loadInventory() {
     if (unsubscribeInventory) {
         unsubscribeInventory();
         unsubscribeInventory = null;
     }
 
-    loadingSpinner.classList.remove('hidden');
-    emptyState.classList.add('hidden');
-    inventoryTableBody.replaceChildren();
+    if (loadingSpinner) loadingSpinner.classList.remove('hidden');
+    if (emptyState) emptyState.classList.add('hidden');
 
-    // Check local inventory first for instant response
+    // Instant local cache load
     const cachedItems = getLocalInventory();
     if (cachedItems && cachedItems.length > 0) {
-        renderLocalInventory(cachedItems);
-        loadingSpinner.classList.add('hidden');
+        rawInventoryItems = cachedItems;
+        await fetchRecallData();
+        renderInventoryView();
+        if (loadingSpinner) loadingSpinner.classList.add('hidden');
     }
 
-    if (!db) {
-        loadingSpinner.classList.add('hidden');
-        if (inventoryTableBody.children.length === 0) {
-            emptyState.classList.remove('hidden');
-            if (window.lucide) window.lucide.createIcons();
-        }
+    if (!db || !currentOrgId || currentOrgId === 'demo-org') {
+        if (loadingSpinner) loadingSpinner.classList.add('hidden');
+        await fetchRecallData();
+        renderInventoryView();
         return;
     }
 
     // Safety timeout: ensure loading spinner is never stuck infinitely
     const loadTimeout = setTimeout(() => {
-        loadingSpinner.classList.add('hidden');
-        if (inventoryTableBody.children.length === 0) {
-            emptyState.classList.remove('hidden');
-            if (window.lucide) window.lucide.createIcons();
-        }
+        if (loadingSpinner) loadingSpinner.classList.add('hidden');
+        renderInventoryView();
     }, 1500);
 
-    const q = query(collection(db, "inventory"), where("orgId", "==", currentOrgId));
-
-    // Flag to handle initial load vs incremental updates to avoid duplicates on re-subscription
-    let isInitialRender = true;
-
     try {
-        unsubscribeInventory = onSnapshot(q, (snapshot) => {
-            clearTimeout(loadTimeout);
-            loadingSpinner.classList.add('hidden');
+        unsubscribeInventory = db.collection('inventory')
+            .where('orgId', '==', currentOrgId)
+            .onSnapshot(async (snapshot) => {
+                clearTimeout(loadTimeout);
+                if (loadingSpinner) loadingSpinner.classList.add('hidden');
 
-            if (snapshot.empty) {
+                if (snapshot.empty) {
+                    const local = getLocalInventory();
+                    rawInventoryItems = (local && local.length > 0) ? local : [];
+                } else {
+                    const remoteItems = [];
+                    snapshot.forEach(d => remoteItems.push({ id: d.id, ...d.data() }));
+                    rawInventoryItems = remoteItems;
+                    saveLocalInventory(remoteItems);
+                }
+
+                await fetchRecallData();
+                renderInventoryView();
+            }, async (error) => {
+                clearTimeout(loadTimeout);
+                logManagerError("Error fetching inventory:", error);
+                if (loadingSpinner) loadingSpinner.classList.add('hidden');
                 const local = getLocalInventory();
-                if (local && local.length > 0) {
-                    renderLocalInventory(local);
-                } else {
-                    emptyState.classList.remove('hidden');
-                    inventoryTableBody.replaceChildren();
-                }
-                if (window.lucide) window.lucide.createIcons();
-                return;
-            }
-
-            emptyState.classList.add('hidden');
-
-            const remoteItems = [];
-            snapshot.forEach(d => remoteItems.push({ id: d.id, ...d.data() }));
-            saveLocalInventory(remoteItems);
-
-            if (isInitialRender) {
-                 inventoryTableBody.replaceChildren();
-                 isInitialRender = false;
-            }
-
-        // ⚡ Bolt Optimization: Use docChanges() to incrementally update the DOM instead of recreating it all.
-        // Impact: Eliminates O(N) DOM node destruction and recreation on every update, drastically reducing layout thrashing.
-        snapshot.docChanges().forEach((change) => {
-            const data = change.doc.data();
-            const id = change.doc.id;
-
-            if (change.type === 'added') {
-                const existingRow = document.getElementById(`item-row-${id}`);
-                const row = renderItemRow(id, data);
-                if (existingRow) {
-                    // Item already in DOM (e.g. from local inventory render), replace in-place to prevent double painting
-                    inventoryTableBody.replaceChild(row, existingRow);
-                } else {
-                    // Check if an optimistic/temp row exists (matching item name)
-                    const tempRow = Array.from(inventoryTableBody.children).find(r => 
-                        r.getAttribute('data-item-name') === data.itemName
-                    );
-                    if (tempRow) {
-                        inventoryTableBody.replaceChild(row, tempRow);
-                    } else {
-                        const existingNodes = inventoryTableBody.children;
-                        if (existingNodes.length > change.newIndex) {
-                            inventoryTableBody.insertBefore(row, existingNodes[change.newIndex]);
-                        } else {
-                            inventoryTableBody.appendChild(row);
-                        }
-                    }
-                }
-            }
-            if (change.type === 'modified') {
-                const oldRow = document.getElementById(`item-row-${id}`);
-                const newRow = renderItemRow(id, data);
-
-                if (oldRow) {
-                    if (change.oldIndex === change.newIndex) {
-                        inventoryTableBody.replaceChild(newRow, oldRow);
-                    } else {
-                        oldRow.remove();
-                        const existingNodes = inventoryTableBody.children;
-                        if (existingNodes.length > change.newIndex) {
-                            inventoryTableBody.insertBefore(newRow, existingNodes[change.newIndex]);
-                        } else {
-                            inventoryTableBody.appendChild(newRow);
-                        }
-                    }
-                } else {
-                    const existingNodes = inventoryTableBody.children;
-                    if (existingNodes.length > change.newIndex) {
-                        inventoryTableBody.insertBefore(newRow, existingNodes[change.newIndex]);
-                    } else {
-                        inventoryTableBody.appendChild(newRow); // Fallback
-                    }
-                }
-            }
-            if (change.type === 'removed') {
-                const oldRow = document.getElementById(`item-row-${id}`);
-                if (oldRow) {
-                    oldRow.remove();
-                }
-            }
-        });
-
-        if (window.lucide) window.lucide.createIcons();
-    }, (error) => {
-        clearTimeout(loadTimeout);
-        logManagerError("Error fetching inventory:", error);
-        loadingSpinner.classList.add('hidden');
-        const local = getLocalInventory();
-        if (local && local.length > 0) {
-            renderLocalInventory(local);
-        } else {
-            emptyState.classList.remove('hidden');
-        }
-        if (window.lucide) window.lucide.createIcons();
-    });
+                rawInventoryItems = (local && local.length > 0) ? local : [];
+                await fetchRecallData();
+                renderInventoryView();
+            });
     } catch (err) {
         clearTimeout(loadTimeout);
-        logManagerError("Firestore onSnapshot error:", err);
-        loadingSpinner.classList.add('hidden');
-        const local = getLocalInventory();
-        if (local && local.length > 0) {
-            renderLocalInventory(local);
-        } else {
-            emptyState.classList.remove('hidden');
-        }
-        if (window.lucide) window.lucide.createIcons();
+        logManagerError("Synchronous error attaching inventory listener:", err);
+        if (loadingSpinner) loadingSpinner.classList.add('hidden');
+        renderInventoryView();
     }
 }
 
-// Render Table Row
-function renderItemRow(id, data) {
-    const isLowStock = parseInt(data.quantity) < parseInt(data.threshold);
-    const row = document.createElement('tr');
-    row.id = `item-row-${id}`; // Needed for targeted DOM updates
-    row.setAttribute('data-item-id', id);
-    row.setAttribute('data-item-name', data.itemName || '');
-    row.className = `border-b border-slate-800/50 transition-colors hover:bg-slate-800/20 ${isLowStock ? 'bg-rose-900/10' : ''}`;
-
-    row.insertAdjacentHTML('beforeend', `
-        <td class="px-6 py-4 whitespace-nowrap">
-            <div class="flex items-center">
-                <div class="h-10 w-10 rounded-full bg-slate-800 flex items-center justify-center mr-3 text-slate-300">
-                    <i data-lucide="${isLowStock ? 'alert-triangle' : 'box'}" class="${isLowStock ? 'text-rose-400' : ''}"></i>
-                </div>
-                <div class="text-sm font-medium text-slate-200">${escapeHTML(data.itemName)}</div>
-            </div>
-        </td>
-        <td class="px-6 py-4 whitespace-nowrap">
-            <span class="px-3 py-1 inline-flex text-sm leading-5 font-semibold rounded-full ${isLowStock ? 'bg-rose-900/50 text-rose-300 border border-rose-800' : 'bg-slate-800 text-slate-300'}">
-                ${escapeHTML(String(data.quantity))}
-            </span>
-        </td>
-        <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-400">
-            ${escapeHTML(String(data.threshold))}
-        </td>
-        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-            <button data-action="edit" data-id="${id}" class="text-sky-400 hover:text-sky-300 mr-3 p-1 rounded-md hover:bg-sky-400/10 transition-colors" aria-label="Edit item">
-                <i data-lucide="edit-2" class="w-4 h-4"></i>
-            </button>
-            <button data-action="delete" data-id="${id}" class="text-rose-400 hover:text-rose-300 p-1 rounded-md hover:bg-rose-400/10 transition-colors" aria-label="Delete item">
-                <i data-lucide="trash-2" class="w-4 h-4"></i>
-            </button>
-        </td>
-    `);
-
-    // Attach dataset properties securely after creation
-    const editBtn = row.querySelector('[data-action="edit"]');
-    editBtn.dataset.name = data.itemName;
-    editBtn.dataset.quantity = data.quantity;
-    editBtn.dataset.threshold = data.threshold;
-
-    return row;
+// Search & Sort Event Listeners
+if (inventorySearchInput) {
+    inventorySearchInput.addEventListener('input', (e) => {
+        currentSearchQuery = e.target.value;
+        if (clearSearchBtn) {
+            if (currentSearchQuery) clearSearchBtn.classList.remove('hidden');
+            else clearSearchBtn.classList.add('hidden');
+        }
+        renderInventoryView();
+    });
 }
 
-// Event Listeners
+if (clearSearchBtn) {
+    clearSearchBtn.addEventListener('click', () => {
+        if (inventorySearchInput) inventorySearchInput.value = '';
+        currentSearchQuery = '';
+        clearSearchBtn.classList.add('hidden');
+        renderInventoryView();
+    });
+}
 
-inventoryTableBody.addEventListener('click', async (e) => {
-    const btn = e.target.closest('button[data-action]');
-    if (!btn) return;
+if (inventorySortSelect) {
+    inventorySortSelect.addEventListener('change', (e) => {
+        currentSortBy = e.target.value;
+        renderInventoryView();
+    });
+}
 
-    const action = btn.dataset.action;
-    const id = btn.dataset.id;
+// Select All & Row Selection Checkboxes
+if (selectAllCheckbox) {
+    selectAllCheckbox.addEventListener('change', (e) => {
+        const isChecked = e.target.checked;
+        const visibleItems = InventoryAI.filterAndSortInventory(rawInventoryItems, {
+            searchTerm: currentSearchQuery,
+            sortBy: currentSortBy,
+            aiEnabled: isAIEnabled,
+            shiftHistory: userShiftHistory
+        });
 
-    if (action === 'edit') {
-        modalTitle.textContent = 'Edit Item';
-        itemIdInput.value = id;
-        itemNameInput.value = btn.dataset.name;
-        itemQuantityInput.value = btn.dataset.quantity;
-        itemThresholdInput.value = btn.dataset.threshold;
-        itemModal.classList.remove('hidden');
-        itemModal.classList.add('flex');
-    } else if (action === 'delete') {
-        if (confirm("Are you sure you want to delete this item?")) {
-            // Instant local update
-            const oldRow = document.getElementById(`item-row-${id}`);
-            if (oldRow) oldRow.remove();
+        visibleItems.forEach(item => {
+            if (isChecked) selectedItemIds.add(item.id);
+            else selectedItemIds.delete(item.id);
+        });
 
-            let items = getLocalInventory() || [];
-            items = items.filter(i => i.id !== id);
-            saveLocalInventory(items);
+        // Update all checkbox elements in DOM
+        document.querySelectorAll('.item-select-checkbox').forEach(chk => {
+            chk.checked = isChecked;
+        });
 
-            if (inventoryTableBody.children.length === 0) {
-                emptyState.classList.remove('hidden');
-            }
+        updateStickyImportBtn();
+    });
+}
 
+// Sticky Floating Import Button Action
+if (btnImportSelected) {
+    btnImportSelected.addEventListener('click', () => {
+        const selected = rawInventoryItems.filter(item => selectedItemIds.has(item.id));
+        if (selected.length === 0) return;
+
+        InventoryAI.prepareTrackerImportPayload(selected);
+
+        // Clear selection
+        selectedItemIds.clear();
+        updateStickyImportBtn();
+
+        // Navigate to Tracker
+        window.location.href = 'index.html#tracker';
+    });
+}
+
+// Enable AI Predictor from Banner Button
+if (btnEnableAIFromInventory) {
+    btnEnableAIFromInventory.addEventListener('click', async () => {
+        const uid = currentUid || localStorage.getItem('ezManage_lastUid');
+        if (uid) {
+            localStorage.setItem(`ezManage_aiEnabled_${uid}`, 'true');
+            localStorage.setItem(`ezManage_cloudEnabled_${uid}`, 'true');
+        }
+        isAIEnabled = true;
+        updateAIStatusUI();
+        renderInventoryView();
+
+        if (currentUid && db) {
             try {
-                if (db) {
-                    await deleteDoc(doc(db, "inventory", id));
+                await db.collection('users').doc(currentUid).set({
+                    aiTrainingEnabled: true,
+                    cloudSyncEnabled: true
+                }, { merge: true });
+            } catch (e) {
+                console.warn("Could not sync AI opt-in to Firestore:", e);
+            }
+        }
+    });
+}
+
+// Table Action Listeners (Edit, Delete, Checkbox)
+if (inventoryTableBody) {
+    inventoryTableBody.addEventListener('change', (e) => {
+        const chk = e.target.closest('.item-select-checkbox');
+        if (!chk) return;
+        const id = chk.dataset.id;
+        if (chk.checked) selectedItemIds.add(id);
+        else selectedItemIds.delete(id);
+
+        const visibleItems = InventoryAI.filterAndSortInventory(rawInventoryItems, {
+            searchTerm: currentSearchQuery,
+            sortBy: currentSortBy,
+            aiEnabled: isAIEnabled,
+            shiftHistory: userShiftHistory
+        });
+        updateSelectAllCheckbox(visibleItems.length, countSelectedInList(visibleItems));
+        updateStickyImportBtn();
+    });
+
+    inventoryTableBody.addEventListener('click', async (e) => {
+        const btn = e.target.closest('button[data-action]');
+        if (!btn) return;
+
+        const action = btn.dataset.action;
+        const id = btn.dataset.id;
+
+        if (action === 'edit') {
+            if (modalTitle) modalTitle.textContent = 'Edit Item';
+            if (itemIdInput) itemIdInput.value = id;
+            if (itemNameInput) itemNameInput.value = btn.dataset.name || '';
+            if (itemQuantityInput) itemQuantityInput.value = btn.dataset.quantity || '';
+            if (itemThresholdInput) itemThresholdInput.value = btn.dataset.threshold || '';
+            if (itemModal) {
+                itemModal.classList.remove('hidden');
+                itemModal.classList.add('flex');
+            }
+        } else if (action === 'delete') {
+            if (confirm("Are you sure you want to delete this item?")) {
+                const oldRow = (id ? document.getElementById(`item-row-${id}`) : null) || btn.closest('tr');
+                if (oldRow) oldRow.remove();
+
+                rawInventoryItems = rawInventoryItems.filter(i => i.id !== id);
+                selectedItemIds.delete(id);
+                saveLocalInventory(rawInventoryItems);
+
+                renderInventoryView();
+
+                try {
+                    if (db && currentOrgId && currentOrgId !== 'demo-org') {
+                        await db.collection('inventory').doc(id).delete();
+                    }
+                } catch (error) {
+                    logManagerError("Error deleting item from Firestore:", error);
                 }
-            } catch (error) {
-                logManagerError("Error deleting item from Firestore:", error);
             }
         }
-    }
-});
+    });
+}
 
-addItemBtn.addEventListener('click', () => {
-    modalTitle.textContent = 'Add New Item';
-    itemForm.reset();
-    itemIdInput.value = '';
-    itemModal.classList.remove('hidden');
-    itemModal.classList.add('flex');
-});
+// Modal open/close controls
+if (addItemBtn) {
+    addItemBtn.addEventListener('click', () => {
+        if (modalTitle) modalTitle.textContent = 'Add New Item';
+        if (itemForm) itemForm.reset();
+        if (itemIdInput) itemIdInput.value = '';
+        if (itemModal) {
+            itemModal.classList.remove('hidden');
+            itemModal.classList.add('flex');
+        }
+    });
+}
 
-closeItemModal.addEventListener('click', () => {
-    itemModal.classList.add('hidden');
-    itemModal.classList.remove('flex');
-});
+if (closeItemModal) {
+    closeItemModal.addEventListener('click', () => {
+        if (itemModal) {
+            itemModal.classList.add('hidden');
+            itemModal.classList.remove('flex');
+        }
+    });
+}
 
-cancelItemBtn.addEventListener('click', () => {
-    itemModal.classList.add('hidden');
-    itemModal.classList.remove('flex');
-});
+if (cancelItemBtn) {
+    cancelItemBtn.addEventListener('click', () => {
+        if (itemModal) {
+            itemModal.classList.add('hidden');
+            itemModal.classList.remove('flex');
+        }
+    });
+}
 
-itemForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
+// Add/Edit Form Submission
+if (itemForm) {
+    itemForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
 
-    const effectiveOrgId = currentOrgId || (auth && auth.currentUser ? auth.currentUser.uid : 'demo-org');
+        const effectiveOrgId = currentOrgId || (auth && auth.currentUser ? auth.currentUser.uid : null) || 'demo-org';
 
-    const id = itemIdInput.value;
-    const name = itemNameInput.value.trim();
-    const quantity = parseInt(itemQuantityInput.value, 10);
-    const threshold = parseInt(itemThresholdInput.value, 10);
+        const id = itemIdInput ? itemIdInput.value : '';
+        const name = itemNameInput ? itemNameInput.value.trim() : '';
+        const quantity = parseInt(itemQuantityInput ? itemQuantityInput.value : '0', 10);
+        const threshold = parseInt(itemThresholdInput ? itemThresholdInput.value : '0', 10);
 
-    const itemData = {
-        itemName: name,
-        quantity: quantity,
-        threshold: threshold,
-        orgId: effectiveOrgId
-    };
+        const itemData = {
+            itemName: name,
+            quantity: quantity,
+            threshold: threshold,
+            orgId: effectiveOrgId,
+            addedVia: 'manual'
+        };
 
-    const targetId = id || ('inv_' + Date.now());
-    itemData.id = targetId;
+        const targetId = id || ('inv_' + Date.now());
+        itemData.id = targetId;
 
-    // Instant local update
-    let items = getLocalInventory() || [];
-    if (id) {
-        items = items.map(it => it.id === id ? { ...it, ...itemData } : it);
-        const oldRow = document.getElementById(`item-row-${id}`);
-        const newRow = renderItemRow(id, itemData);
-        if (oldRow) {
-            inventoryTableBody.replaceChild(newRow, oldRow);
+        // Instant local update
+        if (id) {
+            rawInventoryItems = rawInventoryItems.map(it => it.id === id ? { ...it, ...itemData } : it);
         } else {
-            inventoryTableBody.appendChild(newRow);
+            rawInventoryItems.push(itemData);
         }
-    } else {
-        items.push(itemData);
-        const newRow = renderItemRow(targetId, itemData);
-        inventoryTableBody.appendChild(newRow);
-    }
-    saveLocalInventory(items);
+        saveLocalInventory(rawInventoryItems);
 
-    emptyState.classList.add('hidden');
-    itemModal.classList.add('hidden');
-    itemModal.classList.remove('flex');
-    if (window.lucide) window.lucide.createIcons();
+        if (itemModal) {
+            itemModal.classList.add('hidden');
+            itemModal.classList.remove('flex');
+        }
 
-    try {
-        if (db) {
-            if (id) {
-                const itemRef = doc(db, "inventory", id);
-                await updateDoc(itemRef, itemData);
-            } else {
-                await addDoc(collection(db, "inventory"), itemData);
+        renderInventoryView();
+
+        try {
+            if (db && currentOrgId && currentOrgId !== 'demo-org') {
+                if (id) {
+                    await db.collection('inventory').doc(id).update(itemData);
+                } else {
+                    const docRef = await db.collection('inventory').add(itemData);
+                    itemData.id = docRef.id;
+                }
             }
+        } catch (error) {
+            logManagerError("Error syncing item to Firestore:", error);
         }
-    } catch (error) {
-        logManagerError("Error syncing item to Firestore:", error);
-    }
-});
+    });
+}

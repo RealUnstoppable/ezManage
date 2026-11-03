@@ -50,6 +50,12 @@ describe('getUserRedirectPath', () => {
         getUserRedirectPath = authModule.getUserRedirectPath;
     });
 
+    it('should return "company.html" for CorporateAdmin or Creator or catalinandrian1@gmail.com', () => {
+        expect(getUserRedirectPath({ email: 'catalinandrian1@gmail.com' })).toBe('company.html');
+        expect(getUserRedirectPath({ role: 'CorporateAdmin' })).toBe('company.html');
+        expect(getUserRedirectPath({ role: 'Creator' })).toBe('company.html');
+    });
+
     it('should return "admin.html" if user data exists and isAdmin is true', () => {
         const result = getUserRedirectPath({ isAdmin: true });
         expect(result).toBe('admin.html');

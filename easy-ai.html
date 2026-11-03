@@ -201,11 +201,14 @@
                     Training</b> in your profile settings. This ensures you maintain full control over your data.
             </p>
             <div class="space-y-3">
-                <button onclick="navTo('profile')" class="btn w-full py-4 text-white font-bold rounded-xl"
+                <button onclick="enableAIAndCloudSync()" class="btn w-full py-4 text-white font-bold rounded-xl shadow-lg shadow-sky-500/20"
                     style="background: var(--accent);">
-                    Enable in Profile Settings
+                    <i data-lucide="check-circle-2" class="w-4 h-4 inline-block mr-1"></i> Enable AI Training & Cloud Sync Now
                 </button>
-                <button onclick="navTo('tracker')" class="btn btn-outline w-full py-4 rounded-xl">
+                <button onclick="navTo('profile')" class="btn btn-outline w-full py-3.5 text-slate-700 dark:text-slate-300 font-bold rounded-xl">
+                    Open Profile Settings
+                </button>
+                <button onclick="navTo('tracker')" class="btn btn-ghost w-full py-3 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-sm">
                     Return to Tracker
                 </button>
             </div>
@@ -290,6 +293,16 @@
 
     <main class="pt-[var(--nav-height)] min-h-screen pb-20">
         <div class="max-w-5xl mx-auto px-6 mt-12">
+
+            <!-- Unified Inventory & AI Hub Navigation -->
+            <div class="flex items-center gap-2 overflow-x-auto pb-4 mb-6 border-b border-slate-200 dark:border-slate-800 text-xs font-bold no-scrollbar">
+                <a href="inventory.html" class="px-4 py-2 rounded-xl transition-all flex items-center gap-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700">
+                    <i data-lucide="package" class="w-3.5 h-3.5"></i> Stock & Assets
+                </a>
+                <a href="easy-ai.html" class="px-4 py-2 rounded-xl transition-all flex items-center gap-2 bg-sky-500 text-white shadow-md shadow-sky-500/20">
+                    <i data-lucide="brain" class="w-3.5 h-3.5"></i> AI Demand Predictor
+                </a>
+            </div>
 
             <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
                 <div>
@@ -421,8 +434,12 @@
             if (tempUid) {
                 const localAI = localStorage.getItem(`ezManage_aiEnabled_${tempUid}`);
                 const localCloud = localStorage.getItem(`ezManage_cloudEnabled_${tempUid}`);
-                if (localAI === 'false' || localCloud === 'false') {
-                    document.getElementById('aiRestrictionModal').classList.remove('hidden');
+                if (localAI === 'true' && localCloud === 'true') {
+                    const modal = document.getElementById('aiRestrictionModal');
+                    if (modal) modal.classList.add('hidden');
+                } else if (localAI === 'false' || localCloud === 'false') {
+                    const modal = document.getElementById('aiRestrictionModal');
+                    if (modal) modal.classList.remove('hidden');
                 }
             }
         })();
@@ -440,7 +457,12 @@
                     if (doc.exists) {
                         currentUserData = doc.data();
                         checkAIRestrictions(currentUserData);
+                    } else {
+                        checkAIRestrictions({});
                     }
+                }, err => {
+                    console.warn("User doc listener notice:", err);
+                    checkAIRestrictions({});
                 });
                 updateStatus('Fetching Data', 'amber');
             } else {
@@ -452,7 +474,33 @@
             }
         });
 
-
+        window.enableAIAndCloudSync = async function() {
+            const uid = (currentUser && currentUser.uid) || localStorage.getItem('ezManage_lastUid');
+            if (uid) {
+                localStorage.setItem(`ezManage_cloudEnabled_${uid}`, 'true');
+                localStorage.setItem(`ezManage_aiEnabled_${uid}`, 'true');
+            }
+            if (currentUser && db) {
+                try {
+                    await db.collection("users").doc(currentUser.uid).set({
+                        cloudSyncEnabled: true,
+                        aiTrainingEnabled: true
+                    }, { merge: true });
+                } catch (e) {
+                    console.warn("Error saving AI settings in Firestore:", e);
+                }
+            }
+            if (currentUserData) {
+                currentUserData.cloudSyncEnabled = true;
+                currentUserData.aiTrainingEnabled = true;
+            } else {
+                currentUserData = { cloudSyncEnabled: true, aiTrainingEnabled: true };
+            }
+            checkAIRestrictions(currentUserData);
+            if (currentUser) {
+                fetchHistoryData(currentUser.uid);
+            }
+        };
 
         function updateStatus(text, color) {
             const ind = document.getElementById('statusIndicator');
@@ -476,16 +524,30 @@
 
         function checkAIRestrictions(data) {
             const modal = document.getElementById('aiRestrictionModal');
-            if (!data.cloudSyncEnabled || data.aiTrainingEnabled === false) {
+            const uid = (currentUser && currentUser.uid) || localStorage.getItem('ezManage_lastUid');
+            const localCloud = uid ? localStorage.getItem(`ezManage_cloudEnabled_${uid}`) : null;
+            const localAI = uid ? localStorage.getItem(`ezManage_aiEnabled_${uid}`) : null;
+
+            // Two-way evaluation: Either Firestore flag or local storage cache
+            const cloudEnabled = (data && data.cloudSyncEnabled === true) || localCloud === 'true';
+            const aiEnabled = (data && data.aiTrainingEnabled !== false) && localAI !== 'false';
+
+            if (!cloudEnabled || !aiEnabled) {
                 updateStatus('AI Disabled', 'amber');
-                modal.classList.remove('hidden');
-                document.getElementById('resultsPlaceholder').innerHTML = `Access Restricted.`;
+                if (modal) modal.classList.remove('hidden');
+                const placeholder = document.getElementById('resultsPlaceholder');
+                if (placeholder) placeholder.innerHTML = `Access Restricted.`;
                 return false;
             } else {
-                modal.classList.add('hidden');
+                if (modal) modal.classList.add('hidden');
+                // Ensure local cache matches active permission
+                if (uid) {
+                    localStorage.setItem(`ezManage_cloudEnabled_${uid}`, 'true');
+                    localStorage.setItem(`ezManage_aiEnabled_${uid}`, 'true');
+                }
             }
 
-            if (document.getElementById('statShiftsFound').innerText === '0') {
+            if (document.getElementById('statShiftsFound').innerText === '0' && currentUser) {
                 fetchHistoryData(currentUser.uid);
             }
             return true;
