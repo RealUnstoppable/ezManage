@@ -203,6 +203,20 @@ exports.stripeWebhook = onRequest({invoker: "public"}, async (req, res) => {
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
 
+  // 🛡️ Webhook Idempotency Check (Prevent duplicate execution on retries)
+  const eventId = event && event.id;
+  if (eventId) {
+    try {
+      const eventDoc = await admin.firestore().collection("processed_stripe_events").doc(eventId).get();
+      if (eventDoc && typeof eventDoc.data === "function" && eventDoc.exists) {
+        console.log(`[Stripe Webhook] Duplicate event ${eventId} already processed, skipping.`);
+        return res.status(200).json({ received: true, duplicate: true });
+      }
+    } catch (idempotencyCheckErr) {
+      logManagerError("Error checking event idempotency:", idempotencyCheckErr);
+    }
+  }
+
   // 🎯 Handle Events
   if (event.type === "checkout.session.completed") {
     const session = event.data.object;
@@ -304,6 +318,19 @@ exports.stripeWebhook = onRequest({invoker: "public"}, async (req, res) => {
       } catch (invoiceErr) {
         logManagerError("Error processing invoice.payment_succeeded webhook:", invoiceErr);
       }
+    }
+  }
+
+  // 🛡️ Record processed event for idempotency tracking
+  if (eventId) {
+    try {
+      await admin.firestore().collection("processed_stripe_events").doc(eventId).set({
+        type: event.type,
+        processedAt: admin.firestore.FieldValue.serverTimestamp(),
+        created: event.created || Math.floor(Date.now() / 1000),
+      });
+    } catch (idempotencyWriteErr) {
+      logManagerError("Error recording processed stripe event:", idempotencyWriteErr);
     }
   }
 

@@ -27,6 +27,7 @@ app.use(
           "https://js.stripe.com",
           "https://apis.google.com",
         ],
+        scriptSrcAttr: ["'unsafe-inline'"],
         styleSrc: [
           "'self'",
           "'unsafe-inline'",
@@ -116,6 +117,7 @@ const webhookLimiter = rateLimit({
 const stripeSecret = process.env.STRIPE_SECRET || "sk_test_placeholder";
 const stripeWebhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 const stripe = Stripe(stripeSecret);
+const processedStripeWebhookEvents = new Set();
 
 app.post(
   "/webhook",
@@ -146,6 +148,20 @@ app.post(
         error: err.message,
       });
       return res.status(400).send(`Webhook Signature Error: ${err.message}`);
+    }
+
+    // 🛡️ Webhook Idempotency Check
+    const eventId = event && event.id;
+    if (eventId && processedStripeWebhookEvents.has(eventId)) {
+      console.log(`[Stripe Webhook] Duplicate event ${eventId} already processed, skipping.`);
+      return res.status(200).json({ received: true, duplicate: true });
+    }
+    if (eventId) {
+      if (processedStripeWebhookEvents.size >= 5000) {
+        const oldest = processedStripeWebhookEvents.values().next().value;
+        processedStripeWebhookEvents.delete(oldest);
+      }
+      processedStripeWebhookEvents.add(eventId);
     }
 
     // Handle the event

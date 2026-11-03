@@ -1,8 +1,20 @@
 const mockConstructEvent = jest.fn();
 
+const mockProcessedEventsDoc = {
+  get: jest.fn().mockResolvedValue({ exists: false, data: () => ({}) }),
+  set: jest.fn().mockResolvedValue({}),
+};
+
 const mockFirestore = {
   initializeApp: jest.fn(),
-  collection: jest.fn().mockReturnThis(),
+  collection: jest.fn((name) => {
+    if (name === "processed_stripe_events") {
+      return {
+        doc: jest.fn(() => mockProcessedEventsDoc),
+      };
+    }
+    return mockFirestore;
+  }),
   doc: jest.fn().mockReturnThis(),
   where: jest.fn().mockReturnThis(),
   limit: jest.fn().mockReturnThis(),
@@ -92,6 +104,60 @@ describe("Stripe Webhook Processing & Security", () => {
     await stripeWebhook(req, res);
     expect(res.status).toHaveBeenCalledWith(400);
     expect(res.send).toHaveBeenCalledWith("Webhook Error: Invalid signature");
+  });
+
+  describe("Webhook Idempotency & Deduplication", () => {
+    it("should skip duplicate events if event.id was already processed in Firestore", async () => {
+      const duplicateEvent = {
+        id: "evt_duplicate_999",
+        type: "checkout.session.completed",
+        data: {
+          object: {
+            id: "cs_123",
+            client_reference_id: "user_pro_999",
+          },
+        },
+      };
+      mockConstructEvent.mockReturnValueOnce(duplicateEvent);
+      mockProcessedEventsDoc.get.mockResolvedValueOnce({
+        exists: true,
+        data: () => ({ type: "checkout.session.completed" }),
+      });
+
+      await stripeWebhook(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.json).toHaveBeenCalledWith({ received: true, duplicate: true });
+      expect(mockFirestore.doc).not.toHaveBeenCalledWith("user_pro_999");
+    });
+
+    it("should record event.id in processed_stripe_events on first arrival", async () => {
+      const newEvent = {
+        id: "evt_new_888",
+        type: "checkout.session.completed",
+        data: {
+          object: {
+            id: "cs_123",
+            client_reference_id: "user_pro_999",
+          },
+        },
+      };
+      mockConstructEvent.mockReturnValueOnce(newEvent);
+      mockProcessedEventsDoc.get.mockResolvedValueOnce({
+        exists: false,
+        data: () => ({}),
+      });
+
+      await stripeWebhook(req, res);
+
+      expect(mockProcessedEventsDoc.set).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: "checkout.session.completed",
+          processedAt: "MOCK_TIMESTAMP",
+        })
+      );
+      expect(res.json).toHaveBeenCalledWith({ received: true });
+    });
   });
 
   describe("Event: checkout.session.completed", () => {

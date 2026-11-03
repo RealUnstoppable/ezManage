@@ -769,7 +769,7 @@
                             <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Synchronized with store floor staff and active shift rosters.</p>
                         </div>
                         <div class="flex items-center gap-2">
-                            <button onclick="document.getElementById('companyAddEmpModal').classList.toggle('hidden')" class="btn btn-primary py-2 px-3.5 text-xs font-semibold flex items-center gap-1.5">
+                            <button id="companyAddEmpBtn" onclick="document.getElementById('companyAddEmpModal').classList.toggle('hidden')" class="btn btn-primary py-2 px-3.5 text-xs font-semibold flex items-center gap-1.5">
                                 <i data-lucide="user-plus" class="w-3.5 h-3.5"></i> Add Staff Member
                             </button>
                             <a href="index.html" onclick="localStorage.setItem('navTo', 'employees')" class="btn btn-outline py-2 px-3.5 text-xs font-semibold flex items-center gap-1.5">
@@ -1036,6 +1036,35 @@
         let globalChartInstance = null;
         let isRegistering = false;
 
+        // --- Real-time Firestore Listener Unsubscribe Handles & De-duplication Guard ---
+        let unsubscribeShiftNotes = null;
+        let unsubscribeGroupRequests = null;
+        let unsubscribeDashboardUsers = null;
+        let unsubscribeEmployees = null;
+
+        function cleanupCorporateListeners() {
+            if (unsubscribeShiftNotes) {
+                unsubscribeShiftNotes();
+                unsubscribeShiftNotes = null;
+            }
+            if (unsubscribeGroupRequests) {
+                unsubscribeGroupRequests();
+                unsubscribeGroupRequests = null;
+            }
+            if (unsubscribeDashboardUsers) {
+                unsubscribeDashboardUsers();
+                unsubscribeDashboardUsers = null;
+            }
+            if (unsubscribeEmployees) {
+                unsubscribeEmployees();
+                unsubscribeEmployees = null;
+            }
+        }
+
+        window.cleanupCorporateListeners = cleanupCorporateListeners;
+        window.addEventListener('beforeunload', cleanupCorporateListeners);
+        window.addEventListener('unload', cleanupCorporateListeners);
+
         // --- Resilient Cloud Function Caller ---
         async function callFunction(name, data) {
             try {
@@ -1102,8 +1131,9 @@
             const target = document.getElementById('view-' + viewId);
             if (target) target.classList.add('active');
 
-            if (viewId === 'register') {
-                resetOnboarding();
+            if (viewId === 'register' || viewId === 'login') {
+                cleanupCorporateListeners();
+                if (viewId === 'register') resetOnboarding();
             }
             if (viewId === 'overview' && activeOrgId) {
                 fetchDashboardData();
@@ -1126,6 +1156,13 @@
             });
             if (tabName === 'employees') {
                 fetchEmployeesData();
+            } else if (tabName === 'overview' || tabName === 'managers') {
+                // Detach employees listener when switching away to prevent memory leaks and redundant renders
+                if (unsubscribeEmployees) {
+                    unsubscribeEmployees();
+                    unsubscribeEmployees = null;
+                }
+                fetchDashboardData();
             }
             if (window.lucide) lucide.createIcons();
         }
@@ -1523,9 +1560,11 @@
                     await initializeCorporateWorkspace(user);
                 }
             } else {
+                if (window.isE2ETestMode) return;
                 currentUserData = null;
                 activeOrgId = null;
                 activeOrgData = null;
+                cleanupCorporateListeners();
                 renderAuthProfile(null, null);
                 document.getElementById('dashboard-shell').classList.add('hidden');
                 navTo('login');
@@ -1670,8 +1709,17 @@
         async function fetchGlobalData() {
             if (!activeOrgId) return;
 
-            // Fetch shift notes
-            db.collection('shift_notes').where('orgId', '==', activeOrgId)
+            if (unsubscribeShiftNotes) {
+                unsubscribeShiftNotes();
+                unsubscribeShiftNotes = null;
+            }
+            if (unsubscribeGroupRequests) {
+                unsubscribeGroupRequests();
+                unsubscribeGroupRequests = null;
+            }
+
+            // Fetch shift notes with strict unique ID tracking
+            unsubscribeShiftNotes = db.collection('shift_notes').where('orgId', '==', activeOrgId)
               .onSnapshot(snap => {
                   const notesEl = document.getElementById('statNotesCount');
                   if (notesEl) notesEl.innerText = snap.size;
@@ -1684,62 +1732,79 @@
                       return;
                   }
 
-                  container.innerHTML = snap.docs.slice(0, 15).map(doc => {
-                      const data = doc.data();
-                      const isUrgent = data.priority === 'Urgent';
+                  const seenNoteIds = new Set();
+                  const uniqueNotes = [];
+                  snap.docs.forEach(doc => {
+                      if (!seenNoteIds.has(doc.id)) {
+                          seenNoteIds.add(doc.id);
+                          uniqueNotes.push({ id: doc.id, ...doc.data() });
+                      }
+                  });
+
+                  container.innerHTML = uniqueNotes.slice(0, 15).map(note => {
+                      const isUrgent = note.priority === 'Urgent';
                       return `
-                        <div class="p-3 bg-white dark:bg-slate-800/90 rounded-lg border ${isUrgent ? 'border-red-200 dark:border-red-900/60 bg-red-50/20' : 'border-slate-200 dark:border-slate-700/80'} shadow-sm flex items-start gap-3">
+                        <div id="shift-note-${escapeHTML(note.id)}" data-note-id="${escapeHTML(note.id)}" class="p-3 bg-white dark:bg-slate-800/90 rounded-lg border ${isUrgent ? 'border-red-200 dark:border-red-900/60 bg-red-50/20' : 'border-slate-200 dark:border-slate-700/80'} shadow-sm flex items-start gap-3">
                             <div class="w-7 h-7 rounded-md ${isUrgent ? 'bg-red-100 text-red-600 dark:bg-red-950/60 dark:text-red-400' : 'bg-slate-100 text-indigo-600 dark:bg-slate-700 dark:text-indigo-400'} flex items-center justify-center flex-shrink-0 mt-0.5">
                                 <i data-lucide="${isUrgent ? 'alert-triangle' : 'message-square'}" class="w-3.5 h-3.5"></i>
                             </div>
                             <div class="flex-grow min-w-0">
                                 <div class="flex justify-between items-start gap-2">
-                                    <h4 class="font-semibold text-xs text-slate-900 dark:text-white truncate">${escapeHTML(data.title || 'Shift Note')}</h4>
-                                    <span class="text-[10px] font-medium text-slate-400 shrink-0">${escapeHTML(data.authorName || 'Manager')}</span>
+                                    <h4 class="font-semibold text-xs text-slate-900 dark:text-white truncate">${escapeHTML(note.title || 'Shift Note')}</h4>
+                                    <span class="text-[10px] font-medium text-slate-400 shrink-0">${escapeHTML(note.authorName || 'Manager')}</span>
                                 </div>
-                                <p class="text-xs text-slate-600 dark:text-slate-300 mt-1 line-clamp-2 leading-relaxed">${escapeHTML(data.content || '')}</p>
+                                <p class="text-xs text-slate-600 dark:text-slate-300 mt-1 line-clamp-2 leading-relaxed">${escapeHTML(note.content || '')}</p>
                             </div>
                         </div>
                       `;
                   }).join('');
                   if (window.lucide) lucide.createIcons();
-              });
+              }, err => { console.warn("Shift notes onSnapshot err:", err); });
 
-            // Listen for group requests
-            db.collection('shift_group_requests').where('groupId', '==', activeOrgId).where('status', '==', 'Pending')
+            // Listen for group requests with strict unique ID tracking
+            unsubscribeGroupRequests = db.collection('shift_group_requests').where('groupId', '==', activeOrgId).where('status', '==', 'Pending')
               .onSnapshot(snap => {
                   const badge = document.getElementById('pendingRequestsBadge');
                   const section = document.getElementById('pendingRequestsSection');
                   const container = document.getElementById('pendingRequestsContainer');
 
+                  const seenReqIds = new Set();
+                  const uniqueRequests = [];
+                  snap.docs.forEach(doc => {
+                      if (!seenReqIds.has(doc.id)) {
+                          seenReqIds.add(doc.id);
+                          uniqueRequests.push({ id: doc.id, ...doc.data() });
+                      }
+                  });
+
                   if (badge) {
-                      if (snap.empty) {
+                      if (uniqueRequests.length === 0) {
                           badge.classList.add('hidden');
                       } else {
                           badge.classList.remove('hidden');
-                          badge.innerText = snap.size;
+                          badge.innerText = uniqueRequests.length;
                       }
                   }
 
                   if (container) {
-                      if (snap.empty) {
+                      if (uniqueRequests.length === 0) {
                           if (section) section.classList.add('hidden');
                           container.innerHTML = '';
                       } else {
                           if (section) section.classList.remove('hidden');
-                          container.innerHTML = snap.docs.map(doc => `
-                              <div class="p-3 bg-white dark:bg-slate-900 rounded-lg border border-amber-200 dark:border-amber-800/80 flex justify-between items-center gap-3">
+                          container.innerHTML = uniqueRequests.map(req => `
+                              <div id="group-req-${escapeHTML(req.id)}" data-request-id="${escapeHTML(req.id)}" class="p-3 bg-white dark:bg-slate-900 rounded-lg border border-amber-200 dark:border-amber-800/80 flex justify-between items-center gap-3">
                                   <div>
-                                      <div class="font-semibold text-xs text-slate-900 dark:text-white">${escapeHTML(doc.data().userName || doc.data().email || 'Manager')}</div>
+                                      <div class="font-semibold text-xs text-slate-900 dark:text-white">${escapeHTML(req.userName || req.email || 'Manager')}</div>
                                       <div class="text-[10px] text-amber-600 dark:text-amber-400 font-medium uppercase tracking-wider">Requested Store Access</div>
                                   </div>
-                                  <button onclick="approveRequest('${escapeHTML(doc.id)}')" class="btn btn-accent py-1 px-3 text-xs font-semibold">Approve</button>
+                                  <button onclick="approveRequest('${escapeHTML(req.id)}')" class="btn btn-accent py-1 px-3 text-xs font-semibold">Approve</button>
                               </div>
                           `).join('');
                           if (window.lucide) lucide.createIcons();
                       }
                   }
-              });
+              }, err => { console.warn("Group requests onSnapshot err:", err); });
         }
 
         // --- Bento Dashboard Logic ---
@@ -1753,8 +1818,13 @@
             const picker = document.getElementById('dashboardDatePicker');
             const selectedDate = (picker && picker.value) || new Date().toISOString().split('T')[0];
 
-            // Fetch Managers & Metrics
-            db.collection('users').where('orgId', '==', activeOrgId).onSnapshot(snap => {
+            if (unsubscribeDashboardUsers) {
+                unsubscribeDashboardUsers();
+                unsubscribeDashboardUsers = null;
+            }
+
+            // Fetch Managers & Metrics with strict unique ID tracking
+            unsubscribeDashboardUsers = db.collection('users').where('orgId', '==', activeOrgId).onSnapshot(snap => {
                 const tbody = document.getElementById('managerTableBody');
                 const indivContainer = document.getElementById('individualPerformanceContainer');
 
@@ -1770,22 +1840,34 @@
                     return;
                 }
 
+                // Strict unique tracking for managers and shifts to prevent double-counting and duplicate UI painting
+                const seenManagerIds = new Set();
                 const managers = [];
+                const seenShiftIds = new Set();
+
                 snap.forEach(doc => {
+                    if (seenManagerIds.has(doc.id)) return;
+                    seenManagerIds.add(doc.id);
+
                     const d = doc.data();
                     managers.push({ id: doc.id, ...d });
 
                     const h = d.shiftHistory || [];
-                    allShifts = allShifts.concat(h);
-                    totalShifts += h.length;
-
-                    // Compute routine score
+                    
+                    // Strict unique shift log tracking: prevent duplicate shift entries from bloating stats or double-rendering
                     h.forEach(s => {
-                        let rTotal = 0, rChecked = 0;
-                        (s.routines || []).forEach(r => { rTotal++; if (r.checked) rChecked++; });
-                        if (rTotal > 0) {
-                            totalScore += (rChecked / rTotal) * 100;
-                            totalLogsWithScores++;
+                        const shiftId = s.id || `${doc.id}_${s.dateSaved || ''}_${s.timeSaved || ''}_${s.manager || ''}`;
+                        if (!seenShiftIds.has(shiftId)) {
+                            seenShiftIds.add(shiftId);
+                            allShifts.push({ ...s, id: shiftId, managerId: doc.id });
+                            totalShifts++;
+
+                            let rTotal = 0, rChecked = 0;
+                            (s.routines || []).forEach(r => { rTotal++; if (r.checked) rChecked++; });
+                            if (rTotal > 0) {
+                                totalScore += (rChecked / rTotal) * 100;
+                                totalLogsWithScores++;
+                            }
                         }
                     });
 
@@ -1798,7 +1880,7 @@
                     }
 
                     indivHtml += `
-                        <div class="p-4 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700 flex flex-col justify-between gap-3">
+                        <div id="perf-card-${escapeHTML(doc.id)}" data-manager-id="${escapeHTML(doc.id)}" class="p-4 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200 dark:border-slate-700 flex flex-col justify-between gap-3">
                             <div class="flex justify-between items-start">
                                 <div class="flex items-center gap-2.5 min-w-0">
                                     <div class="w-7 h-7 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 flex items-center justify-center text-xs font-semibold shrink-0">
@@ -1820,7 +1902,7 @@
 
                 if (tbody) {
                     tbody.innerHTML = managers.map(m => `
-                        <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors">
+                        <tr id="manager-row-${escapeHTML(m.id)}" data-manager-id="${escapeHTML(m.id)}" class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-colors">
                             <td class="p-3.5 font-medium text-slate-900 dark:text-slate-100 flex items-center gap-2.5">
                                 <div class="w-6 h-6 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 flex items-center justify-center text-[10px] font-semibold shrink-0">
                                     ${escapeHTML((m.email ? m.email.charAt(0) : 'M').toUpperCase())}
@@ -1853,7 +1935,7 @@
 
                 renderGlobalPerformanceChart(allShifts);
                 if (window.lucide) lucide.createIcons();
-            });
+            }, err => { console.warn("Users onSnapshot err:", err); });
         }
 
         // --- Staff & Employees Logic (Integrated with ezManage app) ---
@@ -1863,9 +1945,15 @@
             const countEl = document.getElementById('statEmployeesCount');
             if (!container) return;
 
-            db.collection('employees').where('orgId', '==', activeOrgId).onSnapshot(snap => {
-                if (countEl) countEl.innerText = `${snap.size} staff`;
+            if (unsubscribeEmployees) {
+                unsubscribeEmployees();
+                unsubscribeEmployees = null;
+            }
+
+            // Fetch Employees with strict unique ID tracking
+            unsubscribeEmployees = db.collection('employees').where('orgId', '==', activeOrgId).onSnapshot(snap => {
                 if (snap.empty) {
+                    if (countEl) countEl.innerText = `0 staff`;
                     container.innerHTML = `
                         <div class="text-center py-10 bg-slate-50 dark:bg-slate-800/40 rounded-xl border border-dashed border-slate-200 dark:border-slate-800">
                             <i data-lucide="users" class="w-8 h-8 text-slate-400 mx-auto mb-2"></i>
@@ -1877,13 +1965,24 @@
                     return;
                 }
 
-                container.innerHTML = snap.docs.map(doc => {
-                    const emp = doc.data();
+                const seenEmployeeIds = new Set();
+                const uniqueEmployees = [];
+
+                snap.forEach(doc => {
+                    if (!seenEmployeeIds.has(doc.id)) {
+                        seenEmployeeIds.add(doc.id);
+                        uniqueEmployees.push({ id: doc.id, ...doc.data() });
+                    }
+                });
+
+                if (countEl) countEl.innerText = `${uniqueEmployees.length} staff`;
+
+                container.innerHTML = uniqueEmployees.map(emp => {
                     const statusClass = emp.status === 'Active'
                         ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-800'
                         : 'bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700';
                     return `
-                        <div class="p-3.5 bg-white dark:bg-slate-800/90 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col sm:flex-row justify-between sm:items-center gap-3">
+                        <div id="emp-card-${escapeHTML(emp.id)}" data-employee-id="${escapeHTML(emp.id)}" class="p-3.5 bg-white dark:bg-slate-800/90 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col sm:flex-row justify-between sm:items-center gap-3">
                             <div class="flex items-center gap-3">
                                 <div class="w-9 h-9 rounded-lg bg-slate-100 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 flex items-center justify-center font-semibold text-slate-700 dark:text-slate-200 text-xs shrink-0">
                                     ${escapeHTML((emp.name || 'E').charAt(0).toUpperCase())}
@@ -1905,7 +2004,7 @@
                     `;
                 }).join('');
                 if (window.lucide) lucide.createIcons();
-            });
+            }, err => { console.warn("Employees onSnapshot err:", err); });
         }
 
         async function submitCompanyEmployee() {

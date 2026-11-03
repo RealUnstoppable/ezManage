@@ -427,11 +427,16 @@
             }
         })();
 
+        let unsubscribeUserDoc = null;
         auth.onAuthStateChanged((user) => {
             currentUser = user;
+            if (unsubscribeUserDoc) {
+                unsubscribeUserDoc();
+                unsubscribeUserDoc = null;
+            }
             if (user) {
                 localStorage.setItem('ezManage_lastUid', user.uid);
-                db.collection("users").doc(user.uid).onSnapshot(doc => {
+                unsubscribeUserDoc = db.collection("users").doc(user.uid).onSnapshot(doc => {
                     if (doc.exists) {
                         currentUserData = doc.data();
                         checkAIRestrictions(currentUserData);

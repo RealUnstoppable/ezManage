@@ -6,6 +6,17 @@ import { escapeHTML, logManagerError } from './utils.js';
 let currentOrgId = null;
 let unsubscribeExpenses = null;
 
+export function cleanupExpenses() {
+    if (unsubscribeExpenses) {
+        unsubscribeExpenses();
+        unsubscribeExpenses = null;
+    }
+}
+if (typeof window !== "undefined") {
+    window.addEventListener('beforeunload', cleanupExpenses);
+    window.addEventListener('unload', cleanupExpenses);
+}
+
 // DOM Elements
 const addExpenseBtn = document.getElementById('addExpenseBtn');
 const expenseModal = document.getElementById('expenseModal');
@@ -81,13 +92,18 @@ function loadExpenses() {
             const id = change.doc.id;
 
             if (change.type === 'added') {
+                const existingRow = document.getElementById(`expense-row-${id}`);
                 const row = renderExpenseRow(id, data);
-                // Respect index to maintain sort order
-                const existingNodes = expenseTableBody.children;
-                if (existingNodes.length > change.newIndex) {
-                    expenseTableBody.insertBefore(row, existingNodes[change.newIndex]);
+                if (existingRow) {
+                    expenseTableBody.replaceChild(row, existingRow);
                 } else {
-                    expenseTableBody.appendChild(row);
+                    // Respect index to maintain sort order
+                    const existingNodes = expenseTableBody.children;
+                    if (existingNodes.length > change.newIndex) {
+                        expenseTableBody.insertBefore(row, existingNodes[change.newIndex]);
+                    } else {
+                        expenseTableBody.appendChild(row);
+                    }
                 }
             }
             if (change.type === 'modified') {

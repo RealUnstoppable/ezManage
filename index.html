@@ -3790,17 +3790,33 @@
         }
 
         function renderHistory() {
+            if (!currentUserData && window.currentUserData) {
+                currentUserData = window.currentUserData;
+            }
             if (!currentUserData) return;
             const container = document.getElementById('historyListContainer');
-            const searchInput = document.getElementById('historySearch').value.toLowerCase();
+            if (!container) return;
+            const searchInput = (document.getElementById('historySearch')?.value || '').toLowerCase();
 
-            if (!cloudSyncEnabled) {
+            const isCloudEnabled = cloudSyncEnabled || window.cloudSyncEnabled || (currentUserData && currentUserData.cloudSyncEnabled);
+            if (!isCloudEnabled) {
                 container.innerHTML = "<p class='text-center py-10 opacity-60'>Cloud Sync is disabled. History relies on Enterprise Cloud Data.</p>";
                 return;
             }
 
             const rawHistory = (currentUserData.shiftHistory || []).reverse();
-            const history = rawHistory.filter(h => {
+            // Strict unique shift ID tracking to prevent duplicate calculations or double-painting
+            const seenShiftIds = new Set();
+            const uniqueHistory = [];
+            rawHistory.forEach(h => {
+                const shiftId = h.id || `${h.dateSaved || ''}_${h.timeSaved || ''}_${h.manager || ''}`;
+                if (!seenShiftIds.has(shiftId)) {
+                    seenShiftIds.add(shiftId);
+                    uniqueHistory.push({ ...h, id: shiftId });
+                }
+            });
+
+            const history = uniqueHistory.filter(h => {
                 const manager = (h.manager || "").toLowerCase();
                 const notes = (h.prepNotes || "").toLowerCase();
                 const d = (h.dateSaved || "").toLowerCase();
@@ -3892,6 +3908,8 @@
 
                 grouped[key].forEach(data => {
                     const div = document.createElement('div');
+                    div.id = `history-item-${escapeHTML(data.id)}`;
+                    div.setAttribute('data-shift-id', data.id);
                     div.className = "flex justify-between items-center p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl hover:bg-sky-50 dark:hover:bg-sky-900/20 transition-colors group";
                     div.innerHTML = `
                         <div>
@@ -5311,8 +5329,14 @@
                         return;
                     }
 
+                    const seenEmpIds = new Set();
                     let employees = [];
-                    snap.forEach(doc => employees.push({ id: doc.id, ...doc.data() }));
+                    snap.forEach(doc => {
+                        if (!seenEmpIds.has(doc.id)) {
+                            seenEmpIds.add(doc.id);
+                            employees.push({ id: doc.id, ...doc.data() });
+                        }
+                    });
 
                     // Sort by name
                     employees.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
@@ -5322,6 +5346,8 @@
 
                     employees.forEach(emp => {
                         const div = document.createElement('div');
+                        div.id = `emp-row-${escapeHTML(emp.id)}`;
+                        div.setAttribute('data-employee-id', emp.id);
                         div.className = "flex flex-col sm:flex-row justify-between sm:items-center p-4 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 gap-4";
 
                         const statusBadge = emp.status === 'Active'
@@ -5699,9 +5725,14 @@
         }
 
 
+        let unsubscribeFeatureRequests = null;
         function fetchFeatureRequests() {
             if (!currentUser) return;
-            db.collection('feature_requests')
+            if (unsubscribeFeatureRequests) {
+                unsubscribeFeatureRequests();
+                unsubscribeFeatureRequests = null;
+            }
+            unsubscribeFeatureRequests = db.collection('feature_requests')
                 .where('uid', '==', currentUser.uid)
                 .onSnapshot(snap => {
                     const container = document.getElementById('myFeatureRequests');

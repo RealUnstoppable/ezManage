@@ -266,5 +266,37 @@ describe('ezManage Server Security & Stripe API Suite', () => {
       expect(response.body).toEqual({ received: true });
       expect(mockConstructEvent).toHaveBeenCalled();
     });
+
+    it('should ignore duplicate webhook events with the same event.id', async () => {
+      mockConstructEvent.mockReturnValue({
+        id: 'evt_idempotent_test_456',
+        type: 'checkout.session.completed',
+        data: {
+          object: {
+            id: 'cs_test_456',
+          },
+        },
+      });
+
+      // First call
+      const res1 = await request(app)
+        .post('/webhook')
+        .set('stripe-signature', 'valid_test_signature')
+        .set('Content-Type', 'application/json')
+        .send(JSON.stringify({ id: 'evt_idempotent_test_456' }));
+
+      expect(res1.status).toBe(200);
+      expect(res1.body).toEqual({ received: true });
+
+      // Duplicate call with same event.id
+      const res2 = await request(app)
+        .post('/webhook')
+        .set('stripe-signature', 'valid_test_signature')
+        .set('Content-Type', 'application/json')
+        .send(JSON.stringify({ id: 'evt_idempotent_test_456' }));
+
+      expect(res2.status).toBe(200);
+      expect(res2.body).toEqual({ received: true, duplicate: true });
+    });
   });
 });

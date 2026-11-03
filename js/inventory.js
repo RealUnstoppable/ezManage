@@ -47,41 +47,66 @@ function renderLocalInventory(items) {
         return;
     }
     emptyState.classList.add('hidden');
+    const seenIds = new Set();
     items.forEach(item => {
+        if (!item || !item.id || seenIds.has(item.id)) return;
+        seenIds.add(item.id);
         const row = renderItemRow(item.id, item);
         inventoryTableBody.appendChild(row);
     });
     if (window.lucide) window.lucide.createIcons();
 }
 
-// Auth State Change
-onAuthStateChanged(auth, async (user) => {
-    if (user && user.uid === currentUid && isDashboardLoaded) return;
-    currentUid = user ? user.uid : null;
-    isDashboardLoaded = true;
-    if (user) {
-        try {
-            // Fetch user's orgId
-            const userDoc = await getDoc(doc(db, 'users', user.uid));
-            if (userDoc && userDoc.exists()) {
-                currentOrgId = userDoc.data().orgId || user.uid;
-            } else {
-                currentOrgId = user.uid;
-            }
-        } catch (error) {
-            logManagerError("Error fetching user profile", error);
-            currentOrgId = user.uid;
-        }
-    } else {
-        currentOrgId = 'demo-org';
+export function cleanupInventory() {
+    if (unsubscribeInventory) {
+        unsubscribeInventory();
+        unsubscribeInventory = null;
     }
+}
+if (typeof window !== "undefined") {
+    window.addEventListener('beforeunload', cleanupInventory);
+    window.addEventListener('unload', cleanupInventory);
+}
+
+// Auth State Change
+if (auth && typeof onAuthStateChanged === 'function') {
+    try {
+        onAuthStateChanged(auth, async (user) => {
+            if (user && user.uid === currentUid && isDashboardLoaded) return;
+            currentUid = user ? user.uid : null;
+            isDashboardLoaded = true;
+            if (user && db) {
+                try {
+                    // Fetch user's orgId
+                    const userDoc = await getDoc(doc(db, 'users', user.uid));
+                    if (userDoc && userDoc.exists()) {
+                        currentOrgId = userDoc.data().orgId || user.uid;
+                    } else {
+                        currentOrgId = user.uid;
+                    }
+                } catch (error) {
+                    logManagerError("Error fetching user profile", error);
+                    currentOrgId = user.uid;
+                }
+            } else {
+                currentOrgId = 'demo-org';
+            }
+            loadInventory();
+        });
+    } catch (e) {
+        currentOrgId = 'demo-org';
+        loadInventory();
+    }
+} else {
+    currentOrgId = 'demo-org';
     loadInventory();
-});
+}
 
 // Load Inventory Items Real-time
 function loadInventory() {
     if (unsubscribeInventory) {
         unsubscribeInventory();
+        unsubscribeInventory = null;
     }
 
     loadingSpinner.classList.remove('hidden');
@@ -93,6 +118,15 @@ function loadInventory() {
     if (cachedItems && cachedItems.length > 0) {
         renderLocalInventory(cachedItems);
         loadingSpinner.classList.add('hidden');
+    }
+
+    if (!db) {
+        loadingSpinner.classList.add('hidden');
+        if (inventoryTableBody.children.length === 0) {
+            emptyState.classList.remove('hidden');
+            if (window.lucide) window.lucide.createIcons();
+        }
+        return;
     }
 
     // Safety timeout: ensure loading spinner is never stuck infinitely
@@ -144,13 +178,26 @@ function loadInventory() {
             const id = change.doc.id;
 
             if (change.type === 'added') {
+                const existingRow = document.getElementById(`item-row-${id}`);
                 const row = renderItemRow(id, data);
-                // Respect index to maintain sort order
-                const existingNodes = inventoryTableBody.children;
-                if (existingNodes.length > change.newIndex) {
-                    inventoryTableBody.insertBefore(row, existingNodes[change.newIndex]);
+                if (existingRow) {
+                    // Item already in DOM (e.g. from local inventory render), replace in-place to prevent double painting
+                    inventoryTableBody.replaceChild(row, existingRow);
                 } else {
-                    inventoryTableBody.appendChild(row);
+                    // Check if an optimistic/temp row exists (matching item name)
+                    const tempRow = Array.from(inventoryTableBody.children).find(r => 
+                        r.getAttribute('data-item-name') === data.itemName
+                    );
+                    if (tempRow) {
+                        inventoryTableBody.replaceChild(row, tempRow);
+                    } else {
+                        const existingNodes = inventoryTableBody.children;
+                        if (existingNodes.length > change.newIndex) {
+                            inventoryTableBody.insertBefore(row, existingNodes[change.newIndex]);
+                        } else {
+                            inventoryTableBody.appendChild(row);
+                        }
+                    }
                 }
             }
             if (change.type === 'modified') {
@@ -218,6 +265,8 @@ function renderItemRow(id, data) {
     const isLowStock = parseInt(data.quantity) < parseInt(data.threshold);
     const row = document.createElement('tr');
     row.id = `item-row-${id}`; // Needed for targeted DOM updates
+    row.setAttribute('data-item-id', id);
+    row.setAttribute('data-item-name', data.itemName || '');
     row.className = `border-b border-slate-800/50 transition-colors hover:bg-slate-800/20 ${isLowStock ? 'bg-rose-900/10' : ''}`;
 
     row.insertAdjacentHTML('beforeend', `
@@ -288,7 +337,9 @@ inventoryTableBody.addEventListener('click', async (e) => {
             }
 
             try {
-                await deleteDoc(doc(db, "inventory", id));
+                if (db) {
+                    await deleteDoc(doc(db, "inventory", id));
+                }
             } catch (error) {
                 logManagerError("Error deleting item from Firestore:", error);
             }
@@ -358,11 +409,13 @@ itemForm.addEventListener('submit', async (e) => {
     if (window.lucide) window.lucide.createIcons();
 
     try {
-        if (id) {
-            const itemRef = doc(db, "inventory", id);
-            await updateDoc(itemRef, itemData);
-        } else {
-            await addDoc(collection(db, "inventory"), itemData);
+        if (db) {
+            if (id) {
+                const itemRef = doc(db, "inventory", id);
+                await updateDoc(itemRef, itemData);
+            } else {
+                await addDoc(collection(db, "inventory"), itemData);
+            }
         }
     } catch (error) {
         logManagerError("Error syncing item to Firestore:", error);
