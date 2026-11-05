@@ -42,6 +42,7 @@ export function loadFooter() {
                         <i data-lucide="cpu" class="w-4 h-4"></i> Connect
                     </h5>
                     <ul class="space-y-2.5 text-sm font-medium">
+                        <li><a href="expenses.html" class="text-slate-400 hover:text-white dark:hover:text-white hover:underline transition-all block py-0.5">Petty Cash & Expenses</a></li>
                         <li><a href="inventory.html" class="text-slate-400 hover:text-white dark:hover:text-white hover:underline transition-all block py-0.5">Inventory & AI Predictor</a></li>
                         <li><a href="company.html" class="text-slate-400 hover:text-white dark:hover:text-white hover:underline transition-all block py-0.5">Corporate Multi-Store Portal</a></li>
                         <li><a href="panel-ai-admin.html" class="text-slate-400 hover:text-white dark:hover:text-white hover:underline transition-all block py-0.5">Admin Intelligence Panel</a></li>
