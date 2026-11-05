@@ -1635,6 +1635,65 @@ exports.manageMaintenanceLogs = functions.https.onCall(async (data, context) => 
     } catch (error) { handleInternalError(`Manage Feedbacks Error for uid: ${uid}`, error); }
 });
 
+
+/**
+ * Manage Expenses API
+ * Handles creation and deletion of expenses.
+ */
+exports.manageExpenses = functions.https.onCall(async (data, context) => {
+  const {uid, userOrgId, isAdmin, userName, action, payload} = await getAuthAndPayload(data, context, admin);
+
+  try {
+    const actualOrgId = userOrgId;
+
+    if (!actualOrgId) {
+      throw new HttpsError("permission-denied", "User must be part of an organization to manage expenses.");
+    }
+
+    if (action === "create") {
+      const {description, amount, category} = payload;
+
+      checkRequiredFields(payload, ["description", "amount"], "Missing required expense details");
+
+      const newExpense = {
+        description,
+        amount: Number(amount),
+        category: category || "Other",
+        loggedByUid: uid,
+        loggedByName: context.auth.token.name || userName || "Anonymous",
+        orgId: actualOrgId,
+        timestamp: admin.firestore.FieldValue.serverTimestamp(),
+      };
+
+      const docRef = await admin.firestore().collection("expenses").add(newExpense);
+      return {success: true, id: docRef.id};
+    }
+
+    if (action === "delete") {
+      const {expenseId} = payload;
+      if (!expenseId) {
+        throw new HttpsError("invalid-argument", "Missing expense ID");
+      }
+
+      const expenseRef = admin.firestore().collection("expenses").doc(expenseId);
+      const expenseDoc = await expenseRef.get();
+
+      if (!expenseDoc.exists) {
+        throw new HttpsError("not-found", "Expense not found");
+      }
+
+      if (expenseDoc.data().orgId !== actualOrgId && !isAdmin) {
+        throw new HttpsError("permission-denied", "Unauthorized to delete this expense");
+      }
+
+      await expenseRef.delete();
+      return {success: true};
+    }
+
+    throw new HttpsError("invalid-argument", "Invalid action");
+  } catch (error) { handleInternalError(`Manage Expenses Error for uid: ${uid}`, error); }
+});
+
   exports.trainGlobalAI = require("./trainGlobalAI").trainGlobalAI;
 
 
