@@ -7603,7 +7603,7 @@
                     if (status === 'Declined') badgeClass = "bg-red-100 text-red-700";
 
                     const hideBtnHtml = status === 'Completed'
-                        ? `<button type="button" class="hide-feature-req-btn text-xs font-bold text-slate-400 hover:text-white px-2.5 py-1 rounded-lg border border-slate-700/60 bg-slate-800/40 flex items-center gap-1 transition-colors" data-id="${escapeHTML(req.id)}" title="Hide completed request into archive"><i data-lucide="eye-off" class="w-3.5 h-3.5"></i> Hide</button>`
+                        ? `<button type="button" class="hide-feature-req-btn text-xs font-bold text-slate-400 hover:text-white px-2.5 py-1 rounded-lg border border-slate-700/60 bg-slate-800/40 flex items-center gap-1 transition-colors" data-id="${escapeHTML(req.id)}" title="Hide completed request into archive" aria-label="Hide completed request"><i data-lucide="eye-off" class="w-3.5 h-3.5"></i> Hide</button>`
                         : '';
 
                     const div = document.createElement('div');
@@ -7647,7 +7647,7 @@
                                 <span class="text-xs text-slate-500 font-mono">${escapeHTML(new Date(req.timestamp).toLocaleDateString())}</span>
                                 <div class="flex items-center gap-2">
                                     <span class="text-[10px] font-black uppercase tracking-widest px-2 py-1 rounded-full bg-emerald-950/40 text-emerald-400 border border-emerald-800/50">Completed</span>
-                                    <button type="button" class="restore-feature-req-btn text-xs font-bold text-sky-400 hover:text-sky-300 px-2.5 py-1 rounded-lg border border-sky-500/30 bg-sky-500/10 flex items-center gap-1 transition-colors" data-id="${escapeHTML(req.id)}" title="Restore to main requests list"><i data-lucide="eye" class="w-3.5 h-3.5"></i> Restore</button>
+                                    <button type="button" class="restore-feature-req-btn text-xs font-bold text-sky-400 hover:text-sky-300 px-2.5 py-1 rounded-lg border border-sky-500/30 bg-sky-500/10 flex items-center gap-1 transition-colors" data-id="${escapeHTML(req.id)}" title="Restore to main requests list" aria-label="Restore request"><i data-lucide="eye" class="w-3.5 h-3.5"></i> Restore</button>
                                     <button type="button" class="delete-feature-req-btn text-slate-500 hover:text-rose-400 p-1 rounded-lg hover:bg-slate-800 transition-colors" data-id="${escapeHTML(req.id)}" aria-label="Delete Request"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
                                 </div>
                             </div>
