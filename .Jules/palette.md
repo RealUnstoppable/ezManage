@@ -72,3 +72,6 @@
 ## 2024-05-24 - ARIA labels for dynamic toggle buttons
 **Learning:** Buttons that dynamically toggle sections, like the "X Variations" button that toggles open the canonical item variations in `easy-ai.html`, need `aria-label`s to inform screen readers of their action and target, especially when they only contain minimal text and a toggle icon.
 **Action:** Add explicit `aria-label`s to dynamic toggle buttons (e.g., 'Toggle variations for [Item Name]') to ensure screen reader users understand what section will be expanded or collapsed.
+## 2024-11-08 - ARIA labels for dynamic search inputs and clear buttons
+**Learning:** Search inputs without an explicit `<label>` and their associated icon-only clear buttons (like `<button id="clearSearchBtn">` in `inventory.html`) lack context for screen readers. Placeholders alone are insufficient.
+**Action:** Always provide an explicit `aria-label` attribute on search inputs and icon-only clear buttons to ensure their purpose is clearly announced.
