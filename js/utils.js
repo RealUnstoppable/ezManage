@@ -81,6 +81,18 @@ export function showToast(message) {
     }, 3000);
 }
 
+export function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
 export function getFirebaseErrorMessage(error) {
     switch (error.code) {
         case 'auth/invalid-email':
