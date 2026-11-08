@@ -1,5 +1,36 @@
-1. **Add ID to Post Note Button:** Add `id="btnSubmitShiftNote"` to the "Post Note" `<button>` tag in `index.html` (around line 1507) to easily select it, although we are already successfully querying it.
-2. **Implement Loading State for Post Note Button:** The "Post Note" button in `index.html` (around line 1507) currently provides no visual feedback when clicked. In `index.html`, update the `submitShiftNote()` function (around line 5293) to fetch the button element using `document.querySelector('#view-shiftNotes button[onclick="submitShiftNote()"]')`. At the start of the function, store the original innerHTML. Change the button's innerHTML to include a Lucide loader (`<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> Posting...`), disable the button, and call `lucide.createIcons()` so the spinner renders. Inside the `try/catch/finally` block of `submitShiftNote()`, restore the original innerHTML, re-enable the button, and call `lucide.createIcons()` to restore the original state properly.
-3. **Run Tests:** Run all relevant tests and checks (e.g., `npm test`) to ensure the changes are correct and introduce no regressions.
-4. **Complete Pre Commit Steps:** Complete pre-commit steps to ensure proper testing, verification, review, and reflection are done.
-5. **Submit PR:** Use the `submit` tool to create a pull request with the required Palette format: title "🎨 Palette: [UX improvement]" and description structure containing "💡 What:", "🎯 Why:", "📸 Before/After:", and "♿ Accessibility:".
+1. **Identify the vulnerability**: In `backend/index.js`, the functions `manageShiftNotes`, `manageTemperatureLogs` (specifically the `get` action where it allows `payload.orgId`), and `manageLostAndFound` allow a user to supply `payload.orgId` from the client and fallback to `userOrgId`. However, trusting client-provided `orgId` allows for Insecure Direct Object Reference (IDOR) attacks, enabling users to access or create data in organizations they don't belong to.
+
+2. **Fix `manageShiftNotes`**:
+   - In `backend/index.js`, line 472, change `const actualOrgId = payload.orgId || userOrgId || null;` to `const actualOrgId = userOrgId || null;`.
+   - Also, in the `create` action (line ~490), ensure `orgId` uses `actualOrgId` directly, not `orgId || actualOrgId` where `orgId` is from `payload`. `orgId: actualOrgId` should be used instead of `orgId: orgId || actualOrgId`.
+
+3. **Fix `manageTemperatureLogs`**:
+   - In `backend/index.js`, around line 1670: `const targetOrgId = (payload && payload.orgId) || userOrgId || null;` allows users to query logs of any `targetOrgId`. We should remove trusting `payload.orgId` if they are not an admin. Actually, if they are an admin, they can query any org. So we can say `const targetOrgId = isAdmin ? ((payload && payload.orgId) || userOrgId || null) : (userOrgId || null);` OR simply check `if (!isAdmin && payload && payload.orgId && payload.orgId !== userOrgId) throw ...`.
+   - Let's look closely at `manageTemperatureLogs`:
+     ```javascript
+        const targetOrgId = (payload && payload.orgId) || userOrgId || null;
+        if (!targetOrgId && !isAdmin) {
+          return {success: true, logs: []};
+        }
+
+        let query = admin.firestore().collection("temperature_logs");
+        if (!isAdmin) {
+          query = query.where("orgId", "==", targetOrgId);
+        } else if (targetOrgId) {
+          query = query.where("orgId", "==", targetOrgId);
+        }
+     ```
+     If we don't trust `payload.orgId`, we should only allow it if `isAdmin` is true. `const targetOrgId = isAdmin ? ((payload && payload.orgId) || userOrgId || null) : (userOrgId || null);`.
+
+4. **Fix `manageLostAndFound`**:
+   - In `backend/index.js`, line 1863: `const actualOrgId = (payload && payload.orgId) || userOrgId || null;` should be `const actualOrgId = isAdmin ? ((payload && payload.orgId) || userOrgId || null) : (userOrgId || null);`.
+
+5. **Journaling**:
+   - Add a journal entry to `.jules/sentinel.md` noting the critical learning about avoiding client-provided payload overriding securely validated variables.
+
+6. **Run Tests**:
+   - Run backend tests to ensure they still pass.
+   - We will run `cd backend && pnpm test`.
+
+7. **Review & Pre-commit Steps**:
+   - Run pre-commit instructions before submitting.
