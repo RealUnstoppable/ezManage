@@ -72,3 +72,7 @@
 ## 2024-05-24 - ARIA labels for dynamic toggle buttons
 **Learning:** Buttons that dynamically toggle sections, like the "X Variations" button that toggles open the canonical item variations in `easy-ai.html`, need `aria-label`s to inform screen readers of their action and target, especially when they only contain minimal text and a toggle icon.
 **Action:** Add explicit `aria-label`s to dynamic toggle buttons (e.g., 'Toggle variations for [Item Name]') to ensure screen reader users understand what section will be expanded or collapsed.
+
+## 2024-11-09 - Missing ARIA Labels in Injected Elements
+**Learning:** Standard linters can miss missing ARIA labels on icon-only buttons injected dynamically via JavaScript template strings.
+**Action:** When injecting icon-only buttons via JS, manually verify `aria-label` is present.
