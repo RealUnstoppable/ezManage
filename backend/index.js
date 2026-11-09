@@ -469,10 +469,10 @@ exports.manageShiftNotes = functions.https.onCall(async (data, context) => {
   try {
     // 🛡️ Securely fetch the user's actual orgId from the database
     // instead of trusting the client payload to prevent IDOR
-    const actualOrgId = payload.orgId || userOrgId || null;
+    const actualOrgId = userOrgId || null;
 
     if (action === "create") {
-      const {authorId, orgId, authorName, content, priority} = payload;
+      const {authorName, content, priority} = payload;
 
       if (!content) {
         throw new HttpsError(
@@ -484,12 +484,12 @@ exports.manageShiftNotes = functions.https.onCall(async (data, context) => {
         priority : "Normal";
 
       const newNote = {
-        authorId: authorId || uid,
+        authorId: uid,
         authorName: authorName || "Anonymous",
         content,
         priority: notePriority,
         status: "Active",
-        orgId: orgId || actualOrgId,
+        orgId: actualOrgId,
         timestamp: admin.firestore.FieldValue.serverTimestamp(),
       };
 
@@ -1667,7 +1667,7 @@ exports.manageMaintenanceLogs = functions.https.onCall(async (data, context) => 
       }
 
       if (action === "get") {
-        const targetOrgId = (payload && payload.orgId) || userOrgId || null;
+        const targetOrgId = userOrgId || null;
         if (!targetOrgId && !isAdmin) {
           return {success: true, logs: []};
         }
@@ -1860,7 +1860,7 @@ exports.manageLostAndFound = functions.https.onCall(async (data, context) => {
   const {uid, userOrgId, isAdmin, userName, action, payload} = await getAuthAndPayload(data, context, admin);
 
   try {
-    const actualOrgId = (payload && payload.orgId) || userOrgId || null;
+    const actualOrgId = userOrgId || null;
 
     if (!actualOrgId && !isAdmin) {
       if (action === "get") {
