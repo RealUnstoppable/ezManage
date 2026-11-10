@@ -1,5 +1,5 @@
 import { auth, db } from '../firebase.js';
-import { logManagerError, escapeHTML } from './utils.js';
+import { logManagerError, escapeHTML, debounce } from './utils.js';
 import * as InventoryAI from './inventory-ai.js';
 
 let currentOrgId = null;
@@ -462,14 +462,14 @@ async function loadInventory() {
 
 // Search & Sort Event Listeners
 if (inventorySearchInput) {
-    inventorySearchInput.addEventListener('input', (e) => {
+    inventorySearchInput.addEventListener('input', debounce((e) => {
         currentSearchQuery = e.target.value;
         if (clearSearchBtn) {
             if (currentSearchQuery) clearSearchBtn.classList.remove('hidden');
             else clearSearchBtn.classList.add('hidden');
         }
         renderInventoryView();
-    });
+    }, 300));
 }
 
 if (clearSearchBtn) {

@@ -2,6 +2,18 @@
  * Utility functions shared across the frontend
  */
 
+export function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
 export function parseNum(val) {
     if (!val) return 0;
     const parsed = parseFloat(val.toString().replace(/[^0-9.]/g, ""));
