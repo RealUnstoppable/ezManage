@@ -105,3 +105,15 @@ export function logManagerError(actionMessage, ...args) {
 export function isNetworkError(error) {
     return error.code === 'auth/network-request-failed' || error.code === 'unavailable' || error.code === 'firestore/unavailable';
 }
+
+export function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func.apply(this, args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
