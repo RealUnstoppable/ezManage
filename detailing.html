@@ -324,7 +324,7 @@
     </footer>
 
     <script type="module">
-        import { loadNavbar } from '/js/navbar.js';
+        import { loadNavbar } from './js/navbar.js';
 
         // Load Navbar
         document.addEventListener('DOMContentLoaded', () => {
@@ -337,11 +337,11 @@
         });
     </script>
 
-    <script src="/js/script.js"></script>
+    <script src="./js/script.js"></script>
 
     <script type="module">
         // --- Functional Logic for Booking ---
-        import { db } from '/js/auth.js';
+        import { db } from './js/auth.js';
         import { collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
 
         // Helper to pre-select service from buttons

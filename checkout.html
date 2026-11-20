@@ -1,16 +1,21 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <script type="module" src="/js/theme-loader.js"></script>
+    <script type="module" src="./js/theme-loader.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Checkout | DTS HUB</title>
-    <link rel="icon" type="image/png" href="/images/dreams-favicon.png">
+    <link rel="icon" type="image/png" href="./images/dreams-favicon.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/css/style.css">
-    <link rel="stylesheet" href="/css/themes.css">
+    <link rel="stylesheet" href="./css/style.css">
+    <link rel="stylesheet" href="./css/themes.css">
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="./js/firebase-config.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
     <style>
         /* Re-using styles from checkout-premium.html for consistency */
         .checkout-main {
@@ -113,12 +118,11 @@
     <main class="checkout-main" id="checkout-container">
         <h1>Loading Checkout...</h1>
     </main>
-    <script src="/js/script.js"></script>
-    <script type="module" src="/js/checkout.js"></script>
- <script src="/js/script.js"></script>
-     <script type="module">
-    import { loadNavbar } from './js/navbar.js';
-    document.addEventListener('DOMContentLoaded', loadNavbar);
-</script>
+    <script src="./js/script.js"></script>
+    <script type="module" src="./js/checkout.js"></script>
+    <script type="module">
+        import { loadNavbar } from './js/navbar.js';
+        document.addEventListener('DOMContentLoaded', loadNavbar);
+    </script>
 </body>
 </html>

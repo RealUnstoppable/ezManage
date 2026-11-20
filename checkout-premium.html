@@ -183,7 +183,7 @@
 
 </header>
 <script type="module">
-      import { auth, db } from '/js/auth.js';
+      import { auth, db } from './js/auth.js';
       import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
     </script>
     <main class="checkout-main">
@@ -252,7 +252,7 @@
         window.location.replace(targetUrl);
     </script>
 
-    <script src="/js/script.js"></script> <script>
+    <script src="./js/script.js"></script> <script>
         // Basic promo code simulation
         document.getElementById('promo-form').addEventListener('submit', (e) => {
             e.preventDefault();
@@ -269,7 +269,7 @@
             }
         });
     </script>
- <script src="/js/script.js"></script>
+ <script src="./js/script.js"></script>
      <script type="module">
     import { loadNavbar } from './js/navbar.js';
     document.addEventListener('DOMContentLoaded', loadNavbar);

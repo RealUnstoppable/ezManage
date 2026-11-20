@@ -1,5 +1,7 @@
 
-import { logManagerError } from './utils.js';
+const logManagerError = (typeof window !== 'undefined' && typeof window.logManagerError === 'function')
+    ? window.logManagerError
+    : (msg, err) => console.error("Manager Troubleshooting: " + msg, err);
 
 document.addEventListener('DOMContentLoaded', () => {
 

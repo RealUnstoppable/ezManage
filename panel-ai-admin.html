@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <!-- 🛡️ Sentinel: Added Content Security Policy for defense-in-depth -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://unpkg.com https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.firebase.com;">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com https://unpkg.com https://cdn.jsdelivr.net https://www.gstatic.com https://js.stripe.com https://apis.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.tailwindcss.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https: blob:; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.firebase.com https://*.cloudfunctions.net https://api.stripe.com http://localhost:* ws://localhost:*; frame-src 'self' https://js.stripe.com https://*.firebaseapp.com;">
   <link rel="stylesheet" href="./css/style.css">
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="js/firebase-config.js"></script>
@@ -229,10 +229,18 @@
     }
 
     const firebaseConfig = window.ezManageFirebaseConfig;
-        const app = window.firebase.apps.length === 0 ? window.firebase.initializeApp(firebaseConfig) : window.firebase.app();
-    const auth = firebase.auth();
-    firebase.firestore().settings({ experimentalForceLongPolling: true });
-        const db = firebase.firestore();
+    const app = (typeof window !== 'undefined' && window.firebase && window.firebase.apps && window.firebase.apps.length > 0)
+        ? window.firebase.app()
+        : (typeof window !== 'undefined' && window.firebase && typeof window.firebase.initializeApp === 'function' && firebaseConfig ? window.firebase.initializeApp(firebaseConfig) : null);
+    const auth = (typeof window !== 'undefined' && window.firebase && typeof window.firebase.auth === 'function') ? window.firebase.auth() : null;
+    try {
+        if (typeof window !== 'undefined' && window.firebase && typeof window.firebase.firestore === 'function') {
+            window.firebase.firestore().settings({ experimentalForceLongPolling: true });
+        }
+    } catch (e) {
+        console.warn("Firestore settings notice:", e);
+    }
+    const db = (typeof window !== 'undefined' && window.firebase && typeof window.firebase.firestore === 'function') ? window.firebase.firestore() : null;
 
     const ADMIN_EMAIL = 'catalinandrian1@gmail.com';
 
@@ -251,27 +259,29 @@
     document.getElementById('gPass').addEventListener('keydown', e => { if(e.key==='Enter') gateSignIn(); });
 
     let isDashboardLoaded = false;
-    auth.onAuthStateChanged(user => {
-        if (!user) { document.getElementById('gate').style.display = 'flex'; document.getElementById('app').style.display = 'none'; return; }
-        if (user.email !== ADMIN_EMAIL) {
-            document.getElementById('gate').style.display = 'flex';
-            document.getElementById('app').style.display = 'none';
-            document.getElementById('gate').innerHTML = `
-                <div style="font-size:2.5rem; margin-bottom:4px;">⛔</div>
-                <h1>Access Denied</h1>
-                <p>This panel is restricted to Administrators only.</p>
-                <button onclick="window.location.href='index.html'" style="margin-top:16px;">Return to Main App</button>
-            `;
-            return;
-        }
-        document.getElementById('gate').style.display = 'none';
-        document.getElementById('app').style.display = 'block';
-        document.getElementById('navEmail').textContent = user.email;
-        if (!isDashboardLoaded) {
-            loadDashboard();
-            isDashboardLoaded = true;
-        }
-    });
+    if (auth && typeof auth.onAuthStateChanged === 'function') {
+        auth.onAuthStateChanged(user => {
+            if (!user) { document.getElementById('gate').style.display = 'flex'; document.getElementById('app').style.display = 'none'; return; }
+            if (user.email !== ADMIN_EMAIL) {
+                document.getElementById('gate').style.display = 'flex';
+                document.getElementById('app').style.display = 'none';
+                document.getElementById('gate').innerHTML = `
+                    <div style="font-size:2.5rem; margin-bottom:4px;">⛔</div>
+                    <h1>Access Denied</h1>
+                    <p>This panel is restricted to Administrators only.</p>
+                    <button onclick="window.location.href='index.html'" style="margin-top:16px;">Return to Main App</button>
+                `;
+                return;
+            }
+            document.getElementById('gate').style.display = 'none';
+            document.getElementById('app').style.display = 'block';
+            document.getElementById('navEmail').textContent = user.email;
+            if (!isDashboardLoaded) {
+                loadDashboard();
+                isDashboardLoaded = true;
+            }
+        });
+    }
 
     /* ---------- CHARTS ---------- */
     function mkChart(id, type, labels, datasets, opts = {}) {

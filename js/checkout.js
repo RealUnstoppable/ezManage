@@ -9,8 +9,9 @@ let userCart = {};
 const checkoutContainer = document.getElementById('checkout-container');
 
 function renderCheckoutPage() {
+    if (!checkoutContainer) return;
     if (Object.keys(userCart).length === 0) {
-        checkoutContainer.innerHTML = '<h1>Your cart is empty.</h1><a href="/shop.html" class="cta-button">Continue Shopping</a>';
+        checkoutContainer.innerHTML = '<h1>Your cart is empty.</h1><a href="shop.html" class="cta-button">Continue Shopping</a>';
         return;
     }
 
@@ -139,20 +140,25 @@ async function handlePlaceOrder(e) {
     }
 }
 
-auth.onAuthStateChanged(async (user) => {
-    if (user) {
-        currentUser = user;
-        try {
-            const userCartRef = db.collection('carts').doc(user.uid);
-            const docSnap = await userCartRef.get();
-            userCart = docSnap.exists ? docSnap.data().items : {};
-        } catch (error) {
-            logManagerError("Error loading cart for uid:", user.uid, error);
-
-            userCart = {};
+if (auth && typeof auth.onAuthStateChanged === 'function') {
+    auth.onAuthStateChanged(async (user) => {
+        if (user) {
+            currentUser = user;
+            try {
+                if (db && typeof db.collection === 'function') {
+                    const userCartRef = db.collection('carts').doc(user.uid);
+                    const docSnap = await userCartRef.get();
+                    userCart = docSnap.exists ? docSnap.data().items : {};
+                }
+            } catch (error) {
+                logManagerError("Error loading cart for uid:", user.uid, error);
+                userCart = {};
+            }
+            renderCheckoutPage();
+        } else {
+            window.location.replace('sign in beta.html');
         }
-        renderCheckoutPage();
-    } else {
-        window.location.replace('/sign in beta.html');
-    }
-});
+    });
+} else {
+    renderCheckoutPage();
+}

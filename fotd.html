@@ -429,7 +429,7 @@
     </script>
    ...
     <script type="module">
-      import { auth, db } from '/js/auth.js';
+      import { auth, db } from './js/auth.js';
       import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
       onAuthStateChanged(auth, (user) => {
         if (user) {

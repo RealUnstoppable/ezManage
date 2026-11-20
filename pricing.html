@@ -82,7 +82,13 @@
         </div>
     </section>
     <script>
-        lucide.createIcons();
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        } else {
+            window.addEventListener('DOMContentLoaded', () => {
+                if (typeof lucide !== 'undefined') lucide.createIcons();
+            });
+        }
 
         function startCheckout(plan) {
             const urls = {
