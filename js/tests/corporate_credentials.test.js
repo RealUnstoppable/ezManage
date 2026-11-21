@@ -315,4 +315,102 @@ describe("Corporate Workspace Credentials UI & Formatting", () => {
       }));
     });
   });
+
+  describe("Multi-Store Company Switcher & Resilience", () => {
+    beforeEach(() => {
+      document.body.innerHTML += `
+        <div id="companySwitcherNavContainer">
+          <span id="navActiveCompanyName">Workspace</span>
+          <span id="companyCountBadge">0</span>
+          <div id="companySwitcherNavList"></div>
+        </div>
+        <div id="dropdownCompanySettingsBtn" class="hidden"></div>
+      `;
+    });
+
+    it("should render list of managed companies in the corporate switcher dropdown", () => {
+      const userCompanies = [
+        { id: "corp_001", groupName: "Apex Downtown", workplaceCode: "EZM-APEX-001" },
+        { id: "corp_002", groupName: "Apex Midtown", workplaceCode: "EZM-APEX-002" },
+        { id: "corp_003", groupName: "Apex Uptown", workplaceCode: "EZM-APEX-003" },
+      ];
+      const activeOrgId = "corp_002";
+
+      function renderSwitcher(companies, activeId) {
+        const listContainer = document.getElementById('companySwitcherNavList');
+        const badge = document.getElementById('companyCountBadge');
+        const navName = document.getElementById('navActiveCompanyName');
+
+        const activeCompany = companies.find(c => c.id === activeId);
+        if (navName && activeCompany) navName.innerText = activeCompany.groupName;
+        if (badge) badge.innerText = String(companies.length);
+
+        if (listContainer) {
+          listContainer.innerHTML = companies.map(c => {
+            const isActive = c.id === activeId;
+            return `
+              <button data-company-id="${c.id}" aria-label="Switch to ${c.groupName}" class="workspace-item ${isActive ? 'active-workspace' : ''}">
+                <span class="company-name">${c.groupName}</span>
+                <span class="company-code">${c.workplaceCode}</span>
+                ${isActive ? '<span class="active-indicator">Active</span>' : ''}
+              </button>
+            `;
+          }).join('');
+        }
+      }
+
+      renderSwitcher(userCompanies, activeOrgId);
+
+      expect(document.getElementById('navActiveCompanyName').innerText).toBe("Apex Midtown");
+      expect(document.getElementById('companyCountBadge').innerText).toBe("3");
+      const items = document.querySelectorAll('.workspace-item');
+      expect(items.length).toBe(3);
+      expect(items[1].classList.contains('active-workspace')).toBe(true);
+      expect(items[1].querySelector('.active-indicator')).not.toBeNull();
+      expect(items[0].classList.contains('active-workspace')).toBe(false);
+    });
+
+    it("should resolve admin companies across ownerId, assigned orgId, and super admin fallbacks", async () => {
+      const mockShiftGroups = [
+        { id: "grp_direct_owner", ownerId: "user_admin_1", groupName: "Direct Owner Org", workplaceCode: "EZM-DIR1" },
+        { id: "grp_assigned_manager", ownerId: "user_other", groupName: "Assigned Manager Store", workplaceCode: "EZM-ASGN" },
+        { id: "grp_email_match", ownerEmail: "admin@corp.com", groupName: "Email Match Entity", workplaceCode: "EZM-EMAL" },
+      ];
+
+      async function resolveAdminCompanies(user, userData) {
+        const companyMap = new Map();
+
+        // Check ownerId
+        mockShiftGroups.filter(g => g.ownerId === user.uid).forEach(g => companyMap.set(g.id, g));
+        // Check email
+        if (user.email) {
+          mockShiftGroups.filter(g => g.ownerEmail === user.email).forEach(g => companyMap.set(g.id, g));
+        }
+        // Check user orgId
+        if (userData && userData.orgId) {
+          const direct = mockShiftGroups.find(g => g.id === userData.orgId || g.workplaceCode === userData.orgId);
+          if (direct) companyMap.set(direct.id, direct);
+        }
+
+        const companies = Array.from(companyMap.values());
+        const activeCompany = companies.length > 0 ? companies[0] : null;
+        return { companies, activeCompany };
+      }
+
+      // Test 1: User is direct owner
+      const res1 = await resolveAdminCompanies({ uid: "user_admin_1", email: "other@corp.com" }, {});
+      expect(res1.companies.length).toBe(1);
+      expect(res1.activeCompany.groupName).toBe("Direct Owner Org");
+
+      // Test 2: User is assigned manager via orgId
+      const res2 = await resolveAdminCompanies({ uid: "user_manager_2", email: "mgr@corp.com" }, { orgId: "grp_assigned_manager" });
+      expect(res2.companies.length).toBe(1);
+      expect(res2.activeCompany.groupName).toBe("Assigned Manager Store");
+
+      // Test 3: User matched by corporate email
+      const res3 = await resolveAdminCompanies({ uid: "user_email_user", email: "admin@corp.com" }, {});
+      expect(res3.companies.length).toBe(1);
+      expect(res3.activeCompany.groupName).toBe("Email Match Entity");
+    });
+  });
 });

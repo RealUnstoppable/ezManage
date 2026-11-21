@@ -38,6 +38,8 @@ const {
   handleAddManagerShiftGroup,
   handleUpdateProfile,
   handleUpdateCompanyShiftGroup,
+  handleGetAdminCompanies,
+  handleSwitchCompany,
   generateUniqueCorporateId,
   generateUniqueWorkplaceCode,
   generateUniqueWorkplaceKey,
@@ -473,5 +475,288 @@ describe("handleAddManagerShiftGroup", () => {
       orgId: "CORP-123",
       role: "Manager",
     }), {merge: true});
+  });
+});
+
+describe("handleGetAdminCompanies & Multi-Store Resolution", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it("should resolve admin companies owned by user and set activeCompany", async () => {
+    const mockUserDoc = {
+      exists: true,
+      data: () => ({
+        email: "executive@apex.com",
+        role: "CorporateAdmin",
+      }),
+    };
+
+    const mockCompanyDoc = {
+      id: "CORP-APEX001",
+      exists: true,
+      data: () => ({
+        groupName: "Apex Hospitality Group",
+        workplaceCode: "EZM-APEX-112233",
+        joinKey: "WPK-1111-2222",
+        ownerId: "admin_uid_1",
+        ownerEmail: "executive@apex.com",
+        multiStoreEnabled: true,
+      }),
+    };
+
+    const whereSnap = {
+      empty: false,
+      forEach: (cb) => cb(mockCompanyDoc),
+    };
+
+    mockMethods.doc.mockImplementation((id) => {
+      if (id === "admin_uid_1") return {get: () => Promise.resolve(mockUserDoc), set: mockMethods.set};
+      if (id === "CORP-APEX001") return {get: () => Promise.resolve(mockCompanyDoc)};
+      return {get: () => Promise.resolve({exists: false})};
+    });
+
+    mockMethods.where.mockReturnValue({
+      get: jest.fn().mockResolvedValue(whereSnap),
+    });
+
+    mockMethods.collection.mockImplementation((col) => {
+      if (col === "users") return {doc: mockMethods.doc};
+      if (col === "shift_groups") return {doc: mockMethods.doc, where: mockMethods.where};
+      return mockMethods;
+    });
+
+    const result = await handleGetAdminCompanies(
+      {},
+      "admin_uid_1",
+      {auth: {token: {email: "executive@apex.com"}}},
+      false,
+      null
+    );
+
+    expect(result.success).toBe(true);
+    expect(result.companies.length).toBe(1);
+    expect(result.companies[0].id).toBe("CORP-APEX001");
+    expect(result.companies[0].groupName).toBe("Apex Hospitality Group");
+    expect(result.companies[0].workplaceCode).toBe("EZM-APEX-112233");
+    expect(result.activeCompany.id).toBe("CORP-APEX001");
+    // Auto-heals user document with orgId
+    expect(mockMethods.set).toHaveBeenCalledWith(expect.objectContaining({
+      orgId: "CORP-APEX001",
+      role: "CorporateAdmin",
+    }), {merge: true});
+  });
+
+  it("should resolve company via assigned userOrgId even if user is not the ownerId", async () => {
+    const mockUserDoc = {
+      exists: true,
+      data: () => ({
+        email: "regional_admin@apex.com",
+        role: "CorporateAdmin",
+        orgId: "CORP-APEX001",
+      }),
+    };
+
+    const mockCompanyDoc = {
+      id: "CORP-APEX001",
+      exists: true,
+      data: () => ({
+        groupName: "Apex Hospitality Group",
+        workplaceCode: "EZM-APEX-112233",
+        ownerId: "different_creator_uid",
+      }),
+    };
+
+    mockMethods.doc.mockImplementation((id) => {
+      if (id === "regional_uid_2") return {get: () => Promise.resolve(mockUserDoc), set: mockMethods.set};
+      if (id === "CORP-APEX001") return {get: () => Promise.resolve(mockCompanyDoc)};
+      return {get: () => Promise.resolve({exists: false})};
+    });
+
+    mockMethods.where.mockReturnValue({
+      get: jest.fn().mockResolvedValue({empty: true, forEach: () => {}}),
+    });
+
+    mockMethods.collection.mockImplementation((col) => {
+      if (col === "users") return {doc: mockMethods.doc};
+      if (col === "shift_groups") return {doc: mockMethods.doc, where: mockMethods.where};
+      return mockMethods;
+    });
+
+    const result = await handleGetAdminCompanies(
+      {},
+      "regional_uid_2",
+      {auth: {token: {email: "regional_admin@apex.com"}}},
+      false,
+      "CORP-APEX001"
+    );
+
+    expect(result.success).toBe(true);
+    expect(result.companies.length).toBe(1);
+    expect(result.activeCompany.id).toBe("CORP-APEX001");
+    expect(result.activeCompany.groupName).toBe("Apex Hospitality Group");
+  });
+
+  it("should handle multi-store admins with multiple companies and respect preferredOrgId", async () => {
+    const mockUserDoc = {
+      exists: true,
+      data: () => ({
+        email: "multi_owner@apex.com",
+        role: "CorporateAdmin",
+      }),
+    };
+
+    const mockCompanyA = {
+      id: "CORP-STORE-A",
+      exists: true,
+      data: () => ({
+        groupName: "Apex Downtown Store",
+        workplaceCode: "EZM-APEX-0001",
+        ownerId: "multi_uid_3",
+      }),
+    };
+
+    const mockCompanyB = {
+      id: "CORP-STORE-B",
+      exists: true,
+      data: () => ({
+        groupName: "Apex Uptown Store",
+        workplaceCode: "EZM-APEX-0002",
+        ownerId: "multi_uid_3",
+      }),
+    };
+
+    mockMethods.doc.mockImplementation((id) => {
+      if (id === "multi_uid_3") return {get: () => Promise.resolve(mockUserDoc), set: mockMethods.set};
+      if (id === "CORP-STORE-A") return {get: () => Promise.resolve(mockCompanyA)};
+      if (id === "CORP-STORE-B") return {get: () => Promise.resolve(mockCompanyB)};
+      return {get: () => Promise.resolve({exists: false})};
+    });
+
+    mockMethods.where.mockReturnValue({
+      get: jest.fn().mockResolvedValue({
+        empty: false,
+        forEach: (cb) => {
+          cb(mockCompanyA);
+          cb(mockCompanyB);
+        },
+      }),
+    });
+
+    mockMethods.collection.mockImplementation((col) => {
+      if (col === "users") return {doc: mockMethods.doc};
+      if (col === "shift_groups") return {doc: mockMethods.doc, where: mockMethods.where};
+      return mockMethods;
+    });
+
+    const result = await handleGetAdminCompanies(
+      {preferredOrgId: "CORP-STORE-B"},
+      "multi_uid_3",
+      {auth: {token: {email: "multi_owner@apex.com"}}},
+      false,
+      null
+    );
+
+    expect(result.success).toBe(true);
+    expect(result.companies.length).toBe(2);
+    // Active company should be preferred store B
+    expect(result.activeCompany.id).toBe("CORP-STORE-B");
+    expect(result.activeCompany.groupName).toBe("Apex Uptown Store");
+  });
+});
+
+describe("handleSwitchCompany", () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it("should switch company and update user document atomically", async () => {
+    const mockUserDoc = {
+      exists: true,
+      data: () => ({
+        email: "owner@company.com",
+        role: "CorporateAdmin",
+      }),
+    };
+
+    const mockTargetDoc = {
+      id: "CORP-STORE-TARGET",
+      exists: true,
+      data: () => ({
+        groupName: "Target Store Location",
+        workplaceCode: "EZM-TGT-9999",
+        ownerId: "owner_uid_4",
+      }),
+    };
+
+    mockMethods.doc.mockImplementation((id) => {
+      if (id === "owner_uid_4") return {get: () => Promise.resolve(mockUserDoc), set: mockMethods.set};
+      if (id === "CORP-STORE-TARGET") return {get: () => Promise.resolve(mockTargetDoc)};
+      return {get: () => Promise.resolve({exists: false})};
+    });
+
+    mockMethods.collection.mockImplementation((col) => {
+      if (col === "users") return {doc: mockMethods.doc};
+      if (col === "shift_groups") return {doc: mockMethods.doc};
+      return mockMethods;
+    });
+
+    const result = await handleSwitchCompany(
+      {groupId: "CORP-STORE-TARGET"},
+      "owner_uid_4",
+      {auth: {token: {email: "owner@company.com"}}},
+      false,
+      null
+    );
+
+    expect(result.success).toBe(true);
+    expect(result.groupId).toBe("CORP-STORE-TARGET");
+    expect(result.activeCompany.groupName).toBe("Target Store Location");
+    expect(mockMethods.set).toHaveBeenCalledWith(expect.objectContaining({
+      orgId: "CORP-STORE-TARGET",
+      role: "CorporateAdmin",
+    }), {merge: true});
+  });
+
+  it("should reject switch if user has no authorization to target company", async () => {
+    const mockUserDoc = {
+      exists: true,
+      data: () => ({
+        email: "stranger@other.com",
+        role: "User",
+        orgId: "OTHER-ORG",
+      }),
+    };
+
+    const mockTargetDoc = {
+      id: "CORP-PRIVATE",
+      exists: true,
+      data: () => ({
+        groupName: "Private Enterprise",
+        ownerId: "someone_else",
+      }),
+    };
+
+    mockMethods.doc.mockImplementation((id) => {
+      if (id === "stranger_uid") return {get: () => Promise.resolve(mockUserDoc)};
+      if (id === "CORP-PRIVATE") return {get: () => Promise.resolve(mockTargetDoc)};
+      return {get: () => Promise.resolve({exists: false})};
+    });
+
+    mockMethods.collection.mockImplementation((col) => {
+      if (col === "users") return {doc: mockMethods.doc};
+      if (col === "shift_groups") return {doc: mockMethods.doc};
+      return mockMethods;
+    });
+
+    await expect(
+      handleSwitchCompany(
+        {groupId: "CORP-PRIVATE"},
+        "stranger_uid",
+        {auth: {token: {email: "stranger@other.com"}}},
+        false,
+        "OTHER-ORG"
+      )
+    ).rejects.toThrow(HttpsError);
   });
 });

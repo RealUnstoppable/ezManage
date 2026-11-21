@@ -225,11 +225,50 @@
             border-bottom-color: #818cf8;
             background-color: transparent;
         }
+
+        @keyframes indeterminate {
+            0% { transform: translateX(-100%); width: 40%; }
+            50% { transform: translateX(50%); width: 60%; }
+            100% { transform: translateX(200%); width: 40%; }
+        }
+
+        .animate-indeterminate {
+            animation: indeterminate 1.4s infinite ease-in-out;
+        }
+
+        .workspace-item {
+            transition: all 0.15s ease;
+        }
+
+        .workspace-item:hover {
+            background-color: rgba(99, 102, 241, 0.08);
+        }
+
+        .workspace-item.active-workspace {
+            border-left: 3px solid #4338ca;
+            background-color: rgba(99, 102, 241, 0.05);
+        }
     </style>
 </head>
 
 <body class="min-h-screen relative">
     <header class="main-header"></header>
+
+    <!-- Corporate Initialization & Loading Overlay -->
+    <div id="corporateLoadingOverlay" class="fixed inset-0 z-[100] bg-slate-50 dark:bg-slate-950 flex flex-col items-center justify-center transition-all duration-300 hidden pointer-events-none opacity-0">
+        <div class="card p-8 max-w-sm w-full text-center shadow-xl border border-slate-200 dark:border-slate-800 space-y-4">
+            <div class="w-14 h-14 rounded-2xl bg-indigo-600 text-white flex items-center justify-center mx-auto shadow-md animate-pulse">
+                <i data-lucide="building-2" class="w-7 h-7"></i>
+            </div>
+            <div>
+                <h3 class="font-bold text-lg text-slate-900 dark:text-white">ezManage Corporate</h3>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1" id="loadingOverlayStatus">Verifying administrative credentials & workspaces...</p>
+            </div>
+            <div class="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-1.5 overflow-hidden">
+                <div class="bg-indigo-600 h-1.5 rounded-full animate-indeterminate"></div>
+            </div>
+        </div>
+    </div>
 
     <!-- Corporate Executive Navbar -->
     <nav class="fixed top-0 w-full z-50 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 transition-colors">
@@ -251,6 +290,33 @@
             </div>
 
             <div class="flex items-center gap-2.5">
+                <!-- Corporate Workspace Switcher Dropdown in Nav -->
+                <div id="companySwitcherNavContainer" class="relative hidden sm:block">
+                    <button id="companySwitcherNavBtn" onclick="toggleCompanySwitcher(event)" aria-label="Switch Corporate Workspace" class="btn btn-outline py-2 px-3 text-xs font-semibold flex items-center gap-2 border-slate-200 dark:border-slate-700 hover:border-indigo-500 transition-colors">
+                        <i data-lucide="building" class="w-3.5 h-3.5 text-indigo-500"></i>
+                        <span id="navActiveCompanyName" class="truncate max-w-[130px]">Workspace</span>
+                        <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-400"></i>
+                    </button>
+                    <!-- Floating Switcher Menu -->
+                    <div id="companySwitcherNavDropdown" class="hidden absolute right-0 mt-2 w-72 card p-2 shadow-2xl border border-slate-200 dark:border-slate-700 z-50 animate-in fade-in duration-150">
+                        <div class="px-3 py-2 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
+                            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">My Workspaces</span>
+                            <span id="companyCountBadge" class="text-[10px] font-bold bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 px-2 py-0.5 rounded-full">1</span>
+                        </div>
+                        <div id="companySwitcherNavList" class="py-1 max-h-56 overflow-y-auto space-y-1 custom-scrollbar">
+                            <!-- Populated dynamically -->
+                        </div>
+                        <div class="border-t border-slate-100 dark:border-slate-800 pt-1 space-y-0.5">
+                            <button onclick="openProvisionModal()" aria-label="Provision New Corporate Workspace" class="w-full text-left flex items-center gap-2 px-3 py-2 text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/30 rounded-lg transition-colors">
+                                <i data-lucide="plus-circle" class="w-4 h-4"></i> Provision New Workspace
+                            </button>
+                            <button onclick="openConnectExistingModal()" aria-label="Connect Existing Corporate Workspace" class="w-full text-left flex items-center gap-2 px-3 py-2 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors">
+                                <i data-lucide="link" class="w-4 h-4 text-emerald-500"></i> Connect Existing Workspace
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
                 <a href="index.html" class="btn btn-outline py-2 px-3 text-xs hidden sm:inline-flex items-center gap-1.5 font-medium">
                     <i data-lucide="layout-dashboard" class="w-3.5 h-3.5 text-indigo-500"></i> Store App
                 </a>
@@ -312,30 +378,63 @@
             </div>
         </div>
 
-        <!-- REGISTER VIEW (ONBOARDING) -->
+        <!-- REGISTER VIEW (ONBOARDING & WORKSPACE RECOVERY HUB) -->
         <div id="view-register" class="view-section px-4 py-8">
-            <div class="max-w-xl mx-auto w-full relative">
+            <div class="max-w-2xl mx-auto w-full relative">
                 <!-- Progress Bar -->
                 <div id="onboardingProgressContainer" class="w-full bg-slate-200 dark:bg-slate-800 rounded-full h-1.5 mb-8 hidden overflow-hidden">
                     <div id="onboardingProgressBar" class="bg-indigo-600 h-1.5 rounded-full transition-all duration-300 ease-out" style="width: 0%"></div>
                 </div>
 
                 <div id="onboardingSteps" class="relative overflow-hidden min-h-[420px]">
-                    <!-- Step 1: Welcome -->
+                    <!-- Step 1: Admin Workspace Central & Recovery Hub -->
                     <div id="step-1" class="onboarding-step transition-all duration-500 ease-in-out transform w-full">
-                        <div class="card text-center p-8 sm:p-10">
-                            <div class="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-2xl flex items-center justify-center mx-auto mb-5 border border-slate-200 dark:border-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm">
+                        <div class="card p-8 sm:p-10 text-center">
+                            <div class="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-slate-200 dark:border-slate-700 text-indigo-600 dark:text-indigo-400 shadow-sm">
                                 <i data-lucide="building-2" class="w-8 h-8"></i>
                             </div>
-                            <span class="text-[10px] font-semibold uppercase tracking-wider bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 px-2.5 py-1 rounded-md inline-block mb-3">Enterprise Setup</span>
-                            <h2 class="text-2xl sm:text-3xl font-bold mb-2 text-slate-900 dark:text-white">Provision Corporate Workspace</h2>
-                            <p class="text-sm text-slate-500 dark:text-slate-400 mb-8 max-w-md mx-auto leading-relaxed">Centralized oversight for multi-unit store operations, synchronized shift routines, manager leaderboards, and unified employee rosters.</p>
-                            <button type="button" onclick="nextOnboardingStep(2)" class="btn btn-primary w-full py-3.5 text-sm font-semibold shadow-sm">
-                                Begin Workspace Provisioning
-                            </button>
-                            <button id="login-link-step-1" type="button" onclick="navTo('login')" class="mt-4 text-xs font-semibold text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
-                                Already have an active organization? <span class="underline">Sign In</span>
-                            </button>
+                            <span class="text-[10px] font-semibold uppercase tracking-wider bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800/80 px-2.5 py-1 rounded-md inline-block mb-2">Corporate Workspace Central</span>
+                            <h2 class="text-2xl sm:text-3xl font-bold mb-2 text-slate-900 dark:text-white">Corporate Admin Operations</h2>
+                            <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mb-8 max-w-lg mx-auto leading-relaxed">Centralized oversight for multi-unit store operations, synchronized shift routines, manager leaderboards, and unified employee rosters.</p>
+
+                            <!-- Dual Path Options for Admins -->
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-left mb-6">
+                                <div class="p-5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/60 dark:bg-slate-800/40 hover:border-indigo-400 transition-colors flex flex-col justify-between">
+                                    <div>
+                                        <div class="w-9 h-9 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 flex items-center justify-center mb-3">
+                                            <i data-lucide="link" class="w-5 h-5"></i>
+                                        </div>
+                                        <h3 class="font-bold text-sm text-slate-900 dark:text-white mb-1">Connect Existing Workspace</h3>
+                                        <p class="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed mb-4">Already have a company or store set up on ezManage? Enter your Workplace Code or Group ID to connect immediately.</p>
+                                    </div>
+                                    <button type="button" onclick="openConnectExistingModal()" aria-label="Connect Existing Workspace" class="btn btn-outline w-full py-2.5 text-xs font-semibold flex items-center justify-center gap-1.5 border-slate-200 dark:border-slate-700 hover:border-emerald-500">
+                                        <i data-lucide="link" class="w-3.5 h-3.5 text-emerald-500"></i> Enter Workplace Code
+                                    </button>
+                                </div>
+
+                                <div class="p-5 rounded-xl border border-indigo-200 dark:border-indigo-800/60 bg-indigo-50/30 dark:bg-indigo-950/20 hover:border-indigo-500 transition-colors flex flex-col justify-between">
+                                    <div>
+                                        <div class="w-9 h-9 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800 flex items-center justify-center mb-3">
+                                            <i data-lucide="plus-circle" class="w-5 h-5"></i>
+                                        </div>
+                                        <h3 class="font-bold text-sm text-slate-900 dark:text-white mb-1">Provision New Workspace</h3>
+                                        <p class="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed mb-4">Create a new corporate entity to oversee multiple store locations, shift groups, and authorized managers.</p>
+                                    </div>
+                                    <button type="button" onclick="nextOnboardingStep(2)" aria-label="Begin Workspace Provisioning" class="btn btn-primary w-full py-2.5 text-xs font-semibold shadow-sm flex items-center justify-center gap-1.5">
+                                        <span>Begin Workspace Provisioning</span> →
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="flex flex-wrap items-center justify-center gap-4 pt-2">
+                                <button type="button" onclick="quickProvisionCorporateWorkspace()" class="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline inline-flex items-center gap-1">
+                                    <i data-lucide="zap" class="w-3.5 h-3.5"></i> 1-Click Fast Workspace Provisioning
+                                </button>
+                                <span class="text-slate-300 dark:text-slate-700">•</span>
+                                <button id="login-link-step-1" type="button" onclick="navTo('login')" class="text-xs font-semibold text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
+                                    Sign in with different credentials <span class="underline">Sign In</span>
+                                </button>
+                            </div>
                         </div>
                     </div>
 
@@ -561,6 +660,9 @@
                 </div>
 
                 <div class="flex flex-wrap items-center gap-2.5 w-full md:w-auto">
+                    <button id="btnSwitchWorkspaceBento" onclick="toggleCompanySwitcher(event)" aria-label="Switch Corporate Workspace" class="btn btn-outline py-2 px-3.5 text-xs font-semibold flex items-center gap-2">
+                        <i data-lucide="arrow-left-right" class="w-3.5 h-3.5 text-indigo-500"></i> Switch Workspace
+                    </button>
                     <button id="openCompanySettingsBtn" onclick="openCompanySettingsModal()" class="btn btn-outline py-2 px-3.5 text-xs font-semibold flex items-center gap-2">
                         <i data-lucide="settings" class="w-3.5 h-3.5 text-indigo-500"></i> Company Settings
                     </button>
@@ -1012,6 +1114,41 @@
         </div>
     </div>
 
+    <!-- Connect Existing Corporate Workspace Modal -->
+    <div id="connectExistingCompanyModal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+        <div class="card max-w-md w-full p-6 space-y-4">
+            <div class="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-3">
+                <h3 class="font-bold text-base text-slate-900 dark:text-white flex items-center gap-2">
+                    <i data-lucide="link" class="w-4 h-4 text-emerald-600"></i> Connect Existing Corporate Workspace
+                </h3>
+                <button onclick="closeConnectExistingModal()" aria-label="Close modal" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            </div>
+            <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">Connect to an existing store or enterprise organization using its unique Workplace Code or Group ID and Join Passcode.</p>
+
+            <form onsubmit="handleConnectExistingCompany(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Workplace Code or Group ID</label>
+                    <input type="text" id="connectWorkspaceCodeInput" required placeholder="e.g. EZM-APEX-8F2D19 or CORP-XXXXXXXX"
+                        class="w-full font-mono uppercase bg-slate-50 dark:bg-slate-800 p-2.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 dark:text-white font-semibold">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Workplace Join Passcode</label>
+                    <input type="password" id="connectJoinPassInput" required placeholder="e.g. WPK-7B29-4M8D"
+                        class="w-full font-mono bg-slate-50 dark:bg-slate-800 p-2.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500 text-slate-900 dark:text-white font-semibold">
+                </div>
+
+                <div class="flex justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                    <button type="button" onclick="closeConnectExistingModal()" class="btn btn-outline py-2 px-4 text-xs font-semibold">Cancel</button>
+                    <button type="submit" id="btnSubmitConnectExisting" class="btn btn-primary py-2 px-5 text-xs font-semibold flex items-center gap-1.5">
+                        <i data-lucide="link" class="w-3.5 h-3.5"></i> Connect Workspace
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Corporate Toast Notification Container -->
     <div id="corporateToastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none"></div>
 
@@ -1035,6 +1172,35 @@
         let isPassVisible = false;
         let globalChartInstance = null;
         let isRegistering = false;
+        let userCompanies = [];
+
+        window.userCompanies = userCompanies;
+        window.activeOrgId = activeOrgId;
+        window.activeOrgData = activeOrgData;
+
+        function showCorporateLoadingOverlay(statusMsg = "Verifying administrative credentials & workspaces...") {
+            if (window.isE2ETestMode) return;
+            const overlay = document.getElementById('corporateLoadingOverlay');
+            const text = document.getElementById('loadingOverlayStatus');
+            if (text) text.innerText = statusMsg;
+            if (overlay) {
+                overlay.classList.remove('hidden', 'opacity-0', 'pointer-events-none');
+                overlay.classList.add('opacity-100');
+            }
+        }
+
+        function hideCorporateLoadingOverlay() {
+            const overlay = document.getElementById('corporateLoadingOverlay');
+            if (overlay) {
+                overlay.classList.remove('opacity-100');
+                overlay.classList.add('opacity-0', 'pointer-events-none');
+                setTimeout(() => {
+                    if (overlay.classList.contains('pointer-events-none')) {
+                        overlay.classList.add('hidden');
+                    }
+                }, 300);
+            }
+        }
 
         // --- Real-time Firestore Listener Unsubscribe Handles & De-duplication Guard ---
         let unsubscribeShiftNotes = null;
@@ -1317,6 +1483,276 @@
             if (dropdown) dropdown.classList.add('hidden');
         }
 
+        // --- Corporate Multi-Store Workspace Switcher Helpers ---
+        function toggleCompanySwitcher(e) {
+            if (e) e.stopPropagation();
+            closeProfileDropdown();
+            const dropdown = document.getElementById('companySwitcherNavDropdown');
+            if (dropdown) {
+                dropdown.classList.toggle('hidden');
+                if (window.lucide) lucide.createIcons();
+            }
+        }
+
+        function closeCompanySwitcher() {
+            const dropdown = document.getElementById('companySwitcherNavDropdown');
+            if (dropdown) dropdown.classList.add('hidden');
+        }
+
+        function renderCompanySwitcher() {
+            const listContainer = document.getElementById('companySwitcherNavList');
+            const badge = document.getElementById('companyCountBadge');
+            const navName = document.getElementById('navActiveCompanyName');
+
+            if (navName && activeOrgData) {
+                navName.innerText = activeOrgData.groupName || 'Workspace';
+            }
+
+            if (badge) {
+                badge.innerText = userCompanies.length;
+            }
+
+            if (!listContainer) return;
+
+            if (!userCompanies || userCompanies.length === 0) {
+                listContainer.innerHTML = `<div class="p-3 text-center text-xs text-slate-400 font-medium">No workspaces found</div>`;
+                return;
+            }
+
+            listContainer.innerHTML = userCompanies.map(c => {
+                const isActive = c.id === activeOrgId;
+                const code = c.workplaceCode || ('EZM-' + c.id.substring(0, 6).toUpperCase());
+                return `
+                    <button onclick="switchCorporateWorkspace('${escapeHTML(c.id)}')" 
+                            aria-label="Switch to ${escapeHTML(c.groupName || 'Workspace')}"
+                            class="w-full text-left p-2.5 rounded-lg workspace-item ${isActive ? 'active-workspace' : ''} flex items-center justify-between gap-2 group transition-all">
+                        <div class="min-w-0 flex-1">
+                            <div class="text-xs font-bold text-slate-800 dark:text-slate-100 truncate group-hover:text-indigo-600 dark:group-hover:text-indigo-400">
+                                ${escapeHTML(c.groupName || 'Corporate Workspace')}
+                            </div>
+                            <div class="text-[10px] font-mono text-slate-400 truncate">
+                                ${escapeHTML(code)}
+                            </div>
+                        </div>
+                        ${isActive ? '<i data-lucide="check" class="w-4 h-4 text-indigo-600 dark:text-indigo-400 shrink-0"></i>' : ''}
+                    </button>
+                `;
+            }).join('');
+
+            if (window.lucide) lucide.createIcons();
+        }
+
+        async function switchCorporateWorkspace(newOrgId) {
+            if (!newOrgId || newOrgId === activeOrgId) {
+                closeCompanySwitcher();
+                return;
+            }
+
+            closeCompanySwitcher();
+            showCorporateLoadingOverlay("Switching corporate workspace...");
+
+            try {
+                localStorage.setItem('ezManage_active_corporate_org_id', newOrgId);
+
+                try {
+                    await callFunction('manageShiftGroups', {
+                        action: 'switch_company',
+                        payload: { newOrgId }
+                    });
+                } catch (switchErr) {
+                    console.warn("Backend switch_company notice (proceeding locally):", switchErr);
+                }
+
+                cleanupCorporateListeners();
+                await initializeCorporateWorkspace(currentUser, newOrgId);
+                showCorporateToast(`Switched workspace to ${(activeOrgData && activeOrgData.groupName) || 'new company'}`);
+            } catch (err) {
+                console.error("Error switching corporate workspace:", err);
+                showCorporateToast("Failed to switch workspace: " + err.message, "error");
+                hideCorporateLoadingOverlay();
+            }
+        }
+
+        function openConnectExistingModal() {
+            closeCompanySwitcher();
+            const modal = document.getElementById('connectExistingCompanyModal');
+            if (modal) {
+                modal.classList.remove('hidden');
+                const input = document.getElementById('connectWorkspaceCodeInput');
+                if (input) setTimeout(() => input.focus(), 100);
+                if (window.lucide) lucide.createIcons();
+            }
+        }
+
+        function closeConnectExistingModal() {
+            const modal = document.getElementById('connectExistingCompanyModal');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        async function handleConnectExistingCompany(e) {
+            if (e) e.preventDefault();
+            const codeInput = document.getElementById('connectWorkspaceCodeInput');
+            const passInput = document.getElementById('connectJoinPassInput');
+            const btn = document.getElementById('btnSubmitConnectExisting');
+
+            const workplaceCode = codeInput ? codeInput.value.trim().toUpperCase() : '';
+            const joinKey = passInput ? passInput.value.trim() : '';
+
+            if (!workplaceCode || !joinKey) {
+                showCorporateToast("Please enter Workplace Code and Passcode", "error");
+                return;
+            }
+
+            const origContent = btn ? btn.innerHTML : '';
+            if (btn) {
+                btn.innerHTML = `<i data-lucide="loader-2" class="w-3.5 h-3.5 animate-spin"></i> Connecting...`;
+                btn.disabled = true;
+                if (window.lucide) lucide.createIcons();
+            }
+
+            try {
+                let result = null;
+                try {
+                    result = await callFunction('manageShiftGroups', {
+                        action: 'request_join',
+                        payload: {
+                            workplaceCode,
+                            joinKey
+                        }
+                    });
+                } catch (funcErr) {
+                    console.warn("Function request_join notice, checking direct query fallback:", funcErr);
+                    let matchDoc = null;
+                    const codeSnap = await db.collection('shift_groups').where('workplaceCode', '==', workplaceCode).limit(1).get().catch(() => ({ empty: true }));
+                    if (!codeSnap.empty) {
+                        matchDoc = codeSnap.docs[0];
+                    } else {
+                        const idDoc = await db.collection('shift_groups').doc(workplaceCode).get().catch(() => ({ exists: false }));
+                        if (idDoc && idDoc.exists) matchDoc = idDoc;
+                    }
+
+                    if (!matchDoc) {
+                        throw new Error("No company found matching code: " + workplaceCode);
+                    }
+
+                    const mData = matchDoc.data();
+                    if (mData.joinKey && mData.joinKey !== joinKey) {
+                        throw new Error("Invalid join passcode for " + (mData.groupName || 'company'));
+                    }
+
+                    if (currentUser) {
+                        await db.collection('users').doc(currentUser.uid).set({
+                            orgId: matchDoc.id,
+                            role: 'CorporateAdmin',
+                            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                        }, { merge: true });
+                    }
+                    result = { data: { groupId: matchDoc.id, groupName: mData.groupName } };
+                }
+
+                const linkedOrgId = (result && result.data && (result.data.groupId || result.data.orgId)) || workplaceCode;
+                localStorage.setItem('ezManage_active_corporate_org_id', linkedOrgId);
+
+                closeConnectExistingModal();
+                if (codeInput) codeInput.value = '';
+                if (passInput) passInput.value = '';
+
+                showCorporateToast("Connected to corporate workspace!");
+                await initializeCorporateWorkspace(currentUser, linkedOrgId);
+            } catch (err) {
+                console.error("Connect company error:", err);
+                showCorporateToast(err.message || "Failed to connect workspace", "error");
+            } finally {
+                if (btn) {
+                    btn.innerHTML = origContent;
+                    btn.disabled = false;
+                    if (window.lucide) lucide.createIcons();
+                }
+            }
+        }
+
+        async function quickProvisionCorporateWorkspace() {
+            if (!currentUser) {
+                navTo('login');
+                return;
+            }
+
+            const defaultName = (currentUserData && currentUserData.name) ? `${currentUserData.name}'s Enterprise` : `${(currentUser.email || 'Corporate').split('@')[0].toUpperCase()} Enterprises`;
+            const companyName = prompt("Enter name for your corporate workspace:", defaultName);
+            if (!companyName || !companyName.trim()) return;
+
+            showCorporateLoadingOverlay("Provisioning corporate workspace...");
+
+            try {
+                let result = null;
+                try {
+                    result = await callFunction('manageShiftGroups', {
+                        action: 'create',
+                        payload: {
+                            groupName: companyName.trim(),
+                            plan: 'enterprise',
+                            workersCount: '10-50',
+                            aiEnabled: true,
+                            multiStoreEnabled: true
+                        }
+                    });
+                } catch (funcErr) {
+                    console.warn("Function create failed, using client fallback:", funcErr);
+                    const cleanCode = companyName.replace(/[^a-zA-Z0-9]/g, '').toUpperCase().slice(0, 4) || 'CORP';
+                    const randSuffix = Math.random().toString(36).substring(2, 8).toUpperCase();
+                    const workplaceCode = `EZM-${cleanCode}-${randSuffix}`;
+                    const joinKey = `WPK-${Math.random().toString(36).substring(2, 6).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+
+                    const newDoc = await db.collection('shift_groups').add({
+                        groupName: companyName.trim(),
+                        ownerId: currentUser.uid,
+                        ownerEmail: currentUser.email,
+                        workplaceCode: workplaceCode,
+                        joinKey: joinKey,
+                        plan: 'enterprise',
+                        workersCount: '10-50',
+                        aiEnabled: true,
+                        multiStoreEnabled: true,
+                        requireApproval: true,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+
+                    await db.collection('users').doc(currentUser.uid).set({
+                        orgId: newDoc.id,
+                        role: 'CorporateAdmin',
+                        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    }, { merge: true });
+
+                    result = { data: { groupId: newDoc.id, workplaceCode, joinKey } };
+                }
+
+                const newOrgId = result && result.data && result.data.groupId;
+                if (newOrgId) {
+                    localStorage.setItem('ezManage_active_corporate_org_id', newOrgId);
+                    showCorporateToast("Corporate workspace provisioned successfully!");
+                    await initializeCorporateWorkspace(currentUser, newOrgId);
+                } else {
+                    throw new Error("Workspace ID missing from provisioning result");
+                }
+            } catch (err) {
+                console.error("Quick provision error:", err);
+                showCorporateToast("Failed to provision workspace: " + err.message, "error");
+                hideCorporateLoadingOverlay();
+            }
+        }
+
+        function openProvisionModal() {
+            closeCompanySwitcher();
+            isRegistering = true;
+            navTo('register');
+            resetOnboarding();
+            if (currentUser) {
+                transitionSteps('step-1', 'step-2');
+                currentStepIndex = onboardingFlow.indexOf('step-2');
+                updateProgressBar();
+            }
+        }
+
         document.addEventListener('click', (e) => {
             const menuBtn = document.getElementById('userProfileMenuBtn');
             const dropdown = document.getElementById('userProfileDropdown');
@@ -1325,13 +1761,26 @@
                     closeProfileDropdown();
                 }
             }
+
+            const switchBtn = document.getElementById('companySwitcherNavBtn');
+            const switchBentoBtn = document.getElementById('btnSwitchWorkspaceBento');
+            const switchDropdown = document.getElementById('companySwitcherNavDropdown');
+            if (switchDropdown && !switchDropdown.classList.contains('hidden')) {
+                if ((!switchBtn || !switchBtn.contains(e.target)) &&
+                    (!switchBentoBtn || !switchBentoBtn.contains(e.target)) &&
+                    !switchDropdown.contains(e.target)) {
+                    closeCompanySwitcher();
+                }
+            }
         });
 
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') {
                 closeProfileDropdown();
+                closeCompanySwitcher();
                 closeProfileSettingsModal();
                 closeCompanySettingsModal();
+                closeConnectExistingModal();
             }
         });
 
@@ -1563,6 +2012,16 @@
                 const orgNameEl = document.getElementById('orgNameDisplayBento');
                 if (orgNameEl) orgNameEl.innerText = groupName;
 
+                const navActiveName = document.getElementById('navActiveCompanyName');
+                if (navActiveName) navActiveName.innerText = groupName;
+
+                const cIdx = userCompanies.findIndex(c => c.id === activeOrgId);
+                if (cIdx !== -1) {
+                    userCompanies[cIdx].groupName = groupName;
+                    userCompanies[cIdx].multiStoreEnabled = multiStoreEnabled;
+                }
+                renderCompanySwitcher();
+
                 const multiStoreBadge = document.getElementById('multiStoreStatusBadge');
                 if (multiStoreBadge) {
                     multiStoreBadge.innerHTML = multiStoreEnabled
@@ -1609,11 +2068,7 @@
 
                 renderAuthProfile(user, currentUserData);
 
-                const isCorporateUser = (user.email === 'catalinandrian1@gmail.com') ||
-                                        (currentUserData && (currentUserData.role === 'CorporateAdmin' || currentUserData.role === 'Creator' || currentUserData.orgId || currentUserData.isAdmin === true));
-
-                if (!isRegistering || isCorporateUser) {
-                    isRegistering = false;
+                if (!isRegistering) {
                     document.getElementById('view-login').classList.remove('active');
                     document.getElementById('view-register').classList.remove('active');
                     await initializeCorporateWorkspace(user);
@@ -1657,9 +2112,85 @@
             }
         }
 
+        // --- Centralized DOM & Workspace Synchronization ---
+        function applyActiveCompanyToDOM(orgData, orgId) {
+            if (!orgData || !orgId) return;
+
+            const code = orgData.workplaceCode || ('EZM-' + orgId.substring(0, 6).toUpperCase());
+            const groupName = orgData.groupName || 'Corporate Workspace';
+            const joinKey = orgData.joinKey || '';
+            const password = orgData.password || '';
+
+            const orgNameEl = document.getElementById('orgNameDisplayBento');
+            if (orgNameEl) orgNameEl.innerText = groupName;
+
+            const orgIdEl = document.getElementById('orgIdDisplayBento');
+            if (orgIdEl) orgIdEl.innerText = `ID: ${orgId}`;
+
+            const codeBannerEl = document.getElementById('workplaceCodeDisplayBento');
+            if (codeBannerEl) {
+                codeBannerEl.innerText = `Code: ${code}`;
+                codeBannerEl.setAttribute('data-code', code);
+            }
+
+            const multiStoreBadge = document.getElementById('multiStoreStatusBadge');
+            if (multiStoreBadge) {
+                const isMulti = orgData.multiStoreEnabled !== false;
+                multiStoreBadge.innerHTML = isMulti
+                    ? `<span class="w-1.5 h-1.5 rounded-full bg-indigo-500"></span> Multi-Store Integrated`
+                    : `<span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span> Single-Store Mode`;
+            }
+
+            const shareGroupPassDisplay = document.getElementById('shareGroupPassDisplay');
+            if (shareGroupPassDisplay) {
+                const isEncrypted = password && password.startsWith('$scrypt$');
+                shareGroupPassDisplay.innerHTML = isEncrypted
+                    ? `<i data-lucide="shield-check" class="w-3.5 h-3.5 text-emerald-500"></i> Security: Encrypted`
+                    : `<i data-lucide="key" class="w-3.5 h-3.5 text-amber-500"></i> Security: Standard`;
+            }
+
+            const shareWorkplaceCodeEl = document.getElementById('shareWorkplaceCode');
+            if (shareWorkplaceCodeEl) shareWorkplaceCodeEl.innerText = code;
+
+            const shareIdEl = document.getElementById('shareGroupId');
+            if (shareIdEl) shareIdEl.innerText = orgId;
+
+            const sharePassEl = document.getElementById('shareGroupPass');
+            if (sharePassEl) {
+                if (joinKey) {
+                    sharePassEl.setAttribute('data-real-pass', joinKey);
+                    sharePassEl.innerText = isPassVisible ? joinKey : '••••••••';
+                } else if (password && password.startsWith('$scrypt$')) {
+                    sharePassEl.innerText = '(Securely Protected)';
+                    sharePassEl.removeAttribute('data-real-pass');
+                } else {
+                    sharePassEl.innerText = password || 'Active';
+                    sharePassEl.setAttribute('data-real-pass', password || '');
+                }
+            }
+
+            const navActiveName = document.getElementById('navActiveCompanyName');
+            if (navActiveName) navActiveName.innerText = groupName;
+
+            const dropdownCompanySettings = document.getElementById('dropdownCompanySettingsBtn');
+            if (dropdownCompanySettings) dropdownCompanySettings.classList.remove('hidden');
+
+            const switcherNavContainer = document.getElementById('companySwitcherNavContainer');
+            if (switcherNavContainer) switcherNavContainer.classList.remove('hidden');
+
+            if (window.lucide) lucide.createIcons();
+        }
+
         // --- Workspace Initialization ---
-        async function initializeCorporateWorkspace(user) {
-            if (!user) return;
+        async function initializeCorporateWorkspace(user, preferredOrgIdOverride) {
+            if (!user) {
+                hideCorporateLoadingOverlay();
+                navTo('login');
+                return;
+            }
+
+            showCorporateLoadingOverlay("Verifying administrative credentials & workspaces...");
+
             try {
                 // Ensure user data is loaded
                 if (!currentUserData) {
@@ -1673,112 +2204,144 @@
                 const isSuperAdmin = (user.email === 'catalinandrian1@gmail.com') ||
                                      (currentUserData && (currentUserData.role === 'CorporateAdmin' || currentUserData.role === 'Creator' || currentUserData.isAdmin === true));
 
-                let orgDoc = null;
-                // 1. Check if user owns a shift group
-                const groupSnap = await db.collection('shift_groups').where('ownerId', '==', user.uid).limit(1).get().catch(err => {
-                    console.warn("Group by owner query notice:", err);
-                    return { empty: true, docs: [] };
-                });
+                const preferredOrgId = preferredOrgIdOverride ||
+                                       localStorage.getItem('ezManage_active_corporate_org_id') ||
+                                       (currentUserData && currentUserData.orgId) || null;
 
-                if (!groupSnap.empty) {
-                    orgDoc = groupSnap.docs[0];
-                } else if (currentUserData && currentUserData.orgId) {
-                    // 2. Check if user document has orgId assigned
-                    const directOrgSnap = await db.collection('shift_groups').doc(currentUserData.orgId).get().catch(err => {
-                        console.warn("Direct org fetch notice:", err);
-                        return { exists: false };
+                let companies = [];
+                let activeCompany = null;
+
+                // Tier 1: Query backend manageShiftGroups action 'get_admin_companies'
+                try {
+                    const res = await callFunction('manageShiftGroups', {
+                        action: 'get_admin_companies',
+                        payload: { preferredOrgId }
                     });
-                    if (directOrgSnap.exists) {
-                        orgDoc = directOrgSnap;
+                    if (res && res.data && Array.isArray(res.data.companies)) {
+                        companies = res.data.companies;
+                        activeCompany = res.data.activeCompany || (companies.length > 0 ? companies[0] : null);
+                    }
+                } catch (funcErr) {
+                    console.warn("manageShiftGroups get_admin_companies notice (trying direct client queries):", funcErr);
+                }
+
+                // Tier 2: Resilient direct client Firestore queries fallback
+                if (!companies || companies.length === 0) {
+                    const companyMap = new Map();
+
+                    // Query by ownerId
+                    try {
+                        const ownerSnap = await db.collection('shift_groups').where('ownerId', '==', user.uid).get();
+                        ownerSnap.docs.forEach(doc => companyMap.set(doc.id, { id: doc.id, ...doc.data() }));
+                    } catch (e) { console.warn("Direct query ownerId notice:", e); }
+
+                    // Query by ownerEmail
+                    if (user.email) {
+                        try {
+                            const emailSnap = await db.collection('shift_groups').where('ownerEmail', '==', user.email).get();
+                            emailSnap.docs.forEach(doc => companyMap.set(doc.id, { id: doc.id, ...doc.data() }));
+                        } catch (e) { console.warn("Direct query ownerEmail notice:", e); }
+                    }
+
+                    // Query assigned orgId from user doc
+                    if (currentUserData && currentUserData.orgId) {
+                        try {
+                            const directDoc = await db.collection('shift_groups').doc(currentUserData.orgId).get();
+                            if (directDoc.exists) {
+                                companyMap.set(directDoc.id, { id: directDoc.id, ...directDoc.data() });
+                            } else {
+                                const codeSnap = await db.collection('shift_groups').where('workplaceCode', '==', currentUserData.orgId).limit(1).get();
+                                if (!codeSnap.empty) {
+                                    const cDoc = codeSnap.docs[0];
+                                    companyMap.set(cDoc.id, { id: cDoc.id, ...cDoc.data() });
+                                }
+                            }
+                        } catch (e) { console.warn("Direct query orgId notice:", e); }
+                    }
+
+                    // Query Super Admin fallbacks
+                    if (companyMap.size === 0 && isSuperAdmin) {
+                        try {
+                            const anySnap = await db.collection('shift_groups').limit(10).get();
+                            anySnap.docs.forEach(doc => companyMap.set(doc.id, { id: doc.id, ...doc.data() }));
+                        } catch (e) { console.warn("SuperAdmin direct query notice:", e); }
+                    }
+
+                    companies = Array.from(companyMap.values());
+                    if (companies.length > 0) {
+                        activeCompany = (preferredOrgId && companyMap.get(preferredOrgId)) || companies[0];
                     }
                 }
 
-                // 3. Super Admin bypass: if no shift group is directly owned yet, find existing or provision master workspace
-                if (!orgDoc && isSuperAdmin) {
-                    const anyGroupSnap = await db.collection('shift_groups').limit(1).get().catch(err => {
-                        console.warn("Any group query notice:", err);
-                        return { empty: true, docs: [] };
-                    });
-                    if (!anyGroupSnap.empty) {
-                        orgDoc = anyGroupSnap.docs[0];
-                    } else {
-                        // Provision Master Corporate Workspace
+                // Auto-heal user profile orgId if needed
+                if (activeCompany && (!currentUserData || !currentUserData.orgId || currentUserData.orgId !== activeCompany.id)) {
+                    db.collection('users').doc(user.uid).set({
+                        orgId: activeCompany.id,
+                        role: 'CorporateAdmin',
+                        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    }, { merge: true }).catch(err => console.warn("User profile auto-heal notice:", err));
+                    if (!currentUserData) currentUserData = {};
+                    currentUserData.orgId = activeCompany.id;
+                }
+
+                userCompanies = companies;
+                window.userCompanies = userCompanies;
+
+                // Tier 3: If still no company found
+                if (!activeCompany) {
+                    if (isSuperAdmin) {
                         try {
                             const newCorpDoc = await db.collection('shift_groups').add({
                                 groupName: 'Unstoppable Corporate',
                                 ownerId: user.uid,
+                                ownerEmail: user.email,
                                 plan: 'enterprise',
                                 workplaceCode: 'EZM-CORP01',
                                 multiStoreEnabled: true,
+                                requireApproval: true,
                                 createdAt: firebase.firestore.FieldValue.serverTimestamp()
                             });
-                            orgDoc = await newCorpDoc.get();
+                            activeCompany = {
+                                id: newCorpDoc.id,
+                                groupName: 'Unstoppable Corporate',
+                                ownerId: user.uid,
+                                ownerEmail: user.email,
+                                plan: 'enterprise',
+                                workplaceCode: 'EZM-CORP01',
+                                multiStoreEnabled: true,
+                                requireApproval: true
+                            };
+                            userCompanies = [activeCompany];
+                            window.userCompanies = userCompanies;
+                            await db.collection('users').doc(user.uid).set({
+                                orgId: newCorpDoc.id,
+                                role: 'CorporateAdmin'
+                            }, { merge: true });
                         } catch (provisionErr) {
                             console.warn("Auto-provision master workspace notice:", provisionErr);
                         }
                     }
-                }
 
-                if (!orgDoc) {
-                    navTo('register');
-                    return;
-                }
-
-                activeOrgId = orgDoc.id;
-                activeOrgData = orgDoc.data() || {};
-                const orgData = activeOrgData;
-                activeWorkplaceCode = orgData.workplaceCode || ('EZM-' + activeOrgId.substring(0, 6).toUpperCase());
-                activeJoinKey = orgData.joinKey || '';
-                activeOrgPass = orgData.password || '';
-
-                const orgNameEl = document.getElementById('orgNameDisplayBento');
-                if (orgNameEl) orgNameEl.innerText = orgData.groupName || 'Corporate Workspace';
-
-                const orgIdEl = document.getElementById('orgIdDisplayBento');
-                if (orgIdEl) orgIdEl.innerText = `ID: ${activeOrgId}`;
-
-                const codeBannerEl = document.getElementById('workplaceCodeDisplayBento');
-                if (codeBannerEl) {
-                    codeBannerEl.innerText = `Code: ${activeWorkplaceCode}`;
-                    codeBannerEl.setAttribute('data-code', activeWorkplaceCode);
-                }
-
-                const multiStoreBadge = document.getElementById('multiStoreStatusBadge');
-                if (multiStoreBadge) {
-                    const isMulti = orgData.multiStoreEnabled !== false;
-                    multiStoreBadge.innerHTML = isMulti
-                        ? `<span class="w-1.5 h-1.5 rounded-full bg-indigo-500"></span> Multi-Store Integrated`
-                        : `<span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span> Single-Store Mode`;
-                }
-
-                const shareGroupPassDisplay = document.getElementById('shareGroupPassDisplay');
-                if (shareGroupPassDisplay) {
-                    const isEncrypted = orgData.password && orgData.password.startsWith('$scrypt$');
-                    shareGroupPassDisplay.innerHTML = isEncrypted
-                        ? `<i data-lucide="shield-check" class="w-3.5 h-3.5 text-emerald-500"></i> Security: Encrypted`
-                        : `<i data-lucide="key" class="w-3.5 h-3.5 text-amber-500"></i> Security: Standard`;
-                }
-
-                const shareWorkplaceCodeEl = document.getElementById('shareWorkplaceCode');
-                if (shareWorkplaceCodeEl) shareWorkplaceCodeEl.innerText = activeWorkplaceCode;
-
-                const shareIdEl = document.getElementById('shareGroupId');
-                if (shareIdEl) shareIdEl.innerText = activeOrgId;
-
-                const sharePassEl = document.getElementById('shareGroupPass');
-                if (sharePassEl) {
-                    if (activeJoinKey) {
-                        sharePassEl.setAttribute('data-real-pass', activeJoinKey);
-                        sharePassEl.innerText = isPassVisible ? activeJoinKey : '••••••••';
-                    } else if (activeOrgPass && activeOrgPass.startsWith('$scrypt$')) {
-                        sharePassEl.innerText = '(Securely Protected)';
-                        sharePassEl.removeAttribute('data-real-pass');
-                    } else {
-                        sharePassEl.innerText = activeOrgPass || 'Active';
-                        sharePassEl.setAttribute('data-real-pass', activeOrgPass || '');
+                    if (!activeCompany) {
+                        hideCorporateLoadingOverlay();
+                        document.getElementById('dashboard-shell').classList.add('hidden');
+                        navTo('register');
+                        return;
                     }
                 }
 
+                activeOrgId = activeCompany.id;
+                activeOrgData = activeCompany;
+                window.activeOrgId = activeOrgId;
+                window.activeOrgData = activeOrgData;
+                localStorage.setItem('ezManage_active_corporate_org_id', activeOrgId);
+
+                activeWorkplaceCode = activeOrgData.workplaceCode || ('EZM-' + activeOrgId.substring(0, 6).toUpperCase());
+                activeJoinKey = activeOrgData.joinKey || '';
+                activeOrgPass = activeOrgData.password || '';
+
+                applyActiveCompanyToDOM(activeOrgData, activeOrgId);
+                renderCompanySwitcher();
                 renderAuthProfile(user, currentUserData);
 
                 document.getElementById('dashboard-shell').classList.remove('hidden');
@@ -1792,6 +2355,7 @@
                 }
 
                 if (window.lucide) lucide.createIcons();
+                hideCorporateLoadingOverlay();
 
                 // Non-blocking dashboard data loading with individual error isolation
                 Promise.allSettled([
@@ -1801,6 +2365,7 @@
                 ]).catch(err => console.warn("Dashboard fetches notice:", err));
             } catch (e) {
                 console.error("Workspace initialization error:", e);
+                hideCorporateLoadingOverlay();
                 const isSuperAdmin = (user && user.email === 'catalinandrian1@gmail.com') ||
                                      (currentUserData && (currentUserData.role === 'CorporateAdmin' || currentUserData.role === 'Creator' || currentUserData.isAdmin === true));
                 if (!isSuperAdmin && !activeOrgId) {
@@ -2784,6 +3349,24 @@
                 });
             }
         });
+
+        // --- Expose Globals for Tests & Interactive Navigation ---
+        window.initializeCorporateWorkspace = initializeCorporateWorkspace;
+        window.applyActiveCompanyToDOM = applyActiveCompanyToDOM;
+        window.renderCompanySwitcher = renderCompanySwitcher;
+        window.switchCorporateWorkspace = switchCorporateWorkspace;
+        window.toggleCompanySwitcher = toggleCompanySwitcher;
+        window.closeCompanySwitcher = closeCompanySwitcher;
+        window.openConnectExistingModal = openConnectExistingModal;
+        window.closeConnectExistingModal = closeConnectExistingModal;
+        window.handleConnectExistingCompany = handleConnectExistingCompany;
+        window.quickProvisionCorporateWorkspace = quickProvisionCorporateWorkspace;
+        window.openProvisionModal = openProvisionModal;
+        window.showCorporateToast = showCorporateToast;
+        window.navTo = navTo;
+        window.switchCorporateTab = switchCorporateTab;
+        window.advanceOnboarding = advanceOnboarding;
+        window.resetOnboarding = resetOnboarding;
     </script>
     <footer class="main-footer"></footer>
 </body>

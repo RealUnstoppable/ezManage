@@ -715,7 +715,7 @@ function generateUniqueCorporateId() {
   return id;
 }
 
-async function handleCreateShiftGroup(payload, uid) {
+async function handleCreateShiftGroup(payload, uid, context) {
   const {groupName, password, ownerName, authorId, orgId, workplaceCode, joinKey, plan, workersCount, aiEnabled, name, multiStoreEnabled, requireApproval} = payload;
 
   checkRequiredFields(payload, ["groupName"]);
@@ -752,8 +752,11 @@ async function handleCreateShiftGroup(payload, uid) {
     uniqueGroupId = `CORP-${crypto.randomBytes(4).toString("hex").toUpperCase()}`;
   }
 
+  const userEmail = payload.ownerEmail || (context && context.auth && context.auth.token && context.auth.token.email) || null;
+
   const newGroupParams = {
     ownerId: authorId || uid,
+    ownerEmail: userEmail,
     orgId: uniqueGroupId,
     ownerName: ownerName || "Anonymous",
     groupName,
@@ -865,7 +868,7 @@ async function handleRequestJoinShiftGroup(payload, uid) {
   return {success: true, groupId: targetGroupId};
 }
 
-async function handleRotateWorkplaceCredentials(payload, uid) {
+async function handleRotateWorkplaceCredentials(payload, uid, context, isAdmin = false) {
   const {groupId, newJoinKey} = payload;
   checkRequiredFields(payload, ["groupId"]);
 
@@ -876,7 +879,7 @@ async function handleRotateWorkplaceCredentials(payload, uid) {
     throw new HttpsError("not-found", "Group not found");
   }
 
-  if (groupDoc.data().ownerId !== uid) {
+  if (groupDoc.data().ownerId !== uid && !isAdmin) {
     throw new HttpsError("permission-denied", "Unauthorized to modify workspace credentials");
   }
 
@@ -923,7 +926,7 @@ async function handleRotateWorkplaceCredentials(payload, uid) {
     return {success: true};
   }
 
-  async function handleApproveJoinShiftGroup(payload, uid) {
+  async function handleApproveJoinShiftGroup(payload, uid, context, isAdmin = false) {
     const {requestId} = payload;
 
     checkRequiredFields(payload, ["requestId"]);
@@ -938,11 +941,11 @@ async function handleRotateWorkplaceCredentials(payload, uid) {
 
     const {groupId, userId} = requestDoc.data();
 
-    // Verify the user approving is the owner
+    // Verify the user approving is the owner or admin
     const groupDoc = await admin.firestore()
         .collection("shift_groups").doc(groupId).get();
 
-    if (!groupDoc.exists || groupDoc.data().ownerId !== uid) {
+    if (!groupDoc.exists || (groupDoc.data().ownerId !== uid && !isAdmin)) {
       throw new HttpsError(
           "permission-denied", "Unauthorized");
     }
@@ -961,7 +964,7 @@ async function handleRotateWorkplaceCredentials(payload, uid) {
     return {success: true};
   }
 
-  async function handleRemoveManagerShiftGroup(payload, uid) {
+  async function handleRemoveManagerShiftGroup(payload, uid, context, isAdmin = false) {
     const {userId, groupId} = payload;
 
     checkRequiredFields(payload, ["userId", "groupId"]);
@@ -969,7 +972,7 @@ async function handleRotateWorkplaceCredentials(payload, uid) {
     const groupDoc = await admin.firestore()
         .collection("shift_groups").doc(groupId).get();
 
-    if (!groupDoc.exists || groupDoc.data().ownerId !== uid) {
+    if (!groupDoc.exists || (groupDoc.data().ownerId !== uid && !isAdmin)) {
       throw new HttpsError(
           "permission-denied", "Unauthorized");
     }
@@ -981,7 +984,7 @@ async function handleRotateWorkplaceCredentials(payload, uid) {
     return {success: true};
   }
 
-  async function handleAddManagerShiftGroup(payload, uid) {
+  async function handleAddManagerShiftGroup(payload, uid, context, isAdmin = false) {
     const {groupId, email} = payload;
     checkRequiredFields(payload, ["groupId", "email"]);
 
@@ -995,7 +998,7 @@ async function handleRotateWorkplaceCredentials(payload, uid) {
       throw new HttpsError("not-found", "Shift group not found");
     }
 
-    if (groupDoc.data().ownerId !== uid) {
+    if (groupDoc.data().ownerId !== uid && !isAdmin) {
       throw new HttpsError("permission-denied", "Unauthorized to add managers to this group");
     }
 
@@ -1040,7 +1043,7 @@ async function handleRotateWorkplaceCredentials(payload, uid) {
     return {success: true, ...updates};
   }
 
-  async function handleUpdateCompanyShiftGroup(payload, uid) {
+  async function handleUpdateCompanyShiftGroup(payload, uid, context, isAdmin = false) {
     const {groupId, groupName, newPassword, multiStoreEnabled, aiEnabled, workersCount, requireApproval} = payload;
     checkRequiredFields(payload, ["groupId"]);
 
@@ -1051,7 +1054,7 @@ async function handleRotateWorkplaceCredentials(payload, uid) {
       throw new HttpsError("not-found", "Shift group not found");
     }
 
-    if (groupDoc.data().ownerId !== uid) {
+    if (groupDoc.data().ownerId !== uid && !isAdmin) {
       throw new HttpsError("permission-denied", "Unauthorized to update company settings");
     }
 
@@ -1099,6 +1102,215 @@ async function handleRotateWorkplaceCredentials(payload, uid) {
     return {success: true, updatedFields: updateData};
   }
 
+  async function handleGetAdminCompanies(payload, uid, context, isAdmin = false, userOrgId = null) {
+    const usersCol = admin.firestore().collection("users");
+    const shiftGroupsCol = admin.firestore().collection("shift_groups");
+
+    const userDoc = await usersCol.doc(uid).get();
+    const userData = userDoc.exists ? userDoc.data() : {};
+    const userEmail = (context && context.auth && context.auth.token && context.auth.token.email) || userData.email || null;
+    const directOrgId = userOrgId || userData.orgId || null;
+    const preferredOrgId = (payload && payload.preferredOrgId) || null;
+
+    const isSuper = Boolean(
+      isAdmin ||
+      (userEmail && userEmail.toLowerCase() === "catalinandrian1@gmail.com") ||
+      userData.role === "CorporateAdmin" ||
+      userData.role === "Creator" ||
+      userData.isAdmin === true
+    );
+
+    const foundDocsMap = new Map();
+
+    const addDocIfValid = (doc) => {
+      if (!doc || !doc.exists) return;
+      const data = doc.data() || {};
+      const orgId = data.orgId || doc.id;
+      const workplaceCode = data.workplaceCode || (`EZM-${doc.id.substring(0, 6).toUpperCase()}`);
+      const isOwner = data.ownerId === uid || (userEmail && data.ownerEmail === userEmail);
+
+      foundDocsMap.set(doc.id, {
+        id: doc.id,
+        groupId: doc.id,
+        orgId: orgId,
+        groupName: data.groupName || data.name || "Corporate Workspace",
+        name: data.groupName || data.name || "Corporate Workspace",
+        workplaceCode: workplaceCode,
+        joinKey: data.joinKey || "",
+        password: data.password || "",
+        multiStoreEnabled: data.multiStoreEnabled !== false,
+        aiEnabled: data.aiEnabled !== false,
+        workersCount: data.workersCount || "1-10",
+        requireApproval: data.requireApproval !== false,
+        plan: data.plan || "Free",
+        ownerId: data.ownerId || uid,
+        ownerEmail: data.ownerEmail || userEmail,
+        ownerName: data.ownerName || "Administrator",
+        isOwner: Boolean(isOwner),
+        createdAt: data.createdAt || null,
+      });
+    };
+
+    // 1. Direct document lookup if user has an assigned orgId
+    if (directOrgId) {
+      try {
+        const doc = await shiftGroupsCol.doc(directOrgId).get();
+        if (doc && doc.exists) addDocIfValid(doc);
+      } catch (e) {}
+
+      // Fallback by workplaceCode or orgId field inside shift_groups
+      if (foundDocsMap.size === 0 && typeof shiftGroupsCol.where === "function") {
+        try {
+          const snapByCode = await shiftGroupsCol.where("workplaceCode", "==", String(directOrgId).toUpperCase()).limit(1).get();
+          if (snapByCode && !snapByCode.empty) addDocIfValid(snapByCode.docs[0]);
+        } catch (e) {}
+      }
+      if (foundDocsMap.size === 0 && typeof shiftGroupsCol.where === "function") {
+        try {
+          const snapByField = await shiftGroupsCol.where("orgId", "==", directOrgId).limit(1).get();
+          if (snapByField && !snapByField.empty) addDocIfValid(snapByField.docs[0]);
+        } catch (e) {}
+      }
+    }
+
+    // 2. Query shift groups owned by this user
+    if (typeof shiftGroupsCol.where === "function") {
+      try {
+        const ownedSnap = await shiftGroupsCol.where("ownerId", "==", uid).get();
+        if (ownedSnap && !ownedSnap.empty) {
+          ownedSnap.forEach((doc) => addDocIfValid(doc));
+        }
+      } catch (e) {}
+
+      // 3. Query shift groups by ownerEmail
+      if (userEmail) {
+        try {
+          const emailSnap = await shiftGroupsCol.where("ownerEmail", "==", userEmail).get();
+          if (emailSnap && !emailSnap.empty) {
+            emailSnap.forEach((doc) => addDocIfValid(doc));
+          }
+        } catch (e) {}
+      }
+    }
+
+    // 4. If requested or preferred orgId is passed, verify and add
+    if (preferredOrgId && !foundDocsMap.has(preferredOrgId)) {
+      try {
+        const prefDoc = await shiftGroupsCol.doc(preferredOrgId).get();
+        if (prefDoc && prefDoc.exists) {
+          const data = prefDoc.data() || {};
+          if (isSuper || data.ownerId === uid || data.ownerEmail === userEmail || directOrgId === preferredOrgId) {
+            addDocIfValid(prefDoc);
+          }
+        }
+      } catch (e) {}
+    }
+
+    // 5. If Super Admin and no companies found yet, list existing corporate workspaces
+    if (isSuper && foundDocsMap.size === 0 && typeof shiftGroupsCol.limit === "function") {
+      try {
+        const anySnap = await shiftGroupsCol.limit(10).get();
+        if (anySnap && !anySnap.empty) {
+          anySnap.forEach((doc) => addDocIfValid(doc));
+        }
+      } catch (e) {}
+    }
+
+    const companies = Array.from(foundDocsMap.values());
+
+    // Determine active company
+    let activeCompany = null;
+    if (preferredOrgId && foundDocsMap.has(preferredOrgId)) {
+      activeCompany = foundDocsMap.get(preferredOrgId);
+    } else if (directOrgId && foundDocsMap.has(directOrgId)) {
+      activeCompany = foundDocsMap.get(directOrgId);
+    } else if (companies.length > 0) {
+      activeCompany = companies[0];
+    }
+
+    // Auto-heal user's orgId on the user document if needed
+    if (activeCompany && (!userData.orgId || userData.orgId !== activeCompany.id)) {
+      try {
+        await usersCol.doc(uid).set({
+          orgId: activeCompany.id,
+          role: userData.role || (activeCompany.isOwner ? "CorporateAdmin" : "Manager"),
+        }, {merge: true});
+      } catch (e) {}
+    }
+
+    return {
+      success: true,
+      companies,
+      activeCompany,
+      totalCompanies: companies.length,
+    };
+  }
+
+  async function handleSwitchCompany(payload, uid, context, isAdmin = false, userOrgId = null) {
+    const {groupId} = payload;
+    checkRequiredFields(payload, ["groupId"]);
+
+    const usersCol = admin.firestore().collection("users");
+    const shiftGroupsCol = admin.firestore().collection("shift_groups");
+
+    const targetDoc = await shiftGroupsCol.doc(groupId).get();
+    if (!targetDoc || !targetDoc.exists) {
+      throw new HttpsError("not-found", "Company workspace not found");
+    }
+
+    const groupData = targetDoc.data() || {};
+    const userDoc = await usersCol.doc(uid).get();
+    const userData = userDoc.exists ? userDoc.data() : {};
+    const userEmail = (context && context.auth && context.auth.token && context.auth.token.email) || userData.email || null;
+
+    const isSuper = Boolean(
+      isAdmin ||
+      (userEmail && userEmail.toLowerCase() === "catalinandrian1@gmail.com") ||
+      userData.role === "CorporateAdmin" ||
+      userData.role === "Creator" ||
+      userData.isAdmin === true
+    );
+
+    const isOwner = groupData.ownerId === uid || (userEmail && groupData.ownerEmail === userEmail);
+    const isMember = userOrgId === groupId || userData.orgId === groupId;
+
+    if (!isSuper && !isOwner && !isMember) {
+      throw new HttpsError("permission-denied", "Unauthorized to switch to this corporate workspace");
+    }
+
+    await usersCol.doc(uid).set({
+      orgId: groupId,
+      role: userData.role || (isOwner ? "CorporateAdmin" : "Manager"),
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    }, {merge: true});
+
+    const activeCompany = {
+      id: targetDoc.id,
+      groupId: targetDoc.id,
+      orgId: groupData.orgId || targetDoc.id,
+      groupName: groupData.groupName || groupData.name || "Corporate Workspace",
+      name: groupData.groupName || groupData.name || "Corporate Workspace",
+      workplaceCode: groupData.workplaceCode || (`EZM-${targetDoc.id.substring(0, 6).toUpperCase()}`),
+      joinKey: groupData.joinKey || "",
+      password: groupData.password || "",
+      multiStoreEnabled: groupData.multiStoreEnabled !== false,
+      aiEnabled: groupData.aiEnabled !== false,
+      workersCount: groupData.workersCount || "1-10",
+      requireApproval: groupData.requireApproval !== false,
+      plan: groupData.plan || "Free",
+      ownerId: groupData.ownerId || uid,
+      ownerEmail: groupData.ownerEmail || userEmail,
+      ownerName: groupData.ownerName || "Administrator",
+      isOwner: Boolean(isOwner),
+    };
+
+    return {
+      success: true,
+      groupId,
+      activeCompany,
+    };
+  }
+
   /**
  * Manage Shift Groups API
  * Handles creating groups, joining groups, and approving joins.
@@ -1107,15 +1319,21 @@ async function handleRotateWorkplaceCredentials(payload, uid) {
     const {uid, userOrgId, isAdmin, userName, action, payload} = await getAuthAndPayload(data, context, admin);
 
     try {
-      if (action === "create") return await handleCreateShiftGroup(payload, uid);
+      if (action === "create") return await handleCreateShiftGroup(payload, uid, context);
       if (action === "request_join") return await handleRequestJoinShiftGroup(payload, uid);
       if (action === "retract_join") return await handleRetractJoinShiftGroup(payload, uid);
-      if (action === "approve_join") return await handleApproveJoinShiftGroup(payload, uid);
-      if (action === "remove_manager") return await handleRemoveManagerShiftGroup(payload, uid);
-      if (action === "rotate_credentials") return await handleRotateWorkplaceCredentials(payload, uid);
-      if (action === "add_manager") return await handleAddManagerShiftGroup(payload, uid);
+      if (action === "approve_join") return await handleApproveJoinShiftGroup(payload, uid, context, isAdmin);
+      if (action === "remove_manager") return await handleRemoveManagerShiftGroup(payload, uid, context, isAdmin);
+      if (action === "rotate_credentials") return await handleRotateWorkplaceCredentials(payload, uid, context, isAdmin);
+      if (action === "add_manager") return await handleAddManagerShiftGroup(payload, uid, context, isAdmin);
       if (action === "update_profile") return await handleUpdateProfile(payload, uid);
-      if (action === "update_company") return await handleUpdateCompanyShiftGroup(payload, uid);
+      if (action === "update_company") return await handleUpdateCompanyShiftGroup(payload, uid, context, isAdmin);
+      if (action === "get_admin_companies" || action === "get_my_company") {
+        return await handleGetAdminCompanies(payload, uid, context, isAdmin, userOrgId);
+      }
+      if (action === "switch_company") {
+        return await handleSwitchCompany(payload, uid, context, isAdmin, userOrgId);
+      }
 
       throw new HttpsError("invalid-argument", "Invalid action");
     } catch (error) { handleInternalError(`Shift Groups Error for uid: ${uid}`, error); }
@@ -1980,6 +2198,8 @@ exports.handleRotateWorkplaceCredentials = handleRotateWorkplaceCredentials;
 exports.handleAddManagerShiftGroup = handleAddManagerShiftGroup;
 exports.handleUpdateProfile = handleUpdateProfile;
 exports.handleUpdateCompanyShiftGroup = handleUpdateCompanyShiftGroup;
+exports.handleGetAdminCompanies = handleGetAdminCompanies;
+exports.handleSwitchCompany = handleSwitchCompany;
 exports.generateUniqueCorporateId = generateUniqueCorporateId;
 exports.generateUniqueWorkplaceCode = generateUniqueWorkplaceCode;
 exports.generateUniqueWorkplaceKey = generateUniqueWorkplaceKey;
