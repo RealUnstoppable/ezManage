@@ -381,6 +381,22 @@
         <!-- REGISTER VIEW (ONBOARDING & WORKSPACE RECOVERY HUB) -->
         <div id="view-register" class="view-section px-4 py-8">
             <div class="max-w-2xl mx-auto w-full relative">
+                <!-- Active Workspace Return Banner (Prevents Admins from getting stuck) -->
+                <div id="backToDashboardBanner" class="hidden mb-6 p-4 bg-indigo-50/80 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-3 shadow-sm">
+                    <div class="flex items-center gap-3">
+                        <div class="w-9 h-9 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-bold text-sm">
+                            <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
+                        </div>
+                        <div>
+                            <div class="text-xs text-slate-500 dark:text-slate-400">Active Company Workspace:</div>
+                            <div id="backToDashboardOrgName" class="text-sm font-bold text-slate-900 dark:text-white">Apex Organization</div>
+                        </div>
+                    </div>
+                    <button type="button" onclick="returnToDashboardFromRegister()" aria-label="Return to Active Dashboard" class="btn btn-primary py-2 px-4 text-xs font-semibold whitespace-nowrap">
+                        Return to Dashboard →
+                    </button>
+                </div>
+
                 <!-- Progress Bar -->
                 <div id="onboardingProgressContainer" class="w-full bg-slate-200 dark:bg-slate-800 rounded-full h-1.5 mb-8 hidden overflow-hidden">
                     <div id="onboardingProgressBar" class="bg-indigo-600 h-1.5 rounded-full transition-all duration-300 ease-out" style="width: 0%"></div>
@@ -440,13 +456,15 @@
 
                     <!-- Step 2: Org Name -->
                     <div id="step-2" class="onboarding-step hidden opacity-0 translate-x-full transition-all duration-300 ease-in-out w-full card p-8 sm:p-10 text-center">
-                        <span class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2 block">Step 1 of 3</span>
+                        <span id="step2Badge" class="text-[10px] font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2 block">Step 1 of 3</span>
                         <h2 class="text-2xl font-bold mb-2 text-slate-900 dark:text-white">Company or Entity Name</h2>
                         <p class="text-xs text-slate-500 dark:text-slate-400 mb-6">This organization name identifies your corporate account across all store locations.</p>
                         <input type="text" id="regOrgName" required placeholder="e.g. Apex Hospitality Group" aria-label="Workspace Name"
                             class="w-full bg-slate-50 dark:bg-slate-800 text-center text-lg font-semibold p-3.5 rounded-xl border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm mb-6 text-slate-900 dark:text-white"
                             onkeydown="handleEnterKey(event, 3)">
-                        <button type="button" onclick="nextOnboardingStep(3)" class="btn btn-primary w-full py-3.5 text-sm font-semibold">Continue to Admin Profile</button>
+                        <button type="button" id="btnStep2Submit" onclick="handleStep2Submit()" class="btn btn-primary w-full py-3.5 text-sm font-semibold flex items-center justify-center gap-1.5">
+                            <span>Continue to Admin Profile</span> →
+                        </button>
                     </div>
 
                     <!-- Step 3: Admin Email -->
@@ -2192,19 +2210,22 @@
             showCorporateLoadingOverlay("Verifying administrative credentials & workspaces...");
 
             try {
-                // Ensure user data is loaded
-                if (!currentUserData) {
-                    const userSnap = await db.collection('users').doc(user.uid).get().catch(err => {
-                        console.warn("User data fetch notice:", err);
-                        return { exists: false, data: () => ({}) };
-                    });
-                    currentUserData = userSnap.exists ? userSnap.data() : {};
+                // Ensure fresh user data is loaded from Firestore
+                try {
+                    const userSnap = await db.collection('users').doc(user.uid).get();
+                    if (userSnap && userSnap.exists) {
+                        currentUserData = userSnap.data();
+                    }
+                } catch (err) {
+                    console.warn("User data fetch notice:", err);
+                    if (!currentUserData) currentUserData = {};
                 }
 
                 const isSuperAdmin = (user.email === 'catalinandrian1@gmail.com') ||
                                      (currentUserData && (currentUserData.role === 'CorporateAdmin' || currentUserData.role === 'Creator' || currentUserData.isAdmin === true));
 
                 const preferredOrgId = preferredOrgIdOverride ||
+                                       activeOrgId ||
                                        localStorage.getItem('ezManage_active_corporate_org_id') ||
                                        (currentUserData && currentUserData.orgId) || null;
 
@@ -2217,9 +2238,9 @@
                         action: 'get_admin_companies',
                         payload: { preferredOrgId }
                     });
-                    if (res && res.data && Array.isArray(res.data.companies)) {
+                    if (res && res.data && Array.isArray(res.data.companies) && res.data.companies.length > 0) {
                         companies = res.data.companies;
-                        activeCompany = res.data.activeCompany || (companies.length > 0 ? companies[0] : null);
+                        activeCompany = res.data.activeCompany || (preferredOrgId && companies.find(c => c.id === preferredOrgId)) || companies[0];
                     }
                 } catch (funcErr) {
                     console.warn("manageShiftGroups get_admin_companies notice (trying direct client queries):", funcErr);
@@ -2229,25 +2250,26 @@
                 if (!companies || companies.length === 0) {
                     const companyMap = new Map();
 
-                    // Query by ownerId
-                    try {
-                        const ownerSnap = await db.collection('shift_groups').where('ownerId', '==', user.uid).get();
-                        ownerSnap.docs.forEach(doc => companyMap.set(doc.id, { id: doc.id, ...doc.data() }));
-                    } catch (e) { console.warn("Direct query ownerId notice:", e); }
-
-                    // Query by ownerEmail
-                    if (user.email) {
-                        try {
-                            const emailSnap = await db.collection('shift_groups').where('ownerEmail', '==', user.email).get();
-                            emailSnap.docs.forEach(doc => companyMap.set(doc.id, { id: doc.id, ...doc.data() }));
-                        } catch (e) { console.warn("Direct query ownerEmail notice:", e); }
+                    // 2a: In-memory activeOrgData
+                    if (activeOrgData && activeOrgData.id) {
+                        companyMap.set(activeOrgData.id, activeOrgData);
                     }
 
-                    // Query assigned orgId from user doc
-                    if (currentUserData && currentUserData.orgId) {
+                    // 2b: Query direct doc lookup by preferredOrgId
+                    if (preferredOrgId) {
+                        try {
+                            const prefDoc = await db.collection('shift_groups').doc(preferredOrgId).get();
+                            if (prefDoc && prefDoc.exists) {
+                                companyMap.set(prefDoc.id, { id: prefDoc.id, ...prefDoc.data() });
+                            }
+                        } catch (e) { console.warn("Direct query preferredOrgId notice:", e); }
+                    }
+
+                    // 2c: Query assigned orgId from user doc
+                    if (currentUserData && currentUserData.orgId && currentUserData.orgId !== preferredOrgId) {
                         try {
                             const directDoc = await db.collection('shift_groups').doc(currentUserData.orgId).get();
-                            if (directDoc.exists) {
+                            if (directDoc && directDoc.exists) {
                                 companyMap.set(directDoc.id, { id: directDoc.id, ...directDoc.data() });
                             } else {
                                 const codeSnap = await db.collection('shift_groups').where('workplaceCode', '==', currentUserData.orgId).limit(1).get();
@@ -2259,7 +2281,21 @@
                         } catch (e) { console.warn("Direct query orgId notice:", e); }
                     }
 
-                    // Query Super Admin fallbacks
+                    // 2d: Query by ownerId
+                    try {
+                        const ownerSnap = await db.collection('shift_groups').where('ownerId', '==', user.uid).get();
+                        ownerSnap.docs.forEach(doc => companyMap.set(doc.id, { id: doc.id, ...doc.data() }));
+                    } catch (e) { console.warn("Direct query ownerId notice:", e); }
+
+                    // 2e: Query by ownerEmail
+                    if (user.email) {
+                        try {
+                            const emailSnap = await db.collection('shift_groups').where('ownerEmail', '==', user.email).get();
+                            emailSnap.docs.forEach(doc => companyMap.set(doc.id, { id: doc.id, ...doc.data() }));
+                        } catch (e) { console.warn("Direct query ownerEmail notice:", e); }
+                    }
+
+                    // 2f: Query Super Admin fallbacks
                     if (companyMap.size === 0 && isSuperAdmin) {
                         try {
                             const anySnap = await db.collection('shift_groups').limit(10).get();
@@ -2825,11 +2861,29 @@
             copyToClipboard(`ezManage Workplace Credentials:\nWorkplace Code: ${code}\nJoin Passcode: ${key}`);
         }
 
-        function finishOnboardingDirectly() {
+        function finishOnboardingDirectly(targetOrgId) {
             isRegistering = false;
+            const orgToInit = targetOrgId || activeOrgId || localStorage.getItem('ezManage_active_corporate_org_id');
             document.getElementById('view-register').classList.remove('active');
-            if (currentUser) {
-                initializeCorporateWorkspace(currentUser);
+            const userToInit = auth.currentUser || currentUser;
+            if (userToInit) {
+                initializeCorporateWorkspace(userToInit, orgToInit);
+            } else {
+                navTo('login');
+            }
+        }
+
+        function returnToDashboardFromRegister() {
+            const currentActiveId = activeOrgId || window.activeOrgId;
+            const currentActiveData = activeOrgData || window.activeOrgData;
+            if (currentActiveId && currentActiveData) {
+                activeOrgId = currentActiveId;
+                activeOrgData = currentActiveData;
+                document.getElementById('view-register').classList.remove('active');
+                document.getElementById('dashboard-shell').classList.remove('hidden');
+                if (window.lucide) lucide.createIcons();
+            } else if (auth.currentUser || currentUser) {
+                initializeCorporateWorkspace(auth.currentUser || currentUser);
             } else {
                 navTo('login');
             }
@@ -2938,8 +2992,9 @@
         let onboardingRoles = [];
 
         function resetOnboarding() {
-            if (currentUser) {
-                onboardingFlow = ['step-2', 'step-workers', 'step-plan', 'step-roles', 'step-config', 'step-loading', 'step-tutorial'];
+            const activeUser = auth.currentUser || currentUser;
+            if (activeUser) {
+                onboardingFlow = ['step-1', 'step-2', 'step-workers', 'step-plan', 'step-roles', 'step-config', 'step-loading', 'step-tutorial'];
             } else {
                 onboardingFlow = ['step-1', 'step-2', 'step-3', 'step-4', 'step-5'];
             }
@@ -2962,6 +3017,31 @@
             if (regEmail) regEmail.value = '';
             const regPass = document.getElementById('regPass');
             if (regPass) regPass.value = '';
+
+            const step2Badge = document.getElementById('step2Badge');
+            const btnStep2Submit = document.getElementById('btnStep2Submit');
+            if (activeUser) {
+                if (step2Badge) step2Badge.innerText = "Corporate Workspace Setup";
+                if (btnStep2Submit) btnStep2Submit.innerHTML = `<span>Create Workspace & Enter Dashboard</span> →`;
+            } else {
+                if (step2Badge) step2Badge.innerText = "Step 1 of 3";
+                if (btnStep2Submit) btnStep2Submit.innerHTML = `<span>Continue to Admin Profile</span> →`;
+            }
+
+            const backBanner = document.getElementById('backToDashboardBanner');
+            const backOrgName = document.getElementById('backToDashboardOrgName');
+            const currentActiveId = activeOrgId || window.activeOrgId;
+            const currentActiveData = activeOrgData || window.activeOrgData;
+            if (backBanner) {
+                if (currentActiveId && currentActiveData) {
+                    activeOrgId = currentActiveId;
+                    activeOrgData = currentActiveData;
+                    backBanner.classList.remove('hidden');
+                    if (backOrgName) backOrgName.innerText = currentActiveData.groupName || currentActiveId;
+                } else {
+                    backBanner.classList.add('hidden');
+                }
+            }
 
             const loadingState = document.getElementById('onboardingLoadingState');
             if (loadingState) loadingState.classList.remove('hidden');
@@ -2989,12 +3069,157 @@
             }
         }
 
+        function handleStep2Submit() {
+            const name = document.getElementById('regOrgName').value.trim();
+            if (!name) return alert("Please enter an organization name.");
+
+            const activeUser = auth.currentUser || currentUser;
+            if (activeUser) {
+                createWorkspaceForLoggedInUser(name);
+            } else {
+                advanceOnboarding();
+            }
+        }
+
+        async function createWorkspaceForLoggedInUser(orgName) {
+            const activeUser = auth.currentUser || currentUser;
+            if (!activeUser) {
+                navTo('login');
+                return;
+            }
+
+            showCorporateLoadingOverlay("Provisioning corporate workspace & configuring dashboard...");
+            isRegistering = true;
+
+            const submitBtn = document.getElementById('btnStep2Submit');
+            let origBtnContent = '';
+            if (submitBtn) {
+                origBtnContent = submitBtn.innerHTML;
+                submitBtn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin inline-block mr-1.5"></i> Initializing...`;
+                submitBtn.disabled = true;
+                if (window.lucide) lucide.createIcons();
+            }
+
+            try {
+                let result = null;
+                const workersEl = document.getElementById('regWorkers');
+                const aiEl = document.getElementById('configAi');
+
+                try {
+                    result = await callFunction('manageShiftGroups', {
+                        action: 'create',
+                        payload: {
+                            ownerName: activeUser.displayName || (activeUser.email ? activeUser.email.split('@')[0] : 'Corporate Admin'),
+                            name: activeUser.displayName || (orgName + " Admin"),
+                            groupName: orgName,
+                            plan: selectedPlan || 'Free',
+                            workersCount: workersEl ? workersEl.value : '1-10',
+                            aiEnabled: aiEl ? Boolean(aiEl.checked) : true,
+                            multiStoreEnabled: true,
+                            requireApproval: true
+                        }
+                    });
+                } catch (funcErr) {
+                    console.warn("Cloud function manageShiftGroups call failed, using client fallback:", funcErr);
+                    const cleanCode = orgName.replace(/[^a-zA-Z0-9]/g, '').toUpperCase().slice(0, 4) || 'CORP';
+                    const randSuffix = Math.random().toString(36).substring(2, 8).toUpperCase();
+                    const workplaceCode = `EZM-${cleanCode}-${randSuffix}`;
+                    const joinKey = `WPK-${Math.random().toString(36).substring(2, 6).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+
+                    const newGroupData = {
+                        ownerId: activeUser.uid,
+                        ownerEmail: activeUser.email || null,
+                        groupName: orgName,
+                        name: activeUser.displayName || (orgName + " Admin"),
+                        workplaceCode: workplaceCode,
+                        joinKey: joinKey,
+                        plan: selectedPlan || 'Free',
+                        workersCount: workersEl ? workersEl.value : '1-10',
+                        aiEnabled: aiEl ? Boolean(aiEl.checked) : true,
+                        multiStoreEnabled: true,
+                        requireApproval: true,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    };
+
+                    const docRef = await db.collection('shift_groups').add(newGroupData);
+                    result = {
+                        data: {
+                            groupId: docRef.id,
+                            workplaceCode: workplaceCode,
+                            joinKey: joinKey
+                        }
+                    };
+                }
+
+                if (!result || !result.data || !result.data.groupId) {
+                    throw new Error("Failed to receive valid workspace identifier from service");
+                }
+
+                const newGroupId = result.data.groupId;
+                const workplaceCode = result.data.workplaceCode || ('EZM-' + newGroupId.substring(0, 6).toUpperCase());
+                const joinKey = result.data.joinKey || '';
+
+                const createdCompany = {
+                    id: newGroupId,
+                    groupId: newGroupId,
+                    orgId: newGroupId,
+                    groupName: orgName,
+                    workplaceCode: workplaceCode,
+                    joinKey: joinKey,
+                    ownerId: activeUser.uid,
+                    ownerEmail: activeUser.email || null,
+                    plan: selectedPlan || 'Free',
+                    multiStoreEnabled: true,
+                    requireApproval: true
+                };
+
+                activeOrgId = newGroupId;
+                activeOrgData = createdCompany;
+                window.activeOrgId = activeOrgId;
+                window.activeOrgData = activeOrgData;
+                localStorage.setItem('ezManage_active_corporate_org_id', newGroupId);
+
+                if (!Array.isArray(userCompanies)) userCompanies = [];
+                if (!userCompanies.some(c => c.id === newGroupId)) {
+                    userCompanies.unshift(createdCompany);
+                    window.userCompanies = userCompanies;
+                }
+
+                if (!currentUserData) currentUserData = {};
+                currentUserData.orgId = newGroupId;
+                currentUserData.role = 'CorporateAdmin';
+
+                isRegistering = false;
+                document.getElementById('view-register').classList.remove('active');
+                document.getElementById('view-login').classList.remove('active');
+
+                showCorporateToast("Corporate workspace created and dashboard ready!");
+                await initializeCorporateWorkspace(activeUser, newGroupId);
+            } catch (err) {
+                isRegistering = false;
+                console.error("Workspace creation failed:", err);
+                showCorporateToast("Failed to create workspace: " + (err.message || "Unknown error"), "error");
+                hideCorporateLoadingOverlay();
+            } finally {
+                if (submitBtn) {
+                    submitBtn.innerHTML = origBtnContent;
+                    submitBtn.disabled = false;
+                    if (window.lucide) lucide.createIcons();
+                }
+            }
+        }
+
         function advanceOnboarding() {
             const currentStepId = onboardingFlow[currentStepIndex];
 
             if (currentStepId === 'step-2') {
                 const name = document.getElementById('regOrgName').value.trim();
                 if (!name) return alert("Please enter an organization name.");
+                const activeUser = auth.currentUser || currentUser;
+                if (activeUser) {
+                    createWorkspaceForLoggedInUser(name);
+                    return;
+                }
             }
             if (currentStepId === 'step-3') {
                 const email = document.getElementById('regEmail').value.trim();
@@ -3003,6 +3228,9 @@
             if (currentStepId === 'step-4') {
                 const pass = document.getElementById('regPass').value;
                 if (!pass || pass.length < 6) return alert("Password must be at least 6 characters.");
+                transitionSteps('step-4', 'step-5');
+                currentStepIndex = onboardingFlow.indexOf('step-5');
+                updateProgressBar();
                 executeRegistration();
                 return;
             }
@@ -3093,7 +3321,12 @@
         function handleEnterKey(event, nextStep) {
             if (event.key === 'Enter') {
                 event.preventDefault();
-                advanceOnboarding();
+                const currentStepId = onboardingFlow[currentStepIndex];
+                if (currentStepId === 'step-2') {
+                    handleStep2Submit();
+                } else {
+                    advanceOnboarding();
+                }
             }
         }
 
@@ -3105,6 +3338,7 @@
             isRegistering = true;
             try {
                 const cred = await auth.createUserWithEmailAndPassword(email, pass);
+                currentUser = cred.user;
                 await cred.user.getIdToken(true);
 
                 // Initial profile document without restricted fields
@@ -3144,7 +3378,7 @@
 
                     const newGroupData = {
                         ownerId: cred.user.uid,
-                        ownerName: email.split('@')[0],
+                        ownerEmail: email,
                         groupName: orgName,
                         name: orgName + " Admin",
                         workplaceCode: workplaceCode,
@@ -3168,11 +3402,44 @@
                 }
 
                 if (result && result.data && result.data.groupId) {
-                    activeOrgId = result.data.groupId;
+                    const newOrgId = result.data.groupId;
+                    activeOrgId = newOrgId;
+                    const workplaceCode = result.data.workplaceCode || ('EZM-' + newOrgId.substring(0, 6).toUpperCase());
+                    const joinKey = result.data.joinKey || '';
+
+                    const createdCompany = {
+                        id: newOrgId,
+                        groupId: newOrgId,
+                        orgId: newOrgId,
+                        groupName: orgName,
+                        workplaceCode: workplaceCode,
+                        joinKey: joinKey,
+                        ownerId: cred.user.uid,
+                        ownerEmail: email,
+                        plan: selectedPlan || 'Free',
+                        multiStoreEnabled: true,
+                        requireApproval: true
+                    };
+
+                    activeOrgData = createdCompany;
+                    window.activeOrgId = activeOrgId;
+                    window.activeOrgData = activeOrgData;
+                    localStorage.setItem('ezManage_active_corporate_org_id', activeOrgId);
+
+                    if (!Array.isArray(userCompanies)) userCompanies = [];
+                    if (!userCompanies.some(c => c.id === newOrgId)) {
+                        userCompanies.unshift(createdCompany);
+                        window.userCompanies = userCompanies;
+                    }
+
+                    if (!currentUserData) currentUserData = {};
+                    currentUserData.orgId = activeOrgId;
+                    currentUserData.role = "CorporateAdmin";
+
                     const codeEl = document.getElementById('onboardingWorkplaceCode');
-                    if (codeEl) codeEl.innerText = result.data.workplaceCode || ('EZM-' + activeOrgId.substring(0, 6).toUpperCase());
+                    if (codeEl) codeEl.innerText = workplaceCode;
                     const keyEl = document.getElementById('onboardingJoinKey');
-                    if (keyEl) keyEl.innerText = result.data.joinKey || '...';
+                    if (keyEl) keyEl.innerText = joinKey || '...';
                 }
 
                 document.getElementById('onboardingLoadingState').classList.add('hidden');
@@ -3182,11 +3449,9 @@
 
                 setTimeout(() => {
                     if (isRegistering) {
-                        isRegistering = false;
-                        document.getElementById('view-register').classList.remove('active');
-                        initializeCorporateWorkspace(cred.user);
+                        finishOnboardingDirectly(activeOrgId);
                     }
-                }, 3000);
+                }, 2200);
             } catch (e) {
                 isRegistering = false;
                 alert("Registration failed: " + (e.message || "An unexpected error occurred."));
@@ -3196,8 +3461,8 @@
 
         async function executeLoggedInRegistration() {
             const orgName = document.getElementById('regOrgName').value.trim();
-            const workers = document.getElementById('regWorkers').value;
-            const aiEnabled = document.getElementById('configAi').checked;
+            const workers = document.getElementById('regWorkers')?.value || '1-10';
+            const aiEnabled = document.getElementById('configAi')?.checked ?? true;
 
             isRegistering = true;
             transitionSteps('step-config', 'step-loading');
@@ -3216,7 +3481,7 @@
             }, 100);
 
             try {
-                const activeUser = auth.currentUser;
+                const activeUser = auth.currentUser || currentUser;
                 await activeUser.getIdToken(true);
 
                 // Initial profile document without restricted fields
@@ -3236,7 +3501,7 @@
                     result = await callFunction('manageShiftGroups', {
                         action: "create",
                         payload: {
-                            ownerName: activeUser.displayName || activeUser.email.split('@')[0],
+                            ownerName: activeUser.displayName || (activeUser.email ? activeUser.email.split('@')[0] : 'Corporate Admin'),
                             name: activeUser.displayName || (orgName + " Admin"),
                             groupName: orgName,
                             plan: selectedPlan || 'Free',
@@ -3277,11 +3542,44 @@
                 }
 
                 if (result && result.data && result.data.groupId) {
-                    activeOrgId = result.data.groupId;
+                    const newOrgId = result.data.groupId;
+                    activeOrgId = newOrgId;
+                    const workplaceCode = result.data.workplaceCode || ('EZM-' + newOrgId.substring(0, 6).toUpperCase());
+                    const joinKey = result.data.joinKey || '';
+
+                    const createdCompany = {
+                        id: newOrgId,
+                        groupId: newOrgId,
+                        orgId: newOrgId,
+                        groupName: orgName,
+                        workplaceCode: workplaceCode,
+                        joinKey: joinKey,
+                        ownerId: activeUser.uid,
+                        ownerEmail: activeUser.email,
+                        plan: selectedPlan || 'Free',
+                        multiStoreEnabled: true,
+                        requireApproval: true
+                    };
+
+                    activeOrgData = createdCompany;
+                    window.activeOrgId = activeOrgId;
+                    window.activeOrgData = activeOrgData;
+                    localStorage.setItem('ezManage_active_corporate_org_id', activeOrgId);
+
+                    if (!Array.isArray(userCompanies)) userCompanies = [];
+                    if (!userCompanies.some(c => c.id === newOrgId)) {
+                        userCompanies.unshift(createdCompany);
+                        window.userCompanies = userCompanies;
+                    }
+
+                    if (!currentUserData) currentUserData = {};
+                    currentUserData.orgId = activeOrgId;
+                    currentUserData.role = "CorporateAdmin";
+
                     const codeEl = document.getElementById('tutorialWorkplaceCode');
-                    if (codeEl) codeEl.innerText = result.data.workplaceCode || ('EZM-' + activeOrgId.substring(0, 6).toUpperCase());
+                    if (codeEl) codeEl.innerText = workplaceCode;
                     const keyEl = document.getElementById('tutorialJoinKey');
-                    if (keyEl) keyEl.innerText = result.data.joinKey || '...';
+                    if (keyEl) keyEl.innerText = joinKey || '...';
                 }
 
                 clearInterval(sim);
@@ -3305,7 +3603,7 @@
             isRegistering = false;
             const userToInit = auth.currentUser || currentUser;
             document.getElementById('view-register').classList.remove('active');
-            initializeCorporateWorkspace(userToInit);
+            initializeCorporateWorkspace(userToInit, activeOrgId);
         }
 
         // --- Manager Form Submission ---
@@ -3367,6 +3665,11 @@
         window.switchCorporateTab = switchCorporateTab;
         window.advanceOnboarding = advanceOnboarding;
         window.resetOnboarding = resetOnboarding;
+        window.handleStep2Submit = handleStep2Submit;
+        window.createWorkspaceForLoggedInUser = createWorkspaceForLoggedInUser;
+        window.returnToDashboardFromRegister = returnToDashboardFromRegister;
+        window.finishOnboardingDirectly = finishOnboardingDirectly;
+        window.finishTutorial = finishTutorial;
     </script>
     <footer class="main-footer"></footer>
 </body>

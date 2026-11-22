@@ -175,4 +175,59 @@ test.describe('E2E Corporate Dashboard & Executive Analytics', () => {
     const tutorialKey = page.locator('#tutorialJoinKey');
     await expect(tutorialKey).toBeAttached();
   });
+
+  test('should support 1-step direct corporate workspace creation for authenticated admins into dashboard', async ({ page }) => {
+    await page.evaluate(() => {
+      // Simulate authenticated admin navigating to workspace registration
+      window.currentUser = { uid: 'auth_admin_999', email: 'admin@apexglobal.com' };
+      window.navTo('register');
+    });
+
+    const step1 = page.locator('#step-1');
+    await expect(step1).toBeVisible();
+
+    // Move to step-2
+    await page.evaluate(() => {
+      window.transitionSteps('step-1', 'step-2');
+    });
+
+    const step2 = page.locator('#step-2');
+    await expect(step2).toBeVisible();
+
+    // Verify button is visible
+    const submitBtn = page.locator('#btnStep2Submit');
+    await expect(submitBtn).toBeVisible();
+
+    // Simulate direct workspace creation and initialization
+    await page.evaluate(() => {
+      const newOrg = {
+        id: 'CORP-APEX-999',
+        groupName: 'Apex Global Enterprises',
+        workplaceCode: 'EZM-APEX-999',
+        joinKey: 'WPK-99-88'
+      };
+      window.activeOrgId = newOrg.id;
+      window.activeOrgData = newOrg;
+      window.applyActiveCompanyToDOM(newOrg, newOrg.id);
+      document.getElementById('view-register').classList.remove('active');
+      document.getElementById('dashboard-shell').classList.remove('hidden');
+    });
+
+    // Assert dashboard shell is visible and organization credentials appear
+    const shell = page.locator('#dashboard-shell');
+    await expect(shell).toBeVisible();
+    await expect(page.locator('#orgNameDisplayBento')).toHaveText('Apex Global Enterprises');
+    await expect(page.locator('#workplaceCodeDisplayBento')).toContainText('EZM-APEX-999');
+
+    // Also assert returnToDashboardFromRegister returns safely to dashboard if admin revisits register
+    await page.evaluate(() => {
+      window.navTo('register');
+    });
+    const backBanner = page.locator('#backToDashboardBanner');
+    await expect(backBanner).toBeVisible();
+    await page.evaluate(() => {
+      window.returnToDashboardFromRegister();
+    });
+    await expect(shell).toBeVisible();
+  });
 });

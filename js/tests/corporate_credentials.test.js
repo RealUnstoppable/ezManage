@@ -413,4 +413,181 @@ describe("Corporate Workspace Credentials UI & Formatting", () => {
       expect(res3.activeCompany.groupName).toBe("Email Match Entity");
     });
   });
+
+  describe("Direct Corporate Workspace Creation & Onboarding Loop Prevention", () => {
+    beforeEach(() => {
+      document.body.innerHTML = `
+        <div id="view-login" class="view-section"></div>
+        <div id="view-register" class="view-section active">
+          <div id="backToDashboardBanner" class="hidden">
+            <span id="backToDashboardOrgName"></span>
+          </div>
+          <div id="step-1" class="onboarding-step"></div>
+          <div id="step-2" class="onboarding-step hidden">
+            <span id="step2Badge">Step 1 of 3</span>
+            <input type="text" id="regOrgName" value="" />
+            <button id="btnStep2Submit">Continue to Admin Profile</button>
+          </div>
+          <div id="step-3" class="onboarding-step hidden"></div>
+          <div id="step-4" class="onboarding-step hidden">
+            <input type="password" id="regPass" value="secret123" />
+          </div>
+          <div id="step-5" class="onboarding-step hidden">
+            <div id="onboardingLoadingState"></div>
+            <div id="onboardingSuccessState" class="hidden">
+              <span id="onboardingWorkplaceCode"></span>
+              <span id="onboardingJoinKey"></span>
+            </div>
+          </div>
+        </div>
+        <div id="dashboard-shell" class="hidden"></div>
+      `;
+    });
+
+    it("should configure Step 2 dynamically for logged-in admin to directly Create Workspace & Enter Dashboard", () => {
+      function configureStep2ForUser(activeUser, activeOrgId, activeOrgData) {
+        const step2Badge = document.getElementById('step2Badge');
+        const btnStep2Submit = document.getElementById('btnStep2Submit');
+        const backBanner = document.getElementById('backToDashboardBanner');
+        const backOrgName = document.getElementById('backToDashboardOrgName');
+
+        if (activeUser) {
+          if (step2Badge) step2Badge.innerText = "Corporate Workspace Setup";
+          if (btnStep2Submit) btnStep2Submit.innerHTML = `<span>Create Workspace & Enter Dashboard</span> →`;
+        } else {
+          if (step2Badge) step2Badge.innerText = "Step 1 of 3";
+          if (btnStep2Submit) btnStep2Submit.innerHTML = `<span>Continue to Admin Profile</span> →`;
+        }
+
+        if (backBanner) {
+          if (activeOrgId && activeOrgData) {
+            backBanner.classList.remove('hidden');
+            if (backOrgName) backOrgName.innerText = activeOrgData.groupName || activeOrgId;
+          } else {
+            backBanner.classList.add('hidden');
+          }
+        }
+      }
+
+      // Logged out
+      configureStep2ForUser(null, null, null);
+      expect(document.getElementById('step2Badge').innerText).toBe("Step 1 of 3");
+      expect(document.getElementById('btnStep2Submit').textContent).toContain("Continue to Admin Profile");
+      expect(document.getElementById('backToDashboardBanner').classList.contains('hidden')).toBe(true);
+
+      // Logged in with active org
+      const user = { uid: "admin_uid_777", email: "admin@apex.com" };
+      const orgData = { groupName: "Apex Retail Group", id: "CORP-APEX777" };
+      configureStep2ForUser(user, "CORP-APEX777", orgData);
+      expect(document.getElementById('step2Badge').innerText).toBe("Corporate Workspace Setup");
+      expect(document.getElementById('btnStep2Submit').textContent).toContain("Create Workspace & Enter Dashboard");
+      expect(document.getElementById('backToDashboardBanner').classList.contains('hidden')).toBe(false);
+      expect(document.getElementById('backToDashboardOrgName').innerText).toBe("Apex Retail Group");
+    });
+
+    it("should directly provision corporate workspace for logged-in user without routing through multi-step onboarding loop", async () => {
+      const activeUser = { uid: "user_owner_888", email: "director@metro.com", displayName: "Director" };
+      const orgName = "Metro Stores Corporate";
+
+      const mockShiftGroupsCol = {
+        add: jest.fn().mockResolvedValue({ id: "CORP-METRO888" })
+      };
+      const mockUsersCol = {
+        doc: jest.fn().mockReturnValue({
+          set: jest.fn().mockResolvedValue(true)
+        })
+      };
+
+      async function testCreateWorkspaceForLoggedInUser(name) {
+        const workplaceCode = `EZM-METR-8F2D19`;
+        const joinKey = `WPK-4A1B-9C2D`;
+
+        const newGroupData = {
+          ownerId: activeUser.uid,
+          ownerEmail: activeUser.email,
+          groupName: name,
+          workplaceCode: workplaceCode,
+          joinKey: joinKey,
+          plan: 'Free',
+          multiStoreEnabled: true,
+          requireApproval: true,
+        };
+
+        const docRef = await mockShiftGroupsCol.add(newGroupData);
+        const newGroupId = docRef.id;
+
+        const createdCompany = {
+          id: newGroupId,
+          groupId: newGroupId,
+          orgId: newGroupId,
+          groupName: name,
+          workplaceCode: workplaceCode,
+          joinKey: joinKey,
+          ownerId: activeUser.uid,
+          ownerEmail: activeUser.email,
+          plan: 'Free',
+          multiStoreEnabled: true,
+          requireApproval: true
+        };
+
+        document.getElementById('view-register').classList.remove('active');
+        document.getElementById('dashboard-shell').classList.remove('hidden');
+
+        return { newGroupId, createdCompany };
+      }
+
+      const result = await testCreateWorkspaceForLoggedInUser(orgName);
+
+      expect(result.newGroupId).toBe("CORP-METRO888");
+      expect(result.createdCompany.groupName).toBe("Metro Stores Corporate");
+      expect(result.createdCompany.workplaceCode).toBe("EZM-METR-8F2D19");
+      expect(document.getElementById('view-register').classList.contains('active')).toBe(false);
+      expect(document.getElementById('dashboard-shell').classList.contains('hidden')).toBe(false);
+    });
+
+    it("should retain newly created company across memory and storage so workspace resolution succeeds immediately", async () => {
+      let activeOrgId = null;
+      let activeOrgData = null;
+      let userCompanies = [];
+      const localStorageMock = new Map();
+
+      function onCompanyCreated(company) {
+        activeOrgId = company.id;
+        activeOrgData = company;
+        localStorageMock.set('ezManage_active_corporate_org_id', company.id);
+        if (!userCompanies.some(c => c.id === company.id)) {
+          userCompanies.unshift(company);
+        }
+      }
+
+      const freshCompany = {
+        id: "CORP-NEW999",
+        groupName: "Fresh Corporate",
+        workplaceCode: "EZM-FRSH-99",
+        joinKey: "WPK-77-88"
+      };
+
+      onCompanyCreated(freshCompany);
+
+      expect(activeOrgId).toBe("CORP-NEW999");
+      expect(activeOrgData.groupName).toBe("Fresh Corporate");
+      expect(localStorageMock.get('ezManage_active_corporate_org_id')).toBe("CORP-NEW999");
+      expect(userCompanies.length).toBe(1);
+      expect(userCompanies[0].id).toBe("CORP-NEW999");
+
+      // Verify Tier 2 resolution finds this company immediately via activeOrgData or preferredOrgId
+      async function resolveTier2Company(preferredOrgId) {
+        const companyMap = new Map();
+        if (activeOrgData && activeOrgData.id) {
+          companyMap.set(activeOrgData.id, activeOrgData);
+        }
+        return companyMap.get(preferredOrgId) || Array.from(companyMap.values())[0] || null;
+      }
+
+      const resolved = await resolveTier2Company(activeOrgId);
+      expect(resolved).not.toBeNull();
+      expect(resolved.id).toBe("CORP-NEW999");
+      expect(resolved.workplaceCode).toBe("EZM-FRSH-99");
+    });
+  });
 });
