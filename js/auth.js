@@ -7,7 +7,7 @@ export { auth, db };
 export function getUserRedirectPath(userData) {
     if (!userData) return 'index.html';
     if (userData.email === 'catalinandrian1@gmail.com' || userData.role === 'CorporateAdmin' || userData.role === 'Creator') {
-        return 'company.html';
+        return 'dashboard.html';
     }
     return userData.isAdmin ? 'admin.html' : 'index.html';
 }

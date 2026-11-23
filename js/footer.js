@@ -43,7 +43,7 @@ export function loadFooter() {
                     </h5>
                     <ul class="space-y-2.5 text-sm font-medium">
                         <li><a href="inventory.html" class="text-slate-400 hover:text-white dark:hover:text-white hover:underline transition-all block py-0.5">Inventory & AI Predictor</a></li>
-                        <li><a href="company.html" class="text-slate-400 hover:text-white dark:hover:text-white hover:underline transition-all block py-0.5">Corporate Multi-Store Portal</a></li>
+                        <li><a href="dashboard.html" class="text-slate-400 hover:text-white dark:hover:text-white hover:underline transition-all block py-0.5">Corporate Multi-Store Portal</a></li>
                         <li><a href="panel-ai-admin.html" class="text-slate-400 hover:text-white dark:hover:text-white hover:underline transition-all block py-0.5">Admin Intelligence Panel</a></li>
                         <li><a href="admin.html" class="text-slate-400 hover:text-white dark:hover:text-white hover:underline transition-all block py-0.5">Shift Lead Dashboard</a></li>
                         <li><a href="index.html#profile" data-navto="profile" class="text-slate-400 hover:text-white dark:hover:text-white hover:underline transition-all block py-0.5">Account & Profile Settings</a></li>

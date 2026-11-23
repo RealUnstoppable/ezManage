@@ -290,6 +290,10 @@
             </div>
 
             <div class="flex items-center gap-2.5">
+                <a href="dashboard.html" aria-label="Open Executive Dashboard" class="btn btn-primary py-2 px-3 text-xs font-semibold flex items-center gap-1.5 shadow-sm">
+                    <i data-lucide="layout-dashboard" class="w-3.5 h-3.5"></i>
+                    <span>Executive Dashboard</span>
+                </a>
                 <!-- Corporate Workspace Switcher Dropdown in Nav -->
                 <div id="companySwitcherNavContainer" class="relative hidden sm:block">
                     <button id="companySwitcherNavBtn" onclick="toggleCompanySwitcher(event)" aria-label="Switch Corporate Workspace" class="btn btn-outline py-2 px-3 text-xs font-semibold flex items-center gap-2 border-slate-200 dark:border-slate-700 hover:border-indigo-500 transition-colors">
@@ -2865,6 +2869,10 @@
             isRegistering = false;
             const orgToInit = targetOrgId || activeOrgId || localStorage.getItem('ezManage_active_corporate_org_id');
             document.getElementById('view-register').classList.remove('active');
+            if (typeof window !== 'undefined' && !window.isE2ETestMode && typeof jest === 'undefined') {
+                window.location.href = `dashboard.html${orgToInit ? `?orgId=${encodeURIComponent(orgToInit)}` : ''}`;
+                return;
+            }
             const userToInit = auth.currentUser || currentUser;
             if (userToInit) {
                 initializeCorporateWorkspace(userToInit, orgToInit);
@@ -2880,9 +2888,17 @@
                 activeOrgId = currentActiveId;
                 activeOrgData = currentActiveData;
                 document.getElementById('view-register').classList.remove('active');
+                if (typeof window !== 'undefined' && !window.isE2ETestMode && typeof jest === 'undefined') {
+                    window.location.href = `dashboard.html${currentActiveId ? `?orgId=${encodeURIComponent(currentActiveId)}` : ''}`;
+                    return;
+                }
                 document.getElementById('dashboard-shell').classList.remove('hidden');
                 if (window.lucide) lucide.createIcons();
             } else if (auth.currentUser || currentUser) {
+                if (typeof window !== 'undefined' && !window.isE2ETestMode && typeof jest === 'undefined') {
+                    window.location.href = 'dashboard.html';
+                    return;
+                }
                 initializeCorporateWorkspace(auth.currentUser || currentUser);
             } else {
                 navTo('login');

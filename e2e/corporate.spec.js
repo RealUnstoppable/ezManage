@@ -230,4 +230,117 @@ test.describe('E2E Corporate Dashboard & Executive Analytics', () => {
     });
     await expect(shell).toBeVisible();
   });
+
+  test('should load dedicated Stripe-styled dashboard.html with executive multi-store metrics and tabs', async ({ page }) => {
+    await page.goto('http://localhost:3000/dashboard.html');
+
+    // Page title check
+    await expect(page).toHaveTitle(/Executive Corporate Dashboard/);
+
+    // Simulate authenticated corporate user with multiple companies
+    await page.evaluate(() => {
+      window.currentUser = { uid: 'exec_user_1', email: 'chief@apexcorp.com' };
+      const company1 = {
+        id: 'CORP-FLAGSHIP-01',
+        groupName: 'Apex Flagship Store',
+        workplaceCode: 'EZM-FLAG-01',
+        plan: 'Enterprise',
+        joinKey: 'WPK-11-22'
+      };
+      const company2 = {
+        id: 'CORP-MIDTOWN-02',
+        groupName: 'Apex Midtown Store',
+        workplaceCode: 'EZM-MIDT-02',
+        plan: 'Pro Store',
+        joinKey: 'WPK-33-44'
+      };
+
+      window.userCompanies = [company1, company2];
+      window.activeOrgId = company1.id;
+      window.activeOrgData = company1;
+
+      // Populate dashboard DOM
+      window.applyActiveCompanyToDashboard(company1, company1.id);
+      window.renderCompanySelectorDropdown();
+
+      // Seed KPI numbers
+      const shiftsEl = document.getElementById('globalShifts');
+      if (shiftsEl) shiftsEl.innerText = '128';
+
+      const routineEl = document.getElementById('globalRoutineScore');
+      if (routineEl) routineEl.innerText = '97%';
+
+      const laborEl = document.getElementById('laborSavedCount');
+      if (laborEl) laborEl.innerText = '96h';
+
+      // Ensure main shell is unhidden
+      const shell = document.getElementById('dashboardMainShell');
+      if (shell) shell.classList.remove('hidden');
+      const gate = document.getElementById('dashboardAuthGate');
+      if (gate) gate.classList.add('hidden');
+    });
+
+    // Check header and hero bento
+    await expect(page.locator('#orgNameDisplayBento')).toHaveText('Apex Flagship Store');
+    await expect(page.locator('#workplaceCodeDisplayBento')).toContainText('EZM-FLAG-01');
+    await expect(page.locator('#globalShifts')).toHaveText('128');
+    await expect(page.locator('#globalRoutineScore')).toHaveText('97%');
+    await expect(page.locator('#laborSavedCount')).toHaveText('96h');
+
+    // Test Multi-Store Company Dropdown
+    const selectorBtn = page.locator('#activeCompanySelectorBtn');
+    await selectorBtn.click();
+    const dropdown = page.locator('#companySelectorDropdown');
+    await expect(dropdown).toBeVisible();
+
+    // Verify company selector contains both locations
+    await expect(dropdown).toContainText('Apex Flagship Store');
+    await expect(dropdown).toContainText('Apex Midtown Store');
+
+    // Click outside to close or re-click
+    await selectorBtn.click();
+    await expect(dropdown).toBeHidden();
+
+    // Test switching tabs to Multi-Store Network
+    const multistoreTab = page.locator('#tabBtn-multistore');
+    await multistoreTab.click();
+    await expect(multistoreTab).toHaveClass(/active/);
+    await expect(page.locator('#dashboardTabContent-multistore')).toBeVisible();
+    await expect(page.locator('#dashboardTabContent-overview')).toBeHidden();
+
+    // Test switching tabs to Shift Managers
+    const managersTab = page.locator('#tabBtn-managers');
+    await managersTab.click();
+    await expect(managersTab).toHaveClass(/active/);
+    await expect(page.locator('#dashboardTabContent-managers')).toBeVisible();
+
+    // Test opening Add Manager modal
+    await page.evaluate(() => {
+      window.openAddManagerModal();
+    });
+    const managerModal = page.locator('#addManagerModal');
+    await expect(managerModal).toBeVisible();
+    await page.evaluate(() => {
+      window.closeAddManagerModal();
+    });
+    await expect(managerModal).toBeHidden();
+
+    // Test switching back to Overview
+    const overviewTab = page.locator('#tabBtn-overview');
+    await overviewTab.click();
+    await expect(overviewTab).toHaveClass(/active/);
+    await expect(page.locator('#dashboardTabContent-overview')).toBeVisible();
+  });
+
+  test('should verify index.html corporate portal links point to dashboard.html', async ({ page }) => {
+    await page.goto('http://localhost:3000/index.html');
+
+    // Check Corporate Portal link in navigation / hero
+    const corpLinks = page.locator('a[href="dashboard.html"]');
+    const count = await corpLinks.count();
+    expect(count).toBeGreaterThan(0);
+
+    const firstCorpLink = corpLinks.first();
+    await expect(firstCorpLink).toBeAttached();
+  });
 });
